@@ -13,8 +13,9 @@ import { useSwipeBackGuard } from '@/hooks/swipeBack'
 import { useAccountStore } from '@/stores/modules/account'
 import { showConfirm, showToast } from '@/utils/index'
 import { fromVisCardInfo } from '@/views/vis/cards/cardApi'
+import MenuIconPicker from '@/views/permission/menu/components/MenuIconPicker.vue'
 import { apiErrorMessage } from '@/views/vis/shared/visRequest'
-import { dashCardDefaultSize, FUNCTION_DASHBOARD_WRITE } from '../config'
+import { dashCardDefaultSize, DASH_DESIGNER_ID, FUNCTION_DASHBOARD_CONF } from '../config'
 import {
   applyFilterDefaults,
   applyFilterDefaultsFromSettings,
@@ -35,6 +36,7 @@ import {
   moveCardToRoot,
   removeCardFromTree,
 } from '../dashLayout'
+import { captureDashPreview, saveDashScreenshot } from '../dashScreenshot'
 import { dashThemeVars, DEFAULT_DASH_CARD_RADIUS, DEFAULT_DASH_THEME } from '../dashTheme'
 import { useDashRefresh } from '../useDashRefresh'
 import CardPickerDialog from './CardPickerDialog.vue'
@@ -49,6 +51,7 @@ export interface DashDesignerSavedPayload {
   name: string
   groupId: string
   status: 'EBL' | 'DBL'
+  icon?: string
 }
 
 export interface DashDesignerInstance {
@@ -67,7 +70,7 @@ const emit = defineEmits<{
 }>()
 
 const { hasFunction } = useAccountStore()
-const canWrite = hasFunction(FUNCTION_DASHBOARD_WRITE)
+const canWrite = hasFunction(FUNCTION_DASHBOARD_CONF)
 const router = useRouter()
 
 const loading = ref(false)
@@ -85,12 +88,14 @@ const settingsOpen = ref(false)
 const saveOpen = ref(false)
 const saveFormRef = ref<FormInstance>()
 const reloading = ref(false)
+const capturing = ref(false)
 
 const states = reactive({
   id: '',
   name: '',
   status: 'EBL' as 'EBL' | 'DBL',
   desc: '',
+  icon: '',
   groupId: '0',
 })
 const widgets = ref<DashWidget[]>([])
@@ -107,6 +112,7 @@ const baselineSnapshot = ref('')
 const saveForm = reactive({
   name: '',
   desc: '',
+  icon: '',
   status: 'EBL' as 'EBL' | 'DBL',
   groupId: '0',
 })
@@ -126,6 +132,7 @@ function currentSnapshot() {
     name: states.name,
     status: states.status,
     desc: states.desc,
+    icon: states.icon,
     groupId: states.groupId,
     filters: filters.value,
     theme: theme.value,
@@ -148,6 +155,7 @@ function resetEmpty() {
   states.name = ''
   states.status = 'EBL'
   states.desc = ''
+  states.icon = ''
   states.groupId = '0'
   filters.value = []
   configExtra.value = {}
@@ -172,7 +180,7 @@ async function loadDashboard() {
   baselineSnapshot.value = ''
   loading.value = true
   try {
-    const res = await vis.dashboard.getDashboardDetail({ dashboardId })
+    const res = await vis.query.getDashboardDetail({ dashboardId })
     if (currentRequestId !== loadRequestId)
       return
     if (!res.data)
@@ -184,6 +192,7 @@ async function loadDashboard() {
     states.name = res.data.dashName || '未命名看板'
     states.status = res.data.status === 'DBL' ? 'DBL' : 'EBL'
     states.desc = res.data.dashDesc || ''
+    states.icon = res.data.icon || ''
     states.groupId = res.data.groupId && res.data.groupId !== '0' ? String(res.data.groupId) : '0'
     filterValues.value = applyFilterDefaults(loaded.filters, {})
     filters.value = loaded.filters
@@ -231,7 +240,7 @@ watch(
 async function resolveCard(info: VIS.VisCardInfo) {
   const cardId = String(info.id || '')
   try {
-    const res = await vis.card.getCardDetail({ cardId })
+    const res = await vis.query.getCardDetail({ cardId })
     if (res.data)
       return fromVisCardInfo(res.data)
   }
@@ -356,7 +365,7 @@ async function reloadCards() {
   const dashboardId = states.id
   reloading.value = true
   try {
-    const res = await vis.dashboard.getDashboardDetail({ dashboardId }, { showErrorMessage: false })
+    const res = await vis.query.getDashboardDetail({ dashboardId }, { showErrorMessage: false })
     if (!res.data || dashboardId !== states.id)
       return
     const loaded = await loadDashboardWidgets(res.data)
@@ -374,6 +383,29 @@ async function reloadCards() {
   }
 }
 
+async function onScreenshot() {
+  if (capturing.value || loading.value)
+    return
+  const root = document.getElementById(DASH_DESIGNER_ID)
+  if (!root) {
+    showToast('截屏失败', 'error')
+    return
+  }
+  capturing.value = true
+  await nextTick()
+  try {
+    const blob = await captureDashPreview(root)
+    saveDashScreenshot(blob, states.name)
+    showToast('截屏已保存')
+  }
+  catch {
+    showToast('截屏失败', 'error')
+  }
+  finally {
+    capturing.value = false
+  }
+}
+
 function openPreview() {
   if (!states.id)
     return
@@ -388,6 +420,7 @@ function openSaveDialog() {
   fetchGroups()
   saveForm.name = states.name.trim()
   saveForm.desc = states.desc.trim()
+  saveForm.icon = states.icon
   saveForm.status = states.status
   saveForm.groupId = states.groupId || '0'
   saveOpen.value = true
@@ -399,10 +432,11 @@ async function handleSave() {
     return
   const dashboardId = states.id
   const desc = saveForm.desc.trim()
+  const icon = saveForm.icon || ''
   const status = saveForm.status
   const groupId = saveForm.groupId || '0'
   const savedState = JSON.parse(currentSnapshot()) as Record<string, unknown>
-  Object.assign(savedState, { name, desc, status, groupId })
+  Object.assign(savedState, { name, desc, icon, status, groupId })
   const savedSnapshot = JSON.stringify(savedState)
   saveLoading.value = true
   try {
@@ -411,6 +445,7 @@ async function handleSave() {
       name,
       status,
       desc,
+      icon,
       groupId,
       filters: filters.value,
       theme: theme.value,
@@ -422,6 +457,7 @@ async function handleSave() {
     if (props.dashboardId === dashboardId && states.id === dashboardId) {
       states.name = name
       states.desc = desc
+      states.icon = icon
       states.status = status
       states.groupId = groupId
       states.id = savedId
@@ -434,6 +470,7 @@ async function handleSave() {
       name,
       groupId,
       status,
+      icon,
     })
   }
   catch (e) {
@@ -472,6 +509,8 @@ function updateMeta(meta: Partial<Omit<DashDesignerSavedPayload, 'id'>> & { desc
     states.status = meta.status
   if (meta.desc !== undefined)
     states.desc = meta.desc
+  if (meta.icon !== undefined)
+    states.icon = meta.icon
 
   if (!baselineSnapshot.value)
     return
@@ -485,6 +524,8 @@ function updateMeta(meta: Partial<Omit<DashDesignerSavedPayload, 'id'>> & { desc
       baseline.status = meta.status
     if (meta.desc !== undefined)
       baseline.desc = meta.desc
+    if (meta.icon !== undefined)
+      baseline.icon = meta.icon
     baselineSnapshot.value = JSON.stringify(baseline)
   }
   catch {
@@ -505,6 +546,7 @@ defineExpose<DashDesignerInstance>({
 
 <template>
   <section
+    :id="DASH_DESIGNER_ID"
     v-spinner="adding || reloading"
     class="designer"
     :class="{ 'is-loading': loading }"
@@ -514,23 +556,22 @@ defineExpose<DashDesignerInstance>({
         <div class="designer__chrome">
           <DashFilterBar
             v-model:values="filterValues"
+            v-model:theme="theme"
             :title="states.name"
             :desc="states.desc"
             :defs="filters"
-            show-preview
             :show-design="canWrite"
             :adding="adding"
             :loading="loading"
             :dirty="dirty"
-            show-reload-cards
             :preview-disabled="!states.id"
-            :show-theme="false"
-            :show-save="canWrite"
+            :screenshotting="capturing || loading"
             :save-loading="saveLoading"
             :save-disabled="!states.id"
             @refresh="refreshCards"
             @reload-cards="confirmReloadCards"
             @preview="openPreview"
+            @screenshot="onScreenshot"
             @add-card="pickerOpen = true"
             @add-group="addGroup"
             @settings="settingsOpen = true"
@@ -632,9 +673,12 @@ defineExpose<DashDesignerInstance>({
           <DashGroupTreeSelect
             v-model="saveForm.groupId"
             :data="groupTree"
-            root-label="未分组"
+            root-label="报表中心"
             :clearable="false"
           />
+        </el-form-item>
+        <el-form-item label="图标">
+          <MenuIconPicker v-model="saveForm.icon" />
         </el-form-item>
         <el-form-item label="看板描述" prop="desc">
           <el-input

@@ -7,6 +7,7 @@ import { Plus, Search } from '@element-plus/icons-vue'
 import { pickBy } from 'lodash-es'
 import { queryRoles, toggleRoleStatus } from '@/apis/admin/role'
 
+import { SYS_ROLE_WRITE } from '@/core/permCodes'
 import { useAccountStore } from '@/stores/modules/account'
 import { showConfirm, showToast } from '@/utils/index'
 import AddRoleDialog from './components/AddRoleDialog.vue'
@@ -47,9 +48,7 @@ const states = reactive<IStates>({
   total: 0,
   records: [],
   permission: {
-    write: hasFunction('sys:role:write'),
-    configFunction: hasFunction('sys:role:config-menu'),
-    configDashboard: hasFunction('sys:role:config-dashboard'),
+    write: hasFunction(SYS_ROLE_WRITE),
   },
 })
 
@@ -196,7 +195,12 @@ onMounted(() => {
         </el-table-column>
         <el-table-column label="备注" show-overflow-tooltip prop="roleNote" />
         <!-- @vue-generic {ADMIN.RoleInfo} -->
-        <el-table-column label="操作" width="320px" fixed="right">
+        <el-table-column
+          v-if="states.permission.write"
+          label="操作"
+          width="320px"
+          fixed="right"
+        >
           <template #default="{ row }">
             <el-button
               v-if="states.permission.write"
@@ -217,7 +221,7 @@ onMounted(() => {
               {{ row.status === "EBL" ? "禁用" : "启用" }}
             </el-button>
             <el-button
-              v-if="states.permission.configFunction"
+              v-if="states.permission.write"
               type="primary"
               link
               size="small"
@@ -226,7 +230,7 @@ onMounted(() => {
               配置功能
             </el-button>
             <el-button
-              v-if="states.permission.configDashboard"
+              v-if="states.permission.write"
               type="primary"
               link
               size="small"

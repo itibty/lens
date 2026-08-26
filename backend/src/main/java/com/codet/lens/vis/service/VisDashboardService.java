@@ -82,6 +82,7 @@ public class VisDashboardService {
 
         VisDashboard entity = BeanUtil.copyProperties(request, VisDashboard.class);
         entity.setDashName(entity.getDashName().trim());
+        entity.setIcon(StrUtil.blankToDefault(entity.getIcon(), null));
         entity.setGroupId(request.getGroupId() == null ? 0L : request.getGroupId());
         if (entity.getGroupId() != 0) {
             VisDashGroup group = dashGroupMapper.selectById(entity.getGroupId());
@@ -121,6 +122,7 @@ public class VisDashboardService {
                 .ne(VisDashboard::getStatus, FieldConst.DEL)
                 .set(VisDashboard::getDashName, request.getDashName().trim())
                 .set(VisDashboard::getDashDesc, request.getDashDesc())
+                .set(VisDashboard::getIcon, StrUtil.blankToDefault(request.getIcon(), null))
                 .set(VisDashboard::getGroupId, groupId));
     }
 

@@ -23,16 +23,20 @@ import java.util.Set;
 public class JwtService {
     private static final String CLAIM_ROLES = "roles";
     private static final String CLAIM_PERMS = "perms";
+    private static final String CLAIM_IAT_MS = "iatMs";
 
     private final LensProperties properties;
 
     public String createToken(String userId, Collection<String> roles, Collection<String> perms, long expiresAt) {
+        long iatMs = System.currentTimeMillis();
         return JWT.create()
                 .setSubject(userId)
                 .setJWTId(IdUtil.fastSimpleUUID())
+                .setIssuedAt(new Date(iatMs))
                 .setExpiresAt(new Date(expiresAt))
                 .setPayload(CLAIM_ROLES, roles)
                 .setPayload(CLAIM_PERMS, perms)
+                .setPayload(CLAIM_IAT_MS, iatMs)
                 .setKey(properties.getJwtSecret().getBytes(StandardCharsets.UTF_8))
                 .sign();
     }
@@ -48,9 +52,24 @@ public class JwtService {
         JWTPayload payload = JWTUtil.parseToken(token).getPayload();
         AuthUser user = new AuthUser();
         user.setSubject(String.valueOf(payload.getClaim(JWTPayload.SUBJECT)));
+        user.setIatMs(toLong(payload.getClaim(CLAIM_IAT_MS)));
         user.setRoles(toStringSet(payload.getClaim(CLAIM_ROLES)));
         user.setPerms(toStringSet(payload.getClaim(CLAIM_PERMS)));
         return user;
+    }
+
+    private static long toLong(Object raw) {
+        if (raw instanceof Number n) {
+            return n.longValue();
+        }
+        if (raw == null) {
+            return 0L;
+        }
+        try {
+            return Long.parseLong(raw.toString());
+        } catch (NumberFormatException ignored) {
+            return 0L;
+        }
     }
 
     @SuppressWarnings("unchecked")

@@ -14,7 +14,9 @@ export async function getDatasourceMetaTree(
     `${VIS_BASE_PATH}/datasources/${param0}/meta-tree`,
     {
       method: "GET",
-      params: { ...queryParams },
+      params: {
+        ...queryParams,
+      },
       ...(options || {}),
     }
   );

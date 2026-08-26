@@ -16,7 +16,7 @@ import { useAccountStore } from '@/stores/modules/account'
 import { getPageAfterDelete, showConfirm, showToast } from '@/utils/index'
 import { isBlank } from '@/utils/validate'
 import BindFieldsDialog from './components/BindFieldsDialog.vue'
-import { FUNCTION_SQL_CONF, sqlTypeList } from './components/config'
+import { FUNCTION_DATASET_CONF } from './components/config'
 import ConfSqlDialog from './components/ConfSqlDialog.vue'
 
 interface IOption {
@@ -31,7 +31,6 @@ interface IStates {
   pageSize: number
   total: number
   records: VIS.ConfSqlInfo[]
-  sqlTypeOptions: Array<IOption>
   statusOptions: Array<IOption>
 }
 
@@ -39,7 +38,6 @@ const { hasFunction } = useAccountStore()
 const states = reactive<IStates>({
   query: {
     id: null,
-    sqlType: null,
     sqlName: null,
     sqlDesc: null,
     dsName: null,
@@ -51,9 +49,8 @@ const states = reactive<IStates>({
   total: 0,
   records: [],
   permission: {
-    sqlConf: hasFunction(FUNCTION_SQL_CONF),
+    conf: hasFunction(FUNCTION_DATASET_CONF),
   },
-  sqlTypeOptions: sqlTypeList.map((item) => { return { ...item } }),
   statusOptions: [
     {
       name: '启用',
@@ -156,7 +153,7 @@ onMounted(() => {
   <PageCard>
     <template #extra>
       <el-button
-        v-if="states.permission.sqlConf"
+        v-if="states.permission.conf"
         :icon="Plus"
         type="primary"
         @click="handleAdd"
@@ -172,17 +169,6 @@ onMounted(() => {
           </el-col>
           <el-col :span="3">
             <el-input v-model="states.query.sqlName" placeholder="名称" clearable />
-          </el-col>
-
-          <el-col :span="3">
-            <el-select v-model="states.query.sqlType" class="w-full" placeholder="SQL类型" clearable>
-              <el-option
-                v-for="item in states.sqlTypeOptions"
-                :key="item.value"
-                :label="item.name"
-                :value="item.value"
-              />
-            </el-select>
           </el-col>
           <el-col :span="3">
             <el-select v-model="states.query.status" class="w-full" placeholder="状态" clearable>
@@ -216,9 +202,7 @@ onMounted(() => {
       >
         <el-table-column label="ID" width="100" prop="id" show-overflow-tooltip />
         <el-table-column label="名称" prop="sqlName" width="100" show-overflow-tooltip />
-        <el-table-column label="类型" width="100" prop="sqlType" />
         <el-table-column label="数据源" width="100" prop="dsName" show-overflow-tooltip />
-        <el-table-column label="响应字段" prop="retKey" width="150" />
         <!-- @vue-generic {VIS.ConfSqlInfo} -->
         <el-table-column label="状态" width="80" align="center" prop="status">
           <template #default="{ row }">
@@ -230,23 +214,12 @@ onMounted(() => {
             </el-tag>
           </template>
         </el-table-column>
-        <!-- @vue-generic {VIS.ConfSqlInfo} -->
-        <el-table-column label="调用用户" prop="execRoles" show-overflow-tooltip>
-          <template #default="{ row }">
-            <template v-if="row.execRoles">
-              角色:({{ row.execRoles }})
-            </template>
-            <template v-if="row.execUsers">
-              用户:({{ row.execUsers }})
-            </template>
-          </template>
-        </el-table-column>
         <el-table-column label="备注" prop="sqlDesc" show-overflow-tooltip />
         <!-- @vue-generic {VIS.ConfSqlInfo} -->
         <el-table-column label="操作" width="240" fixed="right">
           <template #default="{ row }">
             <el-button
-              v-if="states.permission.sqlConf"
+              v-if="states.permission.conf"
               size="small"
               type="primary"
               link
@@ -255,7 +228,7 @@ onMounted(() => {
               编辑
             </el-button>
             <el-button
-              v-if="states.permission.sqlConf"
+              v-if="states.permission.conf"
               size="small"
               type="primary"
               link
@@ -264,7 +237,7 @@ onMounted(() => {
               编辑脚本
             </el-button>
             <el-button
-              v-if="states.permission.sqlConf && row.sqlType === 'DQL'"
+              v-if="states.permission.conf"
               size="small"
               type="primary"
               link
@@ -274,7 +247,7 @@ onMounted(() => {
               字段
             </el-button>
             <el-button
-              v-if="states.permission.sqlConf"
+              v-if="states.permission.conf"
               size="small"
               type="primary"
               link

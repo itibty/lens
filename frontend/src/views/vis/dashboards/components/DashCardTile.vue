@@ -7,7 +7,7 @@ import type { DetailHit } from '@/views/vis/shared/cardDetail'
 import type { VisCard } from '@/views/vis/shared/types'
 import type { VisCardDetailOpenPayload } from '@/views/vis/shared/useVisCardDetail'
 import { useAccountStore } from '@/stores/modules/account'
-import { FUNCTION_CARD_WRITE } from '@/views/vis/cards/config'
+import { FUNCTION_CARD_CONF } from '@/views/vis/cards/config'
 import { resolveAutoRefreshSec, useCardAutoRefresh } from '@/views/vis/shared/cardRefresh'
 import { allowsFullscreen, needsDataset } from '@/views/vis/shared/types'
 import { useVisCardQuery } from '@/views/vis/shared/useVisCardQuery'
@@ -60,7 +60,7 @@ const emit = defineEmits<{
 
 const { hasFunction } = useAccountStore()
 const router = useRouter()
-const canEditCard = hasFunction(FUNCTION_CARD_WRITE)
+const canEditCard = hasFunction(FUNCTION_CARD_CONF)
 const disabled = computed(() => isVisDisabled(props.card.status))
 
 const canFullscreen = computed(() =>

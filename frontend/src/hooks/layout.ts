@@ -8,33 +8,10 @@
 import type { RouteLocationNormalized } from 'vue-router'
 import { onBeforeRouteLeave } from 'vue-router'
 import router, { getRouteScrollKey } from '@/router'
-import { useAppStore } from '@/stores/modules/app'
 import { useKeepPageStore } from '@/stores/modules/keepPage'
 import { createLogger } from '@/utils/logger'
 
 const logger = createLogger('LAYOUT_HOOK')
-
-// 自动折叠侧栏
-export function useAutoFoldSidebar() {
-  const appStore = useAppStore()
-  const TAG = 'AutoFoldSidebar'
-  logger.debug(TAG, 'init')
-
-  let flag = false
-
-  onBeforeMount(() => {
-    if (!appStore.appSetting.sidebarFold) {
-      appStore.setSidebarFold(true)
-      flag = true
-    }
-  })
-
-  onUnmounted(() => {
-    if (flag) {
-      appStore.setSidebarFold(false)
-    }
-  })
-}
 
 function routeNameKeys(route: RouteLocationNormalized): string[] {
   const keys = new Set<string>()

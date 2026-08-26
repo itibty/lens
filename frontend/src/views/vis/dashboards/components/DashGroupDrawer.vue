@@ -259,7 +259,7 @@ function doSubmit() {
   })
 }
 
-function moveOut(row: VIS.VisDashboardInfo) {
+function moveOut(row: { id?: string }) {
   if (!row.id)
     return
   vis.dashboard.moveDashboardsGroup({

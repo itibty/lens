@@ -1,0 +1,10 @@
+/** 与后端 PermCodes 对齐。系统菜单 query+write，可视化菜单一个 conf。 */
+export const SYS_USER_QUERY = 'sys:user:query'
+export const SYS_USER_WRITE = 'sys:user:write'
+export const SYS_ROLE_QUERY = 'sys:role:query'
+export const SYS_ROLE_WRITE = 'sys:role:write'
+export const SYS_MENU_QUERY = 'sys:menu:query'
+export const SYS_MENU_WRITE = 'sys:menu:write'
+export const VIS_DATASET_CONF = 'vis:dataset:conf'
+export const VIS_CARD_CONF = 'vis:card:conf'
+export const VIS_DASHBOARD_CONF = 'vis:dashboard:conf'

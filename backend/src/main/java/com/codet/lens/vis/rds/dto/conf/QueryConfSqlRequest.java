@@ -1,8 +1,7 @@
 package com.codet.lens.vis.rds.dto.conf;
 
-import com.codet.lens.common.PageRequest;
 import com.codet.lens.common.EnumValue;
-import com.codet.lens.common.FieldConst;
+import com.codet.lens.common.PageRequest;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
@@ -14,10 +13,6 @@ public class QueryConfSqlRequest extends PageRequest {
 
     @Schema(description = "数据id")
     private Long id;
-
-    @Schema(description = "sql类型", allowableValues = {FieldConst.DQL, FieldConst.DML})
-    @EnumValue(strValues = {FieldConst.DQL, FieldConst.DML})
-    private String sqlType;
 
     @Schema(description = "名称")
     private String sqlName;

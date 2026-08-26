@@ -1,6 +1,5 @@
 package com.codet.lens.vis.rds.dto.conf;
 
-import com.codet.lens.common.FieldConst;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
@@ -12,10 +11,6 @@ public class ConfSqlInfo {
 
     @Schema(description = "数据id", requiredMode = Schema.RequiredMode.REQUIRED)
     private Long id;
-
-    @Schema(description = "sql类型", requiredMode = Schema.RequiredMode.REQUIRED,
-            allowableValues = {FieldConst.DML, FieldConst.DQL})
-    private String sqlType;
 
     @Schema(description = "名称", requiredMode = Schema.RequiredMode.REQUIRED)
     private String sqlName;
@@ -35,17 +30,8 @@ public class ConfSqlInfo {
     @Schema(description = "数据源名", requiredMode = Schema.RequiredMode.REQUIRED)
     private String dsName;
 
-    @Schema(description = "响应字段名", requiredMode = Schema.RequiredMode.REQUIRED)
-    private String retKey;
-
     @Schema(description = "状态", requiredMode = Schema.RequiredMode.REQUIRED, allowableValues = {"EBL", "DBL"})
     private String status;
-
-    @Schema(description = "可执行的角色编码集合")
-    private String execRoles;
-
-    @Schema(description = "可执行的用户id集合")
-    private String execUsers;
 
     @Schema(description = "模板引擎", requiredMode = Schema.RequiredMode.REQUIRED, allowableValues = {"ENJOY"})
     private String tplEngine;

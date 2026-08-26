@@ -17,7 +17,7 @@ public class MoveDashboardsGroupRequest {
     @NotEmpty(message = "看板不能为空")
     private List<Long> dashboardIds;
 
-    @Schema(description = "目标分组 id。0 为未分组")
+    @Schema(description = "目标分组 id。0 表示挂到报表中心根下")
     @NotNull(message = "分组不能为空")
     private Long groupId;
 }

@@ -12,21 +12,15 @@ import java.util.Set;
 @Accessors(chain = true)
 public class AuthUser {
     private String subject;
+    private long iatMs;
     private Set<String> roles = new HashSet<>();
     private Set<String> perms = new HashSet<>();
 
-    public boolean isAdmin() {
-        return roles.contains(com.codet.lens.common.PermCodes.ROLE_ADMIN);
-    }
-
     public boolean hasPerm(String code) {
-        return isAdmin() || perms.contains(code);
+        return perms.contains(code);
     }
 
     public boolean hasAnyPerm(String... codes) {
-        if (isAdmin()) {
-            return true;
-        }
         for (String code : codes) {
             if (perms.contains(code)) {
                 return true;

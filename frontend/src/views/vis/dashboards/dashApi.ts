@@ -626,7 +626,7 @@ export async function loadDashboardCards(
     if (!cardId)
       return
     try {
-      const res = await vis.card.getCardDetail({ cardId })
+      const res = await vis.query.getCardDetail({ cardId })
       if (!res.data)
         return
       const card = fromVisCardInfo(res.data)
@@ -635,7 +635,7 @@ export async function loadDashboardCards(
       map[cardId] = card
     }
     catch {
-      // 已删或无权限的卡片跳过
+      // 已删、禁用，或未挂在当前用户可看的看板上
     }
   }))
   return map
@@ -674,6 +674,7 @@ export async function saveDashboard(input: {
   status: 'EBL' | 'DBL'
   groupId?: string
   desc?: string
+  icon?: string
   filters: VisDashFilterDef[]
   theme?: DashThemeId
   cardRadius?: DashCardRadiusId
@@ -687,6 +688,7 @@ export async function saveDashboard(input: {
     status: input.status,
     groupId: input.groupId && input.groupId !== '0' ? input.groupId : '0',
     dashDesc: input.desc?.trim() || '',
+    icon: input.icon?.trim() || undefined,
     configJson: stringifyDashConfig(
       input.filters,
       input.extra ?? {},

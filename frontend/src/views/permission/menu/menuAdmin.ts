@@ -1,15 +1,7 @@
-import { menuIconClass, normalizeMenuIconName } from '@/core/menuIcons'
-
 export type MenuType = 'MENU' | 'FUNC'
 
 export function isFunc(node?: Pick<ADMIN.MenuTree, 'menuType'>) {
   return node?.menuType === 'FUNC'
-}
-
-export function treeNodeIcon(node: ADMIN.MenuTree) {
-  if (menuIconClass(node.icon))
-    return normalizeMenuIconName(node.icon)
-  return 'file-line'
 }
 
 export function stripFuncs(nodes: ADMIN.MenuTree[]): ADMIN.MenuTree[] {

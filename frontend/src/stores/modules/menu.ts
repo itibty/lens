@@ -10,6 +10,7 @@ import type { MenuInfo } from '@/core/data'
 import type { RouteMeta } from '@/router'
 import { toRaw } from 'vue'
 import { listAccountMenus as fetchAccountMenus } from '@/apis/admin/account'
+import { listDashboardReportTree } from '@/apis/vis/dashboard'
 import { constantMenu } from '@/core/data'
 import { routes } from '@/router'
 import { createLogger } from '@/utils/logger'
@@ -17,6 +18,7 @@ import { isBlank } from '@/utils/validate'
 
 const TAG = 'MENU_STORE:'
 const logger = createLogger('MENU_STORE')
+const REPORT_CENTER_ID = '90'
 
 function buildMenuIdRouterMap(
   routeList: RouteRecordRaw[],
@@ -32,18 +34,27 @@ function buildMenuIdRouterMap(
   })
 }
 
+function normalizePath(path: string) {
+  if (!path)
+    return '/'
+  return path.length > 1 && path.endsWith('/') ? path.slice(0, -1) : path
+}
+
+function isHomePath(path: string) {
+  const p = normalizePath(path)
+  return p === '/' || p === '/index'
+}
+
 function buildMenusInfo(menus: MenuInfo[], record: Record<string, RouteRecordRaw>): void {
   menus.forEach((menu: MenuInfo) => {
     const route = record[menu.id]
     if (route) {
-      const { path, redirect } = route
       const meta = route.meta as RouteMeta
-      if (redirect) {
-        menu.url = redirect as string
-      }
-      else if (path) {
-        menu.url = path
-      }
+      // 有子节点时不要把父级 path/redirect 写成 url：
+      // redirect 可能指向当前用户看不到的叶子（如 /vis → /vis/cards）。
+      const hasKids = !!menu.children?.length
+      if (!hasKids && isBlank(menu.url) && route.path)
+        menu.url = route.path
 
       if (meta) {
         if (meta.menuName) {
@@ -148,7 +159,47 @@ export const useMenuStore = defineStore('menu', () => {
   const allMenus = ref<MenuInfo[]>([]) // 用户全菜单
   const activeRootId = ref('')
   const filterKeyword = ref('')
+  const reportTreeLoading = ref(false)
   let allMenuIdRoute: Record<string, RouteRecordRaw> = {} // 用户全菜单 id 路由映射
+  let reportTreePromise: Promise<void> | null = null
+
+  function toReportMenus(nodes: VIS.ReportNode[] = []): MenuInfo[] {
+    return nodes.flatMap((node) => {
+      const id = node.id == null ? '' : String(node.id)
+      const name = String(node.name || '')
+      if (!id || !name)
+        return []
+      const children = node.children?.length ? toReportMenus(node.children) : undefined
+      return [{
+        id,
+        pid: node.pid == null ? undefined : String(node.pid),
+        name,
+        url: node.url,
+        icon: node.icon,
+        children,
+      }]
+    })
+  }
+
+  const ensureReportTree = async () => {
+    if (activeRootId.value !== REPORT_CENTER_ID)
+      return
+    const root = allMenus.value.find(menu => menu.id === REPORT_CENTER_ID)
+    if (!root)
+      return
+    if (reportTreePromise)
+      return reportTreePromise
+    root.children = []
+    reportTreeLoading.value = true
+    reportTreePromise = (async () => {
+      const res = await listDashboardReportTree()
+      root.children = toReportMenus(res.data?.list)
+    })().finally(() => {
+      reportTreePromise = null
+      reportTreeLoading.value = false
+    })
+    return reportTreePromise
+  }
 
   const rootMenus = computed(() => allMenus.value.filter(menu => !menu.hidden))
 
@@ -172,6 +223,7 @@ export const useMenuStore = defineStore('menu', () => {
 
     allMenus.value = menuList
     allMenuIdRoute = menuIdRouteData
+    reportTreePromise = null
     if (!activeRootId.value)
       activeRootId.value = rootMenus.value[0]?.id ?? ''
   }
@@ -183,15 +235,49 @@ export const useMenuStore = defineStore('menu', () => {
   }
 
   const activateRoot = (rootId: string) => {
-    if (activeRootId.value === rootId)
-      return
-    activeRootId.value = rootId
-    filterKeyword.value = ''
+    if (activeRootId.value !== rootId) {
+      activeRootId.value = rootId
+      filterKeyword.value = ''
+    }
   }
 
   const findFirstLeafUrl = (rootId: string) => {
     const root = allMenus.value.find(menu => menu.id === rootId)
     return root ? firstVisibleLeafUrl(root) : undefined
+  }
+
+  const resolveHomeUrl = () => {
+    for (const root of rootMenus.value) {
+      const url = firstVisibleLeafUrl(root)
+      if (url)
+        return url
+    }
+    return undefined
+  }
+
+  /** 壳路径（/、/index、/vis、/sys、/vis/report）落到该根下第一片可见叶子 */
+  const resolveLandingUrl = (route: RouteLocationNormalized) => {
+    const path = normalizePath(route.path)
+    if (isHomePath(path))
+      return resolveHomeUrl()
+
+    const root = allMenus.value.find((menu) => {
+      const rec = allMenuIdRoute[menu.id]
+      return !!rec?.path && normalizePath(rec.path) === path
+    })
+    if (!root)
+      return undefined
+    return firstVisibleLeafUrl(root)
+  }
+
+  const routeBelongsToRoot = (route: RouteLocationNormalized, rootId: string) => {
+    const root = allMenus.value.find(menu => menu.id === rootId)
+    if (!root)
+      return false
+    const menuId = (route.meta.menuId || route.meta.rootMenuId) as string | undefined
+    if (menuId && containsMenuId(root, menuId))
+      return true
+    return containsPath(root, route.path)
   }
 
   const syncActiveRootFromRoute = (route: RouteLocationNormalized) => {
@@ -217,6 +303,8 @@ export const useMenuStore = defineStore('menu', () => {
     activeRootId.value = ''
     filterKeyword.value = ''
     allMenuIdRoute = {}
+    reportTreeLoading.value = false
+    reportTreePromise = null
   }
 
   return {
@@ -224,11 +312,16 @@ export const useMenuStore = defineStore('menu', () => {
     rootMenus,
     activeRootId,
     filterKeyword,
+    reportTreeLoading,
     getAllMenuIdRoute,
     fetchUserMenus,
+    ensureReportTree,
     filterMenus,
     activateRoot,
     findFirstLeafUrl,
+    resolveHomeUrl,
+    resolveLandingUrl,
+    routeBelongsToRoot,
     syncActiveRootFromRoute,
     clearMenus,
   }

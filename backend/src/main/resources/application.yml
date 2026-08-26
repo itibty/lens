@@ -11,6 +11,12 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
       maximum-pool-size: 10
+  data:
+    redis:
+      host: 127.0.0.1
+      port: 6379
+      password: Aa123456
+      timeout: 3s
 
 mybatis-plus:
   mapper-locations: classpath*:/mapper/**/*.xml

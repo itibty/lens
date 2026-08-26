@@ -29,6 +29,9 @@ public class VisDashboardInfo {
     @Schema(description = "描述")
     private String dashDesc;
 
+    @Schema(description = "图标")
+    private String icon;
+
     @Schema(description = "状态", allowableValues = {FieldConst.EBL, FieldConst.DBL},
             requiredMode = Schema.RequiredMode.REQUIRED)
     private String status;

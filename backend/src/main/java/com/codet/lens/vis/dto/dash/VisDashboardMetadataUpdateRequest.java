@@ -25,6 +25,10 @@ public class VisDashboardMetadataUpdateRequest {
     @Size(max = 200)
     private String dashDesc;
 
-    @Schema(description = "分组 id。0 或不传为未分组")
+    @Schema(description = "图标")
+    @Size(max = 50)
+    private String icon;
+
+    @Schema(description = "分组 id。0 或不传表示挂到报表中心根下")
     private Long groupId;
 }

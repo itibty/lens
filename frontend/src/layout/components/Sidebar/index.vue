@@ -15,7 +15,7 @@ import MenuItem from './MenuItem.vue'
 const appStore = useAppStore()
 const menuStore = useMenuStore()
 const { appSetting } = storeToRefs(appStore)
-const { menus, filterKeyword, activeRootId } = storeToRefs(menuStore)
+const { menus, filterKeyword, activeRootId, reportTreeLoading } = storeToRefs(menuStore)
 const route = useRoute()
 
 const activeMenu = computed<string>(() => {
@@ -63,7 +63,7 @@ const openedIndexes = computed(() => {
     <div v-if="showSidebarFilter" class="filter-wrap">
       <MenuFilter />
     </div>
-    <div class="menu-wrap">
+    <div v-spinner="reportTreeLoading" class="menu-wrap">
       <el-scrollbar>
         <el-menu
           :key="filterKeyword || activeRootId"
@@ -133,6 +133,7 @@ const openedIndexes = computed(() => {
 }
 
 .menu-wrap {
+  position: relative;
   flex: 1;
   overflow-y: hidden;
 }

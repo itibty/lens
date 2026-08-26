@@ -87,6 +87,7 @@ const services = {
       DATASET: 'dataset',
       CARD: 'card',
       DASHBOARD: 'dashboard',
+      DASH_GROUP: 'dashboard',
       QUERY: 'query',
       EXPORT: 'dataExport',
     },

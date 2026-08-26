@@ -74,9 +74,8 @@ function onInput(value: string) {
       <div class="menu-icon-picker__panel">
         <el-input
           v-model="keyword"
-          size="small"
           clearable
-          placeholder="搜索名称或中文"
+          placeholder="输入后过滤"
         />
         <div class="menu-icon-picker__scroll">
           <div v-for="group in groups" :key="group.id" class="menu-icon-picker__group">

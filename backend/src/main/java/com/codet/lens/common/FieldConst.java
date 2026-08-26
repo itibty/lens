@@ -10,8 +10,6 @@ public final class FieldConst {
     public static final long REPORT_ROOT_ID = 90L;
     public static final String AUTHORIZATION = "Authorization";
     public static final String TOKEN_PREFIX = "Bearer ";
-    public static final String DQL = "DQL";
-    public static final String DML = "DML";
     public static final String MYSQL = "MYSQL";
     public static final String POSTGRES = "POSTGRES";
     public static final String ORACLE = "ORACLE";

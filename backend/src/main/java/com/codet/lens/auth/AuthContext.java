@@ -25,8 +25,18 @@ public final class AuthContext {
     }
 
     public static Long getUserIdLong() {
-        String id = getUserId();
-        return id == null ? null : Long.valueOf(id);
+        return parseUserId(getUserId());
+    }
+
+    public static Long parseUserId(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return null;
+        }
+        try {
+            return Long.valueOf(raw.trim());
+        } catch (NumberFormatException ignored) {
+            return null;
+        }
     }
 
     public static String getToken() {

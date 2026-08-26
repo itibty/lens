@@ -20,7 +20,7 @@ public class QueryContext {
     /** 执行后回写：结果是否被截断 */
     private boolean truncated;
 
-    /** SHOW_SQL + ds:sql:conf 时记下执行 SQL */
+    /** SHOW_SQL + 数据集权限时记下执行 SQL */
     private boolean showSql;
 
     /** 下一条 select 的名称，用完即清 */

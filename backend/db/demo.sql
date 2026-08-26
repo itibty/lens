@@ -913,4 +913,7 @@ INSERT INTO `vis_dashboard_card` (
 (951013, 9510, 9275, NULL, NULL, NULL, NULL),
 (951014, 9510, 9276, NULL, NULL, NULL, NULL);
 
+INSERT IGNORE INTO `sys_role_dashboard` (`id`, `role_id`, `dashboard_id`, `create_at`, `create_by`)
+SELECT `id`, 1, `id`, 0, 0 FROM `vis_dashboard`;
+
 SET FOREIGN_KEY_CHECKS = 1;

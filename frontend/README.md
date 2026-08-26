@@ -1,30 +1,68 @@
 # Lens 前端
 
-Vue 3.5 + Vite 8 + Element Plus + Pinia。
+数据集、卡片、看板设计，以及账号、角色、菜单。
 
-约定见 [AGENTS.md](./AGENTS.md)。
+. Vue 3.5 / Vite 8 / Pinia / Vue Router  
+. Element Plus + UnoCSS  
+. VChart / VTable  
+. openapi 生成 Axios + TS 调用代码  
+. 账号角色权限  
 
-## 运行
+只用 pnpm，Node >= 20.12.1。
 
-```bash
-pnpm i
-pnpm dev
+## 命令
+
+日常：
+
+```shell
+pnpm install          # 安装依赖
+pnpm dev              # 开发  http://127.0.0.1:5173
+pnpm build            # 类型检查 + 构建
 ```
 
-- 地址：`http://127.0.0.1:5173`
-- 开发代理：`/api` → `http://127.0.0.1:8080`（剥掉 `/api`）
-- 需要后端已启动。账号 `admin` / `Aa123456`
+检查：
 
-只用 pnpm（`preinstall` 限制），Node >= 20.12.1。
+```shell
+pnpm type-check
+pnpm lint
+pnpm lint-fix
+```
 
-## 页面
+生成 API（需后端已启动；只生成 vis，不要对 admin 跑 generate）：
 
-| 路由 | 说明 |
-|------|------|
-| `/login` | 登录 |
-| `/vis/datasets` | 数据集（页面在 `views/ds`） |
-| `/vis/cards` `/vis/cards/edit` | 卡片列表 / 设计 |
-| `/vis/dashboards` `/vis/dashboards/edit` | 看板列表 / 设计 |
-| `/vis/dashboards/view` | 看板预览（新窗口） |
-| `/vis/report` `/vis/report/:id` | 报表中心 |
-| `/sys/users` `/sys/roles` `/sys/menus` | 用户 / 角色 / 菜单 |
+```shell
+pnpm generate-api -- --service=vis
+```
+
+依赖：
+
+```shell
+pnpm add [-D] lib@version
+pnpm remove lib
+pnpm outdated [--dev|--prod]   # 列出可升级
+pnpm run check-upgrade         # 交互式升级
+```
+
+## 推荐插件
+
+. Vue - Official（`vue.volar`）  
+. ESLint（`dbaeumer.vscode-eslint`）  
+. UnoCSS（`antfu.unocss`）  
+. EditorConfig（`editorconfig.editorconfig`）  
+. SVG（`jock.svg`）  
+. indent-rainbow（`oderwat.indent-rainbow`）  
+. Code Spell Checker（`streetsidesoftware.code-spell-checker`）  
+. koroFileHeader（`obkoro1.korofileheader`）  
+
+## 参考
+
+[Vite 配置](https://cn.vitejs.dev/config/)  
+[unocss 文档](https://unocss.dev/guide/)  
+[unocss 规则查询](https://unocss.dev/interactive/)  
+[iconify 图标](https://icon-sets.iconify.design/)  
+[vueuse](https://vueuse.org/)  
+[VChart](https://www.visactor.io/vchart)  
+[VTable](https://www.visactor.io/vtable)  
+[grid-layout-plus](https://grid-layout-plus.netlify.app/)  
+['@umijs/openapi' 生成调用代码](https://www.npmjs.com/package/@umijs/openapi)  
+[antfu/eslint-config](https://github.com/antfu/eslint-config)  

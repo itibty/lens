@@ -36,21 +36,6 @@ export async function delCard(
   });
 }
 
-/** 卡片详情 GET /cards/detail */
-export async function getCardDetail(
-  // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
-  params: VIS.getCardDetailParams,
-  options?: { [key: string]: any }
-) {
-  return request<VIS.RVisCardInfo>(`${VIS_BASE_PATH}/cards/detail`, {
-    method: "GET",
-    params: {
-      ...params,
-    },
-    ...(options || {}),
-  });
-}
-
 /** 新建或编辑卡片 POST /cards/edit */
 export async function editCard(
   body: VIS.VisCardSaveRequest,

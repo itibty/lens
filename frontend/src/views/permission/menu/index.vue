@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import type { ElTree } from 'element-plus'
 import type { EditMenuDialogInstance, MenuType } from './components/EditMenuDialog.vue'
-import { Delete, Plus, Search } from '@element-plus/icons-vue'
+import { Search } from '@element-plus/icons-vue'
 import { delMenu, listMenuTree } from '@/apis/admin/menu'
 import MenuIcon from '@/components/MenuIcon.vue'
+import { SYS_MENU_WRITE } from '@/core/permCodes'
+import { menuIconClass } from '@/core/menuIcons'
+import { useAccountStore } from '@/stores/modules/account'
 import { useMenuStore } from '@/stores/modules/menu'
 import { showConfirm, showToast } from '@/utils/index'
 import EditMenuDialog from './components/EditMenuDialog.vue'
@@ -16,8 +19,9 @@ import {
   listFuncs,
   selectableId,
   stripFuncs,
-  treeNodeIcon,
 } from './menuAdmin'
+
+type MenuCommand = 'add-root' | 'add-child' | 'add-func' | 'delete'
 
 const loading = ref(false)
 const keyword = ref('')
@@ -26,6 +30,8 @@ const records = ref<ADMIN.MenuTree[]>([])
 const dialogRef = ref<EditMenuDialogInstance>()
 const treeRef = ref<InstanceType<typeof ElTree>>()
 const menuStore = useMenuStore()
+const { hasFunction } = useAccountStore()
+const canWrite = hasFunction(SYS_MENU_WRITE)
 
 const treeRecords = computed(() => stripFuncs(records.value))
 const selectedNode = computed(() => findNode(records.value, selectedId.value))
@@ -53,7 +59,7 @@ function filterNode(value: string, data: ADMIN.MenuTree) {
 }
 
 function applyFilter() {
-  treeRef.value?.filter(keyword.value)
+  treeRef.value?.filter(keyword.value.trim())
 }
 
 async function fetchData(preferId?: string) {
@@ -80,11 +86,11 @@ function addChild(pid: string, menuType?: MenuType) {
   dialogRef.value?.showAdd({ pid, menuType })
 }
 
-function addUnderNode(data: ADMIN.MenuTree) {
+function addUnderNode(data: ADMIN.MenuTree, menuType?: MenuType) {
   if (!data.id)
     return
   selectNode(data.id)
-  addChild(data.id)
+  addChild(data.id, menuType)
 }
 
 function addUnderSelected(menuType: MenuType) {
@@ -105,23 +111,63 @@ function removeNode(row: ADMIN.MenuTree) {
   })
 }
 
+function onHeadCommand(command: Extract<MenuCommand, 'add-root'>) {
+  if (command === 'add-root')
+    addChild('0')
+}
+
+function onNodeCommand(command: MenuCommand, node: ADMIN.MenuTree) {
+  if (command === 'add-child')
+    addUnderNode(node)
+  else if (command === 'add-func')
+    addUnderNode(node, 'FUNC')
+  else if (command === 'delete')
+    removeNode(node)
+}
+
+watch(keyword, () => applyFilter())
+
 onMounted(() => fetchData())
 </script>
 
 <template>
-  <PageCard title="菜单管理" :scroll-content="false">
+  <PageCard
+    :show-header="false"
+    :scroll-content="false"
+    :provide-scope="false"
+  >
     <div v-loading="loading" class="menu-admin">
       <aside class="menu-admin__tree">
-        <div class="menu-admin__tree-head">
-          <el-input
-            v-model="keyword"
-            clearable
-            :prefix-icon="Search"
-            placeholder="搜索"
-            @keyup.enter="applyFilter"
-            @clear="applyFilter"
-          />
-          <el-button type="primary" :icon="Plus" title="新增" @click="addChild('0')" />
+        <el-input
+          v-model="keyword"
+          class="menu-admin__search"
+          clearable
+          :prefix-icon="Search"
+          placeholder="搜索菜单"
+        />
+        <div class="menu-admin__head">
+          <span class="menu-admin__head-name">菜单</span>
+          <span
+            v-if="canWrite"
+            class="menu-admin__head-ops"
+          >
+            <el-dropdown
+              trigger="click"
+              @command="onHeadCommand"
+            >
+              <el-button link>
+                <span class="menu-tree-node__more-icon i-mingcute-more-2-line" />
+              </el-button>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item command="add-root">
+                    <span class="menu-drop__icon i-mingcute-add-circle-line" />
+                    子菜单
+                  </el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
+          </span>
         </div>
         <el-scrollbar class="menu-admin__tree-scroll">
           <el-tree
@@ -131,34 +177,49 @@ onMounted(() => fetchData())
             node-key="id"
             default-expand-all
             highlight-current
-            :indent="18"
+            :indent="16"
             :expand-on-click-node="false"
             :filter-node-method="filterNode"
             :props="{ children: 'children', label: 'menuName' }"
             @node-click="onNodeClick"
           >
             <template #default="{ data }">
-              <span class="menu-tree-node" :class="{ 'is-current': data.id === selectedId }">
+              <div class="menu-tree-node">
                 <MenuIcon
-                  :icon="treeNodeIcon(data as ADMIN.MenuTree)"
+                  v-if="menuIconClass((data as ADMIN.MenuTree).icon)"
+                  :icon="(data as ADMIN.MenuTree).icon"
                   class-name="menu-tree-node__icon"
                 />
-                <span class="menu-tree-node__name">{{ (data as ADMIN.MenuTree).menuName }}</span>
-                <span class="menu-tree-node__ops" @click.stop>
-                  <el-button
-                    text
-                    :icon="Plus"
-                    title="增加子菜单"
-                    @click="addUnderNode(data as ADMIN.MenuTree)"
-                  />
-                  <el-button
-                    text
-                    :icon="Delete"
-                    title="删除当前项"
-                    @click="removeNode(data as ADMIN.MenuTree)"
-                  />
+                <span class="menu-tree-node__name" :title="(data as ADMIN.MenuTree).menuName">
+                  {{ (data as ADMIN.MenuTree).menuName }}
                 </span>
-              </span>
+                <span v-if="canWrite" class="menu-tree-node__ops" @click.stop>
+                  <el-dropdown
+                    trigger="click"
+                    @command="(command: MenuCommand) => onNodeCommand(command, data as ADMIN.MenuTree)"
+                  >
+                    <el-button link>
+                      <span class="menu-tree-node__more-icon i-mingcute-more-2-line" />
+                    </el-button>
+                    <template #dropdown>
+                      <el-dropdown-menu>
+                        <el-dropdown-item command="add-child">
+                          <span class="menu-drop__icon i-mingcute-add-circle-line" />
+                          子菜单
+                        </el-dropdown-item>
+                        <el-dropdown-item command="add-func">
+                          <span class="menu-drop__icon i-mingcute-add-square-line" />
+                          功能点
+                        </el-dropdown-item>
+                        <el-dropdown-item command="delete" divided>
+                          <span class="menu-drop__icon i-mingcute-delete-2-line" />
+                          删除
+                        </el-dropdown-item>
+                      </el-dropdown-menu>
+                    </template>
+                  </el-dropdown>
+                </span>
+              </div>
             </template>
           </el-tree>
           <div v-else class="menu-admin__tree-empty">暂无数据</div>
@@ -168,9 +229,10 @@ onMounted(() => fetchData())
         <template v-if="selectedNode">
           <el-scrollbar class="menu-admin__body">
             <div class="menu-admin__body-inner">
-              <MenuDetailForm :node="selectedNode" @saved="handleSaved(selectedNode.id)" />
+              <MenuDetailForm :node="selectedNode" :can-write="canWrite" @saved="handleSaved(selectedNode.id)" />
               <MenuButtonsTable
                 :buttons="selectedFuncs"
+                :can-write="canWrite"
                 @add="addUnderSelected('FUNC')"
                 @edit="row => dialogRef?.showEdit(row)"
                 @remove="removeNode"
@@ -192,123 +254,146 @@ onMounted(() => fetchData())
   display: flex;
   height: 100%;
   min-height: 0;
-  background: var(--el-fill-color-extra-light);
+  overflow: hidden;
+}
 
-  &__tree {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    width: 300px;
-    padding: 16px 12px 12px;
-    box-sizing: border-box;
-    border-right: 1px solid var(--el-border-color-lighter);
-    background: var(--el-bg-color);
-  }
+.menu-admin__tree {
+  display: flex;
+  flex: 0 0 292px;
+  flex-direction: column;
+  width: 292px;
+  min-height: 0;
+  padding: 12px;
+  box-sizing: border-box;
+  border-right: 1px solid var(--el-border-color-lighter);
+  background: var(--el-bg-color);
+}
 
-  &__tree-head {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+.menu-admin__search {
+  margin-bottom: 8px;
+}
 
-    :deep(.el-input) {
-      flex: 1;
-      min-width: 0;
-    }
-  }
+.menu-admin__head {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  margin: 0 -12px 4px;
+  padding: 0 32px;
+  background: var(--el-fill-color-lighter);
+  border-top: 1px solid var(--el-border-color-extra-light);
+  border-bottom: 1px solid var(--el-border-color-lighter);
+}
 
-  &__tree-scroll {
-    flex: 1;
-    min-height: 0;
-  }
+.menu-admin__head-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 32px;
+  text-align: center;
+  color: var(--el-text-color-primary);
+}
 
-  &__tree-empty,
-  &__empty {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-    padding: 24px;
-    color: var(--el-text-color-secondary);
-    font-size: 13px;
-  }
+.menu-admin__head-ops {
+  position: absolute;
+  top: 0;
+  right: 8px;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+}
 
-  &__main {
-    display: flex;
-    flex: 1;
-    flex-direction: column;
-    min-width: 0;
-  }
+.menu-admin__tree-scroll {
+  flex: 1;
+  min-height: 0;
+}
 
-  &__body {
-    flex: 1;
-    min-height: 0;
-  }
+.menu-admin__tree-empty,
+.menu-admin__empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 24px;
+  color: var(--el-text-color-secondary);
+  font-size: 13px;
+}
 
-  &__body-inner {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    padding: 12px;
-  }
+.menu-admin__main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  background: var(--el-fill-color-lighter);
+}
+
+.menu-admin__body {
+  flex: 1;
+  min-height: 0;
+}
+
+.menu-admin__body-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
 }
 
 .menu-tree-node {
   display: flex;
+  flex: 1;
   align-items: center;
   gap: 6px;
-  width: 100%;
   min-width: 0;
-  padding-right: 2px;
+  padding-right: 4px;
+}
 
-  &__icon {
-    font-size: 15px;
-  }
+.menu-tree-node__icon {
+  flex-shrink: 0;
+  font-size: 15px;
+}
 
-  &__name {
-    flex: 1;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
+.menu-tree-node__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
-  &__ops {
-    display: none;
-    align-items: center;
-    flex-shrink: 0;
-    gap: 0;
+.menu-tree-node__ops {
+  margin-left: auto;
+  flex-shrink: 0;
+  opacity: 0;
+}
 
-    :deep(.el-button) {
-      width: 22px;
-      height: 22px;
-      min-height: 22px;
-      padding: 0;
-      font-size: 14px;
-      color: var(--el-text-color-secondary);
-    }
+.menu-tree-node__more-icon,
+.menu-drop__icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
 
-    :deep(.el-button:hover) {
-      color: var(--el-color-primary);
-      background: var(--el-color-primary-light-9);
-    }
-  }
+.menu-drop__icon {
+  margin-right: 7px;
+}
 
-  &:hover &__ops,
-  &.is-current &__ops {
-    display: inline-flex;
-  }
+.menu-tree-node:hover .menu-tree-node__ops,
+.menu-tree-node__ops:focus-within {
+  opacity: 1;
 }
 
 :deep(.el-tree-node__content) {
   height: 34px;
-  border-radius: 6px;
+  transition: none;
 }
 
-:deep(.el-tree-node__content:hover) {
-  background: var(--el-fill-color-light);
-}
-
-:deep(.el-tree--highlight-current .el-tree-node.is-current > .el-tree-node__content) {
-  background: var(--el-color-primary-light-9);
+:deep(.el-tree-node.is-current > .el-tree-node__content) {
+  color: var(--el-color-primary);
+  font-weight: 600;
 }
 </style>
 

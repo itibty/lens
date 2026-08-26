@@ -47,7 +47,7 @@ INSERT INTO `sys_menu` (`id`, `pid`, `menu_name`, `menu_type`, `route_path`, `ic
 (300, 3, '查看角色', 'FUNC', NULL, NULL, 1, 'sys:role:query', 'EBL'),
 (303, 3, '配置看板', 'FUNC', NULL, NULL, 4, 'sys:role:config-dashboard', 'EBL'),
 (400, 4, '查看菜单', 'FUNC', NULL, NULL, 1, 'sys:menu:query', 'EBL'),
-(1100, 11, '查看数据集', 'FUNC', NULL, NULL, 1, 'ds:sql:conf', 'EBL'),
+(1100, 11, '查看数据集', 'FUNC', NULL, NULL, 1, 'ds:sql:query', 'EBL'),
 (1700, 17, '查看卡片', 'FUNC', NULL, NULL, 1, 'ds:card:query', 'EBL'),
 (1800, 18, '查看看板', 'FUNC', NULL, NULL, 1, 'ds:dashboard:query', 'EBL')
 ON DUPLICATE KEY UPDATE
@@ -85,6 +85,7 @@ UPDATE `sys_menu` SET `menu_name` = '查看角色' WHERE `id` = 300;
 UPDATE `sys_menu` SET `menu_name` = '配置功能' WHERE `id` = 302;
 UPDATE `sys_menu` SET `menu_name` = '配置看板' WHERE `id` = 303;
 UPDATE `sys_menu` SET `menu_name` = '查看菜单' WHERE `id` = 400;
-UPDATE `sys_menu` SET `menu_name` = '查看数据集' WHERE `id` = 1100;
+UPDATE `sys_menu` SET `menu_name` = '查看数据集', `perm_code` = 'ds:sql:query' WHERE `id` = 1100;
+UPDATE `sys_menu` SET `menu_name` = '编辑数据集', `perm_code` = 'ds:sql:write' WHERE `id` = 1101;
 UPDATE `sys_menu` SET `menu_name` = '查看卡片' WHERE `id` = 1700;
 UPDATE `sys_menu` SET `menu_name` = '查看看板' WHERE `id` = 1800;

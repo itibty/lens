@@ -120,8 +120,8 @@ async function fetchOptions() {
 function showDialog(row: ADMIN.UserInfo) {
   states.form.userId = row.id || ''
   states.form.roleInfos = (row.roleInfos ?? (row.roleIds ?? []).map(roleId => ({ roleId }))).map((item) => {
-    const startAt = toMillis(item.startAt)
-    const endAt = toMillis(item.endAt)
+    const startAt = toMillis('startAt' in item ? item.startAt : undefined)
+    const endAt = toMillis('endAt' in item ? item.endAt : undefined)
     return {
       ...item,
       dateRange: startAt && endAt ? [startAt, endAt] : undefined,

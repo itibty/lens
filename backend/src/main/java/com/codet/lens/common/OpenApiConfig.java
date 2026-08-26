@@ -34,7 +34,7 @@ public class OpenApiConfig {
     public GroupedOpenApi visApi() {
         return GroupedOpenApi.builder()
                 .group("vis")
-                .pathsToMatch("/datasources/**", "/datasets/**", "/cards/**", "/dashboards/**", "/vis/**")
+                .pathsToMatch("/datasources/**", "/datasets/**", "/cards/**", "/dashboards/**", "/dash-groups/**", "/vis/**")
                 .build();
     }
 }

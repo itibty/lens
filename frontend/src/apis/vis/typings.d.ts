@@ -34,8 +34,6 @@ declare namespace VIS {
   type ConfSqlInfo = {
     /** 数据id */
     id: string;
-    /** sql类型 */
-    sqlType: "DML" | "DQL";
     /** 名称 */
     sqlName: string;
     /** 备注(对sql中动态参数做说明) */
@@ -48,14 +46,8 @@ declare namespace VIS {
     dsId: string;
     /** 数据源名 */
     dsName: string;
-    /** 响应字段名 */
-    retKey: string;
     /** 状态 */
     status: "EBL" | "DBL";
-    /** 可执行的角色编码集合 */
-    execRoles?: string;
-    /** 可执行的用户id集合 */
-    execUsers?: string;
     /** 模板引擎 */
     tplEngine: "ENJOY";
   };
@@ -67,18 +59,12 @@ declare namespace VIS {
     sqlName: string;
     /** 描述 */
     sqlDesc?: string;
-    /** 响应字段名 */
-    retKey: string;
     /** 数据源id */
     dsId: string;
     /** sql模板引擎 */
     tplEngine: "ENJOY";
     /** 账号状态 */
     status: "EBL" | "DBL";
-    /** 可执行的角色编码集合,多个逗号分隔 */
-    execRoles?: string;
-    /** 可执行的用户id集合,多个逗号分隔 */
-    execUsers?: string;
   };
 
   type ContrastConfig = {
@@ -136,6 +122,21 @@ declare namespace VIS {
     start: string;
     /** 闭区间止，yyyy-MM-dd */
     end: string;
+  };
+
+  type DashGroupInfo = {
+    /** id */
+    id?: string;
+    /** parent id */
+    pid?: string;
+    /** 子节点 */
+    children?: DashGroupInfo[];
+    groupName?: string;
+    icon?: string;
+    sortNum?: number;
+    status?: string;
+    dashCount?: number;
+    descDashCount?: number;
   };
 
   type DateWindowRequest = {
@@ -197,19 +198,19 @@ declare namespace VIS {
     /** sql 参数 */
     params: any[];
     /** 执行阶段耗时信息 */
-    timeInfos: Info[];
-    /** sql类型 */
-    sqlType: "DML" | "DQL";
-    /** 查询数据结果 */
-    execRet?: Record<string, any>;
+    timeInfos: any[];
+    /** 查询数据行 */
+    execRet?: Record<string, any>[];
     /** 结果列 */
     columns?: DebugSqlColumn[];
-    /** 响应字段名 */
-    retKey?: string;
     /** 错误摘要（失败时） */
     error?: string;
     /** 完整异常堆栈（失败时，仅调试接口） */
     stackTrace?: string;
+  };
+
+  type delDashGroupParams = {
+    groupId: string;
   };
 
   type DetailQueryRequest = {
@@ -387,6 +388,11 @@ declare namespace VIS {
     list?: AssignNode[];
   };
 
+  type ListResponseDashGroupInfo = {
+    /** 列表 */
+    list?: DashGroupInfo[];
+  };
+
   type ListResponseDsOption = {
     /** 列表 */
     list?: DsOption[];
@@ -402,9 +408,14 @@ declare namespace VIS {
     list?: NameValue[];
   };
 
+  type ListResponseReportNode = {
+    /** 列表 */
+    list?: ReportNode[];
+  };
+
   type ListResponseObject = {
-    /** 列表。meta-tree 实际为 SchemaInfo[] */
-    list?: SchemaInfo[];
+    /** 列表 */
+    list?: any[];
   };
 
   type ListResponseVisDashboardRefInfo = {
@@ -449,7 +460,7 @@ declare namespace VIS {
   type MoveDashboardsGroupRequest = {
     /** 看板 id 集合 */
     dashboardIds: string[];
-    /** 目标分组 id。0 为未分组 */
+    /** 目标分组 id。0 表示挂到报表中心根下 */
     groupId: string;
   };
 
@@ -469,46 +480,46 @@ declare namespace VIS {
 
   type PageCondition = {
     /** 当前页 */
-    pageNumber?: number;
+    pageNumber: number;
     /** 每页大小 */
-    pageSize?: number;
+    pageSize: number;
   };
 
   type PageResponseConfSqlInfo = {
     /** 当前页 */
-    pageNumber?: number;
+    pageNumber: number;
     /** 每页大小 */
-    pageSize?: number;
+    pageSize: number;
     /** 总条数 */
-    total?: number;
+    total: number;
     /** 总页数 */
-    pages?: number;
+    pages: number;
     /** 记录 */
     records?: ConfSqlInfo[];
   };
 
   type PageResponseVisCardInfo = {
     /** 当前页 */
-    pageNumber?: number;
+    pageNumber: number;
     /** 每页大小 */
-    pageSize?: number;
+    pageSize: number;
     /** 总条数 */
-    total?: number;
+    total: number;
     /** 总页数 */
-    pages?: number;
+    pages: number;
     /** 记录 */
     records?: VisCardInfo[];
   };
 
   type PageResponseVisDashboardInfo = {
     /** 当前页 */
-    pageNumber?: number;
+    pageNumber: number;
     /** 每页大小 */
-    pageSize?: number;
+    pageSize: number;
     /** 总条数 */
-    total?: number;
+    total: number;
     /** 总页数 */
-    pages?: number;
+    pages: number;
     /** 记录 */
     records?: VisDashboardInfo[];
   };
@@ -631,8 +642,6 @@ declare namespace VIS {
     page: PageCondition;
     /** 数据id */
     id?: string;
-    /** sql类型 */
-    sqlType?: "DQL" | "DML";
     /** 名称 */
     sqlName?: string;
     /** 备注 */
@@ -693,7 +702,7 @@ declare namespace VIS {
     page: PageCondition;
     /** 看板 id */
     id?: string;
-    /** 分组 id。0 为未分组 */
+    /** 分组 id。0 表示报表中心根下 */
     groupId?: string;
     /** groupId 非 0 时是否包含子孙分组。默认 true；抽屉精确查询传 false */
     includeDescendants?: boolean;
@@ -701,6 +710,20 @@ declare namespace VIS {
     dashName?: string;
     /** 状态 */
     status?: "EBL" | "DBL";
+  };
+
+  type ReportNode = {
+    /** id */
+    id?: string;
+    /** parent id */
+    pid?: string;
+    /** 子节点 */
+    children?: ReportNode[];
+    name?: string;
+    icon?: string;
+    /** 看板节点为 /vis/report/{id}；分组为空 */
+    url?: string;
+    nodeType?: string;
   };
 
   type RConfSqlInfo = {
@@ -738,6 +761,13 @@ declare namespace VIS {
     data?: ListResponseAssignNode;
   };
 
+  type RListResponseDashGroupInfo = {
+    /** 200成功 */
+    code?: number;
+    msg?: string;
+    data?: ListResponseDashGroupInfo;
+  };
+
   type RListResponseDsOption = {
     /** 200成功 */
     code?: number;
@@ -757,6 +787,13 @@ declare namespace VIS {
     code?: number;
     msg?: string;
     data?: ListResponseNameValue;
+  };
+
+  type RListResponseReportNode = {
+    /** 200成功 */
+    code?: number;
+    msg?: string;
+    data?: ListResponseReportNode;
   };
 
   type RListResponseObject = {
@@ -857,12 +894,25 @@ declare namespace VIS {
     data?: any;
   };
 
+  type SaveDashGroupRequest = {
+    id?: string;
+    pid?: string;
+    groupName: string;
+    icon?: string;
+    sortNum?: number;
+    status?: string;
+  };
+
   type toggleCardStatusParams = {
     cardId: string;
   };
 
   type toggleDashboardStatusParams = {
     dashboardId: string;
+  };
+
+  type toggleDashGroupStatusParams = {
+    groupId: string;
   };
 
   type VisCardInfo = {
@@ -916,6 +966,8 @@ declare namespace VIS {
     dashName: string;
     /** 描述 */
     dashDesc?: string;
+    /** 图标 */
+    icon?: string;
     /** 状态 */
     status: "EBL" | "DBL";
     /** 看板配置 */
@@ -942,7 +994,9 @@ declare namespace VIS {
     dashName: string;
     /** 描述 */
     dashDesc?: string;
-    /** 分组 id。0 或不传为未分组 */
+    /** 图标 */
+    icon?: string;
+    /** 分组 id。0 或不传表示挂到报表中心根下 */
     groupId?: string;
   };
 
@@ -960,12 +1014,14 @@ declare namespace VIS {
   type VisDashboardSaveRequest = {
     /** 看板 id。空为新建 */
     id?: string;
-    /** 分组 id。0 或不传为未分组 */
+    /** 分组 id。0 或不传表示挂到报表中心根下 */
     groupId?: string;
     /** 看板名 */
     dashName: string;
     /** 描述 */
     dashDesc?: string;
+    /** 图标 */
+    icon?: string;
     /** 状态 */
     status: "EBL" | "DBL";
     /** 看板配置 */
@@ -1025,111 +1081,4 @@ declare namespace VIS {
     /** 是否被截断 */
     truncated: boolean;
   };
-
-  /** 以下为前端长期使用的兼容类型，OpenAPI 暂未完整描述。 */
-  type OptionString = NameValue;
-  type ConfSqlFieldItem = ConfSqlFieldInfo;
-
-  type Info = {
-    taskName?: string;
-    time?: string;
-    percent?: string;
-  };
-
-  type FieldInfo = {
-    infoType: string;
-    name: string;
-    comment?: string;
-    type: string;
-    typeDesc: string;
-    isPk: boolean;
-    nullable: boolean;
-    defaultValue?: string;
-    isAutoIncrement?: boolean;
-  };
-
-  type IndexInfo = {
-    infoType: string;
-    name: string;
-    isUnique: boolean;
-    fieldDesc: string;
-  };
-
-  type TableInfo = {
-    infoType: string;
-    name: string;
-    comment?: string;
-    fieldInfos?: FieldInfo[];
-    indexInfos?: IndexInfo[];
-  };
-
-  type SchemaInfo = {
-    infoType: string;
-    name: string;
-    comment?: string;
-    dbType: string;
-    tableInfos?: TableInfo[];
-  };
-
-  type DashGroupInfo = {
-    id?: string;
-    pid?: string;
-    children?: DashGroupInfo[];
-    groupName?: string;
-    icon?: string;
-    sortNum?: number;
-    status?: "EBL" | "DBL";
-    dashCount?: number;
-    descDashCount?: number;
-  };
-
-  type SaveDashGroupRequest = {
-    id?: string;
-    pid?: string;
-    groupName: string;
-    icon?: string;
-    sortNum?: number;
-    status?: "EBL" | "DBL";
-  };
-
-  type DashAssignNode = {
-    id?: string;
-    pid?: string;
-    children?: DashAssignNode[];
-    name?: string;
-    icon?: string;
-    nodeType?: "GROUP" | "DASH";
-  };
-
-  type ListResponseDashGroupInfo = {
-    list?: DashGroupInfo[];
-  };
-
-  type ListResponseDashAssignNode = {
-    list?: DashAssignNode[];
-  };
-
-  type RListResponseDashGroupInfo = {
-    code?: number;
-    msg?: string;
-    data?: ListResponseDashGroupInfo;
-  };
-
-  type RListResponseDashAssignNode = {
-    code?: number;
-    msg?: string;
-    data?: ListResponseDashAssignNode;
-  };
-
-  type delDashGroupParams = {
-    groupId: string;
-  };
-
-  type toggleDashGroupStatusParams = {
-    groupId: string;
-  };
-
-  /** 新管理接口的稳定别名，兼容生成器后续命名变化。 */
-  type ManageTreeNode = ManageNode;
-  type EditDashboardMetaRequest = VisDashboardMetadataUpdateRequest;
 }

@@ -20,7 +20,7 @@ public class VisDashboardSaveRequest {
     @Schema(description = "看板 id。空为新建")
     private Long id;
 
-    @Schema(description = "分组 id。0 或不传为未分组")
+    @Schema(description = "分组 id。0 或不传表示挂到报表中心根下")
     private Long groupId;
 
     @Schema(description = "看板名", requiredMode = Schema.RequiredMode.REQUIRED)
@@ -31,6 +31,10 @@ public class VisDashboardSaveRequest {
     @Schema(description = "描述")
     @Size(max = 200)
     private String dashDesc;
+
+    @Schema(description = "图标")
+    @Size(max = 50)
+    private String icon;
 
     @Schema(description = "状态", allowableValues = {FieldConst.EBL, FieldConst.DBL}, requiredMode = Schema.RequiredMode.REQUIRED)
     @NotBlank

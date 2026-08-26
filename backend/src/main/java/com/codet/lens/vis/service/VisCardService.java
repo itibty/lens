@@ -38,6 +38,7 @@ public class VisCardService {
     private final VisCardMapper visCardMapper;
     private final VisDashboardCardMapper visDashboardCardMapper;
     private final VisDashboardMapper visDashboardMapper;
+    private final VisDashboardAccess dashboardAccess;
 
     public PageResponse<VisCardInfo> query(QueryVisCardRequest request) {
         IPage<VisCardInfo> page = visCardMapper.selectPage(request.getPage().toIPage(), Wrappers.<VisCard>lambdaQuery()
@@ -52,7 +53,9 @@ public class VisCardService {
         return ConvertUtil.toPageResponse(page);
     }
 
+    /** 配置只读。不拦 vis:card:conf；按看板分配（或设计权限）在 access 里判。 */
     public VisCardInfo detail(Long cardId) {
+        dashboardAccess.assertCanViewCard(cardId);
         return BeanUtil.copyProperties(requireCard(cardId), VisCardInfo.class);
     }
 

@@ -27,7 +27,8 @@ public final class VisExecSql {
         if (request == null || !"true".equals(request.getParameter(PARAM))) {
             return false;
         }
-        return AuthContext.get() != null && AuthContext.get().hasPerm(PermCodes.DS_SQL_CONF);
+        return AuthContext.get() != null && AuthContext.get().hasAnyPerm(
+                PermCodes.VIS_DATASET_CONF);
     }
 
     public static List<ExecSqlInfo> listOrNull(QueryContext ctx) {

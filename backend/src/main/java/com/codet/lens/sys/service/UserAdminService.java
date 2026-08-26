@@ -4,6 +4,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.crypto.digest.BCrypt;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.codet.lens.auth.TokenInvalidateService;
 import com.codet.lens.common.ConvertUtil;
 import com.codet.lens.common.FieldConst;
 import com.codet.lens.common.PageResponse;
@@ -37,6 +38,7 @@ public class UserAdminService {
     private final SysUserMapper userMapper;
     private final SysUserRoleMapper userRoleMapper;
     private final SysRoleMapper roleMapper;
+    private final TokenInvalidateService tokenInvalidateService;
 
     public PageResponse<UserInfo> query(QueryUserRequest req) {
         IPage<SysUser> page = userMapper.selectPage(req.getPage().toIPage(), Wrappers.<SysUser>lambdaQuery()
@@ -95,6 +97,9 @@ public class UserAdminService {
             }
             user.modifyCallback();
             userMapper.updateById(user);
+            if (StrUtil.isNotBlank(req.getPassword()) || FieldConst.DBL.equals(user.getStatus())) {
+                tokenInvalidateService.invalidate(user.getId());
+            }
         }
         if (req.getRoleIds() != null) {
             resetRoles(user.getId(), req.getRoleIds());
@@ -112,6 +117,7 @@ public class UserAdminService {
         user.setPassword(BCrypt.hashpw(req.getPassword()));
         user.modifyCallback();
         userMapper.updateById(user);
+        tokenInvalidateService.invalidate(user.getId());
     }
 
     public void toggle(Long userId) {
@@ -119,6 +125,9 @@ public class UserAdminService {
         user.setStatus(FieldConst.EBL.equals(user.getStatus()) ? FieldConst.DBL : FieldConst.EBL);
         user.modifyCallback();
         userMapper.updateById(user);
+        if (FieldConst.DBL.equals(user.getStatus())) {
+            tokenInvalidateService.invalidate(userId);
+        }
     }
 
     private void resetRoles(Long userId, List<Long> roleIds) {
@@ -143,6 +152,7 @@ public class UserAdminService {
             link.setCreateAt(now);
             userRoleMapper.insert(link);
         }
+        tokenInvalidateService.invalidate(userId);
     }
 
     private SysUser require(Long id) {

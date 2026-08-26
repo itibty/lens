@@ -9,17 +9,18 @@ import type { CustomDialogProps } from '@/components/CustomDialog.vue'
 
 import vis from '@/apis/vis/index'
 
-import { markListStale, useAutoFoldSidebar } from '@/hooks/layout'
+import { markListStale } from '@/hooks/layout'
 import { useLeaveConfirm } from '@/hooks/leaveConfirm'
 import { useSwipeBackGuard } from '@/hooks/swipeBack'
+import { useAccountStore } from '@/stores/modules/account'
 import { showToast } from '@/utils/index'
 import { createLogger } from '@/utils/logger'
+import { FUNCTION_DATASET_CONF } from './components/config'
 import BindFieldsDialog from './components/BindFieldsDialog.vue'
 import DebugParamsDialog from './components/DebugParamsDialog.vue'
 import {
   buildOutputTabPayload,
   extractDebugErrorInfo,
-  hasDebugBusinessError,
   resolveSaveGate,
   SQL_OUTPUT_TAB_LIMIT,
   SQL_OUTPUT_TAB_LIMIT_TIP,
@@ -34,6 +35,8 @@ import SqlRulePanel from './components/SqlRulePanel.vue'
 import SqlTemplateEditor from './components/SqlTemplateEditor.vue'
 
 const logger = createLogger('DS_EDIT')
+const { hasFunction } = useAccountStore()
+const canWrite = hasFunction(FUNCTION_DATASET_CONF)
 
 /** 表数量不超过该值时，进页自动全量加载 meta */
 const AUTO_LOAD_TABLE_LIMIT = 50
@@ -139,7 +142,6 @@ const saveGate = computed(() => resolveSaveGate(states.outputTabs, {
   sqlId: states.info?.id,
   sql: states.sqlCode,
   params: draftParams.value,
-  sqlType: states.info?.sqlType,
 }))
 const saveBlockReason = computed(() => saveGate.value.ok ? '' : saveGate.value.reason)
 
@@ -362,7 +364,7 @@ async function handleSave() {
 
   let fields: VIS.ConfSqlFieldItem[] | undefined
   const tab = gate.tab
-  if (tab?.debugInfo.sqlType === 'DQL') {
+  if (tab) {
     const confirmed = await bindFieldsDialogRef.value?.showDialog({
       columns: tab.debugInfo.columns ?? [],
     })
@@ -405,8 +407,6 @@ async function requestDebugSql(body: VIS.DebugSqlRequest) {
     const res = await vis.dataset.debugDataset(body)
     if (currentRequestId !== requestId)
       return
-    if (res.data && !hasDebugBusinessError(res.data) && res.data.sqlType && states.info)
-      states.info.sqlType = res.data.sqlType
     appendOutputTab({
       ...buildOutputTabPayload(res.data),
       ...runSource,
@@ -458,7 +458,6 @@ function handleRun() {
 }
 
 useLeaveConfirm()
-useAutoFoldSidebar()
 useSwipeBackGuard()
 const route = useRoute()
 function loadConf(id: string) {
@@ -498,6 +497,7 @@ onBeforeRouteUpdate((to) => {
   >
     <template #extra>
       <el-button
+        v-if="canWrite"
         type="primary"
         :loading="states.saveLoading"
         :disabled="!states.info || !!saveBlockReason"

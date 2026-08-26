@@ -36,12 +36,12 @@ import MetricShelf from './components/MetricShelf.vue'
 import OrderShelf from './components/OrderShelf.vue'
 import ParamShelf from './components/ParamShelf.vue'
 import StaticContentFields from './components/StaticContentFields.vue'
-import { FUNCTION_CARD_WRITE } from './config'
+import { FUNCTION_CARD_CONF } from './config'
 
 defineOptions({ name: 'VisCardEdit' })
 
 const { hasFunction } = useAccountStore()
-const canWrite = hasFunction(FUNCTION_CARD_WRITE)
+const canWrite = hasFunction(FUNCTION_CARD_CONF)
 
 const LEFT_WIDTH_KEY = 'NA:vis-card-left-width:v3'
 const CENTER_WIDTH_KEY = 'NA:vis-card-center-width'
@@ -419,7 +419,7 @@ async function loadCard(id?: string) {
       ensureArrays()
       return
     }
-    const res = await vis.card.getCardDetail({ cardId })
+    const res = await vis.query.getCardDetail({ cardId })
     if (!res.data) {
       showToast('卡片不存在', 'error')
       skipConfirm()

@@ -18,6 +18,7 @@ import com.codet.lens.vis.dto.dash.VisDashboardSaveRequest;
 import com.codet.lens.vis.dto.group.VisGroupDtos.AssignNode;
 import com.codet.lens.vis.dto.group.VisGroupDtos.DashGroupInfo;
 import com.codet.lens.vis.dto.group.VisGroupDtos.ManageNode;
+import com.codet.lens.vis.dto.group.VisGroupDtos.ReportNode;
 import com.codet.lens.vis.dto.group.VisGroupDtos.SaveDashGroupRequest;
 import com.codet.lens.vis.service.VisCardService;
 import com.codet.lens.vis.service.VisDashGroupService;
@@ -43,23 +44,15 @@ public class VisConfigController {
 
     @Tag(name = "CARD")
     @Operation(operationId = "queryCards", summary = "分页查询卡片")
-    @Permission(PermCodes.DS_CARD_QUERY)
+    @Permission(PermCodes.VIS_CARD_CONF)
     @PostMapping("/cards/query")
     public R<PageResponse<VisCardInfo>> queryCards(@Validated @RequestBody QueryVisCardRequest request) {
         return R.success(visCardService.query(request));
     }
 
     @Tag(name = "CARD")
-    @Operation(operationId = "getCardDetail", summary = "卡片详情")
-    @Permission(PermCodes.DS_CARD_QUERY)
-    @GetMapping("/cards/detail")
-    public R<VisCardInfo> getCardDetail(@NotNull(message = "cardId不能为空") Long cardId) {
-        return R.success(visCardService.detail(cardId));
-    }
-
-    @Tag(name = "CARD")
     @Operation(operationId = "listCardDashboards", summary = "卡片引用的看板")
-    @Permission({PermCodes.DS_CARD_QUERY, PermCodes.DS_DASHBOARD_QUERY})
+    @Permission({PermCodes.VIS_CARD_CONF, PermCodes.VIS_DASHBOARD_CONF})
     @GetMapping("/cards/dashboards")
     public R<ListResponse<VisDashboardRefInfo>> listCardDashboards(
             @NotNull(message = "cardId不能为空") Long cardId) {
@@ -68,7 +61,7 @@ public class VisConfigController {
 
     @Tag(name = "CARD")
     @Operation(operationId = "editCard", summary = "新建或编辑卡片")
-    @Permission(PermCodes.DS_CARD_WRITE)
+    @Permission(PermCodes.VIS_CARD_CONF)
     @PostMapping("/cards/edit")
     public R<Long> editCard(@Validated @RequestBody VisCardSaveRequest request) {
         return R.success(visCardService.save(request));
@@ -76,7 +69,7 @@ public class VisConfigController {
 
     @Tag(name = "CARD")
     @Operation(operationId = "toggleCardStatus", summary = "卡片启用/禁用")
-    @Permission(PermCodes.DS_CARD_WRITE)
+    @Permission(PermCodes.VIS_CARD_CONF)
     @PostMapping("/cards/toggle-status")
     public R<String> toggleCardStatus(@NotNull(message = "cardId不能为空") Long cardId) {
         visCardService.toggleStatus(cardId);
@@ -85,7 +78,7 @@ public class VisConfigController {
 
     @Tag(name = "CARD")
     @Operation(operationId = "delCard", summary = "删除卡片")
-    @Permission(PermCodes.DS_CARD_WRITE)
+    @Permission(PermCodes.VIS_CARD_CONF)
     @PostMapping("/cards/del")
     public R<Void> delCard(@Validated @RequestBody IdsRequest request) {
         visCardService.delete(request.getIds());
@@ -94,7 +87,7 @@ public class VisConfigController {
 
     @Tag(name = "DASHBOARD")
     @Operation(operationId = "queryDashboards", summary = "分页查询看板")
-    @Permission(PermCodes.DS_DASHBOARD_QUERY)
+    @Permission(PermCodes.VIS_DASHBOARD_CONF)
     @PostMapping("/dashboards/query")
     public R<PageResponse<VisDashboardInfo>> queryDashboards(
             @Validated @RequestBody QueryVisDashboardRequest request) {
@@ -102,24 +95,23 @@ public class VisConfigController {
     }
 
     @Tag(name = "DASHBOARD")
-    @Operation(operationId = "getDashboardDetail", summary = "看板详情")
-    @GetMapping("/dashboards/detail")
-    public R<VisDashboardInfo> getDashboardDetail(
-            @NotNull(message = "dashboardId不能为空") Long dashboardId) {
-        return R.success(visDashboardService.detail(dashboardId));
-    }
-
-    @Tag(name = "DASHBOARD")
     @Operation(operationId = "listDashboardAssignTree", summary = "角色分配看板树")
-    @Permission({PermCodes.DS_DASHBOARD_QUERY, PermCodes.SYS_ROLE_CONFIG_DASHBOARD})
+    @Permission({PermCodes.VIS_DASHBOARD_CONF, PermCodes.SYS_ROLE_WRITE})
     @GetMapping("/dashboards/assign-tree")
     public R<ListResponse<AssignNode>> listDashboardAssignTree() {
         return R.success(visDashGroupService.assignTree());
     }
 
     @Tag(name = "DASHBOARD")
+    @Operation(operationId = "listDashboardReportTree", summary = "报表中心看板树")
+    @GetMapping("/dashboards/report-tree")
+    public R<ListResponse<ReportNode>> listDashboardReportTree() {
+        return R.success(visDashGroupService.reportTree());
+    }
+
+    @Tag(name = "DASHBOARD")
     @Operation(operationId = "listDashboardManageTree", summary = "看板管理混合树")
-    @Permission({PermCodes.DS_DASHBOARD_QUERY, PermCodes.DS_DASHBOARD_WRITE})
+    @Permission(PermCodes.VIS_DASHBOARD_CONF)
     @GetMapping("/dashboards/manage-tree")
     public R<ListResponse<ManageNode>> listDashboardManageTree() {
         return R.success(visDashGroupService.manageTree());
@@ -127,7 +119,7 @@ public class VisConfigController {
 
     @Tag(name = "DASH_GROUP")
     @Operation(operationId = "listDashGroupTree", summary = "看板分组树")
-    @Permission({PermCodes.DS_DASHBOARD_QUERY, PermCodes.DS_DASHBOARD_WRITE, PermCodes.SYS_ROLE_CONFIG_DASHBOARD})
+    @Permission({PermCodes.VIS_DASHBOARD_CONF, PermCodes.SYS_ROLE_WRITE})
     @GetMapping("/dash-groups/tree")
     public R<ListResponse<DashGroupInfo>> listDashGroupTree() {
         return R.success(visDashGroupService.tree());
@@ -135,7 +127,7 @@ public class VisConfigController {
 
     @Tag(name = "DASH_GROUP")
     @Operation(operationId = "editDashGroup", summary = "新建或编辑看板分组")
-    @Permission(PermCodes.DS_DASHBOARD_WRITE)
+    @Permission(PermCodes.VIS_DASHBOARD_CONF)
     @PostMapping("/dash-groups/edit")
     public R<Long> editDashGroup(@Validated @RequestBody SaveDashGroupRequest request) {
         return R.success(visDashGroupService.save(request));
@@ -143,7 +135,7 @@ public class VisConfigController {
 
     @Tag(name = "DASH_GROUP")
     @Operation(operationId = "delDashGroup", summary = "删除看板分组")
-    @Permission(PermCodes.DS_DASHBOARD_WRITE)
+    @Permission(PermCodes.VIS_DASHBOARD_CONF)
     @PostMapping("/dash-groups/del")
     public R<String> delDashGroup(@NotNull(message = "groupId不能为空") Long groupId) {
         visDashGroupService.delete(groupId);
@@ -152,7 +144,7 @@ public class VisConfigController {
 
     @Tag(name = "DASH_GROUP")
     @Operation(operationId = "toggleDashGroupStatus", summary = "看板分组启用/禁用")
-    @Permission(PermCodes.DS_DASHBOARD_WRITE)
+    @Permission(PermCodes.VIS_DASHBOARD_CONF)
     @PostMapping("/dash-groups/toggle-status")
     public R<String> toggleDashGroupStatus(@NotNull(message = "groupId不能为空") Long groupId) {
         visDashGroupService.toggle(groupId);
@@ -161,7 +153,7 @@ public class VisConfigController {
 
     @Tag(name = "DASHBOARD")
     @Operation(operationId = "moveDashboardsGroup", summary = "看板移入分组")
-    @Permission(PermCodes.DS_DASHBOARD_WRITE)
+    @Permission(PermCodes.VIS_DASHBOARD_CONF)
     @PostMapping("/dashboards/move-group")
     public R<Void> moveDashboardsGroup(@Validated @RequestBody MoveDashboardsGroupRequest request) {
         visDashboardService.moveGroup(request.getDashboardIds(), request.getGroupId());
@@ -170,7 +162,7 @@ public class VisConfigController {
 
     @Tag(name = "DASHBOARD")
     @Operation(operationId = "editDashboard", summary = "新建或编辑看板")
-    @Permission(PermCodes.DS_DASHBOARD_WRITE)
+    @Permission(PermCodes.VIS_DASHBOARD_CONF)
     @PostMapping("/dashboards/edit")
     public R<Long> editDashboard(@Validated @RequestBody VisDashboardSaveRequest request) {
         return R.success(visDashboardService.save(request));
@@ -178,7 +170,7 @@ public class VisConfigController {
 
     @Tag(name = "DASHBOARD")
     @Operation(operationId = "editDashboardMeta", summary = "编辑看板元数据")
-    @Permission(PermCodes.DS_DASHBOARD_WRITE)
+    @Permission(PermCodes.VIS_DASHBOARD_CONF)
     @PostMapping("/dashboards/edit-meta")
     public R<Void> editDashboardMeta(
             @Validated @RequestBody VisDashboardMetadataUpdateRequest request) {
@@ -188,7 +180,7 @@ public class VisConfigController {
 
     @Tag(name = "DASHBOARD")
     @Operation(operationId = "toggleDashboardStatus", summary = "看板启用/禁用")
-    @Permission(PermCodes.DS_DASHBOARD_WRITE)
+    @Permission(PermCodes.VIS_DASHBOARD_CONF)
     @PostMapping("/dashboards/toggle-status")
     public R<String> toggleDashboardStatus(@NotNull(message = "dashboardId不能为空") Long dashboardId) {
         visDashboardService.toggleStatus(dashboardId);
@@ -197,7 +189,7 @@ public class VisConfigController {
 
     @Tag(name = "DASHBOARD")
     @Operation(operationId = "delDashboard", summary = "删除看板")
-    @Permission(PermCodes.DS_DASHBOARD_WRITE)
+    @Permission(PermCodes.VIS_DASHBOARD_CONF)
     @PostMapping("/dashboards/del")
     public R<Void> delDashboard(@Validated @RequestBody IdsRequest request) {
         visDashboardService.delete(request.getIds());

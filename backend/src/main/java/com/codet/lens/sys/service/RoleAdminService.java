@@ -3,10 +3,10 @@ package com.codet.lens.sys.service;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.codet.lens.auth.TokenInvalidateService;
 import com.codet.lens.common.ConvertUtil;
 import com.codet.lens.common.FieldConst;
 import com.codet.lens.common.PageResponse;
-import com.codet.lens.common.PermCodes;
 import com.codet.lens.common.ResultException;
 import com.codet.lens.sys.dto.SysDtos.QueryRoleRequest;
 import com.codet.lens.sys.dto.SysDtos.ResetRoleDashboardsRequest;
@@ -17,10 +17,12 @@ import com.codet.lens.sys.entity.SysMenu;
 import com.codet.lens.sys.entity.SysRole;
 import com.codet.lens.sys.entity.SysRoleDashboard;
 import com.codet.lens.sys.entity.SysRoleMenu;
+import com.codet.lens.sys.entity.SysUserRole;
 import com.codet.lens.sys.mapper.SysMenuMapper;
 import com.codet.lens.sys.mapper.SysRoleDashboardMapper;
 import com.codet.lens.sys.mapper.SysRoleMapper;
 import com.codet.lens.sys.mapper.SysRoleMenuMapper;
+import com.codet.lens.sys.mapper.SysUserRoleMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,6 +39,8 @@ public class RoleAdminService {
     private final SysRoleMenuMapper roleMenuMapper;
     private final SysRoleDashboardMapper roleDashboardMapper;
     private final SysMenuMapper menuMapper;
+    private final SysUserRoleMapper userRoleMapper;
+    private final TokenInvalidateService tokenInvalidateService;
 
     public PageResponse<RoleInfo> query(QueryRoleRequest req) {
         IPage<SysRole> page = roleMapper.selectPage(req.getPage().toIPage(), Wrappers.<SysRole>lambdaQuery()
@@ -54,31 +58,31 @@ public class RoleAdminService {
     @Transactional
     public Long save(SaveRoleRequest req) {
         SysRole role = req.getId() == null ? new SysRole() : require(req.getId());
-        if (PermCodes.ROLE_ADMIN.equals(role.getRoleCode()) && req.getId() != null) {
-            throw ResultException.fail("超级管理员角色不可改编码");
-        }
+        String nextStatus = StrUtil.blankToDefault(req.getStatus(), FieldConst.EBL);
+        boolean statusChanged = req.getId() != null && !nextStatus.equals(role.getStatus());
         role.setRoleName(req.getRoleName());
         role.setRoleCode(req.getRoleCode());
         role.setRoleNote(req.getRoleNote());
-        role.setStatus(StrUtil.blankToDefault(req.getStatus(), FieldConst.EBL));
+        role.setStatus(nextStatus);
         if (req.getId() == null) {
             role.createCallback();
             roleMapper.insert(role);
         } else {
             role.modifyCallback();
             roleMapper.updateById(role);
+            if (statusChanged) {
+                invalidateRoleUsers(role.getId());
+            }
         }
         return role.getId();
     }
 
     @Transactional
     public void resetMenus(ResetRoleMenusRequest req) {
-        SysRole role = require(req.getRoleId());
-        if (PermCodes.ROLE_ADMIN.equals(role.getRoleCode())) {
-            throw ResultException.fail("超级管理员无需配置功能");
-        }
+        require(req.getRoleId());
         roleMenuMapper.delete(Wrappers.<SysRoleMenu>lambdaQuery().eq(SysRoleMenu::getRoleId, req.getRoleId()));
         if (req.getMenuIds() == null || req.getMenuIds().isEmpty()) {
+            invalidateRoleUsers(req.getRoleId());
             return;
         }
         Set<Long> funcIds = new HashSet<>(menuMapper.selectList(Wrappers.<SysMenu>lambdaQuery()
@@ -97,14 +101,12 @@ public class RoleAdminService {
             link.setCreateAt(now);
             roleMenuMapper.insert(link);
         }
+        invalidateRoleUsers(req.getRoleId());
     }
 
     @Transactional
     public void resetDashboards(ResetRoleDashboardsRequest req) {
-        SysRole role = require(req.getRoleId());
-        if (PermCodes.ROLE_ADMIN.equals(role.getRoleCode())) {
-            throw ResultException.fail("超级管理员无需配置看板");
-        }
+        require(req.getRoleId());
         roleDashboardMapper.delete(Wrappers.<SysRoleDashboard>lambdaQuery()
                 .eq(SysRoleDashboard::getRoleId, req.getRoleId()));
         if (req.getDashboardIds() == null || req.getDashboardIds().isEmpty()) {
@@ -125,12 +127,19 @@ public class RoleAdminService {
 
     public void toggle(Long roleId) {
         SysRole role = require(roleId);
-        if (PermCodes.ROLE_ADMIN.equals(role.getRoleCode())) {
-            throw ResultException.fail("超级管理员不可禁用");
-        }
         role.setStatus(FieldConst.EBL.equals(role.getStatus()) ? FieldConst.DBL : FieldConst.EBL);
         role.modifyCallback();
         roleMapper.updateById(role);
+        invalidateRoleUsers(roleId);
+    }
+
+    private void invalidateRoleUsers(Long roleId) {
+        List<SysUserRole> links = userRoleMapper.selectList(Wrappers.<SysUserRole>lambdaQuery()
+                .eq(SysUserRole::getRoleId, roleId)
+                .select(SysUserRole::getUserId));
+        for (SysUserRole link : links) {
+            tokenInvalidateService.invalidate(link.getUserId());
+        }
     }
 
     private RoleInfo toInfo(SysRole role) {

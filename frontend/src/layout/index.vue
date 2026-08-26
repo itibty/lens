@@ -14,11 +14,28 @@ import Sidebar from './components/Sidebar/index.vue'
 const keepPageStore = useKeepPageStore()
 const menuStore = useMenuStore()
 const route = useRoute()
+const router = useRouter()
+
+function isReportShell(path: string) {
+  const p = path.length > 1 && path.endsWith('/') ? path.slice(0, -1) : path
+  return p === '/vis/report'
+}
 
 watch(
   () => route.fullPath,
-  () => {
+  async () => {
+    const prev = menuStore.activeRootId
     menuStore.syncActiveRootFromRoute(route)
+    const entered = menuStore.activeRootId !== prev
+    if (entered)
+      await menuStore.ensureReportTree()
+    if (!isReportShell(route.path))
+      return
+    if (!entered)
+      await menuStore.ensureReportTree()
+    const url = menuStore.findFirstLeafUrl(menuStore.activeRootId)
+    if (url && url !== route.path && url !== route.fullPath)
+      await router.push(url)
   },
 )
 </script>
@@ -36,11 +53,9 @@ watch(
       </el-aside>
       <el-main id="main-layout" class="base-content-bg main">
         <RouterView v-slot="{ Component }">
-          <Transition>
-            <KeepAlive :max="10" :include="keepPageStore.pages">
-              <component :is="Component" />
-            </KeepAlive>
-          </Transition>
+          <KeepAlive :max="10" :include="keepPageStore.pages">
+            <component :is="Component" />
+          </KeepAlive>
         </RouterView>
       </el-main>
     </el-container>

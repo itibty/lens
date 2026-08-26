@@ -5,9 +5,8 @@
 import type { FormInstance, FormRules } from 'element-plus'
 import type { DashDesignerInstance, DashDesignerSavedPayload } from './components/DashDesigner.vue'
 import type { DashExplorerTreeInstance } from './components/DashExplorerTree.vue'
-import type { DashManageNode } from './dashManage'
+import type { DashManageNode, ExplorerCommand } from './dashManage'
 import vis from '@/apis/vis/index'
-import { useAutoFoldSidebar } from '@/hooks/layout'
 import { useAccountStore } from '@/stores/modules/account'
 import { showConfirm, showToast } from '@/utils/index'
 import MenuIconPicker from '@/views/permission/menu/components/MenuIconPicker.vue'
@@ -15,28 +14,13 @@ import { apiErrorMessage } from '@/views/vis/shared/visRequest'
 import DashDesigner from './components/DashDesigner.vue'
 import DashExplorerTree from './components/DashExplorerTree.vue'
 import DashGroupTreeSelect from './components/DashGroupTreeSelect.vue'
-import { FUNCTION_DASHBOARD_WRITE } from './config'
-import { normalizeDashManageNodes } from './dashManage'
+import { FUNCTION_DASHBOARD_CONF } from './config'
+import { REPORT_CENTER_ID, ROOT_GROUP_ID, normalizeDashManageNodes, toStoreGroupId } from './dashManage'
 
 defineOptions({ name: 'VisDashboards' })
 
-type ExplorerCommand
-  = | 'add-child-group'
-    | 'add-dashboard'
-    | 'edit-group'
-    | 'toggle-group'
-    | 'delete-group'
-    | 'edit-dashboard'
-    | 'preview-dashboard'
-    | 'move-dashboard'
-    | 'toggle-dashboard'
-    | 'delete-dashboard'
-
-const UNGROUPED_ID = '0'
-const router = useRouter()
 const { hasFunction } = useAccountStore()
-const canWrite = hasFunction(FUNCTION_DASHBOARD_WRITE)
-useAutoFoldSidebar()
+const canWrite = hasFunction(FUNCTION_DASHBOARD_CONF)
 
 const designerRef = ref<DashDesignerInstance>()
 const explorerRef = ref<DashExplorerTreeInstance>()
@@ -50,7 +34,7 @@ const groupDialogTitle = ref('新增分组')
 const groupFormRef = ref<FormInstance>()
 const groupForm = reactive<VIS.SaveDashGroupRequest>({
   id: undefined,
-  pid: UNGROUPED_ID,
+  pid: ROOT_GROUP_ID,
   groupName: '',
   icon: '',
   sortNum: 0,
@@ -67,8 +51,9 @@ const dashboardForm = reactive({
   id: '',
   dashName: '',
   dashDesc: '',
+  icon: '',
   status: 'EBL' as 'EBL' | 'DBL',
-  groupId: UNGROUPED_ID,
+  groupId: ROOT_GROUP_ID,
 })
 const dashboardRules: FormRules<typeof dashboardForm> = {
   dashName: [{ required: true, trigger: 'blur', message: '请输入看板名称' }],
@@ -76,7 +61,7 @@ const dashboardRules: FormRules<typeof dashboardForm> = {
 
 const moveDialogOpen = ref(false)
 const moveTarget = ref<DashManageNode>()
-const moveGroupId = ref(UNGROUPED_ID)
+const moveGroupId = ref(ROOT_GROUP_ID)
 let detailRequestId = 0
 
 function cancelDashboardDetailRequest() {
@@ -98,13 +83,13 @@ function toGroupTree(nodes: DashManageNode[]): VIS.DashGroupInfo[] {
   for (const node of nodes) {
     if (node.nodeType !== 'GROUP')
       continue
-    if (node.virtual || node.id === UNGROUPED_ID) {
+    if (node.virtual || node.id === ROOT_GROUP_ID || node.id === REPORT_CENTER_ID) {
       groups.push(...toGroupTree(node.children ?? []))
       continue
     }
     groups.push({
       id: node.id,
-      pid: node.pid || UNGROUPED_ID,
+      pid: toStoreGroupId(node.pid),
       groupName: node.name,
       icon: node.icon,
       status: node.status,
@@ -189,7 +174,7 @@ async function onTreeSelect(node: DashManageNode) {
 
 function resetGroupForm(partial: Partial<VIS.SaveDashGroupRequest> = {}) {
   groupForm.id = partial.id
-  groupForm.pid = partial.pid ?? UNGROUPED_ID
+  groupForm.pid = toStoreGroupId(partial.pid)
   groupForm.groupName = partial.groupName ?? ''
   groupForm.icon = partial.icon ?? ''
   groupForm.sortNum = partial.sortNum ?? 0
@@ -202,7 +187,7 @@ function openGroupDialog(node?: DashManageNode, edit = false) {
     groupDialogTitle.value = '编辑分组'
     resetGroupForm({
       id: node.id,
-      pid: node.pid || UNGROUPED_ID,
+      pid: toStoreGroupId(node.pid),
       groupName: node.name,
       icon: node.icon,
       sortNum: node.sortNum,
@@ -211,7 +196,7 @@ function openGroupDialog(node?: DashManageNode, edit = false) {
   }
   else {
     groupDialogTitle.value = node ? '新增子分组' : '新增根分组'
-    resetGroupForm({ pid: node?.id || UNGROUPED_ID })
+    resetGroupForm({ pid: node ? toStoreGroupId(node.id) : ROOT_GROUP_ID })
   }
   groupDialogOpen.value = true
 }
@@ -224,7 +209,7 @@ function submitGroup() {
     try {
       const res = await vis.dashboard.editDashGroup({
         id: groupForm.id,
-        pid: groupForm.pid || UNGROUPED_ID,
+        pid: toStoreGroupId(groupForm.pid),
         groupName: groupForm.groupName.trim(),
         icon: groupForm.icon || undefined,
         sortNum: groupForm.sortNum ?? 0,
@@ -243,14 +228,15 @@ function submitGroup() {
   })
 }
 
-function openCreateDashboard(groupId = UNGROUPED_ID) {
+function openCreateDashboard(groupId = ROOT_GROUP_ID) {
   cancelDashboardDetailRequest()
   dashboardDialogMode.value = 'create'
   dashboardForm.id = ''
   dashboardForm.dashName = ''
   dashboardForm.dashDesc = ''
+  dashboardForm.icon = ''
   dashboardForm.status = 'EBL'
-  dashboardForm.groupId = groupId || UNGROUPED_ID
+  dashboardForm.groupId = toStoreGroupId(groupId)
   dashboardDialogOpen.value = true
 }
 
@@ -258,15 +244,16 @@ async function openEditDashboard(node: DashManageNode) {
   const currentRequestId = ++detailRequestId
   actionLoading.value = true
   try {
-    const res = await vis.dashboard.getDashboardDetail({ dashboardId: node.id })
+    const res = await vis.query.getDashboardDetail({ dashboardId: node.id })
     if (currentRequestId !== detailRequestId || !res.data)
       return
     dashboardDialogMode.value = 'edit'
     dashboardForm.id = node.id
     dashboardForm.dashName = res.data.dashName || node.name
     dashboardForm.dashDesc = res.data.dashDesc || ''
+    dashboardForm.icon = res.data.icon || node.icon || ''
     dashboardForm.status = res.data.status === 'DBL' ? 'DBL' : 'EBL'
-    dashboardForm.groupId = res.data.groupId || node.groupId || UNGROUPED_ID
+    dashboardForm.groupId = toStoreGroupId(res.data.groupId || node.groupId)
     dashboardDialogOpen.value = true
   }
   catch (e) {
@@ -289,11 +276,12 @@ function submitDashboard() {
     }
     actionLoading.value = true
     try {
-      const groupId = dashboardForm.groupId || UNGROUPED_ID
+      const groupId = toStoreGroupId(dashboardForm.groupId)
       if (dashboardDialogMode.value === 'create') {
         const res = await vis.dashboard.editDashboard({
           dashName: dashboardForm.dashName.trim(),
           dashDesc: dashboardForm.dashDesc.trim(),
+          icon: dashboardForm.icon || undefined,
           status: dashboardForm.status,
           groupId,
           cards: [],
@@ -310,6 +298,7 @@ function submitDashboard() {
           id: dashboardForm.id,
           dashName: dashboardForm.dashName.trim(),
           dashDesc: dashboardForm.dashDesc.trim(),
+          icon: dashboardForm.icon || undefined,
           groupId,
         })
         dashboardDialogOpen.value = false
@@ -317,6 +306,7 @@ function submitDashboard() {
           designerRef.value?.updateMeta({
             name: dashboardForm.dashName.trim(),
             desc: dashboardForm.dashDesc.trim(),
+            icon: dashboardForm.icon || '',
             groupId,
           })
         }
@@ -333,18 +323,10 @@ function submitDashboard() {
   })
 }
 
-function previewDashboard(node: DashManageNode) {
-  const href = router.resolve({
-    name: 'VisDashboardView',
-    query: { id: node.id },
-  }).href
-  window.open(href, '_blank')
-}
-
 function openMoveDashboard(node: DashManageNode) {
   cancelDashboardDetailRequest()
   moveTarget.value = node
-  moveGroupId.value = node.groupId || node.pid || UNGROUPED_ID
+  moveGroupId.value = toStoreGroupId(node.groupId || node.pid)
   moveDialogOpen.value = true
 }
 
@@ -354,7 +336,7 @@ async function submitMoveDashboard() {
     return
   actionLoading.value = true
   try {
-    const groupId = moveGroupId.value || UNGROUPED_ID
+    const groupId = toStoreGroupId(moveGroupId.value)
     const res = await vis.dashboard.moveDashboardsGroup({
       dashboardIds: [node.id],
       groupId,
@@ -448,10 +430,12 @@ async function deleteDashboard(node: DashManageNode) {
 function onTreeCommand(command: ExplorerCommand, node: DashManageNode) {
   if (command !== 'edit-dashboard')
     cancelDashboardDetailRequest()
-  if (command === 'add-child-group')
+  if (command === 'add-root-group')
+    openGroupDialog()
+  else if (command === 'add-child-group')
     openGroupDialog(node)
   else if (command === 'add-dashboard')
-    openCreateDashboard(node.id)
+    openCreateDashboard(toStoreGroupId(node.id))
   else if (command === 'edit-group')
     openGroupDialog(node, true)
   else if (command === 'toggle-group')
@@ -460,8 +444,6 @@ function onTreeCommand(command: ExplorerCommand, node: DashManageNode) {
     deleteGroup(node)
   else if (command === 'edit-dashboard')
     void openEditDashboard(node)
-  else if (command === 'preview-dashboard')
-    previewDashboard(node)
   else if (command === 'move-dashboard')
     openMoveDashboard(node)
   else if (command === 'toggle-dashboard')
@@ -495,8 +477,6 @@ onMounted(() => {
           :can-write="canWrite"
           @select="onTreeSelect"
           @command="onTreeCommand"
-          @add-root-group="openGroupDialog()"
-          @add-ungrouped-dashboard="openCreateDashboard()"
         />
         <main class="dashboards-main">
           <DashDesigner
@@ -541,7 +521,7 @@ onMounted(() => {
               v-model="groupForm.pid"
               :data="groupTree"
               :exclude-id="groupForm.id"
-              root-label="无（根分组）"
+              root-label="报表中心"
               :clearable="false"
             />
           </el-form-item>
@@ -588,9 +568,12 @@ onMounted(() => {
             <DashGroupTreeSelect
               v-model="dashboardForm.groupId"
               :data="groupTree"
-              root-label="未分组"
+              root-label="报表中心"
               :clearable="false"
             />
+          </el-form-item>
+          <el-form-item label="图标">
+            <MenuIconPicker v-model="dashboardForm.icon" />
           </el-form-item>
           <el-form-item label="看板描述">
             <el-input
@@ -628,11 +611,11 @@ onMounted(() => {
     >
       <template #custom-dialog-body>
         <el-form label-position="top">
-          <el-form-item :label="`将「${moveTarget?.name || ''}」移动到`">
+          <el-form-item>
             <DashGroupTreeSelect
               v-model="moveGroupId"
               :data="groupTree"
-              root-label="未分组"
+              root-label="报表中心"
               :clearable="false"
             />
           </el-form-item>

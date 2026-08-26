@@ -59,6 +59,7 @@ public class SysController {
     @Operation(operationId = "logoutAccount", summary = "退出")
     @PostMapping("/auth/logout")
     public R<String> logoutAccount() {
+        accountService.logout();
         return R.success();
     }
 
@@ -119,7 +120,7 @@ public class SysController {
     }
 
     @Tag(name = "用户")
-    @Permission(PermCodes.SYS_USER_CONFIG_ROLE)
+    @Permission(PermCodes.SYS_USER_WRITE)
     @Operation(operationId = "resetUserRoles", summary = "配置角色")
     @PostMapping("/sys/users/reset-roles")
     public R<String> resetUserRoles(@Valid @RequestBody ResetRolesRequest request) {
@@ -128,7 +129,7 @@ public class SysController {
     }
 
     @Tag(name = "用户")
-    @Permission(PermCodes.SYS_USER_PWD)
+    @Permission(PermCodes.SYS_USER_WRITE)
     @Operation(operationId = "resetUserPwd", summary = "重置密码")
     @PostMapping("/sys/users/reset-pwd")
     public R<String> resetUserPwd(@Valid @RequestBody ResetPwdRequest request) {
@@ -179,7 +180,7 @@ public class SysController {
     }
 
     @Tag(name = "角色")
-    @Permission(PermCodes.SYS_ROLE_CONFIG_MENU)
+    @Permission(PermCodes.SYS_ROLE_WRITE)
     @Operation(operationId = "resetRoleFunctions", summary = "配置功能")
     @PostMapping("/sys/roles/reset-functions")
     public R<String> resetRoleFunctions(@Valid @RequestBody ResetRoleMenusRequest request) {
@@ -188,7 +189,7 @@ public class SysController {
     }
 
     @Tag(name = "角色")
-    @Permission(PermCodes.SYS_ROLE_CONFIG_MENU)
+    @Permission(PermCodes.SYS_ROLE_WRITE)
     @Operation(operationId = "resetRoleMenus", summary = "配置菜单")
     @PostMapping("/sys/roles/reset-menus")
     public R<String> resetRoleMenus(@Valid @RequestBody ResetRoleMenusRequest request) {
@@ -197,7 +198,7 @@ public class SysController {
     }
 
     @Tag(name = "角色")
-    @Permission(PermCodes.SYS_ROLE_CONFIG_DASHBOARD)
+    @Permission(PermCodes.SYS_ROLE_WRITE)
     @Operation(operationId = "resetRoleDashboards", summary = "配置看板")
     @PostMapping("/sys/roles/reset-dashboards")
     public R<String> resetRoleDashboards(@Valid @RequestBody ResetRoleDashboardsRequest request) {
@@ -206,7 +207,7 @@ public class SysController {
     }
 
     @Tag(name = "菜单")
-    @Permission({PermCodes.SYS_MENU_QUERY, PermCodes.SYS_ROLE_CONFIG_MENU})
+    @Permission({PermCodes.SYS_MENU_QUERY, PermCodes.SYS_ROLE_WRITE})
     @Operation(operationId = "listMenuTree", summary = "菜单树")
     @GetMapping("/sys/menus/tree")
     public R<ListResponse<MenuTree>> listMenuTree() {

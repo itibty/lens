@@ -2,8 +2,7 @@
  * 看板布局 / 页面壳常量。
  * 预览页左右留白与 DASH_MARGIN / dashPage 的格子间距一致。
  */
-export const FUNCTION_DASHBOARD_QUERY = 'ds:dashboard:query'
-export const FUNCTION_DASHBOARD_WRITE = 'ds:dashboard:write'
+export { VIS_DASHBOARD_CONF as FUNCTION_DASHBOARD_CONF } from '@/core/permCodes'
 
 export const DASH_COL_NUM = 24
 export const DASH_ROW_HEIGHT = 28
@@ -59,3 +58,5 @@ export const DASH_STACK_MAX_WIDTH = 768
 
 /** 预览页根节点，卡片全屏 Teleport 到这里 */
 export const DASH_VIEWER_ID = 'vis-dash-viewer'
+/** 设计页根节点，截屏用 */
+export const DASH_DESIGNER_ID = 'vis-dash-designer'

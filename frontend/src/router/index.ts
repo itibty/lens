@@ -7,7 +7,7 @@
  */
 /* eslint-disable perfectionist/sort-imports */
 import { createRouter, createWebHistory } from 'vue-router'
-import type { RouteLocationNormalized, RouterScrollBehavior } from 'vue-router'
+import type { RouteLocationGeneric, RouteLocationNormalized, RouterScrollBehavior } from 'vue-router'
 
 import ReportRoutes from './modules/reports'
 import SysRoutes from './modules/sys'
@@ -38,10 +38,10 @@ export const routes = [
   { path: '/permission/role', redirect: '/sys/roles' },
   { path: '/permission/menu', redirect: '/sys/menus' },
   { path: '/vis/dataset', redirect: '/vis/datasets' },
-  { path: '/vis/dataset/edit', redirect: to => ({ path: '/vis/datasets/edit', query: to.query, hash: to.hash }) },
+  { path: '/vis/dataset/edit', redirect: (to: RouteLocationGeneric) => ({ path: '/vis/datasets/edit', query: to.query, hash: to.hash }) },
   {
     path: '/reports/:id?',
-    redirect: (to: RouteLocationNormalized) => {
+    redirect: (to: RouteLocationGeneric) => {
       const raw = to.params.id || to.query.id
       const id = Array.isArray(raw) ? raw[0] : raw
       const query = { ...to.query }

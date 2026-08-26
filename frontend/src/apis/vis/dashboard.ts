@@ -3,28 +3,19 @@
 import request from "@/core/request";
 import { VIS_BASE_PATH } from "@/apis/config";
 
-/** 角色分配看板树 GET /dashboards/assign-tree */
-export async function listDashboardAssignTree(options?: {
-  [key: string]: any;
-}) {
-  return request<VIS.RListResponseAssignNode>(
-    `${VIS_BASE_PATH}/dashboards/assign-tree`,
-    {
-      method: "GET",
-      ...(options || {}),
-    }
-  );
-}
-
-/** 看板分组树 GET /dash-groups/tree */
-export async function listDashGroupTree(options?: { [key: string]: any }) {
-  return request<VIS.RListResponseDashGroupInfo>(
-    `${VIS_BASE_PATH}/dash-groups/tree`,
-    {
-      method: "GET",
-      ...(options || {}),
-    }
-  );
+/** 删除看板分组 POST /dash-groups/del */
+export async function delDashGroup(
+  // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
+  params: VIS.delDashGroupParams,
+  options?: { [key: string]: any }
+) {
+  return request<VIS.RString>(`${VIS_BASE_PATH}/dash-groups/del`, {
+    method: "POST",
+    params: {
+      ...params,
+    },
+    ...(options || {}),
+  });
 }
 
 /** 新建或编辑看板分组 POST /dash-groups/edit */
@@ -42,22 +33,9 @@ export async function editDashGroup(
   });
 }
 
-/** 删除看板分组 POST /dash-groups/del */
-export async function delDashGroup(
-  params: VIS.delDashGroupParams,
-  options?: { [key: string]: any }
-) {
-  return request<VIS.RString>(`${VIS_BASE_PATH}/dash-groups/del`, {
-    method: "POST",
-    params: {
-      ...params,
-    },
-    ...(options || {}),
-  });
-}
-
 /** 看板分组启用/禁用 POST /dash-groups/toggle-status */
 export async function toggleDashGroupStatus(
+  // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
   params: VIS.toggleDashGroupStatusParams,
   options?: { [key: string]: any }
 ) {
@@ -68,6 +46,30 @@ export async function toggleDashGroupStatus(
     },
     ...(options || {}),
   });
+}
+
+/** 看板分组树 GET /dash-groups/tree */
+export async function listDashGroupTree(options?: { [key: string]: any }) {
+  return request<VIS.RListResponseDashGroupInfo>(
+    `${VIS_BASE_PATH}/dash-groups/tree`,
+    {
+      method: "GET",
+      ...(options || {}),
+    }
+  );
+}
+
+/** 角色分配看板树 GET /dashboards/assign-tree */
+export async function listDashboardAssignTree(options?: {
+  [key: string]: any;
+}) {
+  return request<VIS.RListResponseAssignNode>(
+    `${VIS_BASE_PATH}/dashboards/assign-tree`,
+    {
+      method: "GET",
+      ...(options || {}),
+    }
+  );
 }
 
 /** 删除看板 POST /dashboards/del */
@@ -81,21 +83,6 @@ export async function delDashboard(
       "Content-Type": "application/json",
     },
     data: body,
-    ...(options || {}),
-  });
-}
-
-/** 看板详情 GET /dashboards/detail */
-export async function getDashboardDetail(
-  // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
-  params: VIS.getDashboardDetailParams,
-  options?: { [key: string]: any }
-) {
-  return request<VIS.RVisDashboardInfo>(`${VIS_BASE_PATH}/dashboards/detail`, {
-    method: "GET",
-    params: {
-      ...params,
-    },
     ...(options || {}),
   });
 }
@@ -136,6 +123,19 @@ export async function listDashboardManageTree(options?: {
 }) {
   return request<VIS.RListResponseManageNode>(
     `${VIS_BASE_PATH}/dashboards/manage-tree`,
+    {
+      method: "GET",
+      ...(options || {}),
+    }
+  );
+}
+
+/** 报表中心看板树 GET /dashboards/report-tree */
+export async function listDashboardReportTree(options?: {
+  [key: string]: any;
+}) {
+  return request<VIS.RListResponseReportNode>(
+    `${VIS_BASE_PATH}/dashboards/report-tree`,
     {
       method: "GET",
       ...(options || {}),

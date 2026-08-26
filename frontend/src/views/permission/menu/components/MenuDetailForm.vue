@@ -8,6 +8,7 @@ import MenuIconPicker from './MenuIconPicker.vue'
 
 const props = defineProps<{
   node: ADMIN.MenuTree
+  canWrite?: boolean
 }>()
 
 const emits = defineEmits<{
@@ -75,7 +76,7 @@ async function save() {
   <section class="menu-panel">
     <div class="menu-panel__head">
       <div class="menu-panel__title">基本信息</div>
-      <el-button type="primary" :loading="saving" @click="save">保存</el-button>
+      <el-button v-if="canWrite" type="primary" :loading="saving" @click="save">保存</el-button>
     </div>
     <el-form
       ref="formRef"

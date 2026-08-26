@@ -92,7 +92,6 @@ public class VisDatasetService {
         SqlConf conf = new SqlConf();
         conf.setSqlId(row.getId());
         conf.setSqlName(row.getDatasetName());
-        conf.setSqlType(FieldConst.DQL);
         conf.setSqlContent(row.getSqlContent());
         conf.setDsId(source.getId());
         conf.setDsName(source.getSourceName());

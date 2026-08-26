@@ -28,12 +28,13 @@ import DashGrid from './DashGrid.vue'
 defineOptions({ name: 'DashViewer' })
 
 const route = useRoute()
+const router = useRouter()
 const loading = ref(false)
 const name = ref('看板')
 const desc = ref('')
 const dashboardId = ref('')
 const dashDisabled = ref(false)
-const missing = ref(false)
+const emptyText = ref('')
 const widgets = ref<DashWidget[]>([])
 const cardMap = ref<Record<string, VisCard>>({})
 const filters = ref<VisDashFilterDef[]>([])
@@ -47,13 +48,23 @@ const { chromeHidden, onCanvasScroll, revealChrome } = useDashChromeScroll()
 const { pauseFilterUrl, applyFilterQuery } = useDashFilterUrl(
   filters,
   filterValues,
-  () => !dashDisabled.value && !missing.value,
+  () => !dashDisabled.value && !emptyText.value,
 )
 const capturing = ref(false)
 
+function openPreview() {
+  if (!dashboardId.value)
+    return
+  const href = router.resolve({
+    name: 'VisDashboardView',
+    query: { id: dashboardId.value },
+  }).href
+  window.open(href, '_blank')
+}
+
 useCardAutoRefresh({
   intervalSec: () => autoRefreshSec.value,
-  enabled: () => !loading.value && !dashDisabled.value && !missing.value,
+  enabled: () => !loading.value && !dashDisabled.value && !emptyText.value,
   run: () => refreshCards(),
 })
 
@@ -92,19 +103,18 @@ async function loadDashboard(id: string) {
   if (!id) {
     pauseFilterUrl()
     resetViewer()
-    missing.value = true
+    emptyText.value = '请从左侧选择报表'
     loading.value = false
     return
   }
-  missing.value = false
+  emptyText.value = ''
   loading.value = true
   pauseFilterUrl()
   try {
-    const res = await vis.dashboard.getDashboardDetail({ dashboardId: id })
+    const res = await vis.query.getDashboardDetail({ dashboardId: id })
     if (!res.data) {
       resetViewer()
-      missing.value = true
-      showToast('看板不存在', 'error')
+      emptyText.value = res.msg || '看板不存在'
       return
     }
     dashboardId.value = String(res.data.id || id)
@@ -133,8 +143,7 @@ async function loadDashboard(id: string) {
   }
   catch (e) {
     resetViewer()
-    missing.value = true
-    showToast(apiErrorMessage(e, '看板不存在'), 'error')
+    emptyText.value = apiErrorMessage(e, '看板不存在')
   }
   finally {
     loading.value = false
@@ -186,7 +195,7 @@ watch(
       @scroll="onCanvasScroll"
     >
       <div
-        v-if="!missing"
+        v-if="!emptyText"
         class="viewer__chrome"
         :class="{ 'is-off': chromeHidden }"
       >
@@ -196,19 +205,20 @@ watch(
           :title="name"
           :desc="desc"
           :defs="dashDisabled ? [] : filters"
-          :show-screenshot="!dashDisabled"
+          :preview-disabled="!dashboardId"
           :screenshotting="capturing || loading"
           @refresh="refreshCards"
           @screenshot="onScreenshot"
+          @preview="openPreview"
         />
       </div>
       <div class="viewer__body">
         <div
-          v-if="(missing || dashDisabled) && !loading"
+          v-if="(emptyText || dashDisabled) && !loading"
           class="viewer__unavailable"
         >
           <el-empty
-            :description="missing ? '请从左侧选择报表' : '看板已禁用'"
+            :description="emptyText || '看板已禁用'"
             :image-size="120"
           />
         </div>

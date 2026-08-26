@@ -39,18 +39,21 @@ function handleProfile() {
   })
 }
 function goHome() {
-  router.push({ path: '/' })
+  const url = menuStore.resolveHomeUrl()
+  router.push(url || { path: '/index' })
 }
 
-function switchRoot(root: MenuInfo) {
+async function switchRoot(root: MenuInfo) {
   rootPopoverVisible.value = false
-  const sameModule = activeRootId.value === root.id
+  const wasSame = activeRootId.value === root.id
   menuStore.activateRoot(root.id)
-  if (sameModule)
-    return
+  await menuStore.ensureReportTree()
   const url = menuStore.findFirstLeafUrl(root.id)
-  if (url && url !== route.fullPath)
-    router.push(url)
+  if (!url || url === route.fullPath || url === route.path)
+    return
+  if (root.id !== '90' && wasSame && menuStore.routeBelongsToRoot(route, root.id))
+    return
+  router.push(url)
 }
 </script>
 
@@ -71,7 +74,7 @@ function switchRoot(root: MenuInfo) {
         v-model:visible="rootPopoverVisible"
         trigger="click"
         placement="bottom-start"
-        :width="248"
+        :width="268"
         :show-arrow="false"
         popper-class="root-menu-popover"
       >
@@ -264,23 +267,24 @@ function switchRoot(root: MenuInfo) {
 }
 
 .root-menu-popover {
-  padding: 10px !important;
+  padding: 12px !important;
 
   .root-menu-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
+    gap: 10px;
   }
 
   .root-menu-tile {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 8px;
-    min-height: 84px;
-    padding: 12px 8px 10px;
+    justify-content: center;
+    gap: 10px;
+    min-height: 104px;
+    padding: 16px 12px;
     border: 1px solid transparent;
-    border-radius: 8px;
+    border-radius: 10px;
     background: var(--el-fill-color-lighter);
     color: var(--el-text-color-primary);
     cursor: pointer;
@@ -295,15 +299,22 @@ function switchRoot(root: MenuInfo) {
       color: var(--el-color-primary);
     }
 
+    &__icon.menu-icon,
     &__icon {
-      font-size: 22px;
+      width: 24px;
+      height: 24px;
+      font-size: 24px;
+      font-weight: 400;
     }
 
     &__name {
-      font-size: 12px;
+      font-size: 13px;
       line-height: 1.2;
       text-align: center;
-      word-break: break-all;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
   }
 }

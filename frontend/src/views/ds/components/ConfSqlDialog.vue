@@ -30,15 +30,11 @@ const emits = defineEmits<{
 
 const logger = createLogger('CONF_SQL_DIALOG')
 const defaultForm: VIS.ConfSqlInfoRequest = {
-
   sqlName: '',
   sqlDesc: '',
-  retKey: '',
   dsId: '',
   tplEngine: 'ENJOY',
   status: 'EBL',
-  execRoles: '',
-  execUsers: '',
 }
 
 const states = reactive<IStates>({
@@ -47,9 +43,6 @@ const states = reactive<IStates>({
   rules: {
     sqlName: [
       { required: true, trigger: 'blur', message: '请输入数据集名称' },
-    ],
-    retKey: [
-      { required: true, trigger: 'blur', message: '请输入响应字段名' },
     ],
     dsId: [
       { required: true, trigger: 'change', message: '请选择数据源' },
@@ -90,12 +83,9 @@ function showDialog(data?: VIS.ConfSqlInfo) {
       id: data.id,
       sqlName: data.sqlName,
       sqlDesc: data.sqlDesc || '',
-      retKey: data.retKey,
       dsId: data.dsId,
       tplEngine: data.tplEngine,
       status: data.status,
-      execRoles: data.execRoles || '',
-      execUsers: data.execUsers || '',
     }
   }
   else {
@@ -180,31 +170,6 @@ defineExpose<ConfSqlDialogInstance>({
               :value="item.value ?? ''"
             />
           </el-select>
-        </el-form-item>
-        <el-form-item label="结果字段" prop="retKey">
-          <el-input
-            v-model.trim="states.form.retKey"
-            clearable
-            placeholder="请输入结果字段"
-          />
-        </el-form-item>
-        <el-form-item label="限制角色" prop="execRoles">
-          <el-input
-            v-model="states.form.execRoles"
-            clearable
-            placeholder="角色编码,多个用英文逗号分隔"
-            type="textarea"
-            :rows="3"
-          />
-        </el-form-item>
-        <el-form-item label="限制用户" prop="execUsers">
-          <el-input
-            v-model="states.form.execUsers"
-            clearable
-            placeholder="用户ID,多个用英文逗号分隔"
-            type="textarea"
-            :rows="3"
-          />
         </el-form-item>
         <el-form-item label="状态" prop="status">
           <el-switch

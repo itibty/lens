@@ -17,5 +17,9 @@ defineOptions({ name: 'VisDashboardView' })
 .view-page {
   height: 100vh;
   overflow: hidden;
+
+  :deep(.filter-dock__preview) {
+    display: none;
+  }
 }
 </style>

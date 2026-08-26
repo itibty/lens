@@ -91,6 +91,37 @@ export async function queryCardPivot(
   );
 }
 
+/** 卡片查询结构 GET /vis/cards/${param0} */
+export async function getCardDetail(
+  // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
+  params: VIS.getCardDetailParams,
+  options?: { [key: string]: any }
+) {
+  const { cardId: param0, ...queryParams } = params;
+  return request<VIS.RVisCardInfo>(`${VIS_BASE_PATH}/vis/cards/${param0}`, {
+    method: "GET",
+    params: { ...queryParams },
+    ...(options || {}),
+  });
+}
+
+/** 看板查询结构 GET /vis/dashboards/${param0} */
+export async function getDashboardDetail(
+  // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
+  params: VIS.getDashboardDetailParams,
+  options?: { [key: string]: any }
+) {
+  const { dashboardId: param0, ...queryParams } = params;
+  return request<VIS.RVisDashboardInfo>(
+    `${VIS_BASE_PATH}/vis/dashboards/${param0}`,
+    {
+      method: "GET",
+      params: { ...queryParams },
+      ...(options || {}),
+    }
+  );
+}
+
 /** 日期快捷预览 POST /vis/date-window */
 export async function previewDateWindow(
   body: VIS.DateWindowRequest,

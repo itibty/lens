@@ -8,7 +8,6 @@ export default [
     path: '/vis',
     component: Layout,
     name: 'Vis',
-    redirect: '/vis/cards',
     meta: {
       menuId: '16',
       title: '可视化',

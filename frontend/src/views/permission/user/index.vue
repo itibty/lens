@@ -5,6 +5,7 @@ import type { EditUserDialogInstance } from './components/EditUserDialog.vue'
 import { Plus, Search } from '@element-plus/icons-vue'
 import { pickBy } from 'lodash-es'
 import { queryUsers, resetUserPwd, toggleUserStatus } from '@/apis/admin/user'
+import { SYS_USER_WRITE } from '@/core/permCodes'
 import { useAccountStore } from '@/stores/modules/account'
 import { showConfirm, showToast } from '@/utils/index'
 import AddUserDialog from './components/AddUserDialog.vue'
@@ -43,9 +44,7 @@ const states = reactive<IStates>({
   total: 0,
   records: [],
   permission: {
-    write: accountStore.hasFunction('sys:user:write'),
-    pwd: accountStore.hasFunction('sys:user:pwd'),
-    configRole: accountStore.hasFunction('sys:user:config-role'),
+    write: accountStore.hasFunction(SYS_USER_WRITE),
   },
 })
 
@@ -201,7 +200,12 @@ onMounted(() => {
           prop="lastLoginAt"
         />
         <!-- @vue-generic {ADMIN.UserInfo} -->
-        <el-table-column width="250px" label="操作" fixed="right">
+        <el-table-column
+          v-if="states.permission.write"
+          width="250px"
+          label="操作"
+          fixed="right"
+        >
           <template #default="{ row }">
             <el-button
               v-if="states.permission.write"
@@ -222,7 +226,7 @@ onMounted(() => {
               {{ row.status === "EBL" ? "禁用" : "启用" }}
             </el-button>
             <el-button
-              v-if="states.permission.pwd"
+              v-if="states.permission.write"
               size="small"
               type="primary"
               link
@@ -231,7 +235,7 @@ onMounted(() => {
               重置密码
             </el-button>
             <el-button
-              v-if="states.permission.configRole"
+              v-if="states.permission.write"
               size="small"
               type="primary"
               link

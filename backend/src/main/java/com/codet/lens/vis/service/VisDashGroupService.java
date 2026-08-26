@@ -8,6 +8,7 @@ import com.codet.lens.common.ResultException;
 import com.codet.lens.vis.dto.group.VisGroupDtos.AssignNode;
 import com.codet.lens.vis.dto.group.VisGroupDtos.DashGroupInfo;
 import com.codet.lens.vis.dto.group.VisGroupDtos.ManageNode;
+import com.codet.lens.vis.dto.group.VisGroupDtos.ReportNode;
 import com.codet.lens.vis.dto.group.VisGroupDtos.SaveDashGroupRequest;
 import com.codet.lens.vis.entity.VisDashGroup;
 import com.codet.lens.vis.entity.VisDashboard;
@@ -23,6 +24,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -30,6 +32,7 @@ public class VisDashGroupService {
 
     private final VisDashGroupMapper groupMapper;
     private final VisDashboardMapper dashboardMapper;
+    private final VisDashboardAccess dashboardAccess;
 
     public ListResponse<DashGroupInfo> tree() {
         List<VisDashGroup> rows = groupMapper.selectList(Wrappers.<VisDashGroup>lambdaQuery()
@@ -108,6 +111,7 @@ public class VisDashGroupService {
             AssignNode leaf = new AssignNode();
             leaf.setId(dash.getId());
             leaf.setName(dash.getDashName());
+            leaf.setIcon(dash.getIcon());
             leaf.setNodeType("DASH");
             leaf.setChildren(new ArrayList<>());
             long gid = dash.getGroupId() == null ? 0L : dash.getGroupId();
@@ -137,6 +141,68 @@ public class VisDashGroupService {
         root.setNodeType("GROUP");
         root.setChildren(visible);
         return new ListResponse<>(List.of(root));
+    }
+
+    /** 当前用户已分配、启用中的看板树。分组按层级嵌套，无看板的分组不返回。 */
+    public ListResponse<ReportNode> reportTree() {
+        Set<Long> assigned = dashboardAccess.assignedDashboardIds();
+        if (assigned.isEmpty())
+            return new ListResponse<>(List.of());
+
+        List<VisDashGroup> groups = groupMapper.selectList(Wrappers.<VisDashGroup>lambdaQuery()
+                .eq(VisDashGroup::getStatus, FieldConst.EBL)
+                .orderByAsc(VisDashGroup::getSortNum)
+                .orderByAsc(VisDashGroup::getId));
+        List<VisDashboard> dashes = dashboardMapper.selectList(Wrappers.<VisDashboard>lambdaQuery()
+                .eq(VisDashboard::getStatus, FieldConst.EBL)
+                .in(VisDashboard::getId, assigned)
+                .orderByAsc(VisDashboard::getId));
+
+        Map<Long, ReportNode> groupNodes = new LinkedHashMap<>();
+        for (VisDashGroup group : groups) {
+            ReportNode node = new ReportNode();
+            node.setId(group.getId());
+            node.setPid(group.getPid() == null ? 0L : group.getPid());
+            node.setName(group.getGroupName());
+            node.setIcon(group.getIcon());
+            node.setNodeType("GROUP");
+            node.setChildren(new ArrayList<>());
+            groupNodes.put(group.getId(), node);
+        }
+        List<ReportNode> roots = new ArrayList<>();
+        for (ReportNode node : groupNodes.values()) {
+            ReportNode parent = node.getPid() == 0 ? null : groupNodes.get(node.getPid());
+            if (parent == null)
+                roots.add(node);
+            else
+                parent.getChildren().add(node);
+        }
+        for (VisDashboard dash : dashes) {
+            ReportNode leaf = new ReportNode();
+            leaf.setId(dash.getId());
+            leaf.setName(dash.getDashName());
+            leaf.setIcon(dash.getIcon());
+            leaf.setUrl("/vis/report/" + dash.getId());
+            leaf.setNodeType("DASH");
+            leaf.setChildren(new ArrayList<>());
+            long gid = dash.getGroupId() == null ? 0L : dash.getGroupId();
+            ReportNode parent = groupNodes.get(gid);
+            if (parent == null) {
+                leaf.setPid(0L);
+                roots.add(leaf);
+            } else {
+                leaf.setPid(parent.getId());
+                parent.getChildren().add(leaf);
+            }
+        }
+        List<ReportNode> visible = new ArrayList<>();
+        for (ReportNode node : roots) {
+            if (pruneEmptyReportGroups(node))
+                visible.add(node);
+        }
+        visible.sort(Comparator.comparing(ReportNode::getNodeType).reversed()
+                .thenComparing(ReportNode::getId, Comparator.nullsLast(Long::compareTo)));
+        return new ListResponse<>(visible);
     }
 
     public ListResponse<ManageNode> manageTree() {
@@ -173,37 +239,37 @@ public class VisDashGroupService {
                 parent.getChildren().add(node);
         }
 
-        ManageNode ungrouped = new ManageNode();
-        ungrouped.setId(0L);
-        ungrouped.setPid(0L);
-        ungrouped.setNodeType("GROUP");
-        ungrouped.setName("未分组");
-        ungrouped.setStatus(FieldConst.EBL);
-        ungrouped.setSortNum(0);
-        ungrouped.setGroupId(0L);
-        ungrouped.setVirtual(true);
-        ungrouped.setChildren(new ArrayList<>());
-        roots.add(0, ungrouped);
-
         for (VisDashboard dash : dashes) {
             long groupId = dash.getGroupId() == null ? 0L : dash.getGroupId();
-            ManageNode parent = groupNodes.get(groupId);
-            if (parent == null) {
-                parent = ungrouped;
-                groupId = 0L;
-            }
+            ManageNode parent = groupId == 0 ? null : groupNodes.get(groupId);
             ManageNode leaf = new ManageNode();
             leaf.setId(dash.getId());
-            leaf.setPid(groupId);
+            leaf.setPid(parent == null ? 0L : parent.getId());
             leaf.setNodeType("DASH");
             leaf.setName(dash.getDashName());
+            leaf.setIcon(dash.getIcon());
             leaf.setStatus(dash.getStatus());
-            leaf.setGroupId(groupId);
+            leaf.setGroupId(parent == null ? 0L : parent.getId());
             leaf.setVirtual(false);
             leaf.setChildren(new ArrayList<>());
-            parent.getChildren().add(leaf);
+            if (parent == null)
+                roots.add(leaf);
+            else
+                parent.getChildren().add(leaf);
         }
         return new ListResponse<>(roots);
+    }
+
+    private boolean pruneEmptyReportGroups(ReportNode node) {
+        if (!"GROUP".equals(node.getNodeType()))
+            return true;
+        List<ReportNode> kept = new ArrayList<>();
+        for (ReportNode child : node.getChildren() == null ? List.<ReportNode>of() : node.getChildren()) {
+            if (pruneEmptyReportGroups(child))
+                kept.add(child);
+        }
+        node.setChildren(kept);
+        return !kept.isEmpty();
     }
 
     /** 没有看板子孙的分组不展示。 */

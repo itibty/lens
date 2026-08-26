@@ -19,6 +19,8 @@ public class VisDashboard extends BaseEntity {
 
     private String dashDesc; // 描述
 
+    private String icon; // 菜单图标
+
     private String configJson; // 看板配置
 
     private String status; // 状态

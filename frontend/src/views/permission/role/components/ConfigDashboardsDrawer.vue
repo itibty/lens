@@ -102,7 +102,7 @@ function showDrawer(row: ADMIN.RoleInfo) {
   nextTick(fetchData)
 }
 
-function filterNode(value: string, data: AssignTreeNode): boolean {
+function filterNode(value: string, data: { name?: string }): boolean {
   if (!value)
     return true
   return (data.name || '').toLowerCase().includes(value.toLowerCase())

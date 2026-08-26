@@ -1,5 +1,5 @@
 <!--
- * @Description: 按某次 DQL 运行的结果列确认字段目录（单表，确定后覆盖）
+ * @Description: 按某次运行的结果列确认字段目录（单表，确定后覆盖）
 -->
 <script setup lang="ts">
 import type { CustomDialogProps } from '@/components/CustomDialog.vue'

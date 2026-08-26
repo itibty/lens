@@ -14,34 +14,23 @@ const props = withDefaults(defineProps<{
   defs: VisDashFilterDef[]
   title?: string
   desc?: string
-  showPreview?: boolean
   previewDisabled?: boolean
-  showReloadCards?: boolean
-  showScreenshot?: boolean
   screenshotting?: boolean
-  /** 预览页临时换肤；设计页关掉，默认主题走配置弹窗 */
-  showTheme?: boolean
-  /** 设计页：添加卡片 / 分组 / 配置 */
+  /** 设计页且有编辑权限：第二组整组出现 */
   showDesign?: boolean
   adding?: boolean
   dirty?: boolean
-  showSave?: boolean
   saveLoading?: boolean
   saveDisabled?: boolean
   loading?: boolean
 }>(), {
   title: '',
   desc: '',
-  showPreview: false,
   previewDisabled: false,
-  showReloadCards: false,
-  showScreenshot: false,
   screenshotting: false,
-  showTheme: true,
   showDesign: false,
   adding: false,
   dirty: false,
-  showSave: false,
   saveLoading: false,
   saveDisabled: false,
   loading: false,
@@ -56,7 +45,6 @@ const emit = defineEmits<{
   settings: []
   save: []
 }>()
-const showDesignCluster = computed(() => props.showDesign || props.showReloadCards)
 const theme = defineModel<DashThemeId>('theme', { default: DEFAULT_DASH_THEME })
 const values = defineModel<DashFilterValues>('values', { required: true })
 const themeOpen = ref(false)
@@ -124,170 +112,160 @@ useEventListener(window, 'scroll', onPageScroll, true)
       </div>
     </div>
     <div class="filter-dock__right">
-      <el-tooltip
-        v-if="showPreview"
-        :content="previewDisabled ? '请先保存看板' : '预览'"
-        placement="bottom"
-        :show-after="200"
-      >
-        <span class="filter-dock__preview">
-          <button
-            type="button"
-            class="filter-dock__btn"
-            :disabled="previewDisabled"
-            @click="emit('preview')"
-          >
-            <span class="i-mingcute-eye-2-line" />
-          </button>
-        </span>
-      </el-tooltip>
-      <el-tooltip
-        content="刷新数据"
-        placement="bottom"
-        :show-after="200"
-      >
-        <button
-          type="button"
-          class="filter-dock__btn"
-          @click="emit('refresh')"
-        >
-          <span class="i-mingcute-refresh-2-line" />
-        </button>
-      </el-tooltip>
-      <el-tooltip
-        v-if="showScreenshot"
-        :content="screenshotting ? '正在截屏…' : '一键截屏'"
-        placement="bottom"
-        :show-after="200"
-      >
-        <button
-          type="button"
-          class="filter-dock__btn"
-          :disabled="screenshotting"
-          :class="{ 'is-active': screenshotting }"
-          @click="emit('screenshot')"
-        >
-          <span :class="screenshotting ? 'i-svg-spinners-ring-resize' : 'i-mingcute-camera-2-line'" />
-        </button>
-      </el-tooltip>
-      <el-popover
-        v-if="showTheme"
-        v-model:visible="themeOpen"
-        placement="bottom-end"
-        trigger="click"
-        :width="168"
-        :show-arrow="false"
-        popper-class="dash-theme-popper"
-      >
-        <template #reference>
-          <button
-            type="button"
-            class="filter-dock__btn"
-            :class="{ 'is-active': themeOpen }"
-            title="临时换肤"
-          >
-            <span class="i-mingcute-palette-line" />
-          </button>
-        </template>
-        <div class="dash-theme-popper__grid">
-          <button
-            v-for="item in DASH_THEME_PRESETS"
-            :key="item.id"
-            type="button"
-            class="dash-theme-popper__item"
-            :class="{ 'is-active': theme === item.id }"
-            :title="item.name"
-            :style="{ background: item.tokens.canvas }"
-            @click="pickTheme(item.id)"
-          >
-            <span
-              class="dash-theme-popper__card"
-              :style="{
-                background: item.tokens.card,
-                borderRadius: `${dashThemeSwatchRadius(item.tokens.radius)}px`,
-              }"
-            />
-          </button>
-        </div>
-      </el-popover>
-      <i
-        v-if="showDesignCluster"
-        class="filter-dock__tools-sep"
-      />
-      <div
-        v-if="showDesignCluster"
-        class="filter-dock__design"
-      >
+      <div class="filter-dock__view">
         <el-tooltip
-          v-if="showDesign"
-          content="添加卡片"
+          :content="previewDisabled ? '请先保存看板' : '预览'"
           placement="bottom"
           :show-after="200"
         >
-          <span>
+          <span class="filter-dock__preview">
             <button
               type="button"
               class="filter-dock__btn"
-              :disabled="adding"
-              @click="emit('addCard')"
+              :disabled="previewDisabled"
+              @click="emit('preview')"
             >
-              <span :class="adding ? 'i-svg-spinners-ring-resize' : 'i-mingcute-add-square-line'" />
+              <span class="i-mingcute-eye-2-line" />
             </button>
           </span>
         </el-tooltip>
         <el-tooltip
-          v-if="showDesign"
-          content="添加分组"
+          content="刷新数据"
           placement="bottom"
           :show-after="200"
         >
           <button
             type="button"
             class="filter-dock__btn"
-            @click="emit('addGroup')"
+            @click="emit('refresh')"
           >
-            <span class="i-mingcute-new-folder-line" />
+            <span class="i-mingcute-refresh-2-line" />
           </button>
         </el-tooltip>
         <el-tooltip
-          v-if="showDesign"
-          content="配置"
+          :content="screenshotting ? '正在截屏…' : '一键截屏'"
           placement="bottom"
           :show-after="200"
         >
           <button
             type="button"
             class="filter-dock__btn"
-            @click="emit('settings')"
+            :disabled="screenshotting"
+            :class="{ 'is-active': screenshotting }"
+            @click="emit('screenshot')"
           >
-            <span class="i-mingcute-settings-3-line" />
+            <span :class="screenshotting ? 'i-svg-spinners-ring-resize' : 'i-mingcute-camera-2-line'" />
           </button>
         </el-tooltip>
-        <el-tooltip
-          v-if="showReloadCards"
-          content="重载卡片"
-          placement="bottom"
-          :show-after="200"
+        <el-popover
+          v-model:visible="themeOpen"
+          placement="bottom-end"
+          trigger="click"
+          :width="168"
+          :show-arrow="false"
+          popper-class="dash-theme-popper"
         >
-          <button
-            type="button"
-            class="filter-dock__btn"
-            @click="emit('reloadCards')"
-          >
-            <span class="i-mingcute-refresh-anticlockwise-1-line" />
-          </button>
-        </el-tooltip>
+          <template #reference>
+            <button
+              type="button"
+              class="filter-dock__btn"
+              :class="{ 'is-active': themeOpen }"
+              title="临时换肤"
+            >
+              <span class="i-mingcute-palette-line" />
+            </button>
+          </template>
+          <div class="dash-theme-popper__grid">
+            <button
+              v-for="item in DASH_THEME_PRESETS"
+              :key="item.id"
+              type="button"
+              class="dash-theme-popper__item"
+              :class="{ 'is-active': theme === item.id }"
+              :title="item.name"
+              :style="{ background: item.tokens.canvas }"
+              @click="pickTheme(item.id)"
+            >
+              <span
+                class="dash-theme-popper__card"
+                :style="{
+                  background: item.tokens.card,
+                  borderRadius: `${dashThemeSwatchRadius(item.tokens.radius)}px`,
+                }"
+              />
+            </button>
+          </div>
+        </el-popover>
       </div>
-      <el-button
-        v-if="showSave"
-        class="filter-dock__save"
-        type="primary"
-        :loading="saveLoading"
-        :disabled="saveDisabled"
-        @click="emit('save')"
-      >
-        保存
-      </el-button>
+      <i class="filter-dock__tools-sep" />
+      <div class="filter-dock__design">
+        <template v-if="showDesign">
+          <el-tooltip
+            content="添加卡片"
+            placement="bottom"
+            :show-after="200"
+          >
+            <span>
+              <button
+                type="button"
+                class="filter-dock__btn"
+                :disabled="adding"
+                @click="emit('addCard')"
+              >
+                <span :class="adding ? 'i-svg-spinners-ring-resize' : 'i-mingcute-add-square-line'" />
+              </button>
+            </span>
+          </el-tooltip>
+          <el-tooltip
+            content="添加分组"
+            placement="bottom"
+            :show-after="200"
+          >
+            <button
+              type="button"
+              class="filter-dock__btn"
+              @click="emit('addGroup')"
+            >
+              <span class="i-mingcute-new-folder-line" />
+            </button>
+          </el-tooltip>
+          <el-tooltip
+            content="配置"
+            placement="bottom"
+            :show-after="200"
+          >
+            <button
+              type="button"
+              class="filter-dock__btn"
+              @click="emit('settings')"
+            >
+              <span class="i-mingcute-settings-3-line" />
+            </button>
+          </el-tooltip>
+          <el-tooltip
+            content="重载卡片"
+            placement="bottom"
+            :show-after="200"
+          >
+            <button
+              type="button"
+              class="filter-dock__btn"
+              @click="emit('reloadCards')"
+            >
+              <span class="i-mingcute-refresh-anticlockwise-1-line" />
+            </button>
+          </el-tooltip>
+          <el-button
+            class="filter-dock__save"
+            type="primary"
+            :loading="saveLoading"
+            :disabled="saveDisabled"
+            @click="emit('save')"
+          >
+            保存
+          </el-button>
+        </template>
+      </div>
     </div>
     <div
       v-if="defs.length"
@@ -422,11 +400,20 @@ useEventListener(window, 'scroll', onPageScroll, true)
   display: flex;
   flex-shrink: 0;
   align-items: center;
+  justify-self: end;
   gap: 8px;
   overflow: visible;
   pointer-events: auto;
+
+  &:not(:has(.filter-dock__design > *)) {
+    .filter-dock__tools-sep,
+    .filter-dock__design {
+      display: none;
+    }
+  }
 }
 
+.filter-dock__view,
 .filter-dock__design {
   display: flex;
   align-items: center;

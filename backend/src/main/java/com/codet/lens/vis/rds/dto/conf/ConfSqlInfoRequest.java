@@ -2,11 +2,10 @@ package com.codet.lens.vis.rds.dto.conf;
 
 import com.codet.lens.common.EnumValue;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Getter;
-import lombok.Setter;
-
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import lombok.Getter;
+import lombok.Setter;
 
 
 @Schema(description = "新增|编辑 sql脚本信息 请求体")
@@ -23,10 +22,6 @@ public class ConfSqlInfoRequest {
     @Schema(description = "描述")
     private String sqlDesc;
 
-    @Schema(description = "响应字段名", requiredMode = Schema.RequiredMode.REQUIRED)
-    @NotBlank
-    private String retKey;
-
     @Schema(description = "数据源id", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotNull
     private Long dsId;
@@ -40,10 +35,4 @@ public class ConfSqlInfoRequest {
     @EnumValue(strValues = {"EBL", "DBL"})
     @NotNull
     private String status;
-
-    @Schema(description = "可执行的角色编码集合,多个逗号分隔")
-    private String execRoles;
-
-    @Schema(description = "可执行的用户id集合,多个逗号分隔")
-    private String execUsers;
 }

@@ -49,6 +49,17 @@ public class VisGroupDtos {
 
     @Getter
     @Setter
+    public static class ReportNode extends TreeNode<ReportNode> {
+        private String name;
+        private String icon;
+        /** 看板节点为 /vis/report/{id}；分组为空 */
+        private String url;
+        /** GROUP | DASH */
+        private String nodeType;
+    }
+
+    @Getter
+    @Setter
     public static class ManageNode extends TreeNode<ManageNode> {
         /** GROUP | DASH */
         private String nodeType;

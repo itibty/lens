@@ -1,7 +1,9 @@
 <!--
- * @Description: 看板分组树选择（列表筛选 / 移组 / 编辑页 / 抽屉上级）
+ * @Description: 看板分组树选择。根节点表示报表中心，分组挂在其下。
 -->
 <script setup lang="ts">
+import MenuIcon from '@/components/MenuIcon.vue'
+
 const props = withDefaults(defineProps<{
   modelValue?: string | null
   data?: VIS.DashGroupInfo[]
@@ -41,13 +43,13 @@ const treeData = computed(() => {
   const pruned = prune(props.data ?? [], props.excludeId)
   if (!props.rootLabel)
     return pruned
-  const root: VIS.DashGroupInfo = {
+  return [{
     id: '0',
     pid: '0',
     groupName: props.rootLabel,
-    children: [],
-  }
-  return [root, ...pruned]
+    icon: 'report-line',
+    children: pruned,
+  }]
 })
 
 function onChange(value: string | null) {
@@ -70,5 +72,29 @@ function onChange(value: string | null) {
     default-expand-all
     render-after-expand
     @update:model-value="onChange"
-  />
+  >
+    <template #default="{ data }">
+      <span class="dash-group-option">
+        <MenuIcon
+          v-if="(data as VIS.DashGroupInfo).icon"
+          :icon="(data as VIS.DashGroupInfo).icon"
+          class-name="dash-group-option__icon"
+        />
+        <span>{{ (data as VIS.DashGroupInfo).groupName }}</span>
+      </span>
+    </template>
+  </el-tree-select>
 </template>
+
+<style scoped lang="scss">
+.dash-group-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.dash-group-option__icon {
+  font-size: 15px;
+}
+</style>

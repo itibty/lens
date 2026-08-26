@@ -70,12 +70,7 @@ export function buildExecTableRet(data?: VIS.DebugSqlResponse): {
   columns: ColumnInfo[]
   records: any[]
 } {
-  const { execRet, retKey, sqlType } = data || {}
-  if (!execRet || !retKey || !sqlType)
-    return { columns: [], records: [] }
-
-  const rawData = sqlType === 'DQL' ? execRet[retKey] : [execRet]
-  const records = Array.isArray(rawData) ? rawData : []
+  const records = Array.isArray(data?.execRet) ? data.execRet : []
   if (records.length === 0)
     return { columns: [], records }
 
@@ -153,10 +148,10 @@ export type SaveGate
   = | { ok: true, tab?: CurrentRun }
     | { ok: false, reason: string }
 
-/** DQL 必须先跑通当前稿；DML（删除/更新等）不限制 */
+/** 必须先跑通当前稿才能保存 */
 export function resolveSaveGate(
   tabs: SqlOutputTab[],
-  draft: { sqlId?: string, sql: string, params: string, sqlType?: VIS.ConfSqlInfo['sqlType'] },
+  draft: { sqlId?: string, sql: string, params: string },
 ): SaveGate {
   if (!draft.sqlId)
     return { ok: false, reason: '数据集不存在，无法保存' }
@@ -165,11 +160,7 @@ export function resolveSaveGate(
   if (isSuccessfulRun(tab) && runMatchesDraft(tab, draft.sql, draft.params))
     return { ok: true, tab }
 
-  if (draft.sqlType === 'DQL') {
-    if (!isSuccessfulRun(tab))
-      return { ok: false, reason: '请先运行成功后再保存' }
-    return { ok: false, reason: '脚本或参数已修改，请重新运行后再保存' }
-  }
-
-  return { ok: true }
+  if (!isSuccessfulRun(tab))
+    return { ok: false, reason: '请先运行成功后再保存' }
+  return { ok: false, reason: '脚本或参数已修改，请重新运行后再保存' }
 }

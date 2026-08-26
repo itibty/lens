@@ -19,6 +19,7 @@ import java.nio.charset.StandardCharsets;
 public class AuthInterceptor implements HandlerInterceptor {
 
     private final JwtService jwtService;
+    private final TokenInvalidateService tokenInvalidateService;
     private final JsonMapper objectMapper;
 
     @Override
@@ -35,7 +36,7 @@ public class AuthInterceptor implements HandlerInterceptor {
                 ? header.substring(FieldConst.TOKEN_PREFIX.length())
                 : header;
         AuthUser user = token == null ? null : jwtService.parse(token);
-        if (user == null) {
+        if (user == null || tokenInvalidateService.isInvalidated(user)) {
             write(response, ResultEnum.ERROR401);
             return false;
         }

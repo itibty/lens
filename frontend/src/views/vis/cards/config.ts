@@ -1,2 +1,1 @@
-export const FUNCTION_CARD_QUERY = 'ds:card:query'
-export const FUNCTION_CARD_WRITE = 'ds:card:write'
+export { VIS_CARD_CONF as FUNCTION_CARD_CONF } from '@/core/permCodes'

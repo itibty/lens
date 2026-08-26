@@ -15,7 +15,7 @@ public class QueryVisDashboardRequest extends PageRequest {
     @Schema(description = "看板 id")
     private Long id;
 
-    @Schema(description = "分组 id。0 为未分组")
+    @Schema(description = "分组 id。0 表示报表中心根下")
     private Long groupId;
 
     @Schema(description = "groupId 非 0 时是否包含子孙分组。默认 true；抽屉精确查询传 false")

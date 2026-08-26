@@ -1,6 +1,55 @@
+# OS
 .DS_Store
-**/.DS_Store
+Thumbs.db
 
-backend/target/
-
+# IDE
 .cursor/
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+!.vscode/settings.json
+!.vscode/extensions.json
+
+# Logs
+logs/
+*.log
+
+# Java / Maven
+target/
+*.class
+*.jar
+*.war
+*.ear
+*.nar
+!**/src/main/**/target/
+!**/src/test/**/target/
+!.mvn/wrapper/maven-wrapper.jar
+hs_err_pid*
+replay_pid*
+dependency-reduced-pom.xml
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+.mvn/timing.properties
+
+# Node / Vite
+node_modules/
+dist/
+dist-ssr/
+coverage/
+*.tsbuildinfo
+*.local
+pkg-stats.html
+.vite/
+.vite-inspect/
+.mocks/
+
+# Agent / 辅助工具
+.superpowers/
+.codebuddy/
+.trae/
+openspec/

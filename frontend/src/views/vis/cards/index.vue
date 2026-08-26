@@ -11,7 +11,7 @@ import { getPageAfterDelete, showConfirm, showToast } from '@/utils/index'
 import { isBlank } from '@/utils/validate'
 import { CHART_TYPE_OPTIONS } from '@/views/vis/charts'
 import { resolveChartTypeCode } from '@/views/vis/shared/types'
-import { FUNCTION_CARD_WRITE } from './config'
+import { FUNCTION_CARD_CONF } from './config'
 
 defineOptions({ name: 'VisCards' })
 
@@ -40,7 +40,7 @@ const states = reactive<IStates>({
   total: 0,
   records: [],
   permission: {
-    write: hasFunction(FUNCTION_CARD_WRITE),
+    write: hasFunction(FUNCTION_CARD_CONF),
   },
 })
 
@@ -169,7 +169,8 @@ onMounted(() => {
 </script>
 
 <template>
-  <PageCard>
+  <div class="h-full">
+    <PageCard>
     <template #extra>
       <el-button
         v-if="states.permission.write"
@@ -245,7 +246,6 @@ onMounted(() => {
         <el-table-column label="操作" width="220" fixed="right">
           <template #default="{ row }">
             <el-button
-              v-if="states.permission.write"
               size="small"
               type="primary"
               link
@@ -337,4 +337,5 @@ onMounted(() => {
       </el-table>
     </template>
   </CustomDialog>
+  </div>
 </template>

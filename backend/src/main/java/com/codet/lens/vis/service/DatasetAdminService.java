@@ -34,7 +34,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -139,8 +138,6 @@ public class DatasetAdminService {
 
     public DebugSqlResponse debug(DebugSqlRequest req) {
         DebugSqlResponse resp = new DebugSqlResponse();
-        resp.setSqlType(FieldConst.DQL);
-        resp.setRetKey("rows");
         try {
             VisDataset dataset = req.getId() == null ? null : require(req.getId());
             VisDatasource source = dataset == null ? null : datasourceMapper.selectById(dataset.getSourceId());
@@ -153,9 +150,7 @@ public class DatasetAdminService {
             resp.setParams(tpl.getParams());
             if (Boolean.TRUE.equals(req.getExecSql())) {
                 SqlSelectResult result = RdsUtil.select(tpl);
-                Map<String, Object> exec = new LinkedHashMap<>();
-                exec.put("rows", result.getRows());
-                resp.setExecRet(exec);
+                resp.setExecRet(result.getRows());
                 List<DebugSqlColumn> cols = new ArrayList<>();
                 for (SqlColumnMeta col : result.getColumns()) {
                     DebugSqlColumn item = new DebugSqlColumn();
@@ -179,14 +174,12 @@ public class DatasetAdminService {
     private ConfSqlInfo toInfo(VisDataset row, VisDatasource source) {
         ConfSqlInfo info = new ConfSqlInfo();
         info.setId(row.getId());
-        info.setSqlType(FieldConst.DQL);
         info.setSqlName(row.getDatasetName());
         info.setSqlDesc(row.getDatasetDesc());
         info.setSqlContent(row.getSqlContent());
         info.setSqlParams(row.getParamDemo());
         info.setDsId(row.getSourceId());
         info.setDsName(source == null ? null : source.getSourceName());
-        info.setRetKey("rows");
         info.setStatus(row.getStatus());
         info.setTplEngine("ENJOY");
         return info;
