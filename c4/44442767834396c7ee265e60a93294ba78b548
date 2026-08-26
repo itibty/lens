@@ -1,0 +1,1101 @@
+.gitignore
+  s_f2a7d69b90b508::t_66720f6a60f7b9 5-6
+  s_f2a7d69b90b508::t_4798d74f4d5e39 2-4
+  s_460126e698fd7c::t_9f37cab1a6449a 1
+backend/src/main/java/com/codet/lens/common/BaseEntity.java
+  s_460126e698fd7c::t_5b1a54b121b34e 1-45
+backend/src/main/java/com/codet/lens/common/ConvertUtil.java
+  s_460126e698fd7c::t_a7870a4eb1828e 1-17
+backend/src/main/java/com/codet/lens/common/IdsRequest.java
+  s_460126e698fd7c::t_13ba35b609e440 1-16
+backend/src/main/java/com/codet/lens/common/ListResponse.java
+  s_460126e698fd7c::t_b3f1958b131fb4 1-18
+backend/src/main/java/com/codet/lens/common/PageCondition.java
+  s_460126e698fd7c::t_7cb943fdf0252c 1-22
+backend/src/main/java/com/codet/lens/common/PageRequest.java
+  s_460126e698fd7c::t_72b6865912fcb7 1-17
+backend/src/main/java/com/codet/lens/common/PageResponse.java
+  s_460126e698fd7c::t_f2de2d421eda49 1-29
+backend/src/main/java/com/codet/lens/common/R.java
+  s_460126e698fd7c::t_087b1645e2df86 1-49
+backend/src/main/java/com/codet/lens/common/ResultEnum.java
+  s_460126e698fd7c::t_6781d51d3d0e40 1-17
+backend/src/main/java/com/codet/lens/common/SimpleResponse.java
+  s_460126e698fd7c::t_f4b7e39692aab1 1-16
+backend/src/main/java/com/codet/lens/common/TreeNode.java
+  s_460126e698fd7c::t_8964ee5035d421 1-18
+backend/src/main/java/com/codet/lens/vis/core/dash/VisDashWidgets.java
+  s_460126e698fd7c::t_a6977a9acd0a1e 1-153
+backend/src/main/java/com/codet/lens/vis/core/pivot/PivotGrains.java
+  s_460126e698fd7c::t_d1b61a75466c59 1-90
+backend/src/main/java/com/codet/lens/vis/core/pivot/PivotResultAssembler.java
+  s_460126e698fd7c::t_86200810895401 1-160
+backend/src/main/java/com/codet/lens/vis/core/query/ContrastSqlAssembler.java
+  s_460126e698fd7c::t_f800a60733074a 1-287
+backend/src/main/java/com/codet/lens/vis/core/query/ContrastWindowResolver.java
+  s_460126e698fd7c::t_c385cb800eecca 1-180
+backend/src/main/java/com/codet/lens/vis/core/query/DateValueExpResolver.java
+  s_460126e698fd7c::t_43b08eb5d8e18b 1-169
+backend/src/main/java/com/codet/lens/vis/core/query/QueryBO.java
+  s_460126e698fd7c::t_01389ab9b187fc 1-85
+backend/src/main/java/com/codet/lens/vis/core/query/SqlBuilder.java
+  s_460126e698fd7c::t_829a176462ac82 1-128
+backend/src/main/java/com/codet/lens/vis/core/query/SqlDialect.java
+  s_460126e698fd7c::t_0e04fbb00c470b 1-53
+backend/src/main/java/com/codet/lens/vis/core/query/SqlExprHelper.java
+  s_460126e698fd7c::t_10712c4f5edfae 1-243
+backend/src/main/java/com/codet/lens/vis/core/query/VisCatalogCheck.java
+  s_460126e698fd7c::t_9c45fe671a0d03 1-261
+backend/src/main/java/com/codet/lens/vis/core/query/VisFilterOptionNormalizer.java
+  s_460126e698fd7c::t_66deff4f81b3cb 1-355
+backend/src/main/java/com/codet/lens/vis/core/query/VisParamHelper.java
+  s_460126e698fd7c::t_7fec27968dd203 1-76
+backend/src/main/java/com/codet/lens/vis/core/query/VisQueryPrep.java
+  s_460126e698fd7c::t_771067c639f6c3 1-606
+backend/src/main/java/com/codet/lens/vis/dto/card/QueryVisCardRequest.java
+  s_460126e698fd7c::t_bda54d0e82cf10 1-30
+backend/src/main/java/com/codet/lens/vis/dto/card/VisCardInfo.java
+  s_460126e698fd7c::t_e6bd878c36fd8e 1-43
+backend/src/main/java/com/codet/lens/vis/dto/card/VisCardSaveRequest.java
+  s_460126e698fd7c::t_30d98c4f42b5d9 1-48
+backend/src/main/java/com/codet/lens/vis/dto/dash/VisDashboardInfo.java
+  s_460126e698fd7c::t_c11ee497beae7e 1-45
+backend/src/main/java/com/codet/lens/vis/dto/dash/VisDashboardLayoutItem.java
+  s_460126e698fd7c::t_b5b2e4bd0b706a 1-24
+backend/src/main/java/com/codet/lens/vis/dto/dash/VisDashboardRefInfo.java
+  s_460126e698fd7c::t_85ee5aeb5e529c 1-28
+backend/src/main/java/com/codet/lens/vis/dto/dataset/VisDatasetInfo.java
+  s_460126e698fd7c::t_63edac6b63e784 1-20
+backend/src/main/java/com/codet/lens/vis/dto/dataset/VisFilterOptionItem.java
+  s_460126e698fd7c::t_dcc23e643385ef 1-24
+backend/src/main/java/com/codet/lens/vis/dto/dataset/VisFilterOptionsRequest.java
+  s_460126e698fd7c::t_e7b4a804740e8e 1-33
+backend/src/main/java/com/codet/lens/vis/dto/dataset/VisFilterOptionsResponse.java
+  s_460126e698fd7c::t_7f8673b2aa5120 1-19
+backend/src/main/java/com/codet/lens/vis/dto/item/BaseField.java
+  s_460126e698fd7c::t_1ed242b9ab3357 1-16
+backend/src/main/java/com/codet/lens/vis/dto/item/ContrastConfig.java
+  s_460126e698fd7c::t_57bc9a8ed8c7e2 1-32
+backend/src/main/java/com/codet/lens/vis/dto/item/DimensionItem.java
+  s_460126e698fd7c::t_7b5354accc4ad9 1-14
+backend/src/main/java/com/codet/lens/vis/dto/item/FilterGroup.java
+  s_460126e698fd7c::t_e47a4df44884ee 1-19
+backend/src/main/java/com/codet/lens/vis/dto/item/FilterItem.java
+  s_460126e698fd7c::t_045cc90a3e0c53 1-27
+backend/src/main/java/com/codet/lens/vis/dto/item/HavingFilterItem.java
+  s_460126e698fd7c::t_61e077ec17b888 1-18
+backend/src/main/java/com/codet/lens/vis/dto/item/MetricItem.java
+  s_460126e698fd7c::t_dde95702993252 1-21
+backend/src/main/java/com/codet/lens/vis/dto/item/OrderItem.java
+  s_460126e698fd7c::t_da97e261f8820e 1-14
+backend/src/main/java/com/codet/lens/vis/dto/pivot/PivotColumn.java
+  s_460126e698fd7c::t_5c0247c7adc971 1-23
+backend/src/main/java/com/codet/lens/vis/dto/pivot/PivotQueryConfig.java
+  s_460126e698fd7c::t_44cfdf8b1ebb67 1-44
+backend/src/main/java/com/codet/lens/vis/dto/pivot/PivotQueryRequest.java
+  s_460126e698fd7c::t_4c1bbaf3c6ea70 1-27
+backend/src/main/java/com/codet/lens/vis/dto/pivot/PivotQueryResponse.java
+  s_460126e698fd7c::t_82f7a02214eaf9 1-41
+backend/src/main/java/com/codet/lens/vis/dto/pivot/PivotRow.java
+  s_460126e698fd7c::t_d0e8039b84787a 1-27
+backend/src/main/java/com/codet/lens/vis/dto/query/ContrastInfo.java
+  s_460126e698fd7c::t_3a2376f50d7026 1-32
+backend/src/main/java/com/codet/lens/vis/dto/query/ContrastRange.java
+  s_460126e698fd7c::t_f781b7ee18eabc 1-20
+backend/src/main/java/com/codet/lens/vis/dto/query/DateWindowRequest.java
+  s_460126e698fd7c::t_ec24bebbe7a151 1-32
+backend/src/main/java/com/codet/lens/vis/dto/query/DateWindowResponse.java
+  s_460126e698fd7c::t_f8ee1deff6cdca 1-20
+backend/src/main/java/com/codet/lens/vis/dto/query/DetailQueryRequest.java
+  s_460126e698fd7c::t_325b2b9b15a0aa 1-27
+backend/src/main/java/com/codet/lens/vis/dto/query/QueryConfig.java
+  s_460126e698fd7c::t_fbaa7fac7a0721 1-49
+backend/src/main/java/com/codet/lens/vis/dto/query/QueryDataResponse.java
+  s_460126e698fd7c::t_f48eafd419bc85 1-36
+backend/src/main/java/com/codet/lens/vis/dto/query/QueryRequest.java
+  s_460126e698fd7c::t_041de9ed17ebe6 1-27
+backend/src/main/java/com/codet/lens/vis/entity/VisCard.java
+  s_460126e698fd7c::t_4655bbd68c44e1 1-29
+backend/src/main/java/com/codet/lens/vis/enums/AggFunctionEnum.java
+  s_460126e698fd7c::t_04517d2a0b20ad 1-25
+backend/src/main/java/com/codet/lens/vis/enums/ChartTypeEnum.java
+  s_460126e698fd7c::t_96066ce53fd528 1-55
+backend/src/main/java/com/codet/lens/vis/enums/ContrastCalcTypeEnum.java
+  s_460126e698fd7c::t_1dee85c446d980 1-32
+backend/src/main/java/com/codet/lens/vis/enums/ContrastMethodEnum.java
+  s_460126e698fd7c::t_528cb2c3f47f5c 1-37
+backend/src/main/java/com/codet/lens/vis/enums/DateValueExpEnum.java
+  s_460126e698fd7c::t_1f2a5d1407e695 1-48
+backend/src/main/java/com/codet/lens/vis/enums/FilterOpEnum.java
+  s_460126e698fd7c::t_831932b7006ae0 1-43
+backend/src/main/java/com/codet/lens/vis/enums/SortDirEnum.java
+  s_460126e698fd7c::t_5f748b3a1fe477 1-20
+backend/src/main/java/com/codet/lens/vis/enums/TimeGrainEnum.java
+  s_460126e698fd7c::t_717374c15e60f4 1-52
+backend/src/main/java/com/codet/lens/vis/mapper/VisCardMapper.java
+  s_460126e698fd7c::t_45100081855d72 1-9
+backend/src/main/java/com/codet/lens/vis/mapper/VisDashboardCardMapper.java
+  s_460126e698fd7c::t_dad547a3c82e63 1-9
+backend/src/main/java/com/codet/lens/vis/mapper/VisDashboardMapper.java
+  s_460126e698fd7c::t_261e74b934718a 1-9
+backend/src/main/java/com/codet/lens/vis/rds/bo/ExecSqlInfo.java
+  s_460126e698fd7c::t_905b2d5afb3300 1-20
+backend/src/main/java/com/codet/lens/vis/rds/bo/SqlColumnMeta.java
+  s_460126e698fd7c::t_8d5fcb5e307226 1-17
+backend/src/main/java/com/codet/lens/vis/rds/bo/SqlConf.java
+  s_460126e698fd7c::t_c868d63c79ad4a 1-23
+backend/src/main/java/com/codet/lens/vis/rds/bo/SqlSelectResult.java
+  s_460126e698fd7c::t_57c54b2c3d7914 1-18
+backend/src/main/java/com/codet/lens/vis/rds/bo/SqlTplPara.java
+  s_460126e698fd7c::t_54eb799e0e14bc 1-47
+backend/src/main/java/com/codet/lens/vis/rds/bo/SqlTplRet.java
+  s_460126e698fd7c::t_9e2d69eb6c219c 1-36
+backend/src/main/java/com/codet/lens/vis/rds/core/MetaInfo.java
+  s_460126e698fd7c::t_a1583bfd5a630b 1-104
+backend/src/main/java/com/codet/lens/vis/rds/core/QueryContext.java
+  s_460126e698fd7c::t_7e24a3801c9fc6 1-53
+backend/src/main/java/com/codet/lens/vis/rds/core/QueryContextHolder.java
+  s_460126e698fd7c::t_6b2be89ca38ac2 1-23
+backend/src/main/java/com/codet/lens/vis/rds/core/SqlFieldCatalog.java
+  s_460126e698fd7c::t_c8415aa59c9e76 1-45
+backend/src/main/java/com/codet/lens/vis/rds/core/SqlFieldTypes.java
+  s_460126e698fd7c::t_e8de39562197df 1-48
+backend/src/main/java/com/codet/lens/vis/rds/core/SqlTplEngine.java
+  s_460126e698fd7c::t_ff7e4f862f081a 1-64
+backend/src/main/java/com/codet/lens/vis/rds/core/SqlTplKit.java
+  s_460126e698fd7c::t_b6c2449d1dd0ac 1-22
+backend/src/main/java/com/codet/lens/vis/rds/dto/conf/ConfSqlFieldInfo.java
+  s_460126e698fd7c::t_f2bef668a217f6 1-22
+backend/src/main/java/com/codet/lens/vis/rds/dto/conf/ConfSqlInfo.java
+  s_460126e698fd7c::t_8b643dc83118c3 1-52
+backend/src/main/java/com/codet/lens/vis/rds/dto/conf/ConfSqlInfoRequest.java
+  s_460126e698fd7c::t_57afdc4cdaf130 1-49
+backend/src/main/java/com/codet/lens/vis/rds/dto/conf/DebugSqlRequest.java
+  s_460126e698fd7c::t_9828e6b2e68d93 1-32
+backend/src/main/java/com/codet/lens/vis/rds/dto/conf/QueryConfSqlRequest.java
+  s_460126e698fd7c::t_ee927d0ad3b89d 1-38
+backend/src/main/java/com/codet/lens/vis/service/VisCardService.java
+  s_460126e698fd7c::t_4a9a09f4e85212 1-151
+backend/src/main/java/com/codet/lens/vis/service/VisDateWindowService.java
+  s_460126e698fd7c::t_6d2303fd2428c4 1-35
+frontend/.editorconfig
+  s_460126e698fd7c::t_8605e0607aa70b 1-14
+frontend/.env
+  s_460126e698fd7c::t_bb214aede1e89b 1-7
+frontend/.env.pre
+  s_460126e698fd7c::t_8646a770556d1f 1-6
+frontend/.env.test
+  s_460126e698fd7c::t_51029d8744ab9e 1-6
+frontend/.npmrc
+  s_460126e698fd7c::t_1c723ae4ee18e9 1
+frontend/LICENSE
+  s_460126e698fd7c::t_b7e168b4528527 1-201
+frontend/docs/example.nginx.conf
+  s_460126e698fd7c::t_654eb9e65fec47 1-155
+frontend/index.html
+  s_460126e698fd7c::t_c7da045b2954f5 1-34
+frontend/lint-staged.config.cjs
+  s_460126e698fd7c::t_4249c7432cae95 1-14
+frontend/pnpm-lock.yaml
+  s_460126e698fd7c::t_4502bddf712ea3 1-17191
+frontend/public/css/loading.css
+  s_460126e698fd7c::t_695b20ca1bdc6a 1-99
+frontend/scripts/verify-commit.js
+  s_460126e698fd7c::t_852321ff17c6e8 1-48
+frontend/src/apis/admin/index.ts
+  s_460126e698fd7c::t_bc3f753836d541 1-14
+frontend/src/apis/common.ts
+  s_460126e698fd7c::t_d8ee1b42cc6533 1-52
+frontend/src/apis/vis/card.ts
+  s_f2a7d69b90b508::t_195a4d0d2875c5 1-97
+frontend/src/apis/vis/dataset.ts
+  s_f2a7d69b90b508::t_d2edae4627ca63 1-158
+frontend/src/apis/vis/datasource.ts
+  s_f2a7d69b90b508::t_014410caafd5cd 1-70
+frontend/src/apis/vis/query.ts
+  s_f2a7d69b90b508::t_e2e14d936c854e 1-125
+frontend/src/assets/icons/D.svg
+  s_460126e698fd7c::t_c022295446285c 1
+frontend/src/assets/icons/index.svg
+  s_460126e698fd7c::t_4d63735067fdb0 1-440
+frontend/src/assets/icons/logo.svg
+  s_460126e698fd7c::t_b0005400f5b6e0 1
+frontend/src/assets/icons/vis-chart/bar.svg
+  s_460126e698fd7c::t_719197320d9c1f 1-5
+frontend/src/assets/icons/vis-chart/combo.svg
+  s_460126e698fd7c::t_fa40428855a516 1-7
+frontend/src/assets/icons/vis-chart/funnel.svg
+  s_460126e698fd7c::t_d50505030bcad1 1-13
+frontend/src/assets/icons/vis-chart/heatmap.svg
+  s_460126e698fd7c::t_58b833693b8e4d 1-18
+frontend/src/assets/icons/vis-chart/kpi.svg
+  s_460126e698fd7c::t_3f4308feb24293 1-9
+frontend/src/assets/icons/vis-chart/line.svg
+  s_460126e698fd7c::t_3ce66cb0d560fe 1-4
+frontend/src/assets/icons/vis-chart/number.svg
+  s_460126e698fd7c::t_f3f1a59aa38138 1-21
+frontend/src/assets/icons/vis-chart/pie.svg
+  s_460126e698fd7c::t_62876abc406bc1 1-12
+frontend/src/assets/icons/vis-chart/pivot.svg
+  s_460126e698fd7c::t_707f790d5e4e03 1-24
+frontend/src/assets/icons/vis-chart/progress.svg
+  s_460126e698fd7c::t_a8873cf2fbaa14 1-8
+frontend/src/assets/icons/vis-chart/radar.svg
+  s_460126e698fd7c::t_229c0ec5fcacd6 1-22
+frontend/src/assets/icons/vis-chart/rank.svg
+  s_460126e698fd7c::t_c8d051d59f3454 1-8
+frontend/src/assets/icons/vis-chart/richtext.svg
+  s_460126e698fd7c::t_4b8a3d52228db6 1-4
+frontend/src/assets/icons/vis-chart/scatter.svg
+  s_460126e698fd7c::t_eaaff400015a6d 1-8
+frontend/src/assets/icons/vis-chart/table.svg
+  s_460126e698fd7c::t_bccb8b8a8b5276 1-23
+frontend/src/assets/icons/vis-chart/tornado.svg
+  s_460126e698fd7c::t_547a32ca3f5041 1-9
+frontend/src/assets/icons/vis-chart/treemap.svg
+  s_460126e698fd7c::t_5ae974c9af993e 1-6
+frontend/src/assets/icons/vis-chart/trend.svg
+  s_460126e698fd7c::t_ba7e501bf3c34d 1-6
+frontend/src/assets/icons/vis-chart/url.svg
+  s_460126e698fd7c::t_49d57867f107f8 1-10
+frontend/src/assets/icons/vis-chart/waterfall.svg
+  s_460126e698fd7c::t_21ea80016de63a 1-6
+frontend/src/assets/icons/vis-chart/wordcloud.svg
+  s_460126e698fd7c::t_3e0d4fbd23fa86 1-9
+frontend/src/assets/images/login/background.svg
+  s_460126e698fd7c::t_b69581735b37f9 1-69
+frontend/src/assets/styles/base.scss
+  s_460126e698fd7c::t_146c7aa6f3a91a 1-9
+frontend/src/assets/styles/index.scss
+  s_460126e698fd7c::t_bc153d7e9e543a 1-8
+frontend/src/assets/styles/overrides/codemirror.scss
+  s_460126e698fd7c::t_68c95d242bbebf 1-10
+frontend/src/assets/styles/overrides/element.scss
+  s_460126e698fd7c::t_8c75784428041a 1-104
+frontend/src/assets/styles/overrides/nprogress.scss
+  s_460126e698fd7c::t_e1bb39de4e4842 1-13
+frontend/src/assets/styles/tokens.scss
+  s_460126e698fd7c::t_be9d99d084bf69 1-27
+frontend/src/assets/styles/utilities.scss
+  s_460126e698fd7c::t_02cad567257963 1-167
+frontend/src/assets/styles/variables.scss
+  s_460126e698fd7c::t_2e38a35c26221a 1-32
+frontend/src/components/CustomDialog.vue
+  s_460126e698fd7c::t_9ebd01e45bd9ee 1-197
+frontend/src/components/CustomDrawer.vue
+  s_460126e698fd7c::t_517794de2c33f7 1-237
+frontend/src/components/FullPanel.vue
+  s_460126e698fd7c::t_bf7968bbce31ec 1-218
+frontend/src/components/FullWrap.vue
+  s_460126e698fd7c::t_025319572fdd99 1-103
+frontend/src/components/SidePanel.vue
+  s_460126e698fd7c::t_a99b94310c1b51 1-155
+frontend/src/components/SvgIcon.vue
+  s_460126e698fd7c::t_e3dc287be618ef 1-45
+frontend/src/components/editor/CodemirrorEditor.vue
+  s_460126e698fd7c::t_4db012fc636fae 1-372
+frontend/src/components/editor/useEditorResize.ts
+  s_460126e698fd7c::t_9d93e64fc7e72b 1-38
+frontend/src/components/form/TableForm.vue
+  s_460126e698fd7c::t_6137ba3222212e 1-214
+frontend/src/core/data.ts
+  s_460126e698fd7c::t_bec3e7a96ac500 1-47
+frontend/src/directives/index.ts
+  s_460126e698fd7c::t_96b7a374ceba0a 1-19
+frontend/src/directives/modules/copy.ts
+  s_460126e698fd7c::t_da083ba4d7b84b 1-79
+frontend/src/directives/modules/debounce.ts
+  s_460126e698fd7c::t_c66bc6c552a6de 1-55
+frontend/src/directives/modules/input-filter.ts
+  s_460126e698fd7c::t_68d4fc52b5f2c4 1-92
+frontend/src/directives/modules/spinner.ts
+  s_460126e698fd7c::t_c69fa4459b3421 1-59
+frontend/src/directives/modules/throttle.ts
+  s_460126e698fd7c::t_0a33c1ea2cf437 1-50
+frontend/src/directives/modules/watermark.ts
+  s_460126e698fd7c::t_0fa00681270195 1-120
+frontend/src/hooks/checker.ts
+  s_460126e698fd7c::t_ca735821ad7bb9 1-131
+frontend/src/hooks/layout.ts
+  s_460126e698fd7c::t_2a3e83bf52efb8 1-105
+frontend/src/hooks/swipeBack.ts
+  s_460126e698fd7c::t_67279bb463c9f4 1-45
+frontend/src/install.ts
+  s_460126e698fd7c::t_dab0adb74e8076 1-55
+frontend/src/layout/components/Notice/index.vue
+  s_460126e698fd7c::t_156b4c45d95179 1-81
+frontend/src/layout/components/PageCard/index.vue
+  s_460126e698fd7c::t_40399d1af38bee 1-244
+frontend/src/main.ts
+  s_460126e698fd7c::t_0962ea428ce145 1-19
+frontend/src/router/navigation.ts
+  s_460126e698fd7c::t_8cd0bc92abaefc 1-61
+frontend/src/stores/index.ts
+  s_460126e698fd7c::t_965eb0d11ce9d1 1-11
+frontend/src/stores/modules/app.ts
+  s_460126e698fd7c::t_47aa48b4177975 1-42
+frontend/src/stores/modules/keepPage.ts
+  s_460126e698fd7c::t_79fc1a38f82010 1-97
+frontend/src/utils/cache.ts
+  s_460126e698fd7c::t_e604cb11ed7e02 1-97
+frontend/src/utils/code.ts
+  s_460126e698fd7c::t_f8be758bd93259 1-63
+frontend/src/utils/color.ts
+  s_460126e698fd7c::t_42278323d1f5fa 1-53
+frontend/src/utils/converter.ts
+  s_460126e698fd7c::t_e704644b873fcb 1-108
+frontend/src/utils/date.ts
+  s_460126e698fd7c::t_b2cdbeba527792 1-152
+frontend/src/utils/logger.ts
+  s_460126e698fd7c::t_5c54d981f4496b 1-28
+frontend/src/utils/nprogress.ts
+  s_460126e698fd7c::t_43d8d219732d57 1-38
+frontend/src/utils/number.ts
+  s_460126e698fd7c::t_a55ff0abdc9e38 1-44
+frontend/src/utils/validate.ts
+  s_460126e698fd7c::t_5cb9dfe50f119c 1-179
+frontend/src/views/account/index.vue
+  s_460126e698fd7c::t_aeefaa2ec67526 1-38
+frontend/src/views/common/404.vue
+  s_460126e698fd7c::t_ece70b7fbb5ab4 1-309
+frontend/src/views/common/url-frame.vue
+  s_460126e698fd7c::t_d2c83ca8eaf2d8 1-124
+frontend/src/views/ds/components/BindFieldsDialog.vue
+  s_460126e698fd7c::t_e7f14c1ac4203b 1-243
+frontend/src/views/ds/components/MetaTree.vue
+  s_460126e698fd7c::t_d739c5b126983f 1-517
+frontend/src/views/ds/components/SqlOutputPanel.vue
+  s_460126e698fd7c::t_7312ef9ad5a0d4 1-454
+frontend/src/views/ds/components/SqlRulePanel.vue
+  s_460126e698fd7c::t_79707959b371a8 1-195
+frontend/src/views/ds/components/SqlTemplateEditor.vue
+  s_460126e698fd7c::t_c3d150ac4c3895 1-281
+frontend/src/views/ds/components/config.ts
+  s_460126e698fd7c::t_ea9857ebb5aec1 1-23
+frontend/src/views/ds/components/debugResult.ts
+  s_460126e698fd7c::t_cfd9c6789222e0 1-175
+frontend/src/views/ds/components/sql-editor/buildExtensions.ts
+  s_460126e698fd7c::t_cfed9b8bdd78c8 1-54
+frontend/src/views/ds/components/sql-editor/cmUtils.ts
+  s_460126e698fd7c::t_ac93d55dc1e0fd 1-34
+frontend/src/views/ds/components/sql-editor/completionSections.ts
+  s_460126e698fd7c::t_90274bce52dba4 1-36
+frontend/src/views/ds/components/sql-editor/completionTheme.ts
+  s_460126e698fd7c::t_39c9eb1b0c6b70 1-107
+frontend/src/views/ds/components/sql-editor/enjoyCompletion.ts
+  s_460126e698fd7c::t_81d15288615fbf 1-111
+frontend/src/views/ds/components/sql-editor/enjoyConstChips.ts
+  s_460126e698fd7c::t_31670b6e20a51b 1-131
+frontend/src/views/ds/components/sql-editor/enjoyHighlight.ts
+  s_460126e698fd7c::t_e8d1f19119632a 1-117
+frontend/src/views/ds/components/sql-editor/enjoyVocab.ts
+  s_460126e698fd7c::t_5e33eb50746e0d 1-222
+frontend/src/views/ds/components/sql-editor/formatSqlWithEnjoy.ts
+  s_460126e698fd7c::t_4e57f32cbf8ab5 1-136
+frontend/src/views/ds/components/sql-editor/index.ts
+  s_460126e698fd7c::t_c12b7f5f30c1e5 1-23
+frontend/src/views/ds/components/sql-editor/keywordCompletion.ts
+  s_460126e698fd7c::t_76724e02d143e9 1-80
+frontend/src/views/ds/components/sql-editor/metaCompletion.ts
+  s_460126e698fd7c::t_a7a98d94122dcd 1-180
+frontend/src/views/ds/components/sql-editor/presets.ts
+  s_460126e698fd7c::t_e64cfe4d71ed01 1-15
+frontend/src/views/ds/components/sql-editor/sqlHighlightStyle.ts
+  s_460126e698fd7c::t_29bacf0f544c30 1-30
+frontend/src/views/ds/components/sql-editor/sqlKeywordsByDb.ts
+  s_460126e698fd7c::t_f9ac6625ffdacb 1-158
+frontend/src/views/index.vue
+  s_460126e698fd7c::t_5dfa78415bf090 1-32
+frontend/src/views/vis/cards/cardApi.ts
+  s_460126e698fd7c::t_1d9aac45fca36d 1-287
+frontend/src/views/vis/cards/chartShape.ts
+  s_460126e698fd7c::t_2c0870791ad575 1-436
+frontend/src/views/vis/cards/components/AdvFieldLabel.vue
+  s_460126e698fd7c::t_22d0671d5968f2 1-53
+frontend/src/views/vis/cards/components/AdvancedModule.vue
+  s_460126e698fd7c::t_a5b6c353f0fc03 1-113
+frontend/src/views/vis/cards/components/CardPreview.vue
+  s_460126e698fd7c::t_fbd7a354b9e25e 1-752
+frontend/src/views/vis/cards/components/ChartFormHost.vue
+  s_460126e698fd7c::t_00a51d99e8b898 1-56
+frontend/src/views/vis/cards/components/ChartTypePicker.vue
+  s_460126e698fd7c::t_94e6c0f91062a6 1-342
+frontend/src/views/vis/cards/components/ContrastWindowHint.vue
+  s_460126e698fd7c::t_972d27e17f7a64 1-156
+frontend/src/views/vis/cards/components/DateExpFields.vue
+  s_460126e698fd7c::t_9c20da60497adc 1-140
+frontend/src/views/vis/cards/components/DimensionShelf.vue
+  s_460126e698fd7c::t_04cd90e13be239 1-240
+frontend/src/views/vis/cards/components/FieldPill.vue
+  s_460126e698fd7c::t_2714578f08e3c5 1-429
+frontend/src/views/vis/cards/components/FilterBuilder.vue
+  s_460126e698fd7c::t_bd6cbb794554b8 1-410
+frontend/src/views/vis/cards/components/FilterConditionForm.vue
+  s_460126e698fd7c::t_326371a2ab9c52 1-124
+frontend/src/views/vis/cards/components/FilterValueFields.vue
+  s_460126e698fd7c::t_6dcfc65bd246ea 1-305
+frontend/src/views/vis/cards/components/HavingShelf.vue
+  s_460126e698fd7c::t_d38b4bdfb32a13 1-189
+frontend/src/views/vis/cards/components/MetricShelf.vue
+  s_460126e698fd7c::t_d308cec6c4e1f0 1-500
+frontend/src/views/vis/cards/components/OrderShelf.vue
+  s_460126e698fd7c::t_c01018564af782 1-229
+frontend/src/views/vis/cards/components/ParamShelf.vue
+  s_460126e698fd7c::t_266475c21c5ed5 1-219
+frontend/src/views/vis/cards/components/ShelfTitle.vue
+  s_460126e698fd7c::t_8a675261f81192 1-54
+frontend/src/views/vis/cards/components/SimpleHtmlEditor.vue
+  s_460126e698fd7c::t_7f30fa56ceb27d 1-526
+frontend/src/views/vis/cards/components/StaticCalloutModuleFields.vue
+  s_460126e698fd7c::t_0e5c5125b3ef82 1-131
+frontend/src/views/vis/cards/components/StaticContentFields.vue
+  s_460126e698fd7c::t_7f34aa156d63ae 1-73
+frontend/src/views/vis/cards/components/StaticModuleList.vue
+  s_460126e698fd7c::t_2517af3332adf2 1-246
+frontend/src/views/vis/cards/components/StaticProgressModuleFields.vue
+  s_460126e698fd7c::t_56bba0eb925c1a 1-145
+frontend/src/views/vis/cards/components/StaticStatItemRow.vue
+  s_460126e698fd7c::t_5e5d69aeaa6bb6 1-156
+frontend/src/views/vis/cards/components/StaticStatModuleFields.vue
+  s_460126e698fd7c::t_cfab6f0fb072bb 1-140
+frontend/src/views/vis/cards/components/StaticStatsModuleFields.vue
+  s_460126e698fd7c::t_5d63efb0c4fd4f 1-76
+frontend/src/views/vis/cards/components/usePreviewTile.ts
+  s_460126e698fd7c::t_7f53c00c7e8219 1-81
+frontend/src/views/vis/cards/config.ts
+  s_460126e698fd7c::t_2cdee7b752b314 1-2
+frontend/src/views/vis/cards/queryDependents.ts
+  s_460126e698fd7c::t_18ce3e387806e5 1-165
+frontend/src/views/vis/charts/chartIcons.ts
+  s_460126e698fd7c::t_8d3578b4681bc6 1-13
+frontend/src/views/vis/charts/components/ChartDocBlock.vue
+  s_460126e698fd7c::t_57c5bc60c7a8cd 1-86
+frontend/src/views/vis/charts/definitions/bar.ts
+  s_460126e698fd7c::t_599cee01df6eb4 1-15
+frontend/src/views/vis/charts/definitions/combo.ts
+  s_460126e698fd7c::t_fae9173b271cd9 1-15
+frontend/src/views/vis/charts/definitions/funnel.ts
+  s_460126e698fd7c::t_80a8a04bb238bc 1-15
+frontend/src/views/vis/charts/definitions/heatmap.ts
+  s_460126e698fd7c::t_01f6b371b8d6f1 1-15
+frontend/src/views/vis/charts/definitions/kpi.ts
+  s_460126e698fd7c::t_ff056a0a3a3319 1-13
+frontend/src/views/vis/charts/definitions/line.ts
+  s_460126e698fd7c::t_17e6b4c0a5b415 1-15
+frontend/src/views/vis/charts/definitions/number.ts
+  s_460126e698fd7c::t_0ba4cc6a48129a 1-13
+frontend/src/views/vis/charts/definitions/pie.ts
+  s_460126e698fd7c::t_35523ed6a1855c 1-15
+frontend/src/views/vis/charts/definitions/pivot.ts
+  s_460126e698fd7c::t_3b54f64c15b89f 1-13
+frontend/src/views/vis/charts/definitions/progress.ts
+  s_460126e698fd7c::t_6e6621b9c5c245 1-13
+frontend/src/views/vis/charts/definitions/radar.ts
+  s_460126e698fd7c::t_fd66e3d4d82f63 1-15
+frontend/src/views/vis/charts/definitions/rank.ts
+  s_460126e698fd7c::t_81b066effd7079 1-13
+frontend/src/views/vis/charts/definitions/richtext.ts
+  s_460126e698fd7c::t_be3d688bea63d4 1-13
+frontend/src/views/vis/charts/definitions/scatter.ts
+  s_460126e698fd7c::t_650f2498aaad69 1-15
+frontend/src/views/vis/charts/definitions/table.ts
+  s_460126e698fd7c::t_ea07c71dc67091 1-13
+frontend/src/views/vis/charts/definitions/tornado.ts
+  s_460126e698fd7c::t_5a94a70c5a808e 1-15
+frontend/src/views/vis/charts/definitions/treemap.ts
+  s_460126e698fd7c::t_3f0614b4f422ca 1-15
+frontend/src/views/vis/charts/definitions/trend.ts
+  s_460126e698fd7c::t_98965ff93b0207 1-13
+frontend/src/views/vis/charts/definitions/url.ts
+  s_460126e698fd7c::t_4554b98dd45b57 1-13
+frontend/src/views/vis/charts/definitions/waterfall.ts
+  s_460126e698fd7c::t_867a591a65b39b 1-15
+frontend/src/views/vis/charts/definitions/wordcloud.ts
+  s_460126e698fd7c::t_3d37b75f45370a 1-15
+frontend/src/views/vis/charts/index.ts
+  s_460126e698fd7c::t_91c877fede4a20 1-9
+frontend/src/views/vis/charts/registry.ts
+  s_460126e698fd7c::t_a8e2704aa2972d 1-90
+frontend/src/views/vis/charts/style-forms/CardChromeFields.vue
+  s_460126e698fd7c::t_729bb7ab8f5618 1-89
+frontend/src/views/vis/charts/style-forms/CardChromeStyleForm.vue
+  s_460126e698fd7c::t_24dfa4700bc5f1 1-26
+frontend/src/views/vis/charts/style-forms/ChartFeatureForm.vue
+  s_460126e698fd7c::t_fb18ec4a9c559a 1-487
+frontend/src/views/vis/charts/style-forms/ChartMarkLineForm.vue
+  s_460126e698fd7c::t_f15b98b93d90f4 1-209
+frontend/src/views/vis/charts/style-forms/ChartStyleForm.vue
+  s_460126e698fd7c::t_69d30ec912caec 1-23
+frontend/src/views/vis/charts/style-forms/FeatureFormStub.vue
+  s_460126e698fd7c::t_ec89b45f7be579 1-23
+frontend/src/views/vis/charts/style-forms/FlatForm.vue
+  s_460126e698fd7c::t_1bdbb5f85f8fe9 1-14
+frontend/src/views/vis/charts/style-forms/KpiColorPicker.vue
+  s_460126e698fd7c::t_a3e74f40f8ac4a 1-50
+frontend/src/views/vis/charts/style-forms/KpiFeatureForm.vue
+  s_460126e698fd7c::t_050646e70bf0f9 1-240
+frontend/src/views/vis/charts/style-forms/KpiSizePicker.vue
+  s_460126e698fd7c::t_cfa80d15c85351 1-47
+frontend/src/views/vis/charts/style-forms/KpiStyleForm.vue
+  s_460126e698fd7c::t_3bb146b032fbaf 1-33
+frontend/src/views/vis/charts/style-forms/NumberColorPicker.vue
+  s_460126e698fd7c::t_7ff634c4e09ad2 1-46
+frontend/src/views/vis/charts/style-forms/NumberFeatureForm.vue
+  s_460126e698fd7c::t_7e3dbb23d461a3 1-68
+frontend/src/views/vis/charts/style-forms/NumberFormatFields.vue
+  s_460126e698fd7c::t_431e692ca51b26 1-64
+frontend/src/views/vis/charts/style-forms/NumberSizePicker.vue
+  s_460126e698fd7c::t_c1711357a03325 1-47
+frontend/src/views/vis/charts/style-forms/NumberStyleForm.vue
+  s_460126e698fd7c::t_c16bebe43f30a2 1-30
+frontend/src/views/vis/charts/style-forms/PivotFeatureForm.vue
+  s_460126e698fd7c::t_3a68c21ba53d29 1-200
+frontend/src/views/vis/charts/style-forms/ProgressColorPicker.vue
+  s_460126e698fd7c::t_559babf6946c68 1-55
+frontend/src/views/vis/charts/style-forms/ProgressFeatureForm.vue
+  s_460126e698fd7c::t_59124482ddc86c 1-195
+frontend/src/views/vis/charts/style-forms/ProgressSizePicker.vue
+  s_460126e698fd7c::t_239073fb345879 1-47
+frontend/src/views/vis/charts/style-forms/ProgressStyleForm.vue
+  s_460126e698fd7c::t_da00f11d27801e 1-33
+frontend/src/views/vis/charts/style-forms/RankColorPicker.vue
+  s_460126e698fd7c::t_90e982f515b98c 1-45
+frontend/src/views/vis/charts/style-forms/RankFeatureForm.vue
+  s_460126e698fd7c::t_929f0a594610d4 1-82
+frontend/src/views/vis/charts/style-forms/RankSizePicker.vue
+  s_460126e698fd7c::t_54a7de2d5dc531 1-47
+frontend/src/views/vis/charts/style-forms/RankStyleForm.vue
+  s_460126e698fd7c::t_2d637e45307d3e 1-30
+frontend/src/views/vis/charts/style-forms/StaticStyleForm.vue
+  s_460126e698fd7c::t_3cfea03d0d26b9 1-19
+frontend/src/views/vis/charts/style-forms/StyleBlock.vue
+  s_460126e698fd7c::t_f2a019a3122139 1-26
+frontend/src/views/vis/charts/style-forms/StyleFormLabel.vue
+  s_460126e698fd7c::t_10773db39b79a0 1-27
+frontend/src/views/vis/charts/style-forms/StyleFormSection.vue
+  s_460126e698fd7c::t_42b887e19d2778 1-29
+frontend/src/views/vis/charts/style-forms/StyleFormShell.vue
+  s_460126e698fd7c::t_1bf6d82bb3888d 1-19
+frontend/src/views/vis/charts/style-forms/TableFeatureForm.vue
+  s_460126e698fd7c::t_7ad5d0fa6bfdbf 1-87
+frontend/src/views/vis/charts/style-forms/TableMarkForm.vue
+  s_460126e698fd7c::t_e0d2ef891b3368 1-658
+frontend/src/views/vis/charts/style-forms/TableMarkSection.vue
+  s_460126e698fd7c::t_ce7489c4a9aa81 1-47
+frontend/src/views/vis/charts/style-forms/TitleStyleFields.vue
+  s_460126e698fd7c::t_271b1d846b3091 1-148
+frontend/src/views/vis/charts/style-forms/TrendFeatureForm.vue
+  s_460126e698fd7c::t_4c2df6017bb00d 1-84
+frontend/src/views/vis/charts/style-forms/VTableThemePicker.vue
+  s_460126e698fd7c::t_e22e0167875f56 1-74
+frontend/src/views/vis/charts/style-forms/composables/useVisualBranch.ts
+  s_460126e698fd7c::t_c46342151f22b2 1-91
+frontend/src/views/vis/charts/style-forms/composables/useVisualTitle.ts
+  s_460126e698fd7c::t_4742c524b1ec45 1-51
+frontend/src/views/vis/charts/style-forms/vis-style-form.scss
+  s_460126e698fd7c::t_f4afae979f2bfc 1-441
+frontend/src/views/vis/charts/types.ts
+  s_460126e698fd7c::t_d1f4180f6b2032 1-53
+frontend/src/views/vis/dashboards/components/DashCardTile.vue
+  s_460126e698fd7c::t_1ad965555344eb 1-396
+frontend/src/views/vis/dashboards/components/DashFilterBar.vue
+  s_f2a7d69b90b508::t_f527475409eeaf 1-702
+frontend/src/views/vis/dashboards/components/DashFilterChipFields.vue
+  s_460126e698fd7c::t_43173618109b2e 1-325
+frontend/src/views/vis/dashboards/components/DashGrid.vue
+  s_460126e698fd7c::t_a0f137c26cd839 1-335
+frontend/src/views/vis/dashboards/components/DashGroupEditor.vue
+  s_460126e698fd7c::t_e600eb5dbd03ac 1-309
+frontend/src/views/vis/dashboards/components/DashGroupTile.vue
+  s_460126e698fd7c::t_42bb12be5f93d3 1-489
+frontend/src/views/vis/dashboards/components/DashInnerGrid.vue
+  s_460126e698fd7c::t_8ab1948f448d37 1-229
+frontend/src/views/vis/dashboards/components/DashSettingsDialog.vue
+  s_460126e698fd7c::t_3e4e260e661557 1-186
+frontend/src/views/vis/dashboards/components/DashStyleSettings.vue
+  s_460126e698fd7c::t_66a52308046cf2 1-279
+frontend/src/views/vis/dashboards/config.ts
+  s_460126e698fd7c::t_8d4a79342ee0b2 1-61
+frontend/src/views/vis/dashboards/dashFilterQuery.ts
+  s_460126e698fd7c::t_baa7cfddb20dc8 1-131
+frontend/src/views/vis/dashboards/dashGrid.scss
+  s_460126e698fd7c::t_d9e7342cee3402 1-71
+frontend/src/views/vis/dashboards/dashLayout.ts
+  s_460126e698fd7c::t_8b210ca75512bf 1-628
+frontend/src/views/vis/dashboards/dashPage.scss
+  s_460126e698fd7c::t_a4c7b726c25351 1-80
+frontend/src/views/vis/dashboards/dashScreenshot.ts
+  s_460126e698fd7c::t_933b6d7257942a 1-131
+frontend/src/views/vis/dashboards/useDashChromeScroll.ts
+  s_460126e698fd7c::t_735a947a93074b 1-42
+frontend/src/views/vis/dashboards/useDashFilterChips.ts
+  s_460126e698fd7c::t_79cff878ba2a6d 1-133
+frontend/src/views/vis/dashboards/useDashGridInteract.ts
+  s_460126e698fd7c::t_c09ae4652a0bf4 1-204
+frontend/src/views/vis/dashboards/useDashRefresh.ts
+  s_460126e698fd7c::t_a5c54a3b278a81 1-15
+frontend/src/views/vis/shared/FieldTypeIcon.vue
+  s_460126e698fd7c::t_a6bef45ade6ed5 1-56
+frontend/src/views/vis/shared/VChartHost.vue
+  s_460126e698fd7c::t_c1e846877669a1 1-358
+frontend/src/views/vis/shared/VisCardView.vue
+  s_460126e698fd7c::t_eca4837989c7e4 1-1099
+frontend/src/views/vis/shared/VisDataTable.vue
+  s_460126e698fd7c::t_9aaf5db9f79563 1-67
+frontend/src/views/vis/shared/VisDetailDrawer.vue
+  s_460126e698fd7c::t_be334aac1a33e9 1-163
+frontend/src/views/vis/shared/VisFullWrap.vue
+  s_460126e698fd7c::t_5c63f4865763d2 1-134
+frontend/src/views/vis/shared/VisKpiCard.vue
+  s_460126e698fd7c::t_34bfdeb9375c0e 1-319
+frontend/src/views/vis/shared/VisNumberKpi.vue
+  s_460126e698fd7c::t_724d8e0af50629 1-275
+frontend/src/views/vis/shared/VisPivotTable.vue
+  s_460126e698fd7c::t_61052cb4bc7206 1-136
+frontend/src/views/vis/shared/VisProgressCard.vue
+  s_460126e698fd7c::t_b98146114aa35a 1-333
+frontend/src/views/vis/shared/VisRankCard.vue
+  s_460126e698fd7c::t_1d49f0a79fcc95 1-449
+frontend/src/views/vis/shared/VisStaticCallout.vue
+  s_460126e698fd7c::t_52147663770179 1-84
+frontend/src/views/vis/shared/VisStaticCard.vue
+  s_460126e698fd7c::t_7bd3ec1957615f 1-199
+frontend/src/views/vis/shared/VisStaticStat.vue
+  s_460126e698fd7c::t_9377243534ac1e 1-109
+frontend/src/views/vis/shared/VisTrendCard.vue
+  s_460126e698fd7c::t_b85d6677b8dbeb 1-389
+frontend/src/views/vis/shared/VisVTableHost.vue
+  s_460126e698fd7c::t_c3a9c7c069b746 1-82
+frontend/src/views/vis/shared/accentPresets.ts
+  s_460126e698fd7c::t_7e52ecad125a6c 1-42
+frontend/src/views/vis/shared/cardDetail.ts
+  s_460126e698fd7c::t_861edffc7b0767 1-207
+frontend/src/views/vis/shared/cardRefresh.ts
+  s_460126e698fd7c::t_d754769b08ce90 1-75
+frontend/src/views/vis/shared/cardRenderer.ts
+  s_460126e698fd7c::t_5b9404992cfed6 1-1510
+frontend/src/views/vis/shared/cardTheme.ts
+  s_460126e698fd7c::t_6a8dbd47dfa109 1-49
+frontend/src/views/vis/shared/chartDatum.ts
+  s_460126e698fd7c::t_7e3fddb7dd2557 1-29
+frontend/src/views/vis/shared/chartOptions.ts
+  s_460126e698fd7c::t_0a68b299e274ef 1-450
+frontend/src/views/vis/shared/contrastExp.ts
+  s_460126e698fd7c::t_742bd9fa4b9d27 1-214
+frontend/src/views/vis/shared/dateExp.ts
+  s_460126e698fd7c::t_90571bd8e180a8 1-203
+frontend/src/views/vis/shared/dnd.ts
+  s_460126e698fd7c::t_9cbfa07825867a 1-135
+frontend/src/views/vis/shared/filterValue.ts
+  s_460126e698fd7c::t_27771e17168e9f 1-230
+frontend/src/views/vis/shared/kpiCard.ts
+  s_460126e698fd7c::t_564714b33c0fe7 1-351
+frontend/src/views/vis/shared/listTable.ts
+  s_460126e698fd7c::t_02ec8724321573 1-108
+frontend/src/views/vis/shared/markLine.ts
+  s_460126e698fd7c::t_a0b56dad38b52a 1-127
+frontend/src/views/vis/shared/numberCard.ts
+  s_460126e698fd7c::t_88bd97bd0b5177 1-133
+frontend/src/views/vis/shared/numberFit.ts
+  s_460126e698fd7c::t_9cf60888053df4 1-67
+frontend/src/views/vis/shared/numberStyle.ts
+  s_460126e698fd7c::t_1aa75f56fd0a75 1-207
+frontend/src/views/vis/shared/pivotTable.ts
+  s_460126e698fd7c::t_7111f05eff5f55 1-476
+frontend/src/views/vis/shared/progressCard.ts
+  s_460126e698fd7c::t_0797a2ce0703d4 1-311
+frontend/src/views/vis/shared/rankCard.ts
+  s_460126e698fd7c::t_ec1d7d3d052c58 1-202
+frontend/src/views/vis/shared/staticCard.ts
+  s_460126e698fd7c::t_176030af678f85 1-65
+frontend/src/views/vis/shared/staticModules.ts
+  s_460126e698fd7c::t_82af6e7958a416 1-395
+frontend/src/views/vis/shared/tableMark.ts
+  s_460126e698fd7c::t_d0e7c5696f8529 1-362
+frontend/src/views/vis/shared/tableStyle.ts
+  s_460126e698fd7c::t_e70513d5c61a91 1-56
+frontend/src/views/vis/shared/trendCard.ts
+  s_460126e698fd7c::t_eac89b74284a57 1-183
+frontend/src/views/vis/shared/types.ts
+  s_460126e698fd7c::t_abb0c0b98b5e2c 1-675
+frontend/src/views/vis/shared/useVTableMount.ts
+  s_460126e698fd7c::t_b66fcbcec69f1b 1-180
+frontend/src/views/vis/shared/visRequest.ts
+  s_460126e698fd7c::t_f86d9aab8151f3 1-32
+frontend/src/views/vis/shared/vtableTheme.ts
+  s_460126e698fd7c::t_495109139ffe9e 1-233
+frontend/tsconfig.app.json
+  s_460126e698fd7c::t_9a37aed6e936a3 1-33
+frontend/tsconfig.json
+  s_460126e698fd7c::t_49bc5a5a88a3c6 1-7
+frontend/tsconfig.node.json
+  s_460126e698fd7c::t_560c850a8d858b 1-22
+README.md
+  s_460126e698fd7c::t_8ec82dfa8f4d52 1-24
+backend/AGENTS.md
+  s_460126e698fd7c::t_d99a4e8c6204cf 1-71
+backend/README.md
+  s_460126e698fd7c::t_91165e9e7c7682 1-34
+backend/db/demo.sql
+  s_460126e698fd7c::t_5afee0f5710a9b 1-916
+backend/db/migrate_report_model.sql
+  s_460126e698fd7c::t_f61e5cba6b22bd 1-90
+backend/db/schema.sql
+  s_460126e698fd7c::t_c6bcd613ab565d 1-245
+backend/pom.xml
+  s_460126e698fd7c::t_42885bf81e467e 1-118
+backend/src/main/java/com/codet/lens/LensApplication.java
+  s_460126e698fd7c::t_4a0d454d1ae6ce 1-14
+backend/src/main/java/com/codet/lens/auth/AuthContext.java
+  s_460126e698fd7c::t_de1375e7449a2f 1-40
+backend/src/main/java/com/codet/lens/auth/AuthInterceptor.java
+  s_460126e698fd7c::t_f825b4a5925d3f 1-66
+backend/src/main/java/com/codet/lens/auth/AuthUser.java
+  s_460126e698fd7c::t_65d24ab96a9ed5 1-37
+backend/src/main/java/com/codet/lens/auth/JwtService.java
+  s_460126e698fd7c::t_70ad6c5e775e58 1-68
+backend/src/main/java/com/codet/lens/auth/Permission.java
+  s_460126e698fd7c::t_b017a88bc05085 1-12
+backend/src/main/java/com/codet/lens/auth/PublicAccess.java
+  s_460126e698fd7c::t_8fb06ee4274f38 1-11
+backend/src/main/java/com/codet/lens/auth/WebMvcConfig.java
+  s_460126e698fd7c::t_30bd97f53ab53b 1-36
+backend/src/main/java/com/codet/lens/common/EnumValue.java
+  s_460126e698fd7c::t_e9a7b2bc6e7acd 1-51
+backend/src/main/java/com/codet/lens/common/ExceptionAdvice.java
+  s_460126e698fd7c::t_86914aa3a65cce 1-44
+backend/src/main/java/com/codet/lens/common/FieldConst.java
+  s_460126e698fd7c::t_4c6a16b6fab2f5 1-22
+backend/src/main/java/com/codet/lens/common/JacksonConfig.java
+  s_460126e698fd7c::t_12e8a8c2462c69 1-28
+backend/src/main/java/com/codet/lens/common/JsonUtil.java
+  s_460126e698fd7c::t_c05f2cd1de95ff 1-16
+backend/src/main/java/com/codet/lens/common/LensProperties.java
+  s_460126e698fd7c::t_2f602c3022eeda 1-17
+backend/src/main/java/com/codet/lens/common/Long2DatetimeStr.java
+  s_460126e698fd7c::t_8f46b40c7ac6aa 1-20
+backend/src/main/java/com/codet/lens/common/Long2Integer.java
+  s_460126e698fd7c::t_3977cb166f7e86 1-18
+backend/src/main/java/com/codet/lens/common/MybatisConfig.java
+  s_460126e698fd7c::t_73cedb00899b18 1-18
+backend/src/main/java/com/codet/lens/common/OpenApiConfig.java
+  s_460126e698fd7c::t_0f18d9844c5976 1-40
+backend/src/main/java/com/codet/lens/common/PermCodes.java
+  s_460126e698fd7c::t_5eadee8615fc24 1-24
+backend/src/main/java/com/codet/lens/common/ResultException.java
+  s_460126e698fd7c::t_070527edd9a8ee 1-27
+backend/src/main/java/com/codet/lens/common/WebUtil.java
+  s_460126e698fd7c::t_c818b764e608dc 1-15
+backend/src/main/java/com/codet/lens/sys/DataInitializer.java
+  s_460126e698fd7c::t_6c0ac054256ce0 1-70
+backend/src/main/java/com/codet/lens/sys/controller/SysController.java
+  s_460126e698fd7c::t_09c314aa7e7b68 1-232
+backend/src/main/java/com/codet/lens/sys/dto/AccountDtos.java
+  s_460126e698fd7c::t_d46895b2057a30 1-62
+backend/src/main/java/com/codet/lens/sys/dto/SysDtos.java
+  s_460126e698fd7c::t_b8406c5d105a4f 1-154
+backend/src/main/java/com/codet/lens/sys/entity/SysMenu.java
+  s_460126e698fd7c::t_f1f35fce360e48 1-23
+backend/src/main/java/com/codet/lens/sys/entity/SysRole.java
+  s_460126e698fd7c::t_c2e8562d7f36d2 1-18
+backend/src/main/java/com/codet/lens/sys/entity/SysRoleDashboard.java
+  s_460126e698fd7c::t_45d7f019b176eb 1-21
+backend/src/main/java/com/codet/lens/sys/entity/SysRoleMenu.java
+  s_460126e698fd7c::t_e1d49a63a92b2a 1-21
+backend/src/main/java/com/codet/lens/sys/entity/SysUser.java
+  s_460126e698fd7c::t_51b45ac9960498 1-20
+backend/src/main/java/com/codet/lens/sys/entity/SysUserRole.java
+  s_460126e698fd7c::t_74d2e3b9655e99 1-23
+backend/src/main/java/com/codet/lens/sys/mapper/SysMenuMapper.java
+  s_460126e698fd7c::t_e374a4958cf016 1-22
+backend/src/main/java/com/codet/lens/sys/mapper/SysRoleDashboardMapper.java
+  s_460126e698fd7c::t_9f1a59005daf70 1-21
+backend/src/main/java/com/codet/lens/sys/mapper/SysRoleMapper.java
+  s_460126e698fd7c::t_515785a4be3584 1-7
+backend/src/main/java/com/codet/lens/sys/mapper/SysRoleMenuMapper.java
+  s_460126e698fd7c::t_6c10582312338e 1-7
+backend/src/main/java/com/codet/lens/sys/mapper/SysUserMapper.java
+  s_460126e698fd7c::t_49a0706046de8f 1-36
+backend/src/main/java/com/codet/lens/sys/mapper/SysUserRoleMapper.java
+  s_460126e698fd7c::t_5966459df61e3b 1-7
+backend/src/main/java/com/codet/lens/sys/service/AccountService.java
+  s_460126e698fd7c::t_08b7e84bebba68 1-253
+backend/src/main/java/com/codet/lens/sys/service/MenuAdminService.java
+  s_460126e698fd7c::t_2701fe32967cf1 1-108
+backend/src/main/java/com/codet/lens/sys/service/RoleAdminService.java
+  s_460126e698fd7c::t_6a014cf3718d21 1-167
+backend/src/main/java/com/codet/lens/sys/service/UserAdminService.java
+  s_460126e698fd7c::t_01edfca635b86a 1-155
+backend/src/main/java/com/codet/lens/vis/controller/DatasetController.java
+  s_460126e698fd7c::t_8fa44a4077a57a 1-228
+backend/src/main/java/com/codet/lens/vis/controller/VisConfigController.java
+  s_460126e698fd7c::t_9e40046cff2b14 1-206
+backend/src/main/java/com/codet/lens/vis/controller/VisQueryController.java
+  s_460126e698fd7c::t_92f2790e4073c4 1-122
+backend/src/main/java/com/codet/lens/vis/core/query/VisExecSql.java
+  s_460126e698fd7c::t_7ecbaa26e2bbb5 1-64
+backend/src/main/java/com/codet/lens/vis/dto/dash/MoveDashboardsGroupRequest.java
+  s_460126e698fd7c::t_0fc793cd1709c9 1-23
+backend/src/main/java/com/codet/lens/vis/dto/dash/QueryVisDashboardRequest.java
+  s_460126e698fd7c::t_7a1575a1f5c2ae 1-30
+backend/src/main/java/com/codet/lens/vis/dto/dash/VisDashboardMetadataUpdateRequest.java
+  s_460126e698fd7c::t_e1611aedc01f5b 1-30
+backend/src/main/java/com/codet/lens/vis/dto/dash/VisDashboardSaveRequest.java
+  s_460126e698fd7c::t_b4e95700599902 1-47
+backend/src/main/java/com/codet/lens/vis/dto/group/VisGroupDtos.java
+  s_460126e698fd7c::t_43a0a1e200351b 1-63
+backend/src/main/java/com/codet/lens/vis/entity/VisDashGroup.java
+  s_460126e698fd7c::t_457d0e879be030 1-19
+backend/src/main/java/com/codet/lens/vis/entity/VisDashboard.java
+  s_460126e698fd7c::t_173ae729d7b432 1-25
+backend/src/main/java/com/codet/lens/vis/entity/VisDashboardCard.java
+  s_460126e698fd7c::t_3b3b30956f411f 1-19
+backend/src/main/java/com/codet/lens/vis/entity/VisDataset.java
+  s_460126e698fd7c::t_028bf96f8c7b9f 1-20
+backend/src/main/java/com/codet/lens/vis/entity/VisDatasetField.java
+  s_460126e698fd7c::t_0b5b1cbd4de768 1-20
+backend/src/main/java/com/codet/lens/vis/entity/VisDatasource.java
+  s_460126e698fd7c::t_265c224ff60872 1-20
+backend/src/main/java/com/codet/lens/vis/mapper/VisDashGroupMapper.java
+  s_460126e698fd7c::t_5afe3bf603ec20 1-7
+backend/src/main/java/com/codet/lens/vis/mapper/VisDatasetFieldMapper.java
+  s_460126e698fd7c::t_7a333199ae9db6 1-7
+backend/src/main/java/com/codet/lens/vis/mapper/VisDatasetMapper.java
+  s_460126e698fd7c::t_e218789a7f7d15 1-7
+backend/src/main/java/com/codet/lens/vis/mapper/VisDatasourceMapper.java
+  s_460126e698fd7c::t_f4fdaf068b5a47 1-7
+backend/src/main/java/com/codet/lens/vis/rds/core/DatasourceRegistry.java
+  s_460126e698fd7c::t_d016595ad0669e 1-79
+backend/src/main/java/com/codet/lens/vis/rds/core/RdsUtil.java
+  s_460126e698fd7c::t_9227a7a06d6b73 1-133
+backend/src/main/java/com/codet/lens/vis/rds/dto/conf/ConfSqlContentRequest.java
+  s_460126e698fd7c::t_688e7740112e1b 1-16
+backend/src/main/java/com/codet/lens/vis/rds/dto/conf/ConfSqlFieldSaveRequest.java
+  s_460126e698fd7c::t_c0ea1d7adcc77f 1-15
+backend/src/main/java/com/codet/lens/vis/rds/dto/conf/DebugSqlColumn.java
+  s_460126e698fd7c::t_b83b12352d0527 1-16
+backend/src/main/java/com/codet/lens/vis/rds/dto/conf/DebugSqlResponse.java
+  s_460126e698fd7c::t_d4ddfe907d2bf5 1-47
+backend/src/main/java/com/codet/lens/vis/rds/util/SqlPageUtil.java
+  s_460126e698fd7c::t_fe04a70f1331c6 1-25
+backend/src/main/java/com/codet/lens/vis/service/DatasetAdminService.java
+  s_460126e698fd7c::t_a4986b0f1a5c89 1-227
+backend/src/main/java/com/codet/lens/vis/service/PivotDataService.java
+  s_460126e698fd7c::t_3c7f978fc6983b 1-124
+backend/src/main/java/com/codet/lens/vis/service/VisDashGroupService.java
+  s_460126e698fd7c::t_b9353907845f24 1-320
+backend/src/main/java/com/codet/lens/vis/service/VisDashboardAccess.java
+  s_460126e698fd7c::t_f7713257e888d6 1-65
+backend/src/main/java/com/codet/lens/vis/service/VisDashboardService.java
+  s_460126e698fd7c::t_804cf00b515be0 1-283
+backend/src/main/java/com/codet/lens/vis/service/VisDataService.java
+  s_460126e698fd7c::t_d7e14130a4b291 1-285
+backend/src/main/java/com/codet/lens/vis/service/VisDatasetService.java
+  s_460126e698fd7c::t_85be0057a35f7c 1-125
+backend/src/main/java/com/codet/lens/vis/service/VisFilterOptionsService.java
+  s_460126e698fd7c::t_3380c9701e7463 1-176
+backend/src/main/resources/application.yml
+  s_460126e698fd7c::t_b4083c59608eb6 1-34
+frontend/.env.dev
+  s_460126e698fd7c::t_203ecc82dc1f28 1-10
+frontend/.env.prd
+  s_460126e698fd7c::t_290d9652a4299d 1-8
+frontend/.gitignore
+  s_460126e698fd7c::t_cdb3dfe00ef7bf 1-39
+frontend/AGENTS.md
+  s_460126e698fd7c::t_04e746683f807c 1-88
+frontend/README.md
+  s_460126e698fd7c::t_d2af95dbe685dd 1-30
+frontend/auto-imports.d.ts
+  s_460126e698fd7c::t_7d8ec2363c6524 1-323
+frontend/build/generate/openapi.config.cjs
+  s_460126e698fd7c::t_2bc44aab32ac65 1-124
+frontend/build/plugins/appVersion.ts
+  s_460126e698fd7c::t_6b906a9697b7ec 1-54
+frontend/components.d.ts
+  s_460126e698fd7c::t_9141cb5fb03545 1-205
+frontend/env.d.ts
+  s_460126e698fd7c::t_48c1ef301955fc 1-35
+frontend/eslint.config.mjs
+  s_460126e698fd7c::t_ce0db7870ca08b 1-70
+frontend/package.json
+  s_460126e698fd7c::t_70099a0d2f6151 1-125
+frontend/src/App.vue
+  s_460126e698fd7c::t_050ea7a34a6b8e 1-32
+frontend/src/apis/admin/account.ts
+  s_460126e698fd7c::t_2b074d3421d704 1-61
+frontend/src/apis/admin/menu.ts
+  s_460126e698fd7c::t_685fdd447fc730 1-45
+frontend/src/apis/admin/role.ts
+  s_460126e698fd7c::t_d9a991897e0831 1-133
+frontend/src/apis/admin/typings.d.ts
+  s_460126e698fd7c::t_6b9dcadab4b2c9 1-282
+frontend/src/apis/admin/user.ts
+  s_460126e698fd7c::t_4d33ebd0a089a1 1-97
+frontend/src/apis/config.ts
+  s_460126e698fd7c::t_214f56de52a88b 1-13
+frontend/src/apis/vis/dashboard.ts
+  s_460126e698fd7c::t_63f4a52eb3a2c9 1-192
+frontend/src/apis/vis/index.ts
+  s_460126e698fd7c::t_39c5071dd61ff8 1-16
+frontend/src/apis/vis/typings.d.ts
+  s_460126e698fd7c::t_97f70c5528a61e 1-1135
+frontend/src/components/MenuIcon.vue
+  s_460126e698fd7c::t_272a02778f4798 1-26
+frontend/src/components/table/ListTable.vue
+  s_460126e698fd7c::t_3d1d605e366fd2 1-838
+frontend/src/core/config.ts
+  s_460126e698fd7c::t_3fa3ae014e7111 1-36
+frontend/src/core/menuIcons.ts
+  s_460126e698fd7c::t_919d5622ae5cca 1-97
+frontend/src/core/request.ts
+  s_460126e698fd7c::t_6c6b47363beaba 1-229
+frontend/src/hooks/leaveConfirm.ts
+  s_460126e698fd7c::t_ba8af8891cc37d 1-81
+frontend/src/layout/components/MenuFilter/index.vue
+  s_460126e698fd7c::t_003d6f814ca246 1-42
+frontend/src/layout/components/Navbar/index.vue
+  s_460126e698fd7c::t_ae72cf9fe229d8 1-310
+frontend/src/layout/components/Sidebar/MenuItem.vue
+  s_460126e698fd7c::t_29bdd32577c7bc 1-57
+frontend/src/layout/components/Sidebar/index.vue
+  s_460126e698fd7c::t_67174756ff021e 1-156
+frontend/src/layout/index.vue
+  s_460126e698fd7c::t_600a49836727d3 1-79
+frontend/src/router/guard.ts
+  s_460126e698fd7c::t_1edebadd83d4a3 1-83
+frontend/src/router/index.ts
+  s_460126e698fd7c::t_7f7aefc69d7d8f 1-112
+frontend/src/router/modules/reports.ts
+  s_460126e698fd7c::t_49793a9cad227c 1-36
+frontend/src/router/modules/sys.ts
+  s_460126e698fd7c::t_14305afbb1c1e3 1-39
+frontend/src/router/modules/vis.ts
+  s_460126e698fd7c::t_e91b13ae8d29e9 1-76
+frontend/src/stores/modules/account.ts
+  s_460126e698fd7c::t_819dc432626874 1-134
+frontend/src/stores/modules/menu.ts
+  s_460126e698fd7c::t_825d80b2892c97 1-235
+frontend/src/utils/index.ts
+  s_460126e698fd7c::t_9fea1111f4544a 1-188
+frontend/src/utils/trace.ts
+  s_460126e698fd7c::t_b2dc3eb9fa5776 1-310
+frontend/src/views/account/components/ModifyAccountPwd.vue
+  s_460126e698fd7c::t_86be40b2da8808 1-156
+frontend/src/views/ds/components/ConfSqlDialog.vue
+  s_460126e698fd7c::t_6f5b5a5552df4c 1-225
+frontend/src/views/ds/components/DebugParamsDialog.vue
+  s_460126e698fd7c::t_1c2728c6638fa9 1-243
+frontend/src/views/ds/components/sql-editor/parseSqlTables.ts
+  s_460126e698fd7c::t_be187ee0726192 1-112
+frontend/src/views/ds/edit.vue
+  s_460126e698fd7c::t_d8d9afdd269ff8 1-722
+frontend/src/views/ds/index.vue
+  s_460126e698fd7c::t_7a199021440c03 1-305
+frontend/src/views/login/index.vue
+  s_460126e698fd7c::t_d5317ee0a6ddc4 1-268
+frontend/src/views/permission/components/MenuFunctionTree.vue
+  s_460126e698fd7c::t_52f45a0af5085e 1-130
+frontend/src/views/permission/menu/components/EditMenuDialog.vue
+  s_460126e698fd7c::t_90bbcf55030c4b 1-180
+frontend/src/views/permission/menu/components/MenuButtonsTable.vue
+  s_460126e698fd7c::t_5a04c95e91e734 1-38
+frontend/src/views/permission/menu/components/MenuDetailForm.vue
+  s_460126e698fd7c::t_b755b4484deff5 1-138
+frontend/src/views/permission/menu/components/MenuIconPicker.vue
+  s_460126e698fd7c::t_077738b18ee559 1-216
+frontend/src/views/permission/menu/index.vue
+  s_460126e698fd7c::t_3f77a5855a2b9c 1-317
+frontend/src/views/permission/menu/menu-admin.scss
+  s_460126e698fd7c::t_5f5cdc77bc9427 1-41
+frontend/src/views/permission/menu/menuAdmin.ts
+  s_460126e698fd7c::t_d790abbb854dcb 1-56
+frontend/src/views/permission/role/components/AddRoleDialog.vue
+  s_460126e698fd7c::t_eb013b11e9bee4 1-162
+frontend/src/views/permission/role/components/ConfigDashboardsDrawer.vue
+  s_460126e698fd7c::t_9d2a6231a98332 1-206
+frontend/src/views/permission/role/components/ConfigFunctionsDrawer.vue
+  s_460126e698fd7c::t_915c48334acef2 1-120
+frontend/src/views/permission/role/components/EditRoleDialog.vue
+  s_460126e698fd7c::t_fd159ac4757dfc 1-146
+frontend/src/views/permission/role/index.vue
+  s_460126e698fd7c::t_33b8e126cfaf35 1-266
+frontend/src/views/permission/user/components/AddUserDialog.vue
+  s_460126e698fd7c::t_a32785476da87a 1-190
+frontend/src/views/permission/user/components/ConfigRoleDialog.vue
+  s_460126e698fd7c::t_4e7e141778e6c9 1-226
+frontend/src/views/permission/user/components/EditUserDialog.vue
+  s_460126e698fd7c::t_3e7fc577f3dabc 1-146
+frontend/src/views/permission/user/index.vue
+  s_460126e698fd7c::t_4ee3d78413b31e 1-263
+frontend/src/views/reports/index.vue
+  s_460126e698fd7c::t_a8818d3f6245e1 1-21
+frontend/src/views/vis/cards/components/FieldPanel.vue
+  s_460126e698fd7c::t_d448324d1a6653 1-402
+frontend/src/views/vis/cards/edit.vue
+  s_460126e698fd7c::t_728101fe111b68 1-1129
+frontend/src/views/vis/cards/index.vue
+  s_460126e698fd7c::t_2cb6cc16e8ee40 1-340
+frontend/src/views/vis/dashboards/components/CardPickerDialog.vue
+  s_460126e698fd7c::t_4607ac7f0831c9 1-254
+frontend/src/views/vis/dashboards/components/DashDesigner.vue
+  s_460126e698fd7c::t_9e1e617fcb0c66 1-716
+frontend/src/views/vis/dashboards/components/DashExplorerTree.vue
+  s_460126e698fd7c::t_2eab9e6826e588 1-318
+frontend/src/views/vis/dashboards/components/DashFilterSettings.vue
+  s_460126e698fd7c::t_1d5f41ab0084dd 1-1104
+frontend/src/views/vis/dashboards/components/DashGroupDrawer.vue
+  s_460126e698fd7c::t_7168e0d76422dd 1-625
+frontend/src/views/vis/dashboards/components/DashGroupTreeSelect.vue
+  s_460126e698fd7c::t_b946ebf90442c0 1-74
+frontend/src/views/vis/dashboards/components/DashViewer.vue
+  s_460126e698fd7c::t_65d445dde78880 1-263
+frontend/src/views/vis/dashboards/dashApi.ts
+  s_460126e698fd7c::t_35eb0067657dc2 1-707
+frontend/src/views/vis/dashboards/dashManage.ts
+  s_460126e698fd7c::t_9770bcdfb05aa1 1-28
+frontend/src/views/vis/dashboards/dashTheme.ts
+  s_460126e698fd7c::t_2dce33bd8e9952 1-164
+frontend/src/views/vis/dashboards/index.vue
+  s_460126e698fd7c::t_8f6d1c8b909c59 1-674
+frontend/src/views/vis/dashboards/useDashFilterOptions.ts
+  s_460126e698fd7c::t_8ccecb5f83a8a7 1-281
+frontend/src/views/vis/dashboards/view.vue
+  s_460126e698fd7c::t_a001291633e30e 1-21
+frontend/src/views/vis/shared/cardExport.ts
+  s_460126e698fd7c::t_e0aa066da4627d 1-82
+frontend/src/views/vis/shared/chartPalette.ts
+  s_460126e698fd7c::t_c5014a8a38c805 1-182
+frontend/src/views/vis/shared/useVisCardDetail.ts
+  s_460126e698fd7c::t_2cec0707484e39 1-91
+frontend/src/views/vis/shared/useVisCardQuery.ts
+  s_460126e698fd7c::t_55c41439977c91 1-153
+frontend/uno.config.ts
+  s_460126e698fd7c::t_5a6bb7812b58bc 1-98
+frontend/vite.config.ts
+  s_460126e698fd7c::t_595c62713be251 1-208
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "c444442767834396c7ee265e60a93294ba78b548",
+  "prompts": {},
+  "sessions": {
+    "s_460126e698fd7c": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "17d52df3-8b62-4c88-a63f-27a926479b97",
+        "model": "grok-4.6"
+      },
+      "human_author": "Chuang <chuang.zhang1@atrenew.com>"
+    },
+    "s_f2a7d69b90b508": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "cd81d7ba-e8aa-46b5-8e94-9def7dee46b2",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Chuang <chuang.zhang1@atrenew.com>"
+    }
+  }
+}
