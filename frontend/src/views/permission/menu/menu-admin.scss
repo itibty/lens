@@ -1,0 +1,41 @@
+.menu-panel {
+  padding: 12px;
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 8px;
+  background: var(--el-bg-color);
+
+  &__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  &__title {
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 22px;
+    color: var(--el-text-color-primary);
+  }
+
+  &__desc {
+    margin-top: 2px;
+    font-size: 12px;
+    line-height: 18px;
+    color: var(--el-text-color-secondary);
+  }
+
+  &__actions {
+    display: flex;
+    flex-shrink: 0;
+    gap: 8px;
+  }
+
+  &__empty {
+    padding: 12px 0 4px;
+    color: var(--el-text-color-secondary);
+    font-size: 13px;
+    line-height: 20px;
+  }
+}

@@ -1,0 +1,80 @@
+// 看板页面壳：标题和内容各自设左右 padding，外层不设，滚动条贴边。
+// 内容区再减去格子外边距（$dash-grid-gap），避免和 grid-layout-plus 的 margin 叠两次。
+// 设计页 / 预览页左右都与格子间距相同。数值对齐 config.ts 的 DASH_MARGIN。
+
+$dash-page-y: 12px;
+$dash-chrome-x: 20px;
+$dash-gutter: 10px;
+$dash-grid-gap: 12px;
+
+@mixin tokens($page-x) {
+  --dash-page-x: #{$page-x};
+  --dash-page-y: #{$dash-page-y};
+  --dash-chrome-x: #{$dash-chrome-x};
+  --dash-gutter: #{$dash-gutter};
+  --dash-grid-gap: #{$dash-grid-gap};
+}
+
+@mixin page-tokens {
+  @include tokens($dash-grid-gap);
+}
+
+@mixin preview-tokens {
+  @include page-tokens;
+}
+
+@mixin design-tokens {
+  @include page-tokens;
+}
+
+@mixin frost($shadow: none) {
+  backdrop-filter: var(--dash-card-blur, none);
+  -webkit-backdrop-filter: var(--dash-card-blur, none);
+
+  @if $shadow == card {
+    box-shadow: var(--dash-card-shadow, 0 1px 2px rgb(15 23 42 / 4%));
+  } @else if $shadow == btn {
+    box-shadow: var(--dash-btn-shadow, 0 1px 2px rgb(15 23 42 / 4%));
+  } @else if $shadow == chrome {
+    box-shadow: var(--dash-chrome-shadow, 0 1px 0 color-mix(in srgb, var(--dash-border, #e5e7eb) 85%, transparent));
+  }
+}
+
+@mixin shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  box-sizing: border-box;
+}
+
+@mixin chrome {
+  flex-shrink: 0;
+  padding: var(--dash-page-y) var(--dash-chrome-x) var(--dash-gutter);
+  box-sizing: border-box;
+  background: var(--dash-card-bg, #fff);
+  @include frost(chrome);
+}
+
+@mixin chrome-sticky {
+  @include chrome;
+
+  position: sticky;
+  top: 0;
+  z-index: 8;
+  transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &.is-off {
+    transform: translateY(-100%);
+    pointer-events: none;
+  }
+}
+
+@mixin canvas {
+  flex: 1;
+  min-height: 0;
+}
+
+@mixin body {
+  padding: 0 max(0px, calc(var(--dash-page-x) - var(--dash-grid-gap)));
+  box-sizing: border-box;
+}

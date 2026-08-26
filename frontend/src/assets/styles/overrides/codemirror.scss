@@ -1,0 +1,10 @@
+// 覆盖 codemirror 编辑器样式
+.cm-editor {
+  &.cm-focused {
+    outline: none;
+  }
+
+  .cm-content {
+    font-family: 'Consolas';
+  }
+}

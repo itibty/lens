@@ -1,0 +1,32 @@
+/* stylelint-disable */
+@charset "utf-8";
+
+// Sass 编译期变量：用于 Element Plus 主题编译和少量组件 SCSS。
+// 调整品牌主色时，优先改 $cfe-color-primary；运行时语义变量在 tokens.scss 中统一暴露为 --na-*。
+
+// 布局
+$navbar-height: 40px;
+$page-header-height: 48px;
+$base-padding: 16px;
+
+// 项目主色/背景
+$cfe-color-primary: #0052d9; //#5370ff; // #1890ff; //#5972d3;
+$cfe-content-bg: #f7fafc;
+// 配色
+$klein-blue: #002fa7; //克莱因蓝（理想之蓝）
+$prussian-blue: #003153; //普鲁士蓝
+$marrs-green: #008c8c; //马尔斯绿
+$brunswick-green: #063a14; //不伦瑞克绿
+$burgundy-red: #8d021f; //勃艮第红
+$bordeaux-red: #4c0009; //波尔多红
+$china-red: #d12c25; //中国红
+$schenbrunn-yellow: #f7e14d; //申布伦黄
+
+// element plus（需计算变量，不可用css变量）
+@forward 'element-plus/theme-chalk/src/common/var.scss' with (
+  $colors: (
+    'primary': (
+      'base': $cfe-color-primary,
+    ),
+  )
+);

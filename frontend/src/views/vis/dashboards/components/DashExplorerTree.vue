@@ -1,0 +1,318 @@
+<!--
+ * @Description: 看板管理树
+-->
+<script setup lang="ts">
+import type { ElTree, TreeNodeData } from 'element-plus'
+import type { DashManageNode } from '../dashManage'
+import { DataBoard, Folder, Plus, Search } from '@element-plus/icons-vue'
+import MenuIcon from '@/components/MenuIcon.vue'
+
+type ExplorerCommand
+  = | 'add-child-group'
+    | 'add-dashboard'
+    | 'edit-group'
+    | 'toggle-group'
+    | 'delete-group'
+    | 'edit-dashboard'
+    | 'preview-dashboard'
+    | 'move-dashboard'
+    | 'toggle-dashboard'
+    | 'delete-dashboard'
+
+export interface DashExplorerTreeInstance {
+  setCurrentDashboard: (id?: string) => void
+}
+
+interface ExplorerNode extends Omit<DashManageNode, 'children'> {
+  key: string
+  children: ExplorerNode[]
+}
+
+interface TreeNodeLike {
+  expanded: boolean
+}
+
+const props = defineProps<{
+  data: DashManageNode[]
+  loading?: boolean
+  canWrite?: boolean
+}>()
+
+const emit = defineEmits<{
+  select: [node: DashManageNode]
+  command: [command: ExplorerCommand, node: DashManageNode]
+  addRootGroup: []
+  addUngroupedDashboard: []
+}>()
+
+const treeRef = ref<InstanceType<typeof ElTree>>()
+const keyword = ref('')
+const currentDashboardKey = ref('')
+
+function toExplorerNode(node: DashManageNode): ExplorerNode {
+  return {
+    ...node,
+    key: `${node.nodeType === 'GROUP' ? 'g' : 'd'}:${node.id}`,
+    children: (node.children ?? []).map(toExplorerNode),
+  }
+}
+
+const treeData = computed(() => props.data.map(toExplorerNode))
+
+function filterNode(value: string, data: TreeNodeData) {
+  const node = data as ExplorerNode
+  return !value || node.name.toLowerCase().includes(value.toLowerCase())
+}
+
+function onNodeClick(data: ExplorerNode, node: TreeNodeLike) {
+  if (data.nodeType === 'GROUP') {
+    node.expanded = !node.expanded
+    nextTick(() => treeRef.value?.setCurrentKey(currentDashboardKey.value || undefined))
+    return
+  }
+  currentDashboardKey.value = data.key
+  emit('select', data)
+}
+
+function onCommand(command: ExplorerCommand, node: ExplorerNode) {
+  emit('command', command, node)
+}
+
+function setCurrentDashboard(id = '') {
+  currentDashboardKey.value = id ? `d:${id}` : ''
+  nextTick(() => treeRef.value?.setCurrentKey(currentDashboardKey.value || undefined))
+}
+
+watch(keyword, value => treeRef.value?.filter(value.trim()))
+
+defineExpose<DashExplorerTreeInstance>({ setCurrentDashboard })
+</script>
+
+<template>
+  <aside class="explorer">
+    <div class="explorer__actions">
+      <el-button
+        v-if="canWrite"
+        type="primary"
+        size="small"
+        :icon="Plus"
+        @click="emit('addUngroupedDashboard')"
+      >
+        看板
+      </el-button>
+      <el-button
+        v-if="canWrite"
+        size="small"
+        @click="emit('addRootGroup')"
+      >
+        根分组
+      </el-button>
+    </div>
+    <el-input
+      v-model="keyword"
+      class="explorer__search"
+      clearable
+      :prefix-icon="Search"
+      placeholder="搜索分组或看板"
+    />
+    <el-scrollbar v-spinner="loading" class="explorer__scroll">
+      <el-tree
+        ref="treeRef"
+        :data="treeData"
+        :props="{ children: 'children', label: 'name' }"
+        node-key="key"
+        default-expand-all
+        highlight-current
+        :expand-on-click-node="false"
+        :filter-node-method="filterNode"
+        :indent="16"
+        empty-text="暂无看板"
+        @node-click="onNodeClick"
+      >
+        <template #default="{ data: treeNode }">
+          <div
+            class="explorer-node"
+            :class="{
+              'is-disabled': treeNode.status === 'DBL',
+              'is-dashboard': treeNode.nodeType === 'DASH',
+            }"
+          >
+            <MenuIcon
+              v-if="treeNode.icon"
+              :icon="treeNode.icon"
+              class-name="explorer-node__icon"
+            />
+            <el-icon v-else class="explorer-node__icon">
+              <Folder v-if="treeNode.nodeType === 'GROUP'" />
+              <DataBoard v-else />
+            </el-icon>
+            <span class="explorer-node__name" :title="treeNode.name">{{ treeNode.name }}</span>
+            <span v-if="treeNode.status === 'DBL'" class="explorer-node__status">禁用</span>
+            <span class="explorer-node__ops" @click.stop>
+              <el-dropdown
+                trigger="click"
+                @command="(command: ExplorerCommand) => onCommand(command, treeNode)"
+              >
+                <el-button link>
+                  <span class="explorer-node__more-icon i-mingcute-more-2-line" />
+                </el-button>
+                <template #dropdown>
+                  <el-dropdown-menu v-if="treeNode.nodeType === 'GROUP'">
+                    <template v-if="canWrite">
+                      <el-dropdown-item v-if="!treeNode.virtual" command="add-child-group">
+                        <span class="explorer-menu__icon i-mingcute-new-folder-line" />
+                        子组
+                      </el-dropdown-item>
+                      <el-dropdown-item command="add-dashboard">
+                        <span class="explorer-menu__icon i-mingcute-add-square-line" />
+                        看板
+                      </el-dropdown-item>
+                      <el-dropdown-item v-if="!treeNode.virtual" command="edit-group">
+                        <span class="explorer-menu__icon i-mingcute-edit-3-line" />
+                        编辑
+                      </el-dropdown-item>
+                      <el-dropdown-item v-if="!treeNode.virtual" command="toggle-group">
+                        <span
+                          class="explorer-menu__icon"
+                          :class="treeNode.status === 'EBL'
+                            ? 'i-mingcute-toggle-left-line'
+                            : 'i-mingcute-toggle-right-line'"
+                        />
+                        {{ treeNode.status === 'EBL' ? '禁用' : '启用' }}
+                      </el-dropdown-item>
+                      <el-dropdown-item v-if="!treeNode.virtual" command="delete-group" divided>
+                        <span class="explorer-menu__icon i-mingcute-delete-2-line" />
+                        删除
+                      </el-dropdown-item>
+                    </template>
+                  </el-dropdown-menu>
+                  <el-dropdown-menu v-else>
+                    <el-dropdown-item v-if="canWrite" command="edit-dashboard">
+                      <span class="explorer-menu__icon i-mingcute-edit-3-line" />
+                      编辑
+                    </el-dropdown-item>
+                    <el-dropdown-item command="preview-dashboard">
+                      <span class="explorer-menu__icon i-mingcute-eye-2-line" />
+                      预览
+                    </el-dropdown-item>
+                    <template v-if="canWrite">
+                      <el-dropdown-item command="move-dashboard">
+                        <span class="explorer-menu__icon i-mingcute-transfer-horizontal-line" />
+                        移动
+                      </el-dropdown-item>
+                      <el-dropdown-item command="toggle-dashboard">
+                        <span
+                          class="explorer-menu__icon"
+                          :class="treeNode.status === 'EBL'
+                            ? 'i-mingcute-toggle-left-line'
+                            : 'i-mingcute-toggle-right-line'"
+                        />
+                        {{ treeNode.status === 'EBL' ? '禁用' : '启用' }}
+                      </el-dropdown-item>
+                      <el-dropdown-item command="delete-dashboard" divided>
+                        <span class="explorer-menu__icon i-mingcute-delete-2-line" />
+                        删除
+                      </el-dropdown-item>
+                    </template>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
+            </span>
+          </div>
+        </template>
+      </el-tree>
+    </el-scrollbar>
+  </aside>
+</template>
+
+<style scoped lang="scss">
+.explorer {
+  display: flex;
+  flex: 0 0 292px;
+  flex-direction: column;
+  width: 292px;
+  min-height: 0;
+  padding: 12px;
+  box-sizing: border-box;
+  border-right: 1px solid var(--el-border-color-lighter);
+  background: var(--el-bg-color);
+  contain: layout paint;
+  isolation: isolate;
+}
+
+.explorer__actions {
+  display: flex;
+  margin-bottom: 10px;
+}
+
+.explorer__search {
+  margin-bottom: 10px;
+}
+
+.explorer__scroll {
+  flex: 1;
+  min-height: 0;
+}
+
+.explorer-node {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding-right: 4px;
+
+  &.is-disabled {
+    color: var(--el-text-color-placeholder);
+  }
+}
+
+.explorer-node__icon {
+  flex-shrink: 0;
+  font-size: 15px;
+}
+
+.explorer-node__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.explorer-node__status {
+  flex-shrink: 0;
+  color: var(--el-text-color-placeholder);
+  font-size: 11px;
+}
+
+.explorer-node__ops {
+  margin-left: auto;
+  flex-shrink: 0;
+  opacity: 0;
+}
+
+.explorer-node__more-icon,
+.explorer-menu__icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.explorer-menu__icon {
+  margin-right: 7px;
+}
+
+.explorer-node:hover .explorer-node__ops,
+.explorer-node__ops:focus-within {
+  opacity: 1;
+}
+
+:deep(.el-tree-node__content) {
+  height: 34px;
+  transition: none;
+}
+
+:deep(.el-tree-node.is-current > .el-tree-node__content) {
+  color: var(--el-color-primary);
+  font-weight: 600;
+}
+</style>

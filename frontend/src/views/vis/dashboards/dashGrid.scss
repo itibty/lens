@@ -1,0 +1,71 @@
+// 根栅格 / 组内栅格共用。只点亮格子自己的卡片，避免 hover 分组时组内卡一起出手柄。
+
+@mixin empty-hint($min-height) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: $min-height;
+  color: var(--el-text-color-placeholder);
+  font-size: 13px;
+  border: 1px dashed color-mix(in srgb, var(--dash-border, var(--el-border-color)) 80%, transparent);
+  border-radius: var(--dash-card-radius, 12px);
+  background: color-mix(in srgb, var(--dash-card-bg, var(--el-bg-color)) 42%, transparent);
+}
+
+@mixin vgl-canvas {
+  :deep(.vgl-layout) {
+    --vgl-placeholder-bg: var(--dash-accent, #3370ff);
+    --vgl-placeholder-opacity: 0.16;
+  }
+
+  :deep(.vgl-item--placeholder) {
+    display: none;
+    background-color: var(--dash-accent, #3370ff);
+    opacity: 0.16;
+    border-radius: var(--dash-card-radius, 12px);
+  }
+
+  :deep(.vgl-layout:has(.vgl-item--dragging) .vgl-item--placeholder) {
+    display: block;
+  }
+
+  :deep(.vgl-item) {
+    overflow: visible;
+  }
+
+  :deep(.vgl-item__resizer) {
+    display: none;
+  }
+}
+
+@mixin vgl-fill($include-group: false) {
+  :deep(.vgl-item > .vis-full-wrap),
+  :deep(.vgl-item > .dash-tile) {
+    width: 100%;
+    height: 100%;
+  }
+
+  @if $include-group {
+    :deep(.vgl-item > .dash-group) {
+      width: 100%;
+      height: 100%;
+    }
+  }
+}
+
+@mixin vgl-own-tile-chrome {
+  :deep(.vgl-item:hover > .dash-tile),
+  :deep(.vgl-item:hover > .vis-full-wrap > .dash-tile),
+  :deep(.vgl-item--dragging > .dash-tile),
+  :deep(.vgl-item--dragging > .vis-full-wrap > .dash-tile),
+  :deep(.vgl-item--resizing > .dash-tile),
+  :deep(.vgl-item--resizing > .vis-full-wrap > .dash-tile),
+  :deep(.vgl-item:has(> .dash-tile .vis-card-view.is-menu-open) > .dash-tile),
+  :deep(.vgl-item:has(> .vis-full-wrap > .dash-tile .vis-card-view.is-menu-open) > .vis-full-wrap > .dash-tile) {
+    .dash-tile__handle,
+    .dash-tile__dot {
+      opacity: 1;
+      pointer-events: auto;
+    }
+  }
+}

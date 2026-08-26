@@ -1,0 +1,167 @@
+// 尽量灵活，避免 unocss 冲突，作为 unocss 的补充
+$DIRECTIONS: (left, right, top, bottom);
+
+.base-border {
+  border: 1px solid var(--el-border-color);
+}
+.base-lighter-border {
+  border: 1px solid var(--el-border-color-lighter);
+}
+
+.base-padding {
+  padding: var(--na-page-padding);
+}
+@each $direction in $DIRECTIONS {
+  .base-border-#{$direction} {
+    border-#{$direction}: 1px solid var(--el-border-color);
+  }
+  .base-lighter-border-#{$direction} {
+    border-#{$direction}: 1px solid var(--el-border-color-lighter);
+  }
+}
+.base-shadow {
+  box-shadow: 0 2px 4px 0 var(--el-border-color);
+}
+.base-shadow-top {
+  box-shadow: 0px -2px 4px -2px var(--el-border-color);
+}
+.base-shadow-right {
+  box-shadow: 2px 0 4px -2px var(--el-border-color);
+}
+.base-shadow-bottom {
+  box-shadow: 0 2px 4px -2px var(--el-border-color);
+}
+.base-shadow-left {
+  box-shadow: -2px 0 4px -2px var(--el-border-color);
+}
+.base-hover-shadow {
+  &:hover {
+    box-shadow: 0 2px 4px 0 var(--el-border-color);
+  }
+}
+.base-transition {
+  transition:
+    all 0.2s cubic-bezier(0.645, 0.045, 0.355, 1),
+    border 0s,
+    background 0s,
+    color 0s,
+    font-size 0s;
+}
+.base-content-bg {
+  background-color: var(--el-bg-color-page) !important;
+}
+
+.clickable {
+  cursor: pointer;
+  user-select: none;
+}
+.link {
+  color: var(--el-color-primary);
+}
+.hover-link {
+  &:hover {
+    color: var(--el-color-primary);
+  }
+}
+
+.vertical-text {
+  writing-mode: vertical-rl;
+  text-orientation: mixed; /* 默认值，中文、日文等字符保持直立，字母和数字旋转90度 */
+  /* text-orientation: upright; 让所有字符都保持直立 */
+  /* text-orientation: sideways; 让所有字符都横向显示 */
+  letter-spacing: 3px; /* 字符横向间距 */
+}
+
+.icon-btn {
+  color: var(--el-text-color-placeholder);
+  background-color: var(--el-color-info-light-9);
+
+  &:hover {
+    color: var(--el-menu-active-color);
+    background-color: var(--el-color-info-light-7);
+  }
+}
+
+.common-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--na-content-bg);
+}
+
+// 拖拽分割条。拖动中在 handle 的直接父级加 is-resizing（祖先也可加，仅禁选中）
+// 竖条贴右：resize-handle resize-handle--col resize-handle--right
+// 横条贴顶：resize-handle resize-handle--row resize-handle--top
+// 编辑器底边淡入：再加 resize-handle--fade
+.is-resizing {
+  user-select: none;
+}
+
+.resize-handle {
+  position: absolute;
+  z-index: 2;
+
+  &:not(.resize-handle--fade):hover,
+  .is-resizing > &:not(.resize-handle--fade) {
+    background: var(--na-resizer-color);
+  }
+}
+
+.resize-handle--col {
+  top: 0;
+  bottom: 0;
+  width: var(--na-resizer-size);
+  cursor: col-resize;
+}
+
+.resize-handle--row {
+  left: 0;
+  right: 0;
+  height: var(--na-resizer-size);
+  cursor: ns-resize;
+}
+
+.resize-handle--left {
+  left: var(--na-resizer-offset);
+}
+
+.resize-handle--right {
+  right: var(--na-resizer-offset);
+}
+
+.resize-handle--top {
+  top: var(--na-resizer-offset);
+}
+
+.resize-handle--bottom {
+  bottom: var(--na-resizer-offset);
+}
+
+.resize-handle--fade {
+  z-index: 3;
+
+  &.resize-handle--row {
+    height: 6px;
+  }
+
+  &.resize-handle--bottom {
+    bottom: 0;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    height: var(--na-resizer-size);
+    opacity: 0;
+    background: var(--na-resizer-color);
+    transition: opacity 0.15s;
+  }
+}
+
+:hover > .resize-handle--fade::after,
+.is-resizing > .resize-handle--fade::after {
+  opacity: 1;
+}

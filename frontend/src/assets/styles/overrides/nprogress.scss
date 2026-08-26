@@ -1,0 +1,13 @@
+// nprogress 页面进度条
+#nprogress {
+  .bar {
+    background: #f9e72c !important; // #0049B0
+    height: 2px;
+  }
+
+  .peg {
+    box-shadow:
+      0 0 10px #f9e72c,
+      0 0 5px #f9e72c !important;
+  }
+}

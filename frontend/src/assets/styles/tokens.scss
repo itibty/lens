@@ -1,0 +1,27 @@
+@use './variables.scss' as *;
+
+:root {
+  // -- project tokens --
+  --na-color-primary: #{$cfe-color-primary};
+  --na-content-bg: #{$cfe-content-bg};
+  --na-navbar-height: #{$navbar-height};
+  --na-navbar-bg: #20242a;
+  --na-navbar-border-color: rgba(255, 255, 255, 0.08);
+  --na-navbar-title-color: #fff;
+  --na-navbar-text-color: #c9d1dc;
+  --na-navbar-hover-text-color: #fff;
+  --na-navbar-hover-bg: rgba(255, 255, 255, 0.08);
+  --na-page-header-height: #{$page-header-height};
+  --na-page-padding: #{$base-padding};
+  --na-resizer-size: 4px;
+  --na-resizer-offset: -2px;
+  --na-resizer-color: color-mix(in srgb, var(--el-color-primary) 35%, transparent);
+
+  // -- element tokens --
+  --el-border-radius-base: 4px; // 3px
+  --el-loading-spinner-size: 20px;
+  --el-menu-item-height: 36px;
+  --el-menu-sub-item-height: 36px;
+  --el-menu-level-padding: 30px;
+  --el-menu-base-level-padding: 9px;
+}
