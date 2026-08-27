@@ -22,6 +22,7 @@ public class VisDashboardAccess {
 
     private final SysRoleDashboardMapper roleDashboardMapper;
     private final VisDashboardCardMapper dashboardCardMapper;
+    private final VisDashboardVisibilityService dashboardVisibility;
 
     public void assertCanView(Long dashboardId) {
         if (canDesign())
@@ -79,7 +80,9 @@ public class VisDashboardAccess {
         if (userId == null)
             return Set.of();
         List<Long> ids = roleDashboardMapper.findUserDashboardIds(userId, System.currentTimeMillis());
-        return ids == null ? Set.of() : new HashSet<>(ids);
+        return ids == null
+                ? Set.of()
+                : dashboardVisibility.filterVisibleDashboardIds(new HashSet<>(ids));
     }
 
     private Set<Long> assignedIds() {

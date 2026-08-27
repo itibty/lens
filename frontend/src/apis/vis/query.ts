@@ -91,6 +91,28 @@ export async function queryCardPivot(
   );
 }
 
+/** 看板筛选枚举 POST /dashboards/${param0}/filters/${param1}/options */
+export async function listDashboardFilterOptions(
+  // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
+  params: VIS.listDashboardFilterOptionsParams,
+  body: VIS.VisBoundFilterOptionsRequest,
+  options?: { [key: string]: any }
+) {
+  const { dashboardId: param0, filterUid: param1, ...queryParams } = params;
+  return request<VIS.RVisFilterOptionsResponse>(
+    `${VIS_BASE_PATH}/dashboards/${param0}/filters/${param1}/options`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      params: { ...queryParams },
+      data: body,
+      ...(options || {}),
+    }
+  );
+}
+
 /** 卡片查询结构 GET /vis/cards/${param0} */
 export async function getCardDetail(
   // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
@@ -137,7 +159,7 @@ export async function previewDateWindow(
   });
 }
 
-/** 筛选枚举 POST /vis/filter-options */
+/** 设计态筛选枚举 POST /vis/filter-options */
 export async function listFilterOptions(
   body: VIS.VisFilterOptionsRequest,
   options?: { [key: string]: any }

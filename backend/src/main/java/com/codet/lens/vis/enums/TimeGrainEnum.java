@@ -22,21 +22,6 @@ public enum TimeGrainEnum {
         this.name = name;
     }
 
-    public String toSql(String field) {
-        switch (this) {
-            case DAY:
-                return "DATE_FORMAT(" + field + ", '%Y-%m-%d')";
-            case WEEK:
-                return "DATE_FORMAT(DATE_SUB(DATE(" + field + "), INTERVAL WEEKDAY(" + field + ") DAY), '%Y-%m-%d')";
-            case MONTH:
-                return "DATE_FORMAT(" + field + ", '%Y-%m')";
-            case YEAR:
-                return "DATE_FORMAT(" + field + ", '%Y')";
-            default:
-                throw new IllegalStateException(code);
-        }
-    }
-
     public static TimeGrainEnum of(String raw) {
         if (raw == null || raw.trim().isEmpty()) {
             return null;

@@ -26,7 +26,44 @@ public final class VisDashFilters {
         }
     }
 
+    public record OptionSource(Long datasetId, String field, String labelField) {
+    }
+
     private VisDashFilters() {
+    }
+
+    /**
+     * 按筛选 uid 读取已保存的数据集枚举源。客户端不能覆盖这里返回的数据集和字段。
+     */
+    public static OptionSource optionSource(String configJson, String filterUid) {
+        if (StrUtil.isBlank(configJson) || StrUtil.isBlank(filterUid)) {
+            return null;
+        }
+        JsonNode filters = filterNodes(configJson);
+        if (filters == null) {
+            return null;
+        }
+        for (JsonNode node : filters) {
+            if (node == null || !node.isObject() || !filterUid.trim().equals(text(node, "uid"))) {
+                continue;
+            }
+            JsonNode options = node.get("options");
+            if (options == null || !options.isObject() || !"dataset".equals(text(options, "source"))) {
+                return null;
+            }
+            String datasetId = text(options, "datasetId");
+            String field = text(options, "field");
+            if (datasetId.isEmpty() || field.isEmpty()) {
+                return null;
+            }
+            try {
+                return new OptionSource(Long.valueOf(datasetId), field,
+                        StrUtil.blankToDefault(text(options, "labelField"), null));
+            } catch (NumberFormatException ignored) {
+                return null;
+            }
+        }
+        return null;
     }
 
     public static Allowed allowedForDataset(String configJson, Long datasetId) {
@@ -34,14 +71,8 @@ public final class VisDashFilters {
             return Allowed.empty();
         }
         String want = String.valueOf(datasetId);
-        JsonNode filters;
-        try {
-            JsonNode root = MAPPER.readTree(configJson);
-            filters = root == null ? null : root.get("filters");
-        } catch (Exception ignored) {
-            return Allowed.empty();
-        }
-        if (filters == null || !filters.isArray()) {
+        JsonNode filters = filterNodes(configJson);
+        if (filters == null) {
             return Allowed.empty();
         }
         Set<String> filterFields = new LinkedHashSet<>();
@@ -77,6 +108,16 @@ public final class VisDashFilters {
             }
         }
         return kept;
+    }
+
+    private static JsonNode filterNodes(String configJson) {
+        try {
+            JsonNode root = MAPPER.readTree(configJson);
+            JsonNode filters = root == null ? null : root.get("filters");
+            return filters != null && filters.isArray() ? filters : null;
+        } catch (Exception ignored) {
+            return null;
+        }
     }
 
     private static String text(JsonNode node, String field) {

@@ -13,7 +13,7 @@ import { pickBy } from 'lodash-es'
 import vis from '@/apis/vis/index'
 import { useKeepAlive } from '@/hooks/layout'
 import { useAccountStore } from '@/stores/modules/account'
-import { getPageAfterDelete, showConfirm, showToast } from '@/utils/index'
+import { getPageAfterDelete, showAlert, showConfirm, showToast } from '@/utils/index'
 import { isBlank } from '@/utils/validate'
 import BindFieldsDialog from './components/BindFieldsDialog.vue'
 import { FUNCTION_DATASET_CONF } from './components/config'
@@ -66,6 +66,7 @@ const states = reactive<IStates>({
 const confSqlDialogRef = ref<ConfSqlDialogInstance>()
 const bindFieldsDialogRef = ref<BindFieldsDialogInstance>()
 const viewingSqlId = ref('')
+const checkingDatasetId = ref('')
 let requestId = 0
 
 function fetchData() {
@@ -109,14 +110,33 @@ function handleEdit(row: VIS.ConfSqlInfo) {
   confSqlDialogRef.value?.showDialog(row)
 }
 
-function handleDelete(row: VIS.ConfSqlInfo) {
-  showConfirm('您确定要删除此数据集吗?', '删除确认', 'warning', () => {
-    vis.dataset.delDataset({ ids: [row.id!] }).then((res) => {
-      showToast(res.msg)
-      states.pageNumber = getPageAfterDelete(states.pageNumber, states.pageSize, states.total)
-      fetchData()
+async function handleDelete(row: VIS.ConfSqlInfo) {
+  if (!row.id)
+    return
+  checkingDatasetId.value = row.id
+  try {
+    const res = await vis.dataset.listDatasetCards({ datasetId: row.id })
+    const cards = res.data?.list ?? []
+    if (cards.length) {
+      const names = cards.slice(0, 5).map(card => card.cardName).join('、')
+      const suffix = cards.length > 5 ? ' 等' : ''
+      showAlert(
+        `该数据集被 ${cards.length} 张卡片引用，请先处理卡片：${names}${suffix}`,
+        '无法删除数据集',
+      )
+      return
+    }
+    showConfirm('您确定要删除此数据集吗?', '删除确认', 'warning', () => {
+      vis.dataset.delDataset({ ids: [row.id!] }).then((deleteRes) => {
+        showToast(deleteRes.msg)
+        states.pageNumber = getPageAfterDelete(states.pageNumber, states.pageSize, states.total)
+        fetchData()
+      })
     })
-  })
+  }
+  finally {
+    checkingDatasetId.value = ''
+  }
 }
 
 const router = useRouter()
@@ -251,6 +271,7 @@ onMounted(() => {
               size="small"
               type="primary"
               link
+              :loading="checkingDatasetId === row.id"
               @click="handleDelete(row)"
             >
               删除

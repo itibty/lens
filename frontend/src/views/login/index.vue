@@ -9,6 +9,7 @@
 import type { FormInstance } from 'element-plus'
 import { isDefaultHomeRedirect } from '@/router/navigation'
 import { useAccountStore } from '@/stores/modules/account'
+import { showToast } from '@/utils'
 import { CacheKeyNameEnum, storageUtil } from '@/utils/cache'
 import { createLogger } from '@/utils/logger'
 import { isBlank } from '@/utils/validate'
@@ -71,7 +72,9 @@ async function handleLogin() {
     }
   })
 }
-function handleForgetPwd() {}
+function handleForgetPwd() {
+  showToast('请联系管理员重置密码', 'info')
+}
 function getLoginRedirect() {
   const redirect = route.query.redirect
   if (typeof redirect !== 'string')

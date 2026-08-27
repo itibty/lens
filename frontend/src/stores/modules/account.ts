@@ -6,7 +6,7 @@
  * @Description: 账号
  */
 
-import { getAccountInfo, loginAccount as accountLogin, logoutAccount as accountLogout } from '@/apis/admin/account'
+import { loginAccount as accountLogin, logoutAccount as accountLogout, getAccountInfo } from '@/apis/admin/account'
 import { RequestConfig } from '@/core/config'
 import { useKeepPageStore } from '@/stores/modules/keepPage'
 import { useMenuStore } from '@/stores/modules/menu'
@@ -25,7 +25,6 @@ function getDftUserInfo(): ADMIN.AccountInfo {
     realName: '',
     phone: '',
     email: '',
-    avatar: '',
     status: 'EBL',
     roleCodes: [],
     functionCodes: [],
@@ -37,10 +36,7 @@ export const useAccountStore = defineStore('account', () => {
   const userInfo = reactive<ADMIN.AccountInfo>(getDftUserInfo())
 
   // getters
-  const permissionCodes = computed(() => [
-    ...(userInfo.roleCodes ?? []),
-    ...(userInfo.functionCodes ?? []),
-  ])
+  const permissionCodes = computed(() => userInfo.functionCodes ?? [])
 
   // actions
   const updateUserInfo = (next: ADMIN.AccountInfo): void => {
@@ -49,7 +45,6 @@ export const useAccountStore = defineStore('account', () => {
     userInfo.realName = next.realName
     userInfo.email = next.email
     userInfo.phone = next.phone
-    userInfo.avatar = next.avatar
     userInfo.roleCodes = next.roleCodes
     userInfo.functionCodes = next.functionCodes
   }
@@ -76,9 +71,14 @@ export const useAccountStore = defineStore('account', () => {
     throw new Error('获取用户信息失败：返回数据格式错误')
   }
 
+  /** 重置内存账号信息，但保留 token，供初始化失败后重试。 */
+  const resetUserInfo = (): void => {
+    updateUserInfo(getDftUserInfo())
+  }
+
   const clearUserInfo = (): void => {
     storageUtil.del(CacheKeyNameEnum.accessToken)
-    updateUserInfo(getDftUserInfo())
+    resetUserInfo()
     useMenuStore().clearMenus()
     useKeepPageStore().clearPage()
   }
@@ -124,6 +124,7 @@ export const useAccountStore = defineStore('account', () => {
     logout,
     fetchUserInfo,
     updateUserInfo,
+    resetUserInfo,
     clearUserInfo,
     hasUserInfo,
     getUserInfo,

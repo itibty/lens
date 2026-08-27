@@ -8,10 +8,12 @@ import com.codet.lens.common.PageResponse;
 import com.codet.lens.common.PermCodes;
 import com.codet.lens.common.R;
 import com.codet.lens.common.ResultEnum;
+import com.codet.lens.vis.core.query.SqlDialect;
 import com.codet.lens.vis.dto.dataset.VisDatasetInfo;
+import com.codet.lens.vis.dto.dataset.VisCardRefInfo;
 import com.codet.lens.vis.entity.VisDatasource;
 import com.codet.lens.vis.mapper.VisDatasourceMapper;
-import com.codet.lens.vis.rds.core.DatasourceRegistry;
+import com.codet.lens.vis.rds.core.MetaInfo;
 import com.codet.lens.vis.rds.dto.conf.ConfSqlContentRequest;
 import com.codet.lens.vis.rds.dto.conf.ConfSqlFieldInfo;
 import com.codet.lens.vis.rds.dto.conf.ConfSqlFieldSaveRequest;
@@ -21,6 +23,8 @@ import com.codet.lens.vis.rds.dto.conf.DebugSqlRequest;
 import com.codet.lens.vis.rds.dto.conf.DebugSqlResponse;
 import com.codet.lens.vis.rds.dto.conf.QueryConfSqlRequest;
 import com.codet.lens.vis.service.DatasetAdminService;
+import com.codet.lens.vis.service.DatasourceAdminService;
+import com.codet.lens.vis.service.DatasourceMetaService;
 import com.codet.lens.vis.service.VisDatasetService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -36,11 +40,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.sql.DataSource;
-import java.sql.Connection;
-import java.sql.DatabaseMetaData;
-import java.sql.ResultSet;
-import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -49,7 +48,8 @@ import java.util.List;
 public class DatasetController {
 
     private final VisDatasourceMapper datasourceMapper;
-    private final DatasourceRegistry datasourceRegistry;
+    private final DatasourceAdminService datasourceAdminService;
+    private final DatasourceMetaService datasourceMetaService;
     private final DatasetAdminService datasetAdminService;
     private final VisDatasetService visDatasetService;
 
@@ -60,6 +60,7 @@ public class DatasetController {
     public R<ListResponse<DsOption>> listDatasourceOptions(@PathVariable String dsType) {
         List<DsOption> list = datasourceMapper.selectList(null).stream()
                 .filter(r -> FieldConst.EBL.equals(r.getStatus()))
+                .filter(r -> SqlDialect.supports(r.getDbType()))
                 .map(r -> {
                     DsOption opt = new DsOption();
                     opt.setType("RDS");
@@ -77,24 +78,14 @@ public class DatasetController {
     @Operation(operationId = "listDatasourceTables", summary = "数据表选项")
     @GetMapping("/datasources/{sourceName}/tables")
     public R<ListResponse<NameValue>> listDatasourceTables(@PathVariable String sourceName) {
-        List<NameValue> list = new ArrayList<>();
-        try {
-            DataSource ds = datasourceRegistry.raw(sourceName);
-            try (Connection conn = ds.getConnection()) {
-                DatabaseMetaData meta = conn.getMetaData();
-                String catalog = conn.getCatalog();
-                try (ResultSet rs = meta.getTables(catalog, null, "%", new String[]{"TABLE", "VIEW"})) {
-                    while (rs.next()) {
-                        String table = rs.getString("TABLE_NAME");
-                        NameValue nv = new NameValue();
-                        nv.setName(table);
-                        nv.setValue(catalog == null ? table : catalog + "." + table);
-                        list.add(nv);
-                    }
-                }
-            }
-        } catch (Exception ignored) {
-        }
+        List<NameValue> list = datasourceMetaService.listTables(sourceName).stream()
+                .map(option -> {
+                    NameValue item = new NameValue();
+                    item.setName(option.name());
+                    item.setValue(option.value());
+                    return item;
+                })
+                .toList();
         return R.success(new ListResponse<>(list));
     }
 
@@ -102,10 +93,10 @@ public class DatasetController {
     @Permission(PermCodes.VIS_DATASET_CONF)
     @Operation(operationId = "getDatasourceMetaTree", summary = "元数据树")
     @GetMapping("/datasources/{sourceName}/meta-tree")
-    public R<ListResponse<Object>> getDatasourceMetaTree(
+    public R<ListResponse<MetaInfo.SchemaInfo>> getDatasourceMetaTree(
             @PathVariable String sourceName,
             @RequestParam(required = false) String tables) {
-        return R.success(new ListResponse<>(List.of()));
+        return R.success(new ListResponse<>(datasourceMetaService.getMetaTree(sourceName, tables)));
     }
 
     @Tag(name = "DATASOURCE")
@@ -113,16 +104,7 @@ public class DatasetController {
     @Operation(operationId = "editDatasource", summary = "新建或编辑数据源")
     @PostMapping("/datasources/edit")
     public R<Long> editDatasource(@RequestBody VisDatasource body) {
-        if (body.getId() == null) {
-            body.setStatus(FieldConst.EBL);
-            body.createCallback();
-            datasourceMapper.insert(body);
-        } else {
-            body.modifyCallback();
-            datasourceMapper.updateById(body);
-        }
-        datasourceRegistry.refresh(datasourceMapper.selectById(body.getId()));
-        return R.success(body.getId());
+        return R.success(datasourceAdminService.save(body));
     }
 
     @Tag(name = "DATASET")
@@ -157,6 +139,14 @@ public class DatasetController {
     public R<Void> editDatasetContent(@Validated @RequestBody ConfSqlContentRequest request) {
         datasetAdminService.saveContent(request);
         return R.success();
+    }
+
+    @Tag(name = "DATASET")
+    @Permission(PermCodes.VIS_DATASET_CONF)
+    @Operation(operationId = "listDatasetCards", summary = "查询引用数据集的卡片")
+    @GetMapping("/datasets/cards")
+    public R<ListResponse<VisCardRefInfo>> listDatasetCards(@NotNull Long datasetId) {
+        return R.success(datasetAdminService.listRefCards(datasetId));
     }
 
     @Tag(name = "DATASET")
@@ -199,15 +189,18 @@ public class DatasetController {
 
     @Tag(name = "DATASET")
     @Operation(operationId = "listDatasetOptions", summary = "数据集选项")
-    @Permission(PermCodes.VIS_CARD_CONF)
+    @Permission({PermCodes.VIS_CARD_CONF, PermCodes.VIS_DASHBOARD_CONF})
     @GetMapping("/datasets/options")
-    public R<ListResponse<VisDatasetInfo>> listDatasetOptions() {
-        return R.success(visDatasetService.listOptions());
+    public R<ListResponse<VisDatasetInfo>> listDatasetOptions(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) Long selectedId,
+            @RequestParam(required = false) Integer limit) {
+        return R.success(visDatasetService.listOptions(keyword, selectedId, limit));
     }
 
     @Tag(name = "DATASET")
     @Operation(operationId = "listDatasetFieldsById", summary = "数据集字段")
-    @Permission(PermCodes.VIS_CARD_CONF)
+    @Permission({PermCodes.VIS_CARD_CONF, PermCodes.VIS_DASHBOARD_CONF})
     @GetMapping("/datasets/{datasetId}/fields")
     public R<List<ConfSqlFieldInfo>> listDatasetFieldsById(
             @NotNull(message = "datasetId不能为空") @PathVariable Long datasetId) {

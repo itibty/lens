@@ -15,8 +15,8 @@ import { useSwipeBackGuard } from '@/hooks/swipeBack'
 import { useAccountStore } from '@/stores/modules/account'
 import { showToast } from '@/utils/index'
 import { createLogger } from '@/utils/logger'
-import { FUNCTION_DATASET_CONF } from './components/config'
 import BindFieldsDialog from './components/BindFieldsDialog.vue'
+import { FUNCTION_DATASET_CONF } from './components/config'
 import DebugParamsDialog from './components/DebugParamsDialog.vue'
 import {
   buildOutputTabPayload,
@@ -135,6 +135,17 @@ const states = reactive<IStates>({
   activeOutputTabId: '',
 })
 
+const dirty = ref(false)
+useLeaveConfirm(undefined, undefined, () => dirty.value)
+watch(
+  [() => states.sqlCode, () => states.jsonCode],
+  () => {
+    if (!states.loading && !states.saveLoading)
+      dirty.value = true
+  },
+  { flush: 'sync' },
+)
+
 const outputLoading = computed(() => states.runLoading)
 
 const draftParams = computed(() => states.jsonCode || '{}')
@@ -168,6 +179,9 @@ const ruleDocDialog = reactive<CustomDialogProps>({
 })
 
 let requestId = 0
+let loadRequestId = 0
+let tableOptionsRequestId = 0
+let metaTreeRequestId = 0
 /** Tab 唯一 id 序号（仅作 key，与展示序号无关） */
 let outputTabSeq = 0
 
@@ -238,15 +252,25 @@ function resetMetaState() {
   states.metaTree = []
   states.tableOptions = []
   states.loadedTables = []
+  states.optionsLoading = false
+  states.metaLoading = false
 }
 
 function tableKey(opt: VIS.OptionString): string {
   return (opt.value || opt.name || '').trim()
 }
 
-function fetchConfSql(sqlId: string, initMeta: boolean = false) {
+async function fetchConfSql(sqlId: string, initMeta: boolean = false) {
+  const currentRequestId = ++loadRequestId
+  tableOptionsRequestId += 1
+  metaTreeRequestId += 1
+  resetMetaState()
   states.loading = true
-  vis.dataset.getDatasetDetail({ sqlId }).then((res) => {
+  dirty.value = false
+  try {
+    const res = await vis.dataset.getDatasetDetail({ sqlId })
+    if (currentRequestId !== loadRequestId)
+      return
     const { data } = res
     if (!data) {
       states.info = undefined
@@ -261,22 +285,31 @@ function fetchConfSql(sqlId: string, initMeta: boolean = false) {
     states.jsonCode = data.sqlParams || '{}'
     states.sqlCode = data.sqlContent || ''
     if (data.dsName && initMeta)
-      void initMetaForSource(data.dsName)
-  }).catch(() => {
+      void initMetaForSource(data.dsName, currentRequestId)
+  }
+  catch {
+    if (currentRequestId !== loadRequestId)
+      return
     states.info = undefined
     states.jsonCode = ''
     states.sqlCode = ''
     resetMetaState()
-  }).finally(() => {
-    states.loading = false
-  })
+  }
+  finally {
+    if (currentRequestId === loadRequestId)
+      states.loading = false
+  }
 }
 
-async function initMetaForSource(sourceName: string) {
+async function initMetaForSource(sourceName: string, ownerRequestId = loadRequestId) {
+  const currentRequestId = ++tableOptionsRequestId
+  metaTreeRequestId += 1
   resetMetaState()
   states.optionsLoading = true
   try {
     const res = await vis.datasource.listDatasourceTables({ sourceName })
+    if (ownerRequestId !== loadRequestId || currentRequestId !== tableOptionsRequestId)
+      return
     const list = res.data?.list || []
     states.tableOptions = list
 
@@ -286,23 +319,29 @@ async function initMetaForSource(sourceName: string) {
     // 小库直接加载全部，免去选表
     if (list.length <= AUTO_LOAD_TABLE_LIMIT) {
       const all = list.map(tableKey).filter(Boolean)
-      await reloadMetaTree(sourceName, all)
+      await reloadMetaTree(sourceName, all, ownerRequestId)
     }
   }
   catch (e) {
+    if (ownerRequestId !== loadRequestId || currentRequestId !== tableOptionsRequestId)
+      return
     logger.error(e)
     showToast('表清单加载失败', 'error')
   }
   finally {
-    states.optionsLoading = false
+    if (ownerRequestId === loadRequestId && currentRequestId === tableOptionsRequestId)
+      states.optionsLoading = false
   }
 }
 
 /** 按 tables 加载 meta；有数据时原地替换，避免先清空造成闪烁 */
-async function reloadMetaTree(sourceName: string, tables: string[]) {
+async function reloadMetaTree(sourceName: string, tables: string[], ownerRequestId = loadRequestId) {
+  const currentRequestId = ++metaTreeRequestId
   if (!tables.length) {
-    states.metaTree = []
-    states.loadedTables = []
+    if (ownerRequestId === loadRequestId) {
+      states.metaTree = []
+      states.loadedTables = []
+    }
     return
   }
 
@@ -313,14 +352,19 @@ async function reloadMetaTree(sourceName: string, tables: string[]) {
       sourceName,
       tables: tables.join(','),
     })
+    if (ownerRequestId !== loadRequestId || currentRequestId !== metaTreeRequestId)
+      return
     states.metaTree = res.data?.list || []
   }
   catch (e) {
+    if (ownerRequestId !== loadRequestId || currentRequestId !== metaTreeRequestId)
+      return
     logger.error(e)
     showToast('元数据加载失败', 'error')
   }
   finally {
-    states.metaLoading = false
+    if (ownerRequestId === loadRequestId && currentRequestId === metaTreeRequestId)
+      states.metaLoading = false
   }
 }
 
@@ -343,6 +387,7 @@ async function persistSave(sqlId: string, fields?: VIS.ConfSqlFieldItem[]) {
       sqlContent: states.sqlCode,
       sqlParams: draftParams.value,
     })
+    dirty.value = false
     showToast('保存成功', 'success')
     markListStale('DS')
   }
@@ -457,12 +502,13 @@ function handleRun() {
   })
 }
 
-useLeaveConfirm()
 useSwipeBackGuard()
 const route = useRoute()
 function loadConf(id: string) {
+  requestId += 1
+  states.runLoading = false
   clearOutputTabs()
-  fetchConfSql(id, true)
+  void fetchConfSql(id, true)
   if (!states.delayInit) {
     nextTick(() => {
       states.delayInit = true
@@ -500,7 +546,7 @@ onBeforeRouteUpdate((to) => {
         v-if="canWrite"
         type="primary"
         :loading="states.saveLoading"
-        :disabled="!states.info || !!saveBlockReason"
+        :disabled="states.loading || !states.info || !!saveBlockReason"
         :title="saveBlockReason || undefined"
         @click="handleSave"
       >

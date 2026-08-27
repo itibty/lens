@@ -51,30 +51,51 @@ export function filterOptionsQuery(def: Pick<VisDashFilterDef, 'options'>) {
   }
 }
 
-function optionSourceKey(def: VisDashFilterDef) {
+function optionSourceKey(def: VisDashFilterDef, dashboardId = '') {
   const query = filterOptionsQuery(def)
   if (!query)
     return def.uid
-  return [def.uid, query.datasetId, query.field, query.labelField || ''].join('\u0001')
+  return [dashboardId, def.uid, query.datasetId, query.field, query.labelField || ''].join('\u0001')
 }
 
-export async function resolveOptionLabels(def: VisDashFilterDef, values: unknown[]) {
+async function requestFilterOptions(
+  def: VisDashFilterDef,
+  body: VIS.VisBoundFilterOptionsRequest,
+  dashboardId = '',
+) {
   const query = filterOptionsQuery(def)
-  if (!query || !isRemoteFilterOptions(def))
+  if (!query)
+    return undefined
+  const id = dashboardId.trim()
+  if (id) {
+    return vis.query.listDashboardFilterOptions({
+      dashboardId: id,
+      filterUid: def.uid,
+    }, body)
+  }
+  return vis.query.listFilterOptions({ ...query, ...body })
+}
+
+export async function resolveOptionLabels(
+  def: VisDashFilterDef,
+  values: unknown[],
+  dashboardId = '',
+) {
+  if (!filterOptionsQuery(def) || !isRemoteFilterOptions(def))
     return [] as DashFilterOptionItem[]
   const cleaned = optionValuesOf(values)
   if (!cleaned.length)
     return []
-  const res = await vis.query.listFilterOptions({
-    ...query,
+  const res = await requestFilterOptions(def, {
     values: cleaned,
-  })
+  }, dashboardId)
   return parseFilterOptionsRes(res).list
 }
 
 export function useDashFilterLabels(
   defs: MaybeRefOrGetter<VisDashFilterDef[]>,
   values: MaybeRefOrGetter<DashFilterValues>,
+  dashboardId?: MaybeRefOrGetter<string | undefined>,
 ) {
   const labels = ref<Record<string, Record<string, string>>>({})
   let seq = 0
@@ -83,7 +104,7 @@ export function useDashFilterLabels(
     const def = toValue(defs).find(item => item.uid === uid)
     if (!def)
       return {}
-    return labels.value[optionSourceKey(def)] || {}
+    return labels.value[optionSourceKey(def, toValue(dashboardId) || '')] || {}
   }
 
   watch(
@@ -91,7 +112,7 @@ export function useDashFilterLabels(
       if (!isRemoteFilterOptions(def))
         return def.uid
       const cells = optionValuesOf(toValue(values)[def.uid]?.value).join('\u0001')
-      return `${optionSourceKey(def)}\u0002${cells}`
+      return `${optionSourceKey(def, toValue(dashboardId) || '')}\u0002${cells}`
     }).join('\u0003'),
     async () => {
       const id = ++seq
@@ -101,7 +122,8 @@ export function useDashFilterLabels(
       await Promise.all(list.map(async (def) => {
         if (!isRemoteFilterOptions(def))
           return
-        const key = optionSourceKey(def)
+        const currentDashboardId = toValue(dashboardId) || ''
+        const key = optionSourceKey(def, currentDashboardId)
         const cells = optionValuesOf(current[def.uid]?.value)
         const known = labels.value[key] || {}
         if (!cells.length) {
@@ -114,7 +136,7 @@ export function useDashFilterLabels(
           return
         }
         try {
-          const items = await resolveOptionLabels(def, missing)
+          const items = await resolveOptionLabels(def, missing, currentDashboardId)
           if (id !== seq)
             return
           const map = { ...known }
@@ -139,6 +161,7 @@ export function useDashFilterLabels(
 export function useDashFilterOptions(
   def: MaybeRefOrGetter<VisDashFilterDef>,
   selected?: MaybeRefOrGetter<unknown[]>,
+  dashboardId?: MaybeRefOrGetter<string | undefined>,
 ) {
   const options = ref<DashFilterOptionItem[]>([])
   const loading = ref(false)
@@ -155,6 +178,8 @@ export function useDashFilterOptions(
   function optionQueryKey(keyword = '') {
     const query = filterOptionsQuery(current.value)
     return [
+      toValue(dashboardId) || '',
+      current.value.uid,
       query?.datasetId || '',
       query?.field || '',
       query?.labelField || '',
@@ -196,11 +221,10 @@ export function useDashFilterOptions(
     pendingKey = reqKey
     loading.value = true
     try {
-      const res = await vis.query.listFilterOptions({
-        ...query,
+      const res = await requestFilterOptions(current.value, {
         ...(keyword.trim() ? { keyword: keyword.trim() } : {}),
         limit: FILTER_OPTIONS_LIMIT,
-      })
+      }, toValue(dashboardId) || '')
       if (id !== seq)
         return
       const parsed = parseFilterOptionsRes(res)
@@ -246,7 +270,7 @@ export function useDashFilterOptions(
       return
     const ticket = seq
     try {
-      const items = await resolveOptionLabels(current.value, cleaned)
+      const items = await resolveOptionLabels(current.value, cleaned, toValue(dashboardId) || '')
       if (ticket !== seq || optionQueryKey(`#${selectedValues.value.join('\u0001')}`) !== key)
         return
       hydratedKey = key
@@ -267,7 +291,13 @@ export function useDashFilterOptions(
       if (!isRemote.value)
         return `local:${current.value.uid}:${current.value.options?.source || 'manual'}`
       const query = filterOptionsQuery(current.value)
-      return [current.value.uid, query?.datasetId, query?.field, query?.labelField || ''].join('\u0001')
+      return [
+        toValue(dashboardId) || '',
+        current.value.uid,
+        query?.datasetId,
+        query?.field,
+        query?.labelField || '',
+      ].join('\u0001')
     },
     () => {
       resetRemoteCache()

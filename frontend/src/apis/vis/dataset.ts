@@ -20,6 +20,24 @@ export async function listDatasetFieldsById(
   );
 }
 
+/** 查询引用数据集的卡片 GET /datasets/cards */
+export async function listDatasetCards(
+  // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
+  params: VIS.listDatasetCardsParams,
+  options?: { [key: string]: any }
+) {
+  return request<VIS.RListResponseVisCardRefInfo>(
+    `${VIS_BASE_PATH}/datasets/cards`,
+    {
+      method: "GET",
+      params: {
+        ...params,
+      },
+      ...(options || {}),
+    }
+  );
+}
+
 /** 调试数据集脚本 POST /datasets/debug */
 export async function debugDataset(
   body: VIS.DebugSqlRequest,
@@ -129,11 +147,18 @@ export async function listDatasetFields(
 }
 
 /** 数据集选项 GET /datasets/options */
-export async function listDatasetOptions(options?: { [key: string]: any }) {
+export async function listDatasetOptions(
+  // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
+  params: VIS.listDatasetOptionsParams,
+  options?: { [key: string]: any }
+) {
   return request<VIS.RListResponseVisDatasetInfo>(
     `${VIS_BASE_PATH}/datasets/options`,
     {
       method: "GET",
+      params: {
+        ...params,
+      },
       ...(options || {}),
     }
   );

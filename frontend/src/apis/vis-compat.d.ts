@@ -9,41 +9,6 @@ declare namespace VIS {
     percent?: string;
   };
 
-  type FieldInfo = {
-    infoType: string;
-    name: string;
-    comment?: string;
-    type: string;
-    typeDesc: string;
-    isPk: boolean;
-    nullable: boolean;
-    defaultValue?: string;
-    isAutoIncrement?: boolean;
-  };
-
-  type IndexInfo = {
-    infoType: string;
-    name: string;
-    isUnique: boolean;
-    fieldDesc: string;
-  };
-
-  type TableInfo = {
-    infoType: string;
-    name: string;
-    comment?: string;
-    fieldInfos?: FieldInfo[];
-    indexInfos?: IndexInfo[];
-  };
-
-  type SchemaInfo = {
-    infoType: string;
-    name: string;
-    comment?: string;
-    dbType: string;
-    tableInfos?: TableInfo[];
-  };
-
   type ManageTreeNode = ManageNode;
   type EditDashboardMetaRequest = VisDashboardMetadataUpdateRequest;
 }

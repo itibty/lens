@@ -57,7 +57,6 @@ public class UserAdminService {
             info.setId(row.getId());
             info.setUsername(row.getUsername());
             info.setRealName(row.getRealName());
-            info.setAvatar(row.getAvatar());
             info.setStatus(row.getStatus());
             info.setLastLoginAt(row.getLastLoginAt());
             List<SysUserRole> links = roleMap.getOrDefault(row.getId(), List.of());
@@ -82,7 +81,6 @@ public class UserAdminService {
         SysUser user = req.getId() == null ? new SysUser() : require(req.getId());
         user.setUsername(req.getUsername());
         user.setRealName(req.getRealName());
-        user.setAvatar(req.getAvatar());
         user.setStatus(StrUtil.blankToDefault(req.getStatus(), FieldConst.EBL));
         if (req.getId() == null) {
             if (StrUtil.isBlank(req.getPassword())) {

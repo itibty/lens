@@ -19,6 +19,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -26,6 +27,7 @@ public class MenuAdminService {
 
     private final SysMenuMapper menuMapper;
     private final SysRoleMenuMapper roleMenuMapper;
+    private final PermissionTokenService permissionTokenService;
 
     public List<MenuTree> tree() {
         List<SysMenu> rows = menuMapper.selectList(Wrappers.<SysMenu>lambdaQuery()
@@ -61,24 +63,40 @@ public class MenuAdminService {
 
     @Transactional
     public Long save(SaveMenuRequest req) {
-        SysMenu menu = req.getId() == null ? new SysMenu() : require(req.getId());
-        menu.setPid(req.getPid() == null ? 0L : req.getPid());
-        menu.setMenuName(req.getMenuName());
         if (!FieldConst.MENU.equals(req.getMenuType()) && !FieldConst.FUNC.equals(req.getMenuType())) {
             throw ResultException.fail("菜单类型无效");
         }
+        SysMenu menu = req.getId() == null ? new SysMenu() : require(req.getId());
+        String nextPermCode = FieldConst.MENU.equals(req.getMenuType()) ? null : req.getPermCode();
+        String nextStatus = StrUtil.blankToDefault(req.getStatus(), FieldConst.EBL);
+        boolean authChanged = req.getId() != null
+                && (!Objects.equals(menu.getMenuType(), req.getMenuType())
+                || !Objects.equals(menu.getPermCode(), nextPermCode)
+                || !Objects.equals(menu.getStatus(), nextStatus));
+        boolean changedToMenu = req.getId() != null
+                && FieldConst.FUNC.equals(menu.getMenuType())
+                && FieldConst.MENU.equals(req.getMenuType());
+        menu.setPid(req.getPid() == null ? 0L : req.getPid());
+        menu.setMenuName(req.getMenuName());
         menu.setMenuType(req.getMenuType());
         menu.setRoutePath(req.getRoutePath());
         menu.setIcon(req.getIcon());
         menu.setSortNum(req.getSortNum() == null ? 0 : req.getSortNum());
-        menu.setPermCode(FieldConst.MENU.equals(req.getMenuType()) ? null : req.getPermCode());
-        menu.setStatus(StrUtil.blankToDefault(req.getStatus(), FieldConst.EBL));
+        menu.setPermCode(nextPermCode);
+        menu.setStatus(nextStatus);
         if (req.getId() == null) {
             menu.createCallback();
             menuMapper.insert(menu);
         } else {
             menu.modifyCallback();
             menuMapper.updateById(menu);
+            if (authChanged) {
+                permissionTokenService.invalidateMenuUsers(menu.getId());
+            }
+            if (changedToMenu) {
+                roleMenuMapper.delete(Wrappers.<SysRoleMenu>lambdaQuery()
+                        .eq(SysRoleMenu::getMenuId, menu.getId()));
+            }
         }
         return menu.getId();
     }
@@ -95,6 +113,7 @@ public class MenuAdminService {
         menu.setStatus(FieldConst.DEL);
         menu.modifyCallback();
         menuMapper.updateById(menu);
+        permissionTokenService.invalidateMenuUsers(menuId);
         roleMenuMapper.delete(Wrappers.<SysRoleMenu>lambdaQuery().eq(SysRoleMenu::getMenuId, menuId));
     }
 

@@ -100,7 +100,7 @@ public final class ContrastSqlAssembler {
         if (!query.isSkipLimit()) {
             int cap = query.getMaxLimit() != null ? query.getMaxLimit() : MAX_LIMIT;
             int limit = query.getLimit() != null ? Math.min(query.getLimit(), cap) : cap;
-            sql.append(" LIMIT ").append(limit);
+            dialect.appendLimit(sql, limit);
         }
 
         return new Result(new SqlBuilder.SqlRet(sql.toString(), allParams.toArray()),
@@ -215,7 +215,9 @@ public final class ContrastSqlAssembler {
         List<String> parts = new ArrayList<>();
         for (DimensionItem dim : dims) {
             String alias = SqlExprHelper.resolveDimAlias(dim);
-            parts.add(dialect.qualify("m", alias) + " <=> " + dialect.qualify("__cte", alias));
+            parts.add(dialect.nullSafeEquals(
+                    dialect.qualify("m", alias),
+                    dialect.qualify("__cte", alias)));
         }
         return String.join(" AND ", parts);
     }

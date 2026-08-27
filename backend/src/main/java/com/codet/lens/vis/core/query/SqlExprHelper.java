@@ -10,6 +10,7 @@ import com.codet.lens.vis.enums.TimeGrainEnum;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
+import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -98,8 +99,8 @@ public final class SqlExprHelper {
     public static void appendDateRangeHalfOpen(String leftExpr, String startInclusive, String endInclusive,
                                               StringBuilder clause, List<Object> allParams) {
         String[] bounds = DateValueExpResolver.toHalfOpenDateTime(startInclusive, endInclusive);
-        allParams.add(bounds[0]);
-        allParams.add(bounds[1]);
+        allParams.add(Timestamp.valueOf(bounds[0]));
+        allParams.add(Timestamp.valueOf(bounds[1]));
         clause.append("(").append(leftExpr).append(" >= ? AND ").append(leftExpr).append(" < ?)");
     }
 
@@ -121,7 +122,7 @@ public final class SqlExprHelper {
         if (grain == null) {
             return field;
         }
-        return grain.toSql(field);
+        return dialectOrDefault(dialect).timeGrain(field, grain);
     }
 
     public static String buildDimSelectExpr(DimensionItem dim, SqlDialect dialect) {
@@ -225,12 +226,12 @@ public final class SqlExprHelper {
         sql.append(" ORDER BY ").append(String.join(", ", orderParts));
     }
 
-    /** 带 timeGrain 时按维度同一表达式过滤（DATE_FORMAT），否则用原字段。 */
+    /** 带 timeGrain 时按数据库方言使用维度同一表达式过滤，否则用原字段。 */
     public static String filterLeftExpr(FilterItem filter, SqlDialect dialect) {
         SqlDialect d = dialectOrDefault(dialect);
         String field = d.quote(filter.getField());
         TimeGrainEnum grain = TimeGrainEnum.of(filter.getTimeGrain());
-        return grain == null ? field : grain.toSql(field);
+        return grain == null ? field : d.timeGrain(field, grain);
     }
 
     private static LocalDate todayOrNow(LocalDate today) {

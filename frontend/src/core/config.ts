@@ -12,9 +12,6 @@ export const UIConfig = {
   showWatermark: true, // 是否水印
   sidebarFilter: true, // 侧栏是否支持搜索
   sidebarUniqueOpened: false, // 侧栏 uniqueOpened
-  publicOssHost: import.meta.env.VITE_PUBLIC_OSS_HOST || '',
-  invalidImage:
-    'https://cube.elemecdn.com/e/fd/0fc7d20532fdaf769a25683617711png.png',
   paddingSize: 16,
 }
 

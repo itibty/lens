@@ -13,8 +13,10 @@ const props = withDefaults(defineProps<{
   item: DashFilterValue
   opLabel: string
   bare?: boolean
+  dashboardId?: string
 }>(), {
   bare: false,
+  dashboardId: '',
 })
 const emit = defineEmits<{
   patch: [next: DashFilterValue]
@@ -35,6 +37,7 @@ const dateValueFormat = computed(() => {
 const { options, loading, isRemote, search, mergeSelected, hydrateSelected } = useDashFilterOptions(
   () => props.def,
   () => cells.value,
+  () => props.dashboardId,
 )
 const debouncedSearch = useDebounceFn((keyword: string) => {
   void search(keyword)

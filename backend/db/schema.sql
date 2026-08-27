@@ -1,4 +1,5 @@
--- Lens BI schema（结构 + 种子菜单/角色；管理员账号由应用首次启动写入）
+-- Lens BI 当前唯一初始化基线（结构 + 种子菜单/角色；管理员账号由应用首次启动写入）
+-- 权限码与当前 Controller 对齐；本脚本会重建表，不用于已有库的增量升级。
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
@@ -19,7 +20,6 @@ CREATE TABLE `sys_user` (
   `username` varchar(100) NOT NULL,
   `password` varchar(100) NOT NULL,
   `real_name` varchar(50) NOT NULL,
-  `avatar` varchar(200) DEFAULT NULL,
   `status` char(3) NOT NULL DEFAULT 'EBL' COMMENT 'EBL启用 DBL禁用',
   `last_login_at` bigint DEFAULT NULL,
   `create_at` bigint DEFAULT NULL,

@@ -23,6 +23,7 @@ const props = withDefaults(defineProps<{
   saveLoading?: boolean
   saveDisabled?: boolean
   loading?: boolean
+  filterOptionsDashboardId?: string
 }>(), {
   title: '',
   desc: '',
@@ -34,6 +35,7 @@ const props = withDefaults(defineProps<{
   saveLoading: false,
   saveDisabled: false,
   loading: false,
+  filterOptionsDashboardId: '',
 })
 const emit = defineEmits<{
   refresh: []
@@ -65,7 +67,11 @@ const {
   displayText,
   popperWidth,
 } = useDashFilterChips(values)
-const { labelsOf } = useDashFilterLabels(() => props.defs, values)
+const { labelsOf } = useDashFilterLabels(
+  () => props.defs,
+  values,
+  () => props.filterOptionsDashboardId,
+)
 
 function pickTheme(id: DashThemeId) {
   theme.value = id
@@ -311,6 +317,7 @@ useEventListener(window, 'scroll', onPageScroll, true)
           :def="def"
           :item="workingOf(def.uid)"
           :op-label="opLabel(def)"
+          :dashboard-id="filterOptionsDashboardId"
           @patch="(next) => patch(def.uid, next)"
         />
         <div class="dash-filter-chip-popper__footer">

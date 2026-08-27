@@ -5,11 +5,15 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.codet.lens.common.ConvertUtil;
 import com.codet.lens.common.FieldConst;
+import com.codet.lens.common.ListResponse;
 import com.codet.lens.common.PageResponse;
 import com.codet.lens.common.ResultException;
+import com.codet.lens.vis.dto.dataset.VisCardRefInfo;
+import com.codet.lens.vis.entity.VisCard;
 import com.codet.lens.vis.entity.VisDataset;
 import com.codet.lens.vis.entity.VisDatasetField;
 import com.codet.lens.vis.entity.VisDatasource;
+import com.codet.lens.vis.mapper.VisCardMapper;
 import com.codet.lens.vis.mapper.VisDatasetFieldMapper;
 import com.codet.lens.vis.mapper.VisDatasetMapper;
 import com.codet.lens.vis.mapper.VisDatasourceMapper;
@@ -45,6 +49,7 @@ public class DatasetAdminService {
     private final VisDatasetMapper datasetMapper;
     private final VisDatasetFieldMapper fieldMapper;
     private final VisDatasourceMapper datasourceMapper;
+    private final VisCardMapper cardMapper;
 
     public PageResponse<ConfSqlInfo> query(QueryConfSqlRequest req) {
         IPage<VisDataset> page = datasetMapper.selectPage(req.getPage().toIPage(), Wrappers.<VisDataset>lambdaQuery()
@@ -96,12 +101,39 @@ public class DatasetAdminService {
 
     @Transactional
     public void delete(List<Long> ids) {
+        List<VisDataset> datasets = new ArrayList<>();
         for (Long id : ids) {
-            VisDataset row = require(id);
+            datasets.add(require(id));
+        }
+        List<VisCard> references = findRefCards(ids);
+        if (!references.isEmpty()) {
+            String names = references.stream()
+                    .limit(5)
+                    .map(VisCard::getCardName)
+                    .collect(Collectors.joining("、"));
+            String suffix = references.size() > 5 ? " 等" : "";
+            throw ResultException.fail("数据集被 " + references.size()
+                    + " 张卡片引用，请先处理卡片：" + names + suffix);
+        }
+        for (VisDataset row : datasets) {
             row.setStatus(FieldConst.DEL);
             row.modifyCallback();
             datasetMapper.updateById(row);
         }
+    }
+
+    public ListResponse<VisCardRefInfo> listRefCards(Long datasetId) {
+        require(datasetId);
+        List<VisCardRefInfo> list = findRefCards(List.of(datasetId)).stream()
+                .map(row -> {
+                    VisCardRefInfo info = new VisCardRefInfo();
+                    info.setId(row.getId());
+                    info.setCardName(row.getCardName());
+                    info.setStatus(row.getStatus());
+                    return info;
+                })
+                .toList();
+        return new ListResponse<>(list);
     }
 
     public List<ConfSqlFieldInfo> listFields(Long sqlId) {
@@ -199,6 +231,15 @@ public class DatasetAdminService {
             throw ResultException.fail("数据集不存在");
         }
         return row;
+    }
+
+    private List<VisCard> findRefCards(List<Long> datasetIds) {
+        return cardMapper.selectList(Wrappers.<VisCard>query()
+                .in("dataset_id", datasetIds)
+                .ne("status", FieldConst.DEL)
+                .select("id", "card_name", "dataset_id", "status")
+                .orderByDesc("modify_at")
+                .orderByDesc("id"));
     }
 
     private static String guessType(String jdbcType) {

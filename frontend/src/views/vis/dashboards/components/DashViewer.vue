@@ -99,7 +99,9 @@ function resetViewer() {
   autoRefreshSec.value = undefined
 }
 
+let loadRequestId = 0
 async function loadDashboard(id: string) {
+  const currentRequestId = ++loadRequestId
   if (!id) {
     pauseFilterUrl()
     resetViewer()
@@ -112,15 +114,21 @@ async function loadDashboard(id: string) {
   pauseFilterUrl()
   try {
     const res = await vis.query.getDashboardDetail({ dashboardId: id })
+    if (currentRequestId !== loadRequestId)
+      return
     if (!res.data) {
       resetViewer()
       emptyText.value = res.msg || '看板不存在'
       return
     }
+    const disabled = isVisDisabled(res.data.status)
+    const loaded = disabled ? undefined : await loadDashboardWidgets(res.data)
+    if (currentRequestId !== loadRequestId)
+      return
     dashboardId.value = String(res.data.id || id)
     name.value = res.data.dashName || '看板'
     desc.value = res.data.dashDesc || ''
-    dashDisabled.value = isVisDisabled(res.data.status)
+    dashDisabled.value = disabled
     if (dashDisabled.value) {
       filters.value = []
       widgets.value = []
@@ -129,8 +137,7 @@ async function loadDashboard(id: string) {
       cardRadius.value = DEFAULT_DASH_CARD_RADIUS
       autoRefreshSec.value = undefined
     }
-    else {
-      const loaded = await loadDashboardWidgets(res.data)
+    else if (loaded) {
       filters.value = loaded.filters
       widgets.value = loaded.widgets
       cardMap.value = loaded.cardMap
@@ -142,11 +149,14 @@ async function loadDashboard(id: string) {
     applyPageTitle()
   }
   catch (e) {
+    if (currentRequestId !== loadRequestId)
+      return
     resetViewer()
     emptyText.value = apiErrorMessage(e, '看板不存在')
   }
   finally {
-    loading.value = false
+    if (currentRequestId === loadRequestId)
+      loading.value = false
   }
 }
 
@@ -205,6 +215,7 @@ watch(
           :title="name"
           :desc="desc"
           :defs="dashDisabled ? [] : filters"
+          :filter-options-dashboard-id="dashboardId"
           :preview-disabled="!dashboardId"
           :screenshotting="capturing || loading"
           @refresh="refreshCards"

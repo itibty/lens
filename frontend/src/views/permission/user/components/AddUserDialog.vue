@@ -8,11 +8,9 @@
 <script setup lang="ts">
 import type { FormInstance, FormRules } from 'element-plus'
 import type { CustomDialogProps } from '@/components/CustomDialog.vue'
-import { pickBy, random } from 'lodash-es'
+import { pickBy } from 'lodash-es'
 import { addUser } from '@/apis/admin/user'
 import CustomDialog from '@/components/CustomDialog.vue'
-import { UIConfig } from '@/core/config'
-import { defaultAvatars, invalidImg } from '@/core/data'
 import { showToast } from '@/utils/index'
 import { isBlank } from '@/utils/validate'
 
@@ -30,7 +28,6 @@ const emits = defineEmits<{
 }>()
 const defaultForm: ADMIN.SaveUserRequest = {
   username: '',
-  avatar: '',
   realName: '',
   password: 'Aa123456',
   status: 'EBL',
@@ -69,7 +66,6 @@ const dialog = reactive<CustomDialogProps>({
 
 function handleOpen() {
   states.form = { ...defaultForm }
-  randomAvatar()
   formRef.value?.clearValidate()
 }
 function handleClose() {}
@@ -78,10 +74,6 @@ function showDialog() {
   dialog.visible = true
 }
 
-function randomAvatar() {
-  const randomIndex = random(0, defaultAvatars.length - 1)
-  states.form.avatar = defaultAvatars[randomIndex]
-}
 function doSubmit() {
   formRef.value?.validate(async (valid) => {
     if (valid) {
@@ -141,21 +133,6 @@ defineExpose({
             autocomplete="off"
           />
         </el-form-item>
-        <el-form-item label="头像" prop="avatar">
-          <el-avatar
-            :key="`${UIConfig.publicOssHost}${states.form.avatar}`"
-            :size="100"
-            :src="`${UIConfig.publicOssHost}${states.form.avatar}`"
-          >
-            <img :src="invalidImg">
-          </el-avatar>
-          <el-icon
-            class="clickable refresh-avatar ml-10px"
-            @click="randomAvatar"
-          >
-            <i-ep-refresh-right />
-          </el-icon>
-        </el-form-item>
         <el-form-item label="密码" prop="password">
           <el-input
             v-model.trim="states.form.password"
@@ -181,10 +158,3 @@ defineExpose({
     </template>
   </CustomDialog>
 </template>
-
-<style lang="scss" scoped>
-.refresh-avatar {
-  font-size: 18px;
-  color: var(--el-text-color-secondary);
-}
-</style>

@@ -18,10 +18,12 @@ import com.codet.lens.vis.dto.dash.VisDashboardRefInfo;
 import com.codet.lens.vis.entity.VisCard;
 import com.codet.lens.vis.entity.VisDashboard;
 import com.codet.lens.vis.entity.VisDashboardCard;
+import com.codet.lens.vis.entity.VisDataset;
 import com.codet.lens.vis.enums.ChartTypeEnum;
 import com.codet.lens.vis.mapper.VisCardMapper;
 import com.codet.lens.vis.mapper.VisDashboardCardMapper;
 import com.codet.lens.vis.mapper.VisDashboardMapper;
+import com.codet.lens.vis.mapper.VisDatasetMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,6 +41,7 @@ public class VisCardService {
     private final VisDashboardCardMapper visDashboardCardMapper;
     private final VisDashboardMapper visDashboardMapper;
     private final VisDashboardAccess dashboardAccess;
+    private final VisDatasetMapper visDatasetMapper;
 
     public PageResponse<VisCardInfo> query(QueryVisCardRequest request) {
         IPage<VisCardInfo> page = visCardMapper.selectPage(request.getPage().toIPage(), Wrappers.<VisCard>lambdaQuery()
@@ -85,6 +88,9 @@ public class VisCardService {
 
     @Transactional(rollbackFor = Exception.class)
     public Long save(VisCardSaveRequest request) {
+        if (request.getId() != null) {
+            requireCard(request.getId());
+        }
         ChartTypeEnum type = ChartTypeEnum.of(request.getChartType());
         if (type == null) {
             throw fail("不支持的图表类型: " + request.getChartType());
@@ -93,6 +99,7 @@ public class VisCardService {
             if (request.getDatasetId() == null) {
                 throw fail("数据集不能为空");
             }
+            requireDatasetEnabled(request.getDatasetId());
             if (StrUtil.isBlank(request.getQueryJson())) {
                 throw fail("查询配置不能为空");
             }
@@ -113,7 +120,12 @@ public class VisCardService {
             visCardMapper.insert(entity);
         } else {
             entity.modifyCallback();
-            visCardMapper.updateById(entity);
+            int updated = visCardMapper.update(entity, Wrappers.<VisCard>lambdaUpdate()
+                    .eq(VisCard::getId, request.getId())
+                    .ne(VisCard::getStatus, FieldConst.DEL));
+            if (updated != 1) {
+                throw fail("卡片不存在");
+            }
         }
         return entity.getId();
     }
@@ -146,6 +158,16 @@ public class VisCardService {
             throw fail("卡片不存在");
         }
         return row;
+    }
+
+    private void requireDatasetEnabled(Long datasetId) {
+        VisDataset dataset = visDatasetMapper.selectById(datasetId);
+        if (dataset == null || FieldConst.DEL.equals(dataset.getStatus())) {
+            throw fail("数据集不存在");
+        }
+        if (!FieldConst.EBL.equals(dataset.getStatus())) {
+            throw fail("数据集已禁用");
+        }
     }
 
     private static ResultException fail(String msg) {

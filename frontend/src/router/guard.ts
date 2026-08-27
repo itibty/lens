@@ -85,8 +85,13 @@ export function setupRouteGuard() {
             return redirectIfShell(to, menuStore) ?? { ...to, replace: true }
           }
           catch {
-            await accountStore.clearUserInfo()
-            return getLoginLocation(to.fullPath)
+            const currentToken = storageUtil.get(CacheKeyNameEnum.accessToken)
+            if (!currentToken) {
+              return getLoginLocation(to.fullPath)
+            }
+            accountStore.resetUserInfo()
+            menuStore.clearMenus()
+            return false
           }
         }
       }

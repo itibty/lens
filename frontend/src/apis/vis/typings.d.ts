@@ -254,6 +254,27 @@ declare namespace VIS {
     cardId: string;
   };
 
+  type FieldInfo = {
+    /** 信息类别 */
+    infoType: string;
+    /** 字段名 */
+    name: string;
+    /** 备注 */
+    comment?: string;
+    /** 字段类型 */
+    type: string;
+    /** 字段描述类型 */
+    typeDesc: string;
+    /** 是否主键 */
+    isPk: boolean;
+    /** 是否可为空 */
+    nullable: boolean;
+    /** 默认值 */
+    defaultValue?: string;
+    /** 是否自增 */
+    isAutoIncrement?: boolean;
+  };
+
   type FilterGroup = {
     /** 组内连接 */
     combineOp: "and" | "or";
@@ -363,8 +384,28 @@ declare namespace VIS {
     ids: string[];
   };
 
+  type IndexInfo = {
+    /** 信息类别 */
+    infoType: string;
+    /** 索引名 */
+    name: string;
+    /** 是否是唯一索引 */
+    isUnique: boolean;
+    /** 字段列描述 */
+    fieldDesc: string;
+  };
+
   type listCardDashboardsParams = {
     cardId: string;
+  };
+
+  type listDashboardFilterOptionsParams = {
+    dashboardId: string;
+    filterUid: string;
+  };
+
+  type listDatasetCardsParams = {
+    datasetId: string;
   };
 
   type listDatasetFieldsByIdParams = {
@@ -373,6 +414,12 @@ declare namespace VIS {
 
   type listDatasetFieldsParams = {
     sqlId: string;
+  };
+
+  type listDatasetOptionsParams = {
+    keyword?: string;
+    selectedId?: string;
+    limit?: number;
   };
 
   type listDatasourceOptionsParams = {
@@ -413,9 +460,14 @@ declare namespace VIS {
     list?: ReportNode[];
   };
 
-  type ListResponseObject = {
+  type ListResponseSchemaInfo = {
     /** 列表 */
-    list?: any[];
+    list?: SchemaInfo[];
+  };
+
+  type ListResponseVisCardRefInfo = {
+    /** 列表 */
+    list?: VisCardRefInfo[];
   };
 
   type ListResponseVisDashboardRefInfo = {
@@ -712,20 +764,6 @@ declare namespace VIS {
     status?: "EBL" | "DBL";
   };
 
-  type ReportNode = {
-    /** id */
-    id?: string;
-    /** parent id */
-    pid?: string;
-    /** 子节点 */
-    children?: ReportNode[];
-    name?: string;
-    icon?: string;
-    /** 看板节点为 /vis/report/{id}；分组为空 */
-    url?: string;
-    nodeType?: string;
-  };
-
   type RConfSqlInfo = {
     /** 200成功 */
     code?: number;
@@ -745,6 +783,19 @@ declare namespace VIS {
     code?: number;
     msg?: string;
     data?: DebugSqlResponse;
+  };
+
+  type ReportNode = {
+    /** id */
+    id?: string;
+    /** parent id */
+    pid?: string;
+    /** 子节点 */
+    children?: ReportNode[];
+    name?: string;
+    icon?: string;
+    url?: string;
+    nodeType?: string;
   };
 
   type RListConfSqlFieldInfo = {
@@ -796,11 +847,18 @@ declare namespace VIS {
     data?: ListResponseReportNode;
   };
 
-  type RListResponseObject = {
+  type RListResponseSchemaInfo = {
     /** 200成功 */
     code?: number;
     msg?: string;
-    data?: ListResponseObject;
+    data?: ListResponseSchemaInfo;
+  };
+
+  type RListResponseVisCardRefInfo = {
+    /** 200成功 */
+    code?: number;
+    msg?: string;
+    data?: ListResponseVisCardRefInfo;
   };
 
   type RListResponseVisDashboardRefInfo = {
@@ -903,6 +961,32 @@ declare namespace VIS {
     status?: string;
   };
 
+  type SchemaInfo = {
+    /** 信息类别 */
+    infoType: string;
+    /** 名字 */
+    name: string;
+    /** 备注 */
+    comment?: string;
+    /** 数据库类别 */
+    dbType: string;
+    /** 表列表 */
+    tableInfos?: TableInfo[];
+  };
+
+  type TableInfo = {
+    /** 信息类别 */
+    infoType: string;
+    /** 表名 */
+    name: string;
+    /** 备注 */
+    comment?: string;
+    /** 表字段 */
+    fieldInfos?: FieldInfo[];
+    /** 表索引 */
+    indexInfos?: IndexInfo[];
+  };
+
   type toggleCardStatusParams = {
     cardId: string;
   };
@@ -913,6 +997,15 @@ declare namespace VIS {
 
   type toggleDashGroupStatusParams = {
     groupId: string;
+  };
+
+  type VisBoundFilterOptionsRequest = {
+    /** 关键字，按 label / value 过滤 */
+    keyword?: string;
+    /** 按取值精确反查名称 */
+    values?: string[];
+    /** 返回条数，默认 50，最大 200。按值反查时忽略 */
+    limit?: number;
   };
 
   type VisCardInfo = {
@@ -934,6 +1027,15 @@ declare namespace VIS {
     status: "EBL" | "DBL";
     /** 修改时间 */
     modifyAt?: string;
+  };
+
+  type VisCardRefInfo = {
+    /** 卡片 id */
+    id: string;
+    /** 卡片名 */
+    cardName: string;
+    /** 卡片状态 */
+    status: string;
   };
 
   type VisCardSaveRequest = {

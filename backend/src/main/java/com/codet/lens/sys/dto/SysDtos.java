@@ -27,7 +27,6 @@ public class SysDtos {
         private Long id;
         private String username;
         private String realName;
-        private String avatar;
         private String status;
         @JsonSerialize(using = Long2DatetimeStr.class)
         private Long lastLoginAt;
@@ -53,7 +52,6 @@ public class SysDtos {
         private String username;
         @NotBlank
         private String realName;
-        private String avatar;
         private String status;
         private String password;
         private List<Long> roleIds;

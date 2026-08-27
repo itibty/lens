@@ -7,24 +7,20 @@
 -->
 <script setup lang="ts">
 import ModifyAccountPwd from './components/ModifyAccountPwd.vue'
-
-// interface IStates {}
-
-// data
-// const states = reactive<IStates>({})
-
-onMounted(() => {})
 </script>
 
 <template>
   <PageCard container-style="width: 980px;margin:0 auto">
     <el-tabs tab-position="top">
       <el-tab-pane label="个人信息">
-        <el-row>
-          <el-col :sm="24" :lg="8" :md="10" class="base-padding">
-            <!-- <modify-account-info /> -->
-          </el-col>
-        </el-row>
+        <div class="base-padding">
+          <el-alert
+            title="个人信息暂不支持修改"
+            type="info"
+            show-icon
+            :closable="false"
+          />
+        </div>
       </el-tab-pane>
       <el-tab-pane label="修改密码">
         <div class="base-padding flex justify-center">
@@ -34,5 +30,3 @@ onMounted(() => {})
     </el-tabs>
   </PageCard>
 </template>
-
-<style lang="scss" scoped></style>

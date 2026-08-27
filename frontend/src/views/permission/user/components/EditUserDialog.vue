@@ -11,8 +11,6 @@ import type { CustomDialogProps } from '@/components/CustomDialog.vue'
 import { pick, pickBy } from 'lodash-es'
 import { editUser } from '@/apis/admin/user'
 import CustomDialog from '@/components/CustomDialog.vue'
-import { UIConfig } from '@/core/config'
-import { invalidImg } from '@/core/data'
 import { showToast } from '@/utils/index'
 import { isBlank } from '@/utils/validate'
 
@@ -32,7 +30,6 @@ const defaultForm: ADMIN.SaveUserRequest = {
   id: '',
   username: '',
   realName: '',
-  avatar: '',
   status: 'EBL',
 }
 const states = reactive<IStates>({
@@ -119,15 +116,6 @@ defineExpose({
             autocomplete="off"
           />
         </el-form-item>
-        <el-form-item label="头像" prop="avatar">
-          <el-avatar
-            :key="`${UIConfig.publicOssHost}${states.form.avatar}`"
-            :size="100"
-            :src="`${UIConfig.publicOssHost}${states.form.avatar}`"
-          >
-            <img :src="invalidImg">
-          </el-avatar>
-        </el-form-item>
         <el-form-item label="状态" prop="status">
           <el-switch
             v-model="states.form.status"
@@ -142,5 +130,3 @@ defineExpose({
     </template>
   </CustomDialog>
 </template>
-
-<style lang="scss" scoped></style>

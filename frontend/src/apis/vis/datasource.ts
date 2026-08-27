@@ -10,7 +10,7 @@ export async function getDatasourceMetaTree(
   options?: { [key: string]: any }
 ) {
   const { sourceName: param0, ...queryParams } = params;
-  return request<VIS.RListResponseObject>(
+  return request<VIS.RListResponseSchemaInfo>(
     `${VIS_BASE_PATH}/datasources/${param0}/meta-tree`,
     {
       method: "GET",

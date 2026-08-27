@@ -82,14 +82,17 @@ public class VisDashGroupService {
 
     public ListResponse<AssignNode> assignTree() {
         List<VisDashGroup> groups = groupMapper.selectList(Wrappers.<VisDashGroup>lambdaQuery()
-                .eq(VisDashGroup::getStatus, FieldConst.EBL)
+                .ne(VisDashGroup::getStatus, FieldConst.DEL)
                 .orderByAsc(VisDashGroup::getSortNum)
                 .orderByAsc(VisDashGroup::getId));
+        Set<Long> effectiveGroupIds = VisDashboardVisibilityService.effectiveGroupIds(groups);
         List<VisDashboard> dashes = dashboardMapper.selectList(Wrappers.<VisDashboard>lambdaQuery()
                 .eq(VisDashboard::getStatus, FieldConst.EBL)
                 .orderByAsc(VisDashboard::getId));
         Map<Long, AssignNode> groupNodes = new LinkedHashMap<>();
         for (VisDashGroup group : groups) {
+            if (!effectiveGroupIds.contains(group.getId()))
+                continue;
             AssignNode node = new AssignNode();
             node.setId(group.getId());
             node.setPid(group.getPid() == null ? 0L : group.getPid());
@@ -101,11 +104,14 @@ public class VisDashGroupService {
         }
         List<AssignNode> roots = new ArrayList<>();
         for (AssignNode node : groupNodes.values()) {
-            AssignNode parent = node.getPid() == 0 ? null : groupNodes.get(node.getPid());
-            if (parent == null)
+            if (node.getPid() == 0) {
                 roots.add(node);
-            else
+            } else {
+                AssignNode parent = groupNodes.get(node.getPid());
+                if (parent == null)
+                    continue;
                 parent.getChildren().add(node);
+            }
         }
         for (VisDashboard dash : dashes) {
             AssignNode leaf = new AssignNode();
@@ -116,10 +122,10 @@ public class VisDashGroupService {
             leaf.setChildren(new ArrayList<>());
             long gid = dash.getGroupId() == null ? 0L : dash.getGroupId();
             AssignNode parent = groupNodes.get(gid);
-            if (parent == null) {
+            if (gid == 0) {
                 leaf.setPid(0L);
                 roots.add(leaf);
-            } else {
+            } else if (parent != null) {
                 leaf.setPid(parent.getId());
                 parent.getChildren().add(leaf);
             }
@@ -150,9 +156,10 @@ public class VisDashGroupService {
             return new ListResponse<>(List.of());
 
         List<VisDashGroup> groups = groupMapper.selectList(Wrappers.<VisDashGroup>lambdaQuery()
-                .eq(VisDashGroup::getStatus, FieldConst.EBL)
+                .ne(VisDashGroup::getStatus, FieldConst.DEL)
                 .orderByAsc(VisDashGroup::getSortNum)
                 .orderByAsc(VisDashGroup::getId));
+        Set<Long> effectiveGroupIds = VisDashboardVisibilityService.effectiveGroupIds(groups);
         List<VisDashboard> dashes = dashboardMapper.selectList(Wrappers.<VisDashboard>lambdaQuery()
                 .eq(VisDashboard::getStatus, FieldConst.EBL)
                 .in(VisDashboard::getId, assigned)
@@ -160,6 +167,8 @@ public class VisDashGroupService {
 
         Map<Long, ReportNode> groupNodes = new LinkedHashMap<>();
         for (VisDashGroup group : groups) {
+            if (!effectiveGroupIds.contains(group.getId()))
+                continue;
             ReportNode node = new ReportNode();
             node.setId(group.getId());
             node.setPid(group.getPid() == null ? 0L : group.getPid());
@@ -171,11 +180,14 @@ public class VisDashGroupService {
         }
         List<ReportNode> roots = new ArrayList<>();
         for (ReportNode node : groupNodes.values()) {
-            ReportNode parent = node.getPid() == 0 ? null : groupNodes.get(node.getPid());
-            if (parent == null)
+            if (node.getPid() == 0) {
                 roots.add(node);
-            else
+            } else {
+                ReportNode parent = groupNodes.get(node.getPid());
+                if (parent == null)
+                    continue;
                 parent.getChildren().add(node);
+            }
         }
         for (VisDashboard dash : dashes) {
             ReportNode leaf = new ReportNode();
@@ -187,10 +199,10 @@ public class VisDashGroupService {
             leaf.setChildren(new ArrayList<>());
             long gid = dash.getGroupId() == null ? 0L : dash.getGroupId();
             ReportNode parent = groupNodes.get(gid);
-            if (parent == null) {
+            if (gid == 0) {
                 leaf.setPid(0L);
                 roots.add(leaf);
-            } else {
+            } else if (parent != null) {
                 leaf.setPid(parent.getId());
                 parent.getChildren().add(leaf);
             }

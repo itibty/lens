@@ -65,7 +65,8 @@ interface IStates {
 
 const route = useRoute()
 const router = useRouter()
-const { skipConfirm } = useLeaveConfirm()
+const dirty = ref(false)
+const { skipConfirm } = useLeaveConfirm(undefined, undefined, () => dirty.value)
 
 const designerRef = ref<HTMLElement>()
 const previewRef = ref<{
@@ -89,6 +90,15 @@ const states = reactive<IStates>({
     ...createEmptyCard(),
   },
 })
+
+watch(
+  () => states.card,
+  () => {
+    if (!states.loading && !states.saveLoading)
+      dirty.value = true
+  },
+  { deep: true, flush: 'sync' },
+)
 
 function readStoredWidth(key: string, min: number, max: number, fallback: number) {
   const n = Number(localStorage.getItem(key))
@@ -404,9 +414,13 @@ watch(
   },
 )
 
+let loadRequestId = 0
 async function loadCard(id?: string) {
   const cardId = id ?? (route.query.id as string | undefined)
+  const currentRequestId = ++loadRequestId
   shapeIssues.value = []
+  previewRef.value?.resetPreview()
+  dirty.value = false
   states.loading = true
   try {
     if (!cardId) {
@@ -420,6 +434,8 @@ async function loadCard(id?: string) {
       return
     }
     const res = await vis.query.getCardDetail({ cardId })
+    if (currentRequestId !== loadRequestId)
+      return
     if (!res.data) {
       showToast('卡片不存在', 'error')
       skipConfirm()
@@ -430,16 +446,21 @@ async function loadCard(id?: string) {
     states.card = fromVisCardInfo(res.data)
     ensureArrays()
     await nextTick()
+    if (currentRequestId !== loadRequestId)
+      return
     if (isStaticChart(states.card.visual.chartType) || states.card.query.datasetId)
       void previewRef.value?.runPreview()
   }
   catch (e) {
+    if (currentRequestId !== loadRequestId)
+      return
     showToast(apiErrorMessage(e, '卡片不存在'), 'error')
     skipConfirm()
     router.replace({ name: 'VisCards' })
   }
   finally {
-    states.loading = false
+    if (currentRequestId === loadRequestId)
+      states.loading = false
   }
 }
 
@@ -505,6 +526,7 @@ async function handleSave() {
     states.card.id = savedId
     states.isNew = false
     saveOpen.value = false
+    dirty.value = false
     showToast('保存成功', 'success')
     markListStale('VisCards')
     if (!route.query.id && savedId)
@@ -559,6 +581,7 @@ onBeforeRouteUpdate((to) => {
         v-if="canWrite"
         type="primary"
         :loading="states.saveLoading"
+        :disabled="states.loading"
         @click="openSaveDialog"
       >
         保存

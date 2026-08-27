@@ -91,7 +91,7 @@ public final class SqlBuilder {
         if (!query.isSkipLimit()) {
             int cap = query.getMaxLimit() != null ? query.getMaxLimit() : (int) MAX_LIMIT;
             int limit = query.getLimit() != null ? Math.min(query.getLimit(), cap) : cap;
-            sql.append(" LIMIT ").append(limit);
+            dialect.appendLimit(sql, limit);
         }
 
         return new SqlRet(sql.toString(), allParams.toArray());

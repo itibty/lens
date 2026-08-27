@@ -139,10 +139,11 @@ public class VisDataService {
     }
 
     private void doExport(SqlConf sqlConf, QueryBO query, OutputStream out) {
+        query.setSkipLimit(true);
         SqlBuilder.SqlRet sqlRet = ContrastSqlAssembler.hasContrast(query.getMetrics())
                 ? ContrastSqlAssembler.build(query).getSqlRet()
                 : SqlBuilder.build(query);
-        String baseSql = sqlRet.getSql().replaceAll(" LIMIT \\d+$", "");
+        String baseSql = sqlRet.getSql();
         Object[] baseParams = sqlRet.getParams();
 
         if (!baseSql.toUpperCase().contains(" ORDER BY ")) {
@@ -211,7 +212,7 @@ public class VisDataService {
 
         try {
             for (int batch = 0; batch < EXPORT_MAX_BATCHES; batch++) {
-                String batchSql = baseSql + " LIMIT " + EXPORT_BATCH_SIZE + " OFFSET " + offset;
+                String batchSql = query.dialectOrDefault().paginate(baseSql, offset, EXPORT_BATCH_SIZE);
                 SqlTplRet batchTpl = new SqlTplRet(null, dsName, batchSql, baseParams);
 
                 QueryContextHolder.set(new QueryContext(EXPORT_BATCH_SIZE, EXPORT_BATCH_SIZE));

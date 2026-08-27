@@ -85,7 +85,7 @@ async function switchRoot(root: MenuInfo) {
             :class="{ open: rootPopoverVisible }"
             title="切换工作区"
           >
-            <span class="i-mingcute-grid-2-line root-nav-trigger__icon" />
+            <span class="root-nav-trigger__icon i-mingcute-grid-2-line" />
             <span v-if="activeRootName" class="root-nav-trigger__name">{{ activeRootName }}</span>
           </button>
         </template>
@@ -112,11 +112,11 @@ async function switchRoot(root: MenuInfo) {
       <div v-if="false" class="nav-link mr-10px flex-xy">
         <LayoutNotice />
       </div>
-      <el-popover :width="210" popper-class="avatar-popover">
+      <el-popover :width="210" popper-class="account-popover">
         <template #reference>
-          <el-avatar :size="24" :src="userInfo.avatar" class="clickable">
-            <img src="@/assets/images/empty-avatar.png" alt="">
-          </el-avatar>
+          <el-button circle class="account-trigger" aria-label="账号菜单">
+            <span class="i-mingcute-user-3-line" />
+          </el-button>
         </template>
         <template #default>
           <div
@@ -256,7 +256,7 @@ async function switchRoot(root: MenuInfo) {
 </style>
 
 <style lang="scss">
-.avatar-popover {
+.account-popover {
   padding: 0 !important;
 
   .item-line {

@@ -31,6 +31,16 @@ public interface SysUserMapper extends BaseMapper<SysUser> {
             """)
     List<String> findPermCodes(@Param("userId") Long userId, @Param("now") Long now);
 
+    @Select("""
+            select min(ur.end_at) from sys_user_role ur
+            join sys_role r on r.id = ur.role_id
+            where ur.user_id = #{userId} and r.status = 'EBL'
+              and ur.end_at is not null
+              and (ur.start_at is null or ur.start_at <= #{now})
+              and ur.end_at >= #{now}
+            """)
+    Long findEarliestRoleEndAt(@Param("userId") Long userId, @Param("now") Long now);
+
     @Update("update sys_user set last_login_at = #{at} where id = #{userId}")
     int updateLastLoginAt(@Param("userId") Long userId, @Param("at") Long at);
 }

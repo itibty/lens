@@ -9,6 +9,7 @@ import vis from '@/apis/vis/index'
 import { cloneDatasetField, DND_GROUP } from '@/views/vis/shared/dnd'
 import FieldTypeIcon from '@/views/vis/shared/FieldTypeIcon.vue'
 import { DATA_TYPE_OPTIONS } from '@/views/vis/shared/types'
+import { useDatasetOptions } from '@/views/vis/shared/useDatasetOptions'
 import { fromConfSqlField } from '../cardApi'
 
 const props = withDefaults(defineProps<{
@@ -21,8 +22,12 @@ const props = withDefaults(defineProps<{
 const datasetId = defineModel<string>('datasetId', { required: true })
 const fields = defineModel<DatasetField[]>('fields', { required: true })
 
-const datasets = ref<VIS.VisDatasetInfo[]>([])
-const loadingOptions = ref(false)
+const {
+  datasets,
+  loading: loadingOptions,
+  search: searchDatasets,
+  reload: reloadDatasets,
+} = useDatasetOptions(datasetId)
 const loadingFields = ref(false)
 const keyword = ref('')
 const typeFilter = ref<DatasetFieldDataType | ''>('')
@@ -60,20 +65,14 @@ const metricFields = ref<DatasetField[]>([])
 
 const optionIds = computed(() => new Set(datasets.value.map(item => String(item.id))))
 
+function onDatasetVisible(visible: boolean) {
+  if (visible)
+    reloadDatasets()
+}
+
 function splitFields(list: DatasetField[]) {
   allDimensionFields.value = list.filter(f => !isMetricField(f))
   allMetricFields.value = list.filter(f => isMetricField(f))
-}
-
-async function loadOptions() {
-  loadingOptions.value = true
-  try {
-    const res = await vis.dataset.listDatasetOptions()
-    datasets.value = res.data?.list ?? []
-  }
-  finally {
-    loadingOptions.value = false
-  }
 }
 
 async function loadFields(id: string) {
@@ -133,8 +132,6 @@ const fieldGroups = computed(() => [
   { key: 'dimension', label: '维度', fields: dimensionFields.value },
   { key: 'metric', label: '指标', fields: metricFields.value },
 ].filter(group => group.fields.length))
-
-onMounted(loadOptions)
 </script>
 
 <template>
@@ -145,9 +142,12 @@ onMounted(loadOptions)
         class="w-full"
         :class="{ 'is-error': !!error }"
         filterable
+        remote
         clearable
         :loading="loadingOptions"
+        :remote-method="searchDatasets"
         placeholder="选择数据集"
+        @visible-change="onDatasetVisible"
       >
         <el-option
           v-if="datasetId && !optionIds.has(datasetId)"

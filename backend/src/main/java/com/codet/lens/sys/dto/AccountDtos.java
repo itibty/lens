@@ -36,7 +36,6 @@ public class AccountDtos {
         private String realName;
         private String phone;
         private String email;
-        private String avatar;
         private String status;
         private Set<String> roleCodes;
         private Set<String> functionCodes;

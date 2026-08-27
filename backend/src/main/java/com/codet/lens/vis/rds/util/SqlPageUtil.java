@@ -1,5 +1,6 @@
 package com.codet.lens.vis.rds.util;
 
+import com.codet.lens.vis.core.query.SqlDialect;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -19,7 +20,8 @@ public final class SqlPageUtil {
     }
 
     public static PageSql getPageSql(String dbType, String sql, long offset, long limit) {
-        String wrapped = "select * from (" + sql + ") __page limit " + Math.max(limit, 0) + " offset " + Math.max(offset, 0);
+        String wrapped = "select * from (" + sql + ") __page";
+        wrapped = SqlDialect.of(dbType).paginate(wrapped, offset, limit);
         return new PageSql(wrapped, Collections.emptyList());
     }
 }

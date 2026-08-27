@@ -5,8 +5,8 @@
 import type { ElTree, TreeNodeData } from 'element-plus'
 import type { DashManageNode, ExplorerCommand } from '../dashManage'
 import { Search } from '@element-plus/icons-vue'
-import { ROOT_GROUP_ID } from '../dashManage'
 import MenuIcon from '@/components/MenuIcon.vue'
+import { ROOT_GROUP_ID } from '../dashManage'
 
 export interface DashExplorerTreeInstance {
   setCurrentDashboard: (id?: string) => void
@@ -83,47 +83,52 @@ function setCurrentDashboard(id = '') {
   nextTick(() => treeRef.value?.setCurrentKey(currentDashboardKey.value || undefined))
 }
 
-watch(keyword, value => treeRef.value?.filter(value.trim()))
+function applyFilter() {
+  treeRef.value?.filter(keyword.value.trim())
+}
+
+function handleKeywordChange(value: string) {
+  if (!value)
+    treeRef.value?.filter('')
+}
 
 defineExpose<DashExplorerTreeInstance>({ setCurrentDashboard })
 </script>
 
 <template>
   <aside class="explorer">
-    <el-input
-      v-model="keyword"
-      class="explorer__search"
-      clearable
-      :prefix-icon="Search"
-      placeholder="搜索分组或看板"
-    />
     <div class="explorer__head">
-      <span class="explorer__head-name">报表中心</span>
-      <span
+      <el-input
+        v-model="keyword"
+        class="explorer__search"
+        clearable
+        :prefix-icon="Search"
+        placeholder="请输入关键词"
+        @keyup.enter="applyFilter"
+        @clear="applyFilter"
+        @update:model-value="handleKeywordChange"
+      />
+      <el-dropdown
         v-if="canWrite"
-        class="explorer__head-ops"
+        trigger="click"
+        @command="onHeadCommand"
       >
-        <el-dropdown
-          trigger="click"
-          @command="onHeadCommand"
-        >
-          <el-button link>
-            <span class="explorer-node__more-icon i-mingcute-more-2-line" />
-          </el-button>
-          <template #dropdown>
-            <el-dropdown-menu>
-              <el-dropdown-item command="add-root-group">
-                <span class="explorer-menu__icon i-mingcute-new-folder-line" />
-                子组
-              </el-dropdown-item>
-              <el-dropdown-item command="add-dashboard">
-                <span class="explorer-menu__icon i-mingcute-add-square-line" />
-                看板
-              </el-dropdown-item>
-            </el-dropdown-menu>
-          </template>
-        </el-dropdown>
-      </span>
+        <el-button class="explorer__more">
+          <span class="explorer-node__more-icon i-mingcute-more-2-line" />
+        </el-button>
+        <template #dropdown>
+          <el-dropdown-menu>
+            <el-dropdown-item command="add-root-group">
+              <span class="explorer-menu__icon i-mingcute-new-folder-line" />
+              子组
+            </el-dropdown-item>
+            <el-dropdown-item command="add-dashboard">
+              <span class="explorer-menu__icon i-mingcute-add-square-line" />
+              看板
+            </el-dropdown-item>
+          </el-dropdown-menu>
+        </template>
+      </el-dropdown>
     </div>
     <el-scrollbar v-spinner="loading" class="explorer__scroll">
       <el-tree
@@ -239,42 +244,21 @@ defineExpose<DashExplorerTreeInstance>({ setCurrentDashboard })
   isolation: isolate;
 }
 
-.explorer__search {
+.explorer__head {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   margin-bottom: 8px;
 }
 
-.explorer__head {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 32px;
-  margin: 0 -12px 4px;
-  padding: 0 32px;
-  background: var(--el-fill-color-lighter);
-  border-top: 1px solid var(--el-border-color-extra-light);
-  border-bottom: 1px solid var(--el-border-color-lighter);
-}
-
-.explorer__head-name {
+.explorer__search {
+  flex: 1;
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 13px;
-  font-weight: 600;
-  line-height: 32px;
-  text-align: center;
-  color: var(--el-text-color-primary);
 }
 
-.explorer__head-ops {
-  position: absolute;
-  top: 0;
-  right: 8px;
-  bottom: 0;
-  display: flex;
-  align-items: center;
+.explorer__more {
+  width: 32px;
+  padding: 0;
 }
 
 .explorer__scroll {

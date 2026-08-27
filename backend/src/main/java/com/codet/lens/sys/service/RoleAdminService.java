@@ -3,7 +3,6 @@ package com.codet.lens.sys.service;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import com.codet.lens.auth.TokenInvalidateService;
 import com.codet.lens.common.ConvertUtil;
 import com.codet.lens.common.FieldConst;
 import com.codet.lens.common.PageResponse;
@@ -17,18 +16,17 @@ import com.codet.lens.sys.entity.SysMenu;
 import com.codet.lens.sys.entity.SysRole;
 import com.codet.lens.sys.entity.SysRoleDashboard;
 import com.codet.lens.sys.entity.SysRoleMenu;
-import com.codet.lens.sys.entity.SysUserRole;
 import com.codet.lens.sys.mapper.SysMenuMapper;
 import com.codet.lens.sys.mapper.SysRoleDashboardMapper;
 import com.codet.lens.sys.mapper.SysRoleMapper;
 import com.codet.lens.sys.mapper.SysRoleMenuMapper;
-import com.codet.lens.sys.mapper.SysUserRoleMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 @Service
@@ -39,8 +37,7 @@ public class RoleAdminService {
     private final SysRoleMenuMapper roleMenuMapper;
     private final SysRoleDashboardMapper roleDashboardMapper;
     private final SysMenuMapper menuMapper;
-    private final SysUserRoleMapper userRoleMapper;
-    private final TokenInvalidateService tokenInvalidateService;
+    private final PermissionTokenService permissionTokenService;
 
     public PageResponse<RoleInfo> query(QueryRoleRequest req) {
         IPage<SysRole> page = roleMapper.selectPage(req.getPage().toIPage(), Wrappers.<SysRole>lambdaQuery()
@@ -59,7 +56,8 @@ public class RoleAdminService {
     public Long save(SaveRoleRequest req) {
         SysRole role = req.getId() == null ? new SysRole() : require(req.getId());
         String nextStatus = StrUtil.blankToDefault(req.getStatus(), FieldConst.EBL);
-        boolean statusChanged = req.getId() != null && !nextStatus.equals(role.getStatus());
+        boolean authChanged = req.getId() != null
+                && (!nextStatus.equals(role.getStatus()) || !Objects.equals(req.getRoleCode(), role.getRoleCode()));
         role.setRoleName(req.getRoleName());
         role.setRoleCode(req.getRoleCode());
         role.setRoleNote(req.getRoleNote());
@@ -70,8 +68,8 @@ public class RoleAdminService {
         } else {
             role.modifyCallback();
             roleMapper.updateById(role);
-            if (statusChanged) {
-                invalidateRoleUsers(role.getId());
+            if (authChanged) {
+                permissionTokenService.invalidateRoleUsers(role.getId());
             }
         }
         return role.getId();
@@ -82,7 +80,7 @@ public class RoleAdminService {
         require(req.getRoleId());
         roleMenuMapper.delete(Wrappers.<SysRoleMenu>lambdaQuery().eq(SysRoleMenu::getRoleId, req.getRoleId()));
         if (req.getMenuIds() == null || req.getMenuIds().isEmpty()) {
-            invalidateRoleUsers(req.getRoleId());
+            permissionTokenService.invalidateRoleUsers(req.getRoleId());
             return;
         }
         Set<Long> funcIds = new HashSet<>(menuMapper.selectList(Wrappers.<SysMenu>lambdaQuery()
@@ -101,7 +99,7 @@ public class RoleAdminService {
             link.setCreateAt(now);
             roleMenuMapper.insert(link);
         }
-        invalidateRoleUsers(req.getRoleId());
+        permissionTokenService.invalidateRoleUsers(req.getRoleId());
     }
 
     @Transactional
@@ -130,16 +128,7 @@ public class RoleAdminService {
         role.setStatus(FieldConst.EBL.equals(role.getStatus()) ? FieldConst.DBL : FieldConst.EBL);
         role.modifyCallback();
         roleMapper.updateById(role);
-        invalidateRoleUsers(roleId);
-    }
-
-    private void invalidateRoleUsers(Long roleId) {
-        List<SysUserRole> links = userRoleMapper.selectList(Wrappers.<SysUserRole>lambdaQuery()
-                .eq(SysUserRole::getRoleId, roleId)
-                .select(SysUserRole::getUserId));
-        for (SysUserRole link : links) {
-            tokenInvalidateService.invalidate(link.getUserId());
-        }
+        permissionTokenService.invalidateRoleUsers(roleId);
     }
 
     private RoleInfo toInfo(SysRole role) {

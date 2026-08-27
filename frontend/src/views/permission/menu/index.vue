@@ -4,8 +4,8 @@ import type { EditMenuDialogInstance, MenuType } from './components/EditMenuDial
 import { Search } from '@element-plus/icons-vue'
 import { delMenu, listMenuTree } from '@/apis/admin/menu'
 import MenuIcon from '@/components/MenuIcon.vue'
-import { SYS_MENU_WRITE } from '@/core/permCodes'
 import { menuIconClass } from '@/core/menuIcons'
+import { SYS_MENU_WRITE } from '@/core/permCodes'
 import { useAccountStore } from '@/stores/modules/account'
 import { useMenuStore } from '@/stores/modules/menu'
 import { showConfirm, showToast } from '@/utils/index'
@@ -60,6 +60,11 @@ function filterNode(value: string, data: ADMIN.MenuTree) {
 
 function applyFilter() {
   treeRef.value?.filter(keyword.value.trim())
+}
+
+function handleKeywordChange(value: string) {
+  if (!value)
+    treeRef.value?.filter('')
 }
 
 async function fetchData(preferId?: string) {
@@ -125,8 +130,6 @@ function onNodeCommand(command: MenuCommand, node: ADMIN.MenuTree) {
     removeNode(node)
 }
 
-watch(keyword, () => applyFilter())
-
 onMounted(() => fetchData())
 </script>
 
@@ -138,36 +141,34 @@ onMounted(() => fetchData())
   >
     <div v-loading="loading" class="menu-admin">
       <aside class="menu-admin__tree">
-        <el-input
-          v-model="keyword"
-          class="menu-admin__search"
-          clearable
-          :prefix-icon="Search"
-          placeholder="搜索菜单"
-        />
         <div class="menu-admin__head">
-          <span class="menu-admin__head-name">菜单</span>
-          <span
+          <el-input
+            v-model="keyword"
+            class="menu-admin__search"
+            clearable
+            :prefix-icon="Search"
+            placeholder="搜索菜单"
+            @keyup.enter="applyFilter"
+            @clear="applyFilter"
+            @update:model-value="handleKeywordChange"
+          />
+          <el-dropdown
             v-if="canWrite"
-            class="menu-admin__head-ops"
+            trigger="click"
+            @command="onHeadCommand"
           >
-            <el-dropdown
-              trigger="click"
-              @command="onHeadCommand"
-            >
-              <el-button link>
-                <span class="menu-tree-node__more-icon i-mingcute-more-2-line" />
-              </el-button>
-              <template #dropdown>
-                <el-dropdown-menu>
-                  <el-dropdown-item command="add-root">
-                    <span class="menu-drop__icon i-mingcute-add-circle-line" />
-                    子菜单
-                  </el-dropdown-item>
-                </el-dropdown-menu>
-              </template>
-            </el-dropdown>
-          </span>
+            <el-button class="menu-admin__more">
+              <span class="menu-tree-node__more-icon i-mingcute-more-2-line" />
+            </el-button>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item command="add-root">
+                  <span class="menu-drop__icon i-mingcute-add-circle-line" />
+                  子菜单
+                </el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
         </div>
         <el-scrollbar class="menu-admin__tree-scroll">
           <el-tree
@@ -222,7 +223,9 @@ onMounted(() => fetchData())
               </div>
             </template>
           </el-tree>
-          <div v-else class="menu-admin__tree-empty">暂无数据</div>
+          <div v-else class="menu-admin__tree-empty">
+            暂无数据
+          </div>
         </el-scrollbar>
       </aside>
       <section class="menu-admin__main">
@@ -269,42 +272,21 @@ onMounted(() => fetchData())
   background: var(--el-bg-color);
 }
 
-.menu-admin__search {
+.menu-admin__head {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   margin-bottom: 8px;
 }
 
-.menu-admin__head {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 32px;
-  margin: 0 -12px 4px;
-  padding: 0 32px;
-  background: var(--el-fill-color-lighter);
-  border-top: 1px solid var(--el-border-color-extra-light);
-  border-bottom: 1px solid var(--el-border-color-lighter);
-}
-
-.menu-admin__head-name {
+.menu-admin__search {
+  flex: 1;
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 13px;
-  font-weight: 600;
-  line-height: 32px;
-  text-align: center;
-  color: var(--el-text-color-primary);
 }
 
-.menu-admin__head-ops {
-  position: absolute;
-  top: 0;
-  right: 8px;
-  bottom: 0;
-  display: flex;
-  align-items: center;
+.menu-admin__more {
+  width: 32px;
+  padding: 0;
 }
 
 .menu-admin__tree-scroll {

@@ -5,7 +5,6 @@ declare namespace ADMIN {
     realName?: string;
     phone?: string;
     email?: string;
-    avatar?: string;
     status?: string;
     roleCodes?: string[];
     functionCodes?: string[];
@@ -229,7 +228,6 @@ declare namespace ADMIN {
     id?: string;
     username: string;
     realName: string;
-    avatar?: string;
     status?: string;
     password?: string;
     roleIds?: string[];
@@ -252,7 +250,6 @@ declare namespace ADMIN {
     id?: string;
     username?: string;
     realName?: string;
-    avatar?: string;
     status?: string;
     lastLoginAt?: string;
     roleNames?: string;

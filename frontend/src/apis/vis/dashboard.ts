@@ -130,19 +130,6 @@ export async function listDashboardManageTree(options?: {
   );
 }
 
-/** 报表中心看板树 GET /dashboards/report-tree */
-export async function listDashboardReportTree(options?: {
-  [key: string]: any;
-}) {
-  return request<VIS.RListResponseReportNode>(
-    `${VIS_BASE_PATH}/dashboards/report-tree`,
-    {
-      method: "GET",
-      ...(options || {}),
-    }
-  );
-}
-
 /** 看板移入分组 POST /dashboards/move-group */
 export async function moveDashboardsGroup(
   body: VIS.MoveDashboardsGroupRequest,
@@ -171,6 +158,19 @@ export async function queryDashboards(
         "Content-Type": "application/json",
       },
       data: body,
+      ...(options || {}),
+    }
+  );
+}
+
+/** 报表中心看板树 GET /dashboards/report-tree */
+export async function listDashboardReportTree(options?: {
+  [key: string]: any;
+}) {
+  return request<VIS.RListResponseReportNode>(
+    `${VIS_BASE_PATH}/dashboards/report-tree`,
+    {
+      method: "GET",
       ...(options || {}),
     }
   );

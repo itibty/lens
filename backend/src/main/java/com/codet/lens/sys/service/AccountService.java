@@ -50,9 +50,12 @@ public class AccountService {
         }
         tokenInvalidateService.invalidate(user.getId());
         long now = System.currentTimeMillis();
+        // 产品约定：仅签发登录时已生效角色；未来 start_at 到点不会刷新现有 JWT，用户需重新登录。
+        // 已生效角色的 end_at 仍会压缩 token 有效期，保证角色到期时自动撤权。
         Set<String> roles = new HashSet<>(sysUserMapper.findRoleCodes(user.getId(), now));
         Set<String> perms = new HashSet<>(sysUserMapper.findPermCodes(user.getId(), now));
-        long expiresAt = System.currentTimeMillis() + properties.getJwtTtlMs();
+        Long earliestRoleEndAt = sysUserMapper.findEarliestRoleEndAt(user.getId(), now);
+        long expiresAt = resolveTokenExpiresAt(now, properties.getJwtTtlMs(), earliestRoleEndAt);
         String token = jwtService.createToken(user.getId().toString(), roles, perms, expiresAt);
         sysUserMapper.updateLastLoginAt(user.getId(), System.currentTimeMillis());
         LoginResponse resp = new LoginResponse();
@@ -105,12 +108,16 @@ public class AccountService {
         tokenInvalidateService.invalidate(AuthContext.getUserIdLong());
     }
 
+    static long resolveTokenExpiresAt(long now, long jwtTtlMs, Long earliestRoleEndAt) {
+        long defaultExpiresAt = now + jwtTtlMs;
+        return earliestRoleEndAt == null ? defaultExpiresAt : Math.min(defaultExpiresAt, earliestRoleEndAt);
+    }
+
     private AccountInfo toInfo(SysUser user, Set<String> roles, Set<String> perms) {
         AccountInfo info = new AccountInfo();
         info.setId(user.getId());
         info.setUsername(user.getUsername());
         info.setRealName(user.getRealName());
-        info.setAvatar(user.getAvatar());
         info.setStatus(user.getStatus());
         info.setPhone("");
         info.setEmail("");

@@ -1,6 +1,7 @@
 package com.codet.lens.vis.service;
 
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.codet.lens.common.FieldConst;
@@ -22,35 +23,56 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class VisDatasetService {
 
-    private static final int OPTION_LIMIT = 50;
+    private static final int DEFAULT_OPTION_LIMIT = 50;
+    private static final int MAX_OPTION_LIMIT = 100;
 
     private final VisDatasetMapper datasetMapper;
     private final VisDatasetFieldMapper fieldMapper;
     private final VisDatasourceMapper datasourceMapper;
 
-    public ListResponse<VisDatasetInfo> listOptions() {
-        List<VisDatasetInfo> list = datasetMapper.selectPage(new Page<>(1, OPTION_LIMIT, false),
-                        Wrappers.<VisDataset>lambdaQuery()
-                                .eq(VisDataset::getStatus, FieldConst.EBL)
-                                .orderByDesc(VisDataset::getId)
-                                .select(VisDataset::getId, VisDataset::getDatasetName, VisDataset::getDatasetDesc))
+    public ListResponse<VisDatasetInfo> listOptions(String keyword, Long selectedId, Integer limit) {
+        String search = StrUtil.trim(keyword);
+        QueryWrapper<VisDataset> query = new QueryWrapper<VisDataset>()
+                .eq("status", FieldConst.EBL)
+                .orderByDesc("id")
+                .select("id", "dataset_name", "dataset_desc");
+        if (StrUtil.isNotBlank(search)) {
+            Long searchId = parseId(search);
+            query.and(wrapper -> {
+                wrapper.like("dataset_name", search).or().like("dataset_desc", search);
+                if (searchId != null) {
+                    wrapper.or().eq("id", searchId);
+                }
+            });
+        }
+        List<VisDatasetInfo> list = datasetMapper.selectPage(
+                        new Page<>(1, resolveOptionLimit(limit), false), query)
                 .getRecords().stream()
-                .map(row -> {
-                    VisDatasetInfo info = new VisDatasetInfo();
-                    info.setId(row.getId());
-                    info.setSqlName(row.getDatasetName());
-                    info.setSqlDesc(row.getDatasetDesc());
-                    return info;
-                })
-                .toList();
+                .map(VisDatasetService::toInfo)
+                .collect(Collectors.toCollection(ArrayList::new));
+        if (selectedId != null && list.stream().noneMatch(item -> selectedId.equals(item.getId()))) {
+            VisDataset selected = datasetMapper.selectById(selectedId);
+            if (selected != null && FieldConst.EBL.equals(selected.getStatus())) {
+                list.add(0, toInfo(selected));
+            }
+        }
         return new ListResponse<>(list);
+    }
+
+    static int resolveOptionLimit(Integer limit) {
+        if (limit == null || limit <= 0) {
+            return DEFAULT_OPTION_LIMIT;
+        }
+        return Math.min(limit, MAX_OPTION_LIMIT);
     }
 
     public List<ConfSqlFieldInfo> listFields(Long datasetId) {
@@ -112,6 +134,22 @@ public class VisDatasetService {
 
     private static String datasetLabel(VisDataset row) {
         return StrUtil.isBlank(row.getDatasetName()) ? "数据集" : "数据集「" + row.getDatasetName() + "」";
+    }
+
+    private static Long parseId(String value) {
+        try {
+            return Long.valueOf(value);
+        } catch (NumberFormatException ignored) {
+            return null;
+        }
+    }
+
+    private static VisDatasetInfo toInfo(VisDataset row) {
+        VisDatasetInfo info = new VisDatasetInfo();
+        info.setId(row.getId());
+        info.setSqlName(row.getDatasetName());
+        info.setSqlDesc(row.getDatasetDesc());
+        return info;
     }
 
     @Getter

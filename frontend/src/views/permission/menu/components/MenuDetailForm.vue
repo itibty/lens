@@ -48,9 +48,7 @@ function fillForm(node: ADMIN.MenuTree) {
   nextTick(() => formRef.value?.clearValidate())
 }
 
-watch(() => props.node.id, () => {
-  fillForm(props.node)
-}, { immediate: true })
+watch(() => props.node, fillForm, { immediate: true })
 
 async function save() {
   const valid = await formRef.value?.validate().catch(() => false)
@@ -75,8 +73,12 @@ async function save() {
 <template>
   <section class="menu-panel">
     <div class="menu-panel__head">
-      <div class="menu-panel__title">基本信息</div>
-      <el-button v-if="canWrite" type="primary" :loading="saving" @click="save">保存</el-button>
+      <div class="menu-panel__title">
+        基本信息
+      </div>
+      <el-button v-if="canWrite" type="primary" :loading="saving" @click="save">
+        保存
+      </el-button>
     </div>
     <el-form
       ref="formRef"

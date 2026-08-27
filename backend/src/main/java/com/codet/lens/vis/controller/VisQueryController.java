@@ -1,8 +1,11 @@
 package com.codet.lens.vis.controller;
 
+import com.codet.lens.auth.Permission;
+import com.codet.lens.common.PermCodes;
 import com.codet.lens.common.R;
 import com.codet.lens.vis.dto.card.VisCardInfo;
 import com.codet.lens.vis.dto.dash.VisDashboardInfo;
+import com.codet.lens.vis.dto.dataset.VisBoundFilterOptionsRequest;
 import com.codet.lens.vis.dto.dataset.VisFilterOptionsRequest;
 import com.codet.lens.vis.dto.dataset.VisFilterOptionsResponse;
 import com.codet.lens.vis.dto.pivot.PivotQueryRequest;
@@ -13,6 +16,7 @@ import com.codet.lens.vis.dto.query.DetailQueryRequest;
 import com.codet.lens.vis.dto.query.QueryDataResponse;
 import com.codet.lens.vis.dto.query.QueryRequest;
 import com.codet.lens.vis.service.PivotDataService;
+import com.codet.lens.vis.service.VisBoundFilterOptionsService;
 import com.codet.lens.vis.service.VisBoundQueryService;
 import com.codet.lens.vis.service.VisCardService;
 import com.codet.lens.vis.service.VisDashboardAccess;
@@ -50,6 +54,7 @@ public class VisQueryController {
     private final VisDataService visDataService;
     private final PivotDataService pivotDataService;
     private final VisBoundQueryService boundQuery;
+    private final VisBoundFilterOptionsService boundFilterOptions;
     private final VisDashboardAccess dashboardAccess;
     private final VisDashboardService visDashboardService;
     private final VisCardService visCardService;
@@ -75,12 +80,21 @@ public class VisQueryController {
         return R.success(visDateWindowService.preview(request));
     }
 
-    @Operation(operationId = "listFilterOptions", summary = "筛选枚举")
+    @Operation(operationId = "listFilterOptions", summary = "设计态筛选枚举")
+    @Permission({PermCodes.VIS_CARD_CONF, PermCodes.VIS_DASHBOARD_CONF})
     @PostMapping("/vis/filter-options")
     public R<VisFilterOptionsResponse> listFilterOptions(
             @Validated @RequestBody VisFilterOptionsRequest request) {
-        dashboardAccess.assertCanUseVisQuery();
         return R.success(visFilterOptionsService.list(request));
+    }
+
+    @Operation(operationId = "listDashboardFilterOptions", summary = "看板筛选枚举")
+    @PostMapping("/dashboards/{dashboardId}/filters/{filterUid}/options")
+    public R<VisFilterOptionsResponse> listDashboardFilterOptions(
+            @PathVariable Long dashboardId,
+            @PathVariable String filterUid,
+            @RequestBody(required = false) VisBoundFilterOptionsRequest request) {
+        return R.success(boundFilterOptions.list(dashboardId, filterUid, request));
     }
 
     /**

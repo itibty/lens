@@ -24,7 +24,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -131,14 +130,7 @@ public class VisFilterOptionsService {
     }
 
     static String stringExpr(String dsType, String expr) {
-        String type = StrUtil.blankToDefault(dsType, "").toUpperCase(Locale.ROOT);
-        if (type.contains("ORACLE")) {
-            return "TO_CHAR(" + expr + ")";
-        }
-        if (type.contains("POSTGRES") || type.contains("TRINO") || type.contains("PRESTO")) {
-            return "CAST(" + expr + " AS VARCHAR)";
-        }
-        return "CAST(" + expr + " AS CHAR)";
+        return SqlDialect.of(dsType).stringExpr(expr);
     }
 
     static SqlTplRet applyLimit(SqlTplRet tplRet, String dsType, int limit) {
@@ -148,14 +140,9 @@ public class VisFilterOptionsService {
         if (tplRet.getParams() != null) {
             Collections.addAll(params, tplRet.getParams());
         }
-        String type = StrUtil.blankToDefault(dsType, "").toUpperCase(Locale.ROOT);
-        try {
-            SqlPageUtil.PageSql pageSql = SqlPageUtil.getPageSql(type, wrapped, 0, limit);
-            params.addAll(pageSql.getPage());
-            return new SqlTplRet(tplRet.getSqlId(), tplRet.getDsName(), pageSql.getSql(), params.toArray());
-        } catch (Exception ignored) {
-            return new SqlTplRet(tplRet.getSqlId(), tplRet.getDsName(), wrapped + " LIMIT " + limit, params.toArray());
-        }
+        SqlPageUtil.PageSql pageSql = SqlPageUtil.getPageSql(dsType, wrapped, 0, limit);
+        params.addAll(pageSql.getPage());
+        return new SqlTplRet(tplRet.getSqlId(), tplRet.getDsName(), pageSql.getSql(), params.toArray());
     }
 
     static String stripSemicolon(String sql) {

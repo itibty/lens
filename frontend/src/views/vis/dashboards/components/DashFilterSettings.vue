@@ -9,6 +9,7 @@ import vis from '@/apis/vis/index'
 import { fromConfSqlField } from '@/views/vis/cards/cardApi'
 import { filterOpLabel } from '@/views/vis/shared/filterValue'
 import { dataTypeLabel } from '@/views/vis/shared/types'
+import { useDatasetOptions } from '@/views/vis/shared/useDatasetOptions'
 import {
   createEmptyFilterDef,
   dashFilterOpText,
@@ -45,7 +46,6 @@ const SOURCE_OPTIONS: Array<{ label: string, value: DashFilterOptionSource }> = 
   { label: '从数据集读取', value: 'dataset' },
 ]
 
-const datasets = ref<VIS.VisDatasetInfo[]>([])
 const fields = ref<DatasetField[]>([])
 const optionFields = ref<DatasetField[]>([])
 const loadingFields = ref(false)
@@ -53,6 +53,20 @@ const loadingOptionFields = ref(false)
 const selectedUid = ref('')
 
 const selected = computed(() => items.value.find(item => item.uid === selectedUid.value) || null)
+const targetDatasetId = computed(() => selected.value?.datasetId || '')
+const optionDatasetId = computed(() => selected.value?.options?.datasetId || '')
+const {
+  datasets: targetDatasets,
+  loading: loadingTargetDatasets,
+  search: searchTargetDatasets,
+  reload: reloadTargetDatasets,
+} = useDatasetOptions(targetDatasetId)
+const {
+  datasets: optionDatasets,
+  loading: loadingOptionDatasets,
+  search: searchOptionDatasets,
+  reload: reloadOptionDatasets,
+} = useDatasetOptions(optionDatasetId)
 const showOp = computed(() => selected.value ? needsFilterOp(selected.value) : false)
 const opOptions = computed(() => selected.value ? opsForFormType(selected.value.formType) : [])
 const showValueAs = computed(() => isTemporalFormType(selected.value?.formType))
@@ -76,9 +90,14 @@ const previewLoading = ref(false)
 const previewError = ref('')
 let previewSeq = 0
 
-async function loadDatasets() {
-  const res = await vis.dataset.listDatasetOptions()
-  datasets.value = res.data?.list ?? []
+function onTargetDatasetsVisible(visible: boolean) {
+  if (visible)
+    reloadTargetDatasets()
+}
+
+function onOptionDatasetsVisible(visible: boolean) {
+  if (visible)
+    reloadOptionDatasets()
 }
 
 async function loadFields(datasetId: string) {
@@ -370,10 +389,6 @@ watch(
   },
   { immediate: true },
 )
-
-onMounted(() => {
-  void loadDatasets()
-})
 </script>
 
 <template>
@@ -456,11 +471,15 @@ onMounted(() => {
             <el-select
               :model-value="selected.datasetId"
               filterable
+              remote
+              :loading="loadingTargetDatasets"
+              :remote-method="searchTargetDatasets"
               placeholder="这项筛选作用在哪个数据集"
               @update:model-value="onTargetDatasetChange"
+              @visible-change="onTargetDatasetsVisible"
             >
               <el-option
-                v-for="item in datasets"
+                v-for="item in targetDatasets"
                 :key="item.id"
                 :label="item.sqlName"
                 :value="String(item.id)"
@@ -577,11 +596,15 @@ onMounted(() => {
             <el-select
               :model-value="selected.options?.datasetId || ''"
               filterable
+              remote
+              :loading="loadingOptionDatasets"
+              :remote-method="searchOptionDatasets"
               placeholder="下拉选项从哪个数据集读"
               @update:model-value="onOptionsDatasetChange"
+              @visible-change="onOptionDatasetsVisible"
             >
               <el-option
-                v-for="item in datasets"
+                v-for="item in optionDatasets"
                 :key="`opt-${item.id}`"
                 :label="item.sqlName"
                 :value="String(item.id)"
@@ -762,7 +785,7 @@ onMounted(() => {
       v-else-if="!selected"
       class="filter-settings__placeholder"
     >
-      <span class="i-mingcute-filter-2-line filter-settings__placeholder-icon" />
+      <span class="filter-settings__placeholder-icon i-mingcute-filter-2-line" />
       从左侧添加一项筛选
     </div>
   </div>
