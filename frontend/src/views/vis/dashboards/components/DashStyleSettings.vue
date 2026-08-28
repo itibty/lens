@@ -194,7 +194,7 @@ const autoRefreshSecValue = computed({
 
 .style-settings__grid {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(68px, 1fr));
   gap: 10px;
 }
 

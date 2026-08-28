@@ -6,6 +6,7 @@ import type { DetailHit, DetailMenuPayload, PivotPathMember } from '@/views/vis/
 import type { VisQueryConfig, VisVisualConfig } from '@/views/vis/shared/types'
 import { onClickOutside, useEventListener } from '@vueuse/core'
 import { showToast } from '@/utils/index'
+import { DASH_SURFACE_MODE_KEY } from '@/views/vis/dashboards/dashTheme'
 import {
   contextFromChartDatum,
   contextFromPivotPaths,
@@ -124,6 +125,9 @@ const stageClass = computed(() => `is-${stageMode.value}`)
 const chrome = computed(() => resolveCardChrome(props.visual))
 const hasCardBg = computed(() => !!chrome.value.bg)
 const hasCardColor = computed(() => !!chrome.value.color)
+const dashSurfaceMode = inject(DASH_SURFACE_MODE_KEY, null)
+const followsDashSurface = computed(() => props.embedded && !!dashSurfaceMode && !hasCardBg.value)
+const darkSurface = computed(() => followsDashSurface.value && dashSurfaceMode?.value === 'dark')
 
 const hasHeaderText = computed(() => !!(cardTitle.value || cardRemark.value))
 
@@ -148,12 +152,21 @@ const headerThemeStyle = computed(() => {
 })
 
 const contentThemeStyle = computed(() => {
-  if (!hasCardColor.value)
-    return undefined
-  return {
-    'color': chrome.value.color,
-    '--vis-content-color': chrome.value.color,
+  if (hasCardColor.value) {
+    return {
+      'color': chrome.value.color,
+      '--vis-content-color': chrome.value.color,
+      '--vis-muted-color': `color-mix(in srgb, ${chrome.value.color} 64%, transparent)`,
+    }
   }
+  if (followsDashSurface.value) {
+    return {
+      'color': 'var(--dash-content-color)',
+      '--vis-content-color': 'var(--dash-content-color)',
+      '--vis-muted-color': 'var(--dash-content-muted)',
+    }
+  }
+  return undefined
 })
 
 const chartSpec = computed(() =>
@@ -545,6 +558,7 @@ watch(allowDetail, (ok) => {
           :data="data"
           :empty-text="emptyText"
           :interactive="allowDetail"
+          :dark="darkSurface"
           @cell-click="onTableClick"
         />
 
@@ -557,6 +571,7 @@ watch(allowDetail, (ok) => {
           :data="pivotData ?? emptyPivotData"
           :empty-text="emptyText"
           :interactive="allowDetail"
+          :dark="darkSurface"
           @cell-click="onPivotClick"
         />
 
@@ -570,6 +585,7 @@ watch(allowDetail, (ok) => {
             :empty-text="emptyText"
             :interactive="allowDetail"
             :lock-tooltip="!!menu"
+            :dark="darkSurface"
             @mark-click="onMarkClick"
           />
         </div>
@@ -701,6 +717,24 @@ watch(allowDetail, (ok) => {
     .vis-card-view__remark-icon {
       color: var(--dash-card-header-color, var(--el-text-color-placeholder));
       opacity: 0.72;
+    }
+  }
+
+  &.is-embedded &__full-icon {
+    color: var(--dash-content-muted, var(--el-text-color-placeholder));
+
+    &:hover {
+      color: var(--dash-content-color, var(--el-text-color-regular));
+    }
+  }
+
+  &.is-embedded &__header:not(.is-card-color) &__more-btn {
+    color: var(--dash-content-muted, var(--el-text-color-secondary));
+
+    &:hover,
+    &:focus-visible {
+      background: color-mix(in srgb, var(--dash-title, #1f2329) 10%, transparent);
+      color: var(--dash-content-color, var(--el-text-color-primary));
     }
   }
 
@@ -972,7 +1006,7 @@ watch(allowDetail, (ok) => {
   &__error-detail {
     font-size: 12px;
     line-height: 1.55;
-    color: var(--el-text-color-secondary);
+    color: var(--vis-muted-color, var(--el-text-color-secondary));
     word-break: break-word;
 
     :is(.is-number, .is-progress) & {
@@ -1012,7 +1046,7 @@ watch(allowDetail, (ok) => {
     text-align: center;
     font-size: 12px;
     line-height: 1.45;
-    color: var(--el-text-color-secondary);
+    color: var(--vis-muted-color, var(--el-text-color-secondary));
 
     &.is-card-color {
       color: inherit;
@@ -1028,7 +1062,7 @@ watch(allowDetail, (ok) => {
     align-items: center;
     justify-content: center;
     border-radius: inherit;
-    background: color-mix(in srgb, var(--el-bg-color) 48%, transparent);
+    background: color-mix(in srgb, var(--dash-card-bg, var(--el-bg-color)) 48%, transparent);
     pointer-events: all;
   }
 

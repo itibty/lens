@@ -222,11 +222,11 @@ const { vars: cardStyle } = useNumberFit(rootRef, () => style.value.size, () => 
     }
 
     &.is-flat {
-      --vis-kpi-delta: var(--el-text-color-secondary);
+      --vis-kpi-delta: var(--vis-muted-color, var(--el-text-color-secondary));
     }
 
     &.is-metric {
-      --vis-kpi-delta: var(--el-text-color-regular);
+      --vis-kpi-delta: var(--vis-content-color, var(--el-text-color-regular));
     }
   }
 
@@ -267,7 +267,7 @@ const { vars: cardStyle } = useNumberFit(rootRef, () => style.value.size, () => 
     font-size: var(--vis-number-aux-label, 11px);
     font-weight: 400;
     line-height: 1.25;
-    color: var(--el-text-color-secondary);
+    color: var(--vis-muted-color, var(--el-text-color-secondary));
     opacity: 0.88;
   }
 }

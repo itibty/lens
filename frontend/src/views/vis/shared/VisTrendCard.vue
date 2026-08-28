@@ -218,7 +218,7 @@ function onValueClick(event: MouseEvent) {
     justify-content: center;
     min-height: 80px;
     font-size: 13px;
-    color: var(--el-text-color-secondary);
+    color: var(--vis-muted-color, var(--el-text-color-secondary));
   }
 
   &__name {
@@ -229,7 +229,7 @@ function onValueClick(event: MouseEvent) {
     font-weight: 500;
     letter-spacing: 0.02em;
     line-height: 1.3;
-    color: var(--vis-content-color, var(--el-text-color-secondary));
+    color: var(--vis-muted-color, var(--el-text-color-secondary));
     opacity: 0.88;
   }
 
@@ -306,7 +306,7 @@ function onValueClick(event: MouseEvent) {
     }
 
     &.is-flat {
-      color: var(--el-text-color-secondary);
+      color: var(--vis-muted-color, var(--el-text-color-secondary));
     }
   }
 
@@ -382,7 +382,7 @@ function onValueClick(event: MouseEvent) {
     font-size: var(--vis-number-aux-label, 11px);
     font-weight: 400;
     line-height: 1.25;
-    color: var(--el-text-color-secondary);
+    color: var(--vis-muted-color, var(--el-text-color-secondary));
     opacity: 0.88;
   }
 }

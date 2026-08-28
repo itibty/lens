@@ -5,7 +5,7 @@
   align-items: center;
   justify-content: center;
   min-height: $min-height;
-  color: var(--el-text-color-placeholder);
+  color: var(--dash-content-muted, var(--el-text-color-placeholder));
   font-size: 13px;
   border: 1px dashed color-mix(in srgb, var(--dash-border, var(--el-border-color)) 80%, transparent);
   border-radius: var(--dash-card-radius, 12px);

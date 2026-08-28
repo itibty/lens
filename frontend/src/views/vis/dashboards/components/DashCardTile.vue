@@ -341,7 +341,7 @@ function onMenuAction(key: string) {
 .dash-tile__handle-icon {
   width: 34px;
   height: 24px;
-  color: #646a73;
+  color: var(--dash-content-muted, #646a73);
 }
 
 .dash-tile.hide-resize-dots .dash-tile__dot {
@@ -357,7 +357,7 @@ function onMenuAction(key: string) {
   box-sizing: border-box;
   width: 16px;
   height: 16px;
-  border: 2px solid #fff;
+  border: 2px solid var(--dash-card-bg, #fff);
   border-radius: 50%;
   background: var(--dash-accent, #0052d9);
   touch-action: none;

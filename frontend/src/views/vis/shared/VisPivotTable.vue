@@ -19,9 +19,11 @@ const props = withDefaults(defineProps<{
   visual?: VisVisualConfig
   emptyText?: string
   interactive?: boolean
+  dark?: boolean
 }>(), {
   emptyText: '暂无数据',
   interactive: false,
+  dark: false,
 })
 
 const emit = defineEmits<{
@@ -52,7 +54,7 @@ function isSortIconClick(args: MousePointerCellEvent) {
 }
 
 function createTable(el: HTMLElement, width: number, height: number) {
-  const option = buildPivotTableOption(props.data, props.visual, props.query, sortState.value)
+  const option = buildPivotTableOption(props.data, props.visual, props.query, sortState.value, props.dark)
   if (!option)
     return null
   const excelOptions = {
@@ -131,6 +133,6 @@ defineExpose({
     :empty="empty"
     :empty-text="emptyText"
     :create="createTable"
-    :deps="() => [props.data, props.query, props.visual, props.interactive, sortState]"
+    :deps="() => [props.data, props.query, props.visual, props.interactive, props.dark, sortState]"
   />
 </template>

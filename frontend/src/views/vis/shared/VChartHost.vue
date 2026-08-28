@@ -3,7 +3,7 @@
 -->
 <script setup lang="ts">
 import type { ISpec } from '@visactor/vchart'
-import VChart from '@visactor/vchart'
+import VChart, { darkTheme } from '@visactor/vchart'
 import { useResizeObserver } from '@vueuse/core'
 import { unwrapChartDatum } from '@/views/vis/shared/chartDatum'
 
@@ -14,12 +14,15 @@ const props = withDefaults(defineProps<{
   interactive?: boolean
   /** 明细菜单打开时压住提示，避免盖住菜单 */
   lockTooltip?: boolean
+  /** 看板专属暗色 surface；不影响卡片设计页和全局主题 */
+  dark?: boolean
 }>(), {
   spec: null,
   empty: false,
   emptyText: '暂无数据',
   interactive: false,
   lockTooltip: false,
+  dark: false,
 })
 
 const emit = defineEmits<{
@@ -60,6 +63,58 @@ function specRec(spec: ISpec | null | undefined) {
   if (!spec || typeof spec !== 'object')
     return null
   return spec as unknown as Record<string, unknown>
+}
+
+function plainRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : {}
+}
+
+function darkTextBlock(value: unknown, fill: string) {
+  const block = plainRecord(value)
+  return {
+    ...block,
+    style: {
+      ...plainRecord(block.style),
+      fill,
+    },
+  }
+}
+
+function darkIndicator(value: unknown) {
+  const indicator = plainRecord(value)
+  return {
+    ...indicator,
+    title: darkTextBlock(indicator.title, '#F2F5F9'),
+    content: Array.isArray(indicator.content)
+      ? indicator.content.map(item => darkTextBlock(item, '#9DA9B8'))
+      : indicator.content,
+  }
+}
+
+function withSurfaceTheme(spec: ISpec): ISpec {
+  if (!props.dark)
+    return spec
+  const source = spec as unknown as Record<string, unknown>
+  const base = darkTheme as unknown as Record<string, unknown>
+  const current = plainRecord(source.theme)
+  return {
+    ...source,
+    ...(source.indicator ? { indicator: darkIndicator(source.indicator) } : {}),
+    theme: {
+      ...base,
+      ...current,
+      component: {
+        ...plainRecord(base.component),
+        ...plainRecord(current.component),
+      },
+      series: {
+        ...plainRecord(base.series),
+        ...plainRecord(current.series),
+      },
+    },
+  } as ISpec
 }
 
 function lineCurveType(spec: ISpec | null | undefined) {
@@ -248,17 +303,18 @@ function syncChart() {
     destroyChart()
     return
   }
+  const spec = withSurfaceTheme(props.spec)
   if (!chart) {
-    createChart(props.spec)
+    createChart(spec)
     return
   }
-  if (remountKey(props.spec) !== lastRemountKey) {
+  if (remountKey(spec) !== lastRemountKey) {
     destroyChart()
-    createChart(props.spec)
+    createChart(spec)
     return
   }
   const size = wrapSize()
-  chart.updateSpecSync(size ? withSize(props.spec, size) : props.spec)
+  chart.updateSpecSync(size ? withSize(spec, size) : spec)
 }
 
 function fitChart() {
@@ -298,6 +354,14 @@ watch(
   (locked) => {
     if (locked)
       hideTooltip()
+  },
+)
+
+watch(
+  () => props.dark,
+  () => {
+    destroyChart()
+    nextTick(syncChart)
   },
 )
 

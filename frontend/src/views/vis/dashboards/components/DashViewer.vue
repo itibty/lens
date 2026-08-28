@@ -19,7 +19,13 @@ import {
 } from '../dashApi'
 import { useDashFilterUrl } from '../dashFilterQuery'
 import { captureDashPreview, saveDashScreenshot } from '../dashScreenshot'
-import { dashThemeVars, DEFAULT_DASH_CARD_RADIUS, DEFAULT_DASH_THEME } from '../dashTheme'
+import {
+  DASH_SURFACE_MODE_KEY,
+  dashThemeVars,
+  DEFAULT_DASH_CARD_RADIUS,
+  DEFAULT_DASH_THEME,
+  resolveDashSurfaceMode,
+} from '../dashTheme'
 import { useDashChromeScroll } from '../useDashChromeScroll'
 import { useDashRefresh } from '../useDashRefresh'
 import DashFilterBar from './DashFilterBar.vue'
@@ -43,6 +49,7 @@ const theme = ref<DashThemeId>(DEFAULT_DASH_THEME)
 const cardRadius = ref<DashCardRadiusId>(DEFAULT_DASH_CARD_RADIUS)
 const autoRefreshSec = ref<number>()
 const themeStyle = computed(() => dashThemeVars(theme.value, cardRadius.value))
+provide(DASH_SURFACE_MODE_KEY, computed(() => resolveDashSurfaceMode(theme.value)))
 const { refreshCards, refreshTick } = useDashRefresh()
 const { chromeHidden, onCanvasScroll, revealChrome } = useDashChromeScroll()
 const { pauseFilterUrl, applyFilterQuery } = useDashFilterUrl(

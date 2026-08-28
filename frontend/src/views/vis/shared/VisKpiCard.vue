@@ -273,7 +273,7 @@ function onRowClick(record: Record<string, unknown>, event: MouseEvent) {
   bottom: 0;
   width: 2px;
   margin-left: -1px;
-  background: repeating-linear-gradient(to bottom, #1f2329 0 5px, transparent 5px 9px);
+  background: repeating-linear-gradient(to bottom, var(--vis-content-color, #1f2329) 0 5px, transparent 5px 9px);
 }
 
 .vis-kpi-card__pace-tag {

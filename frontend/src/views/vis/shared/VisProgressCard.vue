@@ -225,7 +225,7 @@ watch(
     font-weight: 500;
     letter-spacing: 0.02em;
     line-height: 1.3;
-    color: var(--vis-content-color, var(--el-text-color-secondary));
+    color: var(--vis-muted-color, var(--el-text-color-secondary));
     opacity: 0.88;
   }
 
@@ -262,7 +262,7 @@ watch(
     min-width: 0;
     background: linear-gradient(
       180deg,
-      color-mix(in srgb, var(--vis-progress-fill, var(--el-color-primary)) 72%, #fff) 0%,
+      color-mix(in srgb, var(--vis-progress-fill, var(--el-color-primary)) 72%, var(--dash-card-bg, #fff)) 0%,
       var(--vis-progress-fill, var(--el-color-primary)) 100%
     );
     transition: width 0.7s cubic-bezier(0.22, 1, 0.36, 1);
@@ -288,14 +288,14 @@ watch(
 
   &__target {
     font-weight: 400;
-    color: var(--vis-content-color, var(--el-text-color-secondary));
+    color: var(--vis-muted-color, var(--el-text-color-secondary));
     opacity: 0.82;
   }
 
   &__sep {
     opacity: 0.38;
     font-weight: 400;
-    color: var(--el-text-color-secondary);
+    color: var(--vis-muted-color, var(--el-text-color-secondary));
   }
 
   &__ring-wrap {

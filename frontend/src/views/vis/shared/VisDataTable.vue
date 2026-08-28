@@ -15,9 +15,11 @@ const props = withDefaults(defineProps<{
   data: VIS.QueryDataResponse
   emptyText?: string
   interactive?: boolean
+  dark?: boolean
 }>(), {
   emptyText: '暂无数据',
   interactive: false,
+  dark: false,
 })
 
 const emit = defineEmits<{
@@ -27,7 +29,7 @@ const emit = defineEmits<{
 const empty = computed(() => !listTableColumns(props.query, props.data, false).length)
 
 function createTable(el: HTMLElement, width: number, height: number) {
-  const option = buildListTableOption(props.query, props.data, props.visual)
+  const option = buildListTableOption(props.query, props.data, props.visual, props.dark)
   if (!option)
     return null
   const table = new ListTable(el, {
@@ -62,6 +64,6 @@ function createTable(el: HTMLElement, width: number, height: number) {
     :empty="empty"
     :empty-text="emptyText"
     :create="createTable"
-    :deps="() => [props.data, props.query, props.visual, props.interactive]"
+    :deps="() => [props.data, props.query, props.visual, props.interactive, props.dark]"
   />
 </template>

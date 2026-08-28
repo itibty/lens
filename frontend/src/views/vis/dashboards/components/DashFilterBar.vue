@@ -399,7 +399,7 @@ useEventListener(window, 'scroll', onPageScroll, true)
   min-width: 0;
   font-size: 13px;
   line-height: 32px;
-  color: var(--el-text-color-secondary);
+  color: var(--dash-content-muted, var(--el-text-color-secondary));
 }
 
 .filter-dock__right {
@@ -457,7 +457,7 @@ useEventListener(window, 'scroll', onPageScroll, true)
   border: 1px solid color-mix(in srgb, var(--dash-border, var(--el-border-color)) 78%, transparent);
   border-radius: 8px;
   background: var(--dash-btn-bg, var(--el-bg-color));
-  color: var(--el-text-color-regular);
+  color: var(--dash-content-color, var(--el-text-color-regular));
   @include page.frost(btn);
   cursor: pointer;
   outline: none;
@@ -494,7 +494,7 @@ useEventListener(window, 'scroll', onPageScroll, true)
 
     &:hover {
       border-color: var(--dash-border, var(--el-border-color));
-      color: var(--el-text-color-regular);
+      color: var(--dash-content-color, var(--el-text-color-regular));
     }
   }
 }
@@ -551,7 +551,7 @@ useEventListener(window, 'scroll', onPageScroll, true)
   flex-shrink: 0;
   align-items: center;
   padding: 0 10px 0 12px;
-  color: var(--el-text-color-secondary);
+  color: var(--dash-content-muted, var(--el-text-color-secondary));
   font-size: 12px;
 }
 
@@ -570,7 +570,7 @@ useEventListener(window, 'scroll', onPageScroll, true)
 
 .filter-chip__op {
   flex-shrink: 0;
-  color: var(--el-text-color-placeholder);
+  color: var(--dash-content-muted, var(--el-text-color-placeholder));
   font-size: 12px;
 }
 
@@ -579,12 +579,12 @@ useEventListener(window, 'scroll', onPageScroll, true)
   text-overflow: ellipsis;
   white-space: nowrap;
   max-width: 16em;
-  color: var(--el-text-color-regular);
+  color: var(--dash-content-color, var(--el-text-color-regular));
   font-size: 13px;
 }
 
 .filter-chip:not(.is-on) .filter-chip__value {
-  color: var(--el-text-color-placeholder);
+  color: var(--dash-content-muted, var(--el-text-color-placeholder));
 }
 
 .filter-chip.is-on .filter-chip__value {
@@ -599,7 +599,7 @@ useEventListener(window, 'scroll', onPageScroll, true)
   width: 16px;
   height: 16px;
   border-radius: 999px;
-  color: var(--el-text-color-secondary);
+  color: var(--dash-content-muted, var(--el-text-color-secondary));
 
   .i-mingcute-close-line {
     width: 11px;

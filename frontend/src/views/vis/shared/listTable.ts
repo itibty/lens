@@ -6,10 +6,10 @@ import { contrastPeriodDescription, findContrastInfo, formatContrastValue, isDif
 import { bindMarkColumnStyle, prepareTableMarks } from './tableMark'
 import { resolveTableStyle } from './tableStyle'
 import { dimensionAlias, metricAlias } from './types'
-import { resolveTableHeaderIconColor, resolveVTableLayout, resolveVTableTheme, VTABLE_EMPTY_TIP } from './vtableTheme'
+import { resolveTableHeaderIconColor, resolveVTableEmptyTip, resolveVTableLayout, resolveVTableTheme } from './vtableTheme'
 
-function contrastPeriodHeaderIcon(tip: string, visual?: VisVisualConfig) {
-  const color = resolveTableHeaderIconColor(visual)
+function contrastPeriodHeaderIcon(tip: string, visual?: VisVisualConfig, dark = false) {
+  const color = resolveTableHeaderIconColor(visual, dark)
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="${color}" stroke-width="1.7"/><path d="M12 11.2V17" stroke="${color}" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="8.2" r="1.15" fill="${color}"/></svg>`
   return {
     type: 'svg' as const,
@@ -53,6 +53,7 @@ export function listTableColumns(
   data: VIS.QueryDataResponse,
   sortable: boolean,
   visual?: VisVisualConfig,
+  dark = false,
 ): NonNullable<ListTableConstructorOptions['columns']> {
   const metricKeys = new Set((query.metrics ?? []).map(metricAlias))
   const dimensionKeys = new Set((query.dimensions ?? []).map(dimensionAlias))
@@ -70,7 +71,7 @@ export function listTableColumns(
       sort: sortable,
       mergeCell,
       description: periodTip || undefined,
-      headerIcon: periodTip ? contrastPeriodHeaderIcon(periodTip, visual) : undefined,
+      headerIcon: periodTip ? contrastPeriodHeaderIcon(periodTip, visual, dark) : undefined,
       style: bindMarkColumnStyle(marks, field, {
         textAlign: isMetric || diffRate ? 'right' : dimensionKeys.has(field) ? 'left' : undefined,
       }),
@@ -85,17 +86,18 @@ export function buildListTableOption(
   query: VIS.QueryConfig,
   data: VIS.QueryDataResponse,
   visual: VisVisualConfig,
+  dark = false,
 ): ListTableConstructorOptions | null {
   const tableStyle = resolveTableStyle(visual)
-  const columns = listTableColumns(query, data, tableStyle.sortable, visual)
+  const columns = listTableColumns(query, data, tableStyle.sortable, visual, dark)
   if (!columns.length)
     return null
 
   return {
     records: data.rows ?? [],
     columns,
-    theme: resolveVTableTheme(visual),
-    emptyTip: { ...VTABLE_EMPTY_TIP },
+    theme: resolveVTableTheme(visual, dark),
+    emptyTip: resolveVTableEmptyTip(dark),
     ...resolveVTableLayout(!(data.rows?.length)),
     hover: { highlightMode: 'row' },
     rowSeriesNumber: tableStyle.showRowNumber

@@ -4,7 +4,7 @@ import { TYPES } from '@visactor/vtable'
 import { bindMarkColumnStyle, prepareTableMarks } from './tableMark'
 import { resolvePivotPlaces, resolvePivotTreeDisplay, resolveTableStyle } from './tableStyle'
 import { dimensionAlias, metricAlias } from './types'
-import { resolveVTableLayout, resolveVTableTheme, VTABLE_EMPTY_TIP } from './vtableTheme'
+import { resolveVTableEmptyTip, resolveVTableLayout, resolveVTableTheme } from './vtableTheme'
 
 /** 后端短 path 补到树/records 上的占位，表头再译成「小计 / 总计」 */
 export const PIVOT_SUBTOTAL_TOKEN = '__SUBTOTAL__'
@@ -395,6 +395,7 @@ export function buildPivotTableOption(
   visual?: VisVisualConfig,
   query?: VisQueryConfig,
   sortState?: PivotHeaderSortState | null,
+  dark = false,
 ): PivotTableConstructorOptions | null {
   const { metrics, rowFields, colFields } = resolvePivotSchema(data, query)
   if (!metrics.length)
@@ -453,14 +454,14 @@ export function buildPivotTableOption(
     hideIndicatorName,
     supplementIndicatorNodes: empty,
     parseCustomTreeToMatchRecords: !empty,
-    emptyTip: empty ? { ...VTABLE_EMPTY_TIP } : undefined,
+    emptyTip: empty ? resolveVTableEmptyTip(dark) : undefined,
     corner: { titleOnDimension: 'row' },
     formatCopyValue: (value: string) => value
       .replaceAll(PIVOT_SUBTOTAL_TOKEN, '小计')
       .replaceAll(PIVOT_TOTAL_TOKEN, '总计'),
     ...resolveVTableLayout(empty),
     hover: { highlightMode: 'cross' },
-    theme: resolveVTableTheme(visual),
+    theme: resolveVTableTheme(visual, dark),
     dataConfig: {
       aggregationRules: metrics.map(metric => ({
         indicatorKey: metric,

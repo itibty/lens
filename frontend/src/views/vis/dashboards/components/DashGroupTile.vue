@@ -277,7 +277,7 @@ function onResizePointerDown(corner: 'nw' | 'ne' | 'sw' | 'se', event: PointerEv
 .dash-group__handle-icon {
   width: 34px;
   height: 24px;
-  color: #646a73;
+  color: var(--dash-content-muted, #646a73);
 }
 
 .dash-group.hide-resize-dots .dash-group__dot {
@@ -293,7 +293,7 @@ function onResizePointerDown(corner: 'nw' | 'ne' | 'sw' | 'se', event: PointerEv
   box-sizing: border-box;
   width: 16px;
   height: 16px;
-  border: 2px solid #fff;
+  border: 2px solid var(--dash-card-bg, #fff);
   border-radius: 50%;
   background: var(--dash-accent, #0052d9);
   touch-action: none;
@@ -385,7 +385,7 @@ function onResizePointerDown(corner: 'nw' | 'ne' | 'sw' | 'se', event: PointerEv
   white-space: pre-wrap;
   font-size: 12px;
   line-height: 20px;
-  color: var(--dash-group-fg, var(--el-text-color-secondary));
+  color: var(--dash-group-fg, var(--dash-content-muted, var(--el-text-color-secondary)));
 }
 
 .dash-group__actions {
@@ -405,7 +405,7 @@ function onResizePointerDown(corner: 'nw' | 'ne' | 'sw' | 'se', event: PointerEv
   padding: 2px;
   overflow-x: auto;
   border-radius: 8px;
-  background: var(--el-fill-color-light);
+  background: color-mix(in srgb, var(--dash-title, #1f2329) 8%, var(--dash-card-bg, #fff));
   scrollbar-width: none;
 
   &::-webkit-scrollbar {
@@ -442,7 +442,7 @@ function onResizePointerDown(corner: 'nw' | 'ne' | 'sw' | 'se', event: PointerEv
   border: none;
   border-radius: 6px;
   background: transparent;
-  color: var(--el-text-color-secondary);
+  color: var(--dash-content-muted, var(--el-text-color-secondary));
   font-size: 12px;
   line-height: 24px;
   overflow: hidden;
@@ -451,11 +451,11 @@ function onResizePointerDown(corner: 'nw' | 'ne' | 'sw' | 'se', event: PointerEv
   cursor: pointer;
 
   &:hover:not(.is-active) {
-    color: var(--el-text-color-primary);
+    color: var(--dash-content-color, var(--el-text-color-primary));
   }
 
   &.is-active {
-    background: var(--el-bg-color);
+    background: var(--dash-card-bg, var(--el-bg-color));
     color: var(--dash-accent, var(--el-color-primary));
     font-weight: 600;
     box-shadow: 0 1px 2px rgb(15 23 42 / 8%);

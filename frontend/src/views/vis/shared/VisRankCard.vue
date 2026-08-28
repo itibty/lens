@@ -159,7 +159,7 @@ function onRowClick(item: { record: Record<string, unknown> }, event: MouseEvent
     justify-content: center;
     min-height: 80px;
     font-size: 13px;
-    color: var(--el-text-color-secondary);
+    color: var(--vis-muted-color, var(--el-text-color-secondary));
   }
 
   &__podium {
@@ -429,14 +429,14 @@ function onRowClick(item: { record: Record<string, unknown> }, event: MouseEvent
 
   &__pct {
     font-weight: 400;
-    color: var(--el-text-color-secondary);
+    color: var(--vis-muted-color, var(--el-text-color-secondary));
   }
 
   &__track {
     width: 100%;
     height: var(--vis-rank-bar, 8px);
     border-radius: 99px;
-    background: var(--el-fill-color);
+    background: color-mix(in srgb, var(--vis-content-color, var(--el-text-color-primary)) 12%, transparent);
     overflow: hidden;
   }
 

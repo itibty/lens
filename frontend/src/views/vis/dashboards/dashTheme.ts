@@ -1,5 +1,8 @@
+import type { ComputedRef, InjectionKey } from 'vue'
+
 /** 默认主题 / 默认圆角不写进 configJson；预览顶栏换肤只是会话临时覆盖。 */
-export type DashThemeId = 't1' | 't2' | 't3' | 't4' | 't5'
+export type DashThemeId = 't1' | 't2' | 't3' | 't4' | 't5' | 't6'
+export type DashSurfaceMode = 'light' | 'dark'
 
 export interface DashThemeTokens {
   canvas: string
@@ -9,6 +12,9 @@ export interface DashThemeTokens {
   border: string
   btnBg: string
   radius: number
+  mode?: DashSurfaceMode
+  content?: string
+  muted?: string
 }
 
 export interface DashThemePreset {
@@ -85,6 +91,22 @@ export const DASH_THEME_PRESETS: DashThemePreset[] = [
       radius: 16,
     },
   },
+  {
+    id: 't6',
+    name: 'Dark',
+    tokens: {
+      canvas: '#10151d',
+      card: '#1b222c',
+      title: '#f2f5f9',
+      accent: '#4d9fff',
+      border: '#34404d',
+      btnBg: '#222b36',
+      radius: 12,
+      mode: 'dark',
+      content: '#e9eef5',
+      muted: '#9da9b8',
+    },
+  },
 ]
 
 const THEME_IDS = new Set<DashThemeId>(DASH_THEME_PRESETS.map(item => item.id))
@@ -136,9 +158,23 @@ export function resolveDashTheme(id?: string): DashThemePreset {
   return DASH_THEME_PRESETS.find(item => item.id === resolved) ?? DASH_THEME_PRESETS[0]
 }
 
+export function resolveDashSurfaceMode(id?: string): DashSurfaceMode {
+  return resolveDashTheme(id).tokens.mode ?? 'light'
+}
+
+export const DASH_SURFACE_MODE_KEY: InjectionKey<ComputedRef<DashSurfaceMode>> = Symbol('dash-surface-mode')
+
 const SOLID_SHADOW = '0 1px 2px rgb(15 23 42 / 4%)'
 
-function surfaceVars(): Record<string, string> {
+function surfaceVars(mode: DashSurfaceMode): Record<string, string> {
+  if (mode === 'dark') {
+    return {
+      '--dash-card-blur': 'none',
+      '--dash-card-shadow': '0 1px 2px rgb(0 0 0 / 35%)',
+      '--dash-btn-shadow': '0 1px 2px rgb(0 0 0 / 28%)',
+      '--dash-chrome-shadow': '0 1px 0 color-mix(in srgb, var(--dash-border) 88%, transparent)',
+    }
+  }
   return {
     '--dash-card-blur': 'none',
     '--dash-card-shadow': SOLID_SHADOW,
@@ -149,16 +185,20 @@ function surfaceVars(): Record<string, string> {
 
 export function dashThemeVars(id?: string, radiusId?: string): Record<string, string> {
   const { tokens } = resolveDashTheme(id)
+  const mode = tokens.mode ?? 'light'
   return {
     '--dash-canvas-bg': tokens.canvas,
     '--dash-card-bg': tokens.card,
     '--dash-card-header-bg': 'transparent',
-    '--dash-card-header-color': '#1f2329',
+    '--dash-card-header-color': tokens.title,
     '--dash-card-radius': `${resolveDashCardRadiusPx(radiusId)}px`,
     '--dash-title': tokens.title,
+    '--dash-content-color': tokens.content ?? tokens.title,
+    '--dash-content-muted': tokens.muted ?? `color-mix(in srgb, ${tokens.title} 64%, transparent)`,
+    '--dash-surface-mode': mode,
     '--dash-accent': tokens.accent,
     '--dash-border': tokens.border,
     '--dash-btn-bg': tokens.btnBg,
-    ...surfaceVars(),
+    ...surfaceVars(mode),
   }
 }

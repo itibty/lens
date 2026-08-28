@@ -12,10 +12,10 @@ import { useLeaveConfirm } from '@/hooks/leaveConfirm'
 import { useSwipeBackGuard } from '@/hooks/swipeBack'
 import { useAccountStore } from '@/stores/modules/account'
 import { showConfirm, showToast } from '@/utils/index'
-import { fromVisCardInfo } from '@/views/vis/cards/cardApi'
 import MenuIconPicker from '@/views/permission/menu/components/MenuIconPicker.vue'
+import { fromVisCardInfo } from '@/views/vis/cards/cardApi'
 import { apiErrorMessage } from '@/views/vis/shared/visRequest'
-import { dashCardDefaultSize, DASH_DESIGNER_ID, FUNCTION_DASHBOARD_CONF } from '../config'
+import { DASH_DESIGNER_ID, dashCardDefaultSize, FUNCTION_DASHBOARD_CONF } from '../config'
 import {
   applyFilterDefaults,
   applyFilterDefaultsFromSettings,
@@ -37,7 +37,13 @@ import {
   removeCardFromTree,
 } from '../dashLayout'
 import { captureDashPreview, saveDashScreenshot } from '../dashScreenshot'
-import { dashThemeVars, DEFAULT_DASH_CARD_RADIUS, DEFAULT_DASH_THEME } from '../dashTheme'
+import {
+  DASH_SURFACE_MODE_KEY,
+  dashThemeVars,
+  DEFAULT_DASH_CARD_RADIUS,
+  DEFAULT_DASH_THEME,
+  resolveDashSurfaceMode,
+} from '../dashTheme'
 import { useDashRefresh } from '../useDashRefresh'
 import CardPickerDialog from './CardPickerDialog.vue'
 import DashFilterBar from './DashFilterBar.vue'
@@ -108,6 +114,7 @@ const cardRadius = ref<DashCardRadiusId>(DEFAULT_DASH_CARD_RADIUS)
 const autoRefreshSec = ref<number>()
 const groupTree = ref<VIS.DashGroupInfo[]>([])
 const baselineSnapshot = ref('')
+provide(DASH_SURFACE_MODE_KEY, computed(() => resolveDashSurfaceMode(theme.value)))
 
 const saveForm = reactive({
   name: '',

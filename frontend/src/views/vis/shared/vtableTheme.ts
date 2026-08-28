@@ -9,6 +9,14 @@ type ITableThemeDefine = TYPES.ITableThemeDefine
 const CELL_FONT_SIZE = 13
 const BODY_BG = '#FFFFFF'
 const DEFAULT_STRIPE = '#F7F8FA'
+const DARK_BODY_BG = '#1B222C'
+const DARK_STRIPE = '#202832'
+const DARK_HEADER_BG = '#252E39'
+const DARK_TEXT = '#E9EEF5'
+const DARK_MUTED = '#9DA9B8'
+const DARK_BORDER = '#34404D'
+const DARK_HOVER = '#293441'
+const DARK_ACCENT = '#4D9FFF'
 
 /** 表格 / 透视共用画布与行高 */
 export const VTABLE_LAYOUT = {
@@ -55,6 +63,16 @@ export const VTABLE_EMPTY_TIP = {
     image: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg"/>',
   },
 } as const
+
+export function resolveVTableEmptyTip(dark = false) {
+  return {
+    ...VTABLE_EMPTY_TIP,
+    textStyle: {
+      ...VTABLE_EMPTY_TIP.textStyle,
+      color: dark ? DARK_MUTED : VTABLE_EMPTY_TIP.textStyle.color,
+    },
+  }
+}
 
 type TableChrome = {
   headerBg: string
@@ -145,14 +163,75 @@ const BASE_FRAME = {
 
 const HEADER_FONT = { fontSize: CELL_FONT_SIZE, fontWeight: 600 } as const
 
-export function resolveTableHeaderIconColor(visual?: VisVisualConfig) {
+export function resolveTableHeaderIconColor(visual?: VisVisualConfig, dark = false) {
+  if (dark)
+    return DARK_MUTED
   return TABLE_CHROME[resolveChartThemeId(visual)]?.headerColor ?? '#646A73'
 }
 
 /** 官方 DEFAULT；预设只叠表头 / 字色 / 外框，以及可选斑马纹 */
-export function resolveVTableTheme(visual?: VisVisualConfig): ITableThemeDefine {
+export function resolveVTableTheme(visual?: VisVisualConfig, dark = false): ITableThemeDefine {
   const striped = resolveTableStyle(visual).striped
   const chrome = TABLE_CHROME[resolveChartThemeId(visual)]
+
+  if (dark) {
+    const header = {
+      ...HEADER_FONT,
+      bgColor: DARK_HEADER_BG,
+      color: DARK_TEXT,
+      hover: {
+        cellBgColor: DARK_HOVER,
+        inlineRowBgColor: DARK_HOVER,
+        inlineColumnBgColor: DARK_HOVER,
+      },
+      select: {
+        cellBgColor: DARK_HOVER,
+        inlineRowBgColor: DARK_HOVER,
+        inlineColumnBgColor: DARK_HOVER,
+      },
+    }
+    return themes.DARK.extends({
+      underlayBackgroundColor: 'transparent',
+      defaultStyle: {
+        fontSize: CELL_FONT_SIZE,
+        color: DARK_TEXT,
+        borderColor: DARK_BORDER,
+      },
+      headerStyle: header,
+      rowHeaderStyle: header,
+      cornerHeaderStyle: header,
+      bodyStyle: {
+        fontSize: CELL_FONT_SIZE,
+        fontWeight: 400,
+        color: DARK_TEXT,
+        bgColor: striped ? stripeBg(DARK_STRIPE, DARK_BODY_BG) : DARK_BODY_BG,
+        hover: {
+          cellBgColor: DARK_HOVER,
+          inlineRowBgColor: DARK_HOVER,
+          inlineColumnBgColor: DARK_HOVER,
+        },
+      },
+      frameStyle: {
+        ...BASE_FRAME,
+        borderColor: DARK_BORDER,
+      },
+      columnResize: {
+        lineColor: DARK_ACCENT,
+        bgColor: DARK_HOVER,
+      },
+      selectionStyle: {
+        cellBgColor: 'rgba(77, 159, 255, 0.18)',
+        cellBorderColor: DARK_ACCENT,
+      },
+      functionalIconsStyle: {
+        sort_color: DARK_MUTED,
+        sort_color_2: DARK_MUTED,
+        frozen_color: DARK_MUTED,
+        collapse_color: DARK_MUTED,
+        expand_color: DARK_MUTED,
+      },
+    })
+  }
 
   if (!chrome) {
     return themes.DEFAULT.extends({
