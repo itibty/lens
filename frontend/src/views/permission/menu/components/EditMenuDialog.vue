@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import type { FormInstance, FormRules } from 'element-plus'
+import type { MenuType } from '../menuAdmin'
 import type { CustomDialogProps } from '@/components/CustomDialog.vue'
 import { editMenu } from '@/apis/admin/menu'
 import CustomDialog from '@/components/CustomDialog.vue'
 import { normalizeMenuIconName } from '@/core/menuIcons'
 import { showToast } from '@/utils/index'
-import { type MenuType, isFunc } from '../menuAdmin'
+import { isFunc } from '../menuAdmin'
 import MenuIconPicker from './MenuIconPicker.vue'
 
 export type { MenuType }

@@ -79,7 +79,9 @@ function onInput(value: string) {
         />
         <div class="menu-icon-picker__scroll">
           <div v-for="group in groups" :key="group.id" class="menu-icon-picker__group">
-            <div class="menu-icon-picker__group-title">{{ group.label }}</div>
+            <div class="menu-icon-picker__group-title">
+              {{ group.label }}
+            </div>
             <div class="menu-icon-picker__grid">
               <button
                 v-for="item in group.items"
@@ -95,7 +97,9 @@ function onInput(value: string) {
               </button>
             </div>
           </div>
-          <div v-if="!groups.length" class="menu-icon-picker__miss">无匹配图标</div>
+          <div v-if="!groups.length" class="menu-icon-picker__miss">
+            无匹配图标
+          </div>
         </div>
       </div>
     </el-popover>

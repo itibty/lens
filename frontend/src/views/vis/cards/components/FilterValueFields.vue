@@ -194,7 +194,7 @@ const rangePickerType = computed(() => {
           placement="top"
           :show-after="200"
         >
-          <span class="i-mingcute-information-line filter-value__info" />
+          <span class="filter-value__info i-mingcute-information-line" />
         </el-tooltip>
       </div>
     </template>

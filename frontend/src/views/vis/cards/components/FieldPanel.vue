@@ -247,7 +247,7 @@ const fieldGroups = computed(() => [
                       :show-after="200"
                     >
                       <span
-                        class="i-mingcute-information-line field-source__info"
+                        class="field-source__info i-mingcute-information-line"
                         tabindex="0"
                         @pointerdown.stop
                       />

@@ -16,7 +16,9 @@ const emits = defineEmits<{
 <template>
   <section class="menu-panel">
     <div class="menu-panel__head">
-      <div class="menu-panel__title">功能点</div>
+      <div class="menu-panel__title">
+        功能点
+      </div>
       <el-button
         v-if="canWrite"
         size="small"

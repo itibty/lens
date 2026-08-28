@@ -68,18 +68,18 @@ export default defineConfig({
     presetIcons({
       // Vite / Node 22 下默认 node-loader 经常解析不到 @iconify-json，class 图标会空着
       collections: {
-        mingcute: iconifyCollection('mingcute'),
-        ep: iconifyCollection('ep'),
-        tabler: iconifyCollection('tabler'),
-        ix: iconifyCollection('ix'),
+        'mingcute': iconifyCollection('mingcute'),
+        'ep': iconifyCollection('ep'),
+        'tabler': iconifyCollection('tabler'),
+        'ix': iconifyCollection('ix'),
         'ant-design': iconifyCollection('ant-design'),
         'svg-spinners': iconifyCollection('svg-spinners'),
       },
       extraProperties: {
-        display: 'inline-block',
+        'display': 'inline-block',
         'vertical-align': 'middle',
-        width: '1em',
-        height: '1em',
+        'width': '1em',
+        'height': '1em',
       },
     }),
     // presetAttributify(), // 预设启用 Attributify使用模式（语法增强）， 但可能和组件属性冲突

@@ -8,6 +8,7 @@
 <script setup lang="ts">
 import type { FormInstance, FormRules } from 'element-plus'
 import type { CustomDialogProps } from '@/components/CustomDialog.vue'
+import { ElMessageBox } from 'element-plus'
 import { pickBy } from 'lodash-es'
 import vis from '@/apis/vis/index'
 import CustomDialog from '@/components/CustomDialog.vue'
@@ -104,6 +105,68 @@ function fetchDsOptions() {
     states.dsOptions = []
   })
 }
+
+function sourceChangeWarning(error: unknown): VIS.DatasetSourceChangeWarning | null {
+  if (!error || typeof error !== 'object')
+    return null
+  const data = (error as { data?: unknown }).data
+  if (!data || typeof data !== 'object')
+    return null
+  const warning = data as Partial<VIS.DatasetSourceChangeWarning>
+  if (
+    warning.warningType !== 'DATASET_SOURCE_CHANGE'
+    || typeof warning.referenceCount !== 'number'
+    || !Array.isArray(warning.cards)
+  ) {
+    return null
+  }
+  return warning as VIS.DatasetSourceChangeWarning
+}
+
+function sourceChangeWarningText(warning: VIS.DatasetSourceChangeWarning) {
+  const names = warning.cards
+    .map(card => card.cardName)
+    .filter(Boolean)
+    .join('、')
+  const suffix = warning.referenceCount > warning.cards.length ? ' 等' : ''
+  const affected = names ? `\n受影响卡片：${names}${suffix}` : ''
+  return `该数据集被 ${warning.referenceCount} 张卡片引用。更换数据源后，这些卡片将立即使用新数据源查询；即使字段名相同，数据含义也可能不同。${affected}\n请确认已验证 SQL、字段类型和业务口径。`
+}
+
+function errorMessage(error: unknown) {
+  if (error && typeof error === 'object' && 'msg' in error) {
+    const msg = (error as { msg?: unknown }).msg
+    if (typeof msg === 'string' && msg)
+      return msg
+  }
+  return '保存失败'
+}
+
+function isMessageBoxCancel(error: unknown) {
+  return error === 'cancel' || error === 'close'
+}
+
+async function saveInfo(body: VIS.ConfSqlInfoRequest) {
+  try {
+    return await vis.dataset.editDatasetInfo(body, { showErrorMessage: false })
+  }
+  catch (error) {
+    const warning = sourceChangeWarning(error)
+    if (!warning)
+      throw error
+    await ElMessageBox.confirm(sourceChangeWarningText(warning), '确认更换数据源', {
+      confirmButtonText: '确认更换',
+      cancelButtonText: '取消',
+      closeOnClickModal: false,
+      type: 'warning',
+    })
+    return vis.dataset.editDatasetInfo(
+      { ...body, confirmSourceChange: true },
+      { showErrorMessage: false },
+    )
+  }
+}
+
 function doSubmit() {
   formRef.value?.validate(async (valid) => {
     if (valid) {
@@ -113,14 +176,20 @@ function doSubmit() {
       )
       dialog.confirmLoading = true
 
-      vis.dataset.editDatasetInfo(body as VIS.ConfSqlInfoRequest).then((res) => {
+      try {
+        const res = await saveInfo(body as VIS.ConfSqlInfoRequest)
         const { msg } = res
         showToast(msg, 'success')
         emits('fetchData')
         dialog.visible = false
-      }).finally(() => {
+      }
+      catch (error) {
+        if (!isMessageBoxCancel(error))
+          showToast(errorMessage(error), 'error')
+      }
+      finally {
         dialog.confirmLoading = false
-      })
+      }
     }
   })
 }

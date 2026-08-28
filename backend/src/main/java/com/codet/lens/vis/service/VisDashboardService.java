@@ -36,6 +36,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -81,6 +82,7 @@ public class VisDashboardService {
         if (CollUtil.isNotEmpty(cardIds)) {
             requireCardsExist(cardIds);
         }
+        VisDashboard previous = request.getId() == null ? null : requireDashboard(request.getId());
 
         VisDashboard entity = BeanUtil.copyProperties(request, VisDashboard.class);
         entity.setDashName(entity.getDashName().trim());
@@ -99,9 +101,11 @@ public class VisDashboardService {
             entity.createCallback();
             visDashboardMapper.insert(entity);
         } else {
-            requireDashboard(request.getId());
             entity.modifyCallback();
             visDashboardMapper.updateById(entity);
+            if (reportEntryChanged(previous, entity)) {
+                permissionTokenService.invalidateDashboardUsers(entity.getId());
+            }
         }
         replaceCards(entity.getId(), cardIds);
         return entity.getId();
@@ -109,7 +113,7 @@ public class VisDashboardService {
 
     @Transactional(rollbackFor = Exception.class)
     public void updateMetadata(VisDashboardMetadataUpdateRequest request) {
-        requireDashboard(request.getId());
+        VisDashboard previous = requireDashboard(request.getId());
         long groupId = request.getGroupId() == null ? 0L : request.getGroupId();
         if (groupId != 0) {
             VisDashGroup group = dashGroupMapper.selectById(groupId);
@@ -126,6 +130,12 @@ public class VisDashboardService {
                 .set(VisDashboard::getDashDesc, request.getDashDesc())
                 .set(VisDashboard::getIcon, StrUtil.blankToDefault(request.getIcon(), null))
                 .set(VisDashboard::getGroupId, groupId));
+        if (!Objects.equals(previous.getDashName(), request.getDashName().trim())
+                || !Objects.equals(StrUtil.blankToDefault(previous.getIcon(), null),
+                StrUtil.blankToDefault(request.getIcon(), null))
+                || normalizedGroupId(previous.getGroupId()) != groupId) {
+            permissionTokenService.invalidateDashboardUsers(request.getId());
+        }
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -137,8 +147,12 @@ public class VisDashboardService {
                 throw fail("分组不存在");
             }
         }
+        List<Long> changedIds = new ArrayList<>();
         for (Long dashboardId : dashboardIds) {
-            requireDashboard(dashboardId);
+            VisDashboard dashboard = requireDashboard(dashboardId);
+            if (normalizedGroupId(dashboard.getGroupId()) != target) {
+                changedIds.add(dashboardId);
+            }
         }
         VisDashboard patch = new VisDashboard();
         patch.setGroupId(target);
@@ -146,6 +160,7 @@ public class VisDashboardService {
         visDashboardMapper.update(patch, Wrappers.<VisDashboard>lambdaUpdate()
                 .ne(VisDashboard::getStatus, FieldConst.DEL)
                 .in(VisDashboard::getId, dashboardIds));
+        permissionTokenService.invalidateDashboardUsers(changedIds);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -172,6 +187,19 @@ public class VisDashboardService {
                 .in(VisDashboardCard::getDashboardId, ids));
         sysRoleDashboardMapper.delete(Wrappers.<SysRoleDashboard>lambdaQuery()
                 .in(SysRoleDashboard::getDashboardId, ids));
+    }
+
+    private static boolean reportEntryChanged(VisDashboard previous, VisDashboard current) {
+        return previous != null
+                && (!Objects.equals(previous.getDashName(), current.getDashName())
+                || !Objects.equals(StrUtil.blankToDefault(previous.getIcon(), null),
+                StrUtil.blankToDefault(current.getIcon(), null))
+                || normalizedGroupId(previous.getGroupId()) != normalizedGroupId(current.getGroupId())
+                || !Objects.equals(previous.getStatus(), current.getStatus()));
+    }
+
+    private static long normalizedGroupId(Long groupId) {
+        return groupId == null ? 0L : groupId;
     }
 
     private void replaceCards(Long dashboardId, List<Long> cardIds) {

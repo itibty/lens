@@ -89,7 +89,7 @@ function selectType(value: ChartType) {
               {{ current?.label || '选择组件' }}
             </span>
           </span>
-          <span class="i-mingcute-down-line chart-type-picker__trigger-caret" />
+          <span class="chart-type-picker__trigger-caret i-mingcute-down-line" />
         </button>
       </template>
 

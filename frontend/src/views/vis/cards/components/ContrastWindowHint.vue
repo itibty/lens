@@ -76,7 +76,7 @@ onUnmounted(() => {
       </span>
       <span
         v-show="loading"
-        class="i-svg-spinners-ring-resize contrast-window__spin"
+        class="contrast-window__spin i-svg-spinners-ring-resize"
       />
     </div>
     <div v-if="error" class="contrast-window__error">

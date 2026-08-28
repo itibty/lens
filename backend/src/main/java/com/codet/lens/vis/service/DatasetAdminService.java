@@ -7,7 +7,9 @@ import com.codet.lens.common.ConvertUtil;
 import com.codet.lens.common.FieldConst;
 import com.codet.lens.common.ListResponse;
 import com.codet.lens.common.PageResponse;
+import com.codet.lens.common.ResultEnum;
 import com.codet.lens.common.ResultException;
+import com.codet.lens.vis.dto.dataset.DatasetSourceChangeWarning;
 import com.codet.lens.vis.dto.dataset.VisCardRefInfo;
 import com.codet.lens.vis.entity.VisCard;
 import com.codet.lens.vis.entity.VisDataset;
@@ -24,7 +26,6 @@ import com.codet.lens.vis.rds.bo.SqlTplRet;
 import com.codet.lens.vis.rds.core.RdsUtil;
 import com.codet.lens.vis.rds.dto.conf.ConfSqlContentRequest;
 import com.codet.lens.vis.rds.dto.conf.ConfSqlFieldInfo;
-import com.codet.lens.vis.rds.dto.conf.ConfSqlFieldSaveRequest;
 import com.codet.lens.vis.rds.dto.conf.ConfSqlInfo;
 import com.codet.lens.vis.rds.dto.conf.ConfSqlInfoRequest;
 import com.codet.lens.vis.rds.dto.conf.DebugSqlColumn;
@@ -40,6 +41,7 @@ import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -76,6 +78,17 @@ public class DatasetAdminService {
         if (datasourceMapper.selectById(req.getDsId()) == null) {
             throw ResultException.fail("数据源不存在");
         }
+        boolean sourceChanged = req.getId() != null && !Objects.equals(row.getSourceId(), req.getDsId());
+        if (sourceChanged && !Boolean.TRUE.equals(req.getConfirmSourceChange())) {
+            List<VisCard> references = findRefCards(List.of(req.getId()));
+            if (!references.isEmpty()) {
+                DatasetSourceChangeWarning warning = new DatasetSourceChangeWarning();
+                warning.setReferenceCount(references.size());
+                warning.setCards(references.stream().limit(5).map(this::toCardRefInfo).toList());
+                throw new ResultException(ResultEnum.FAIL.getCode(),
+                        "更换数据源将影响 " + references.size() + " 张引用该数据集的卡片", warning);
+            }
+        }
         row.setSourceId(req.getDsId());
         row.setDatasetName(req.getSqlName());
         row.setDatasetDesc(req.getSqlDesc());
@@ -97,6 +110,7 @@ public class DatasetAdminService {
         row.setParamDemo(req.getSqlParams());
         row.modifyCallback();
         datasetMapper.updateById(row);
+        replaceFields(req.getId(), req.getFields());
     }
 
     @Transactional
@@ -125,13 +139,7 @@ public class DatasetAdminService {
     public ListResponse<VisCardRefInfo> listRefCards(Long datasetId) {
         require(datasetId);
         List<VisCardRefInfo> list = findRefCards(List.of(datasetId)).stream()
-                .map(row -> {
-                    VisCardRefInfo info = new VisCardRefInfo();
-                    info.setId(row.getId());
-                    info.setCardName(row.getCardName());
-                    info.setStatus(row.getStatus());
-                    return info;
-                })
+                .map(this::toCardRefInfo)
                 .toList();
         return new ListResponse<>(list);
     }
@@ -147,17 +155,12 @@ public class DatasetAdminService {
                 .toList();
     }
 
-    @Transactional
-    public void saveFields(ConfSqlFieldSaveRequest req) {
-        require(req.getSqlId());
-        fieldMapper.delete(Wrappers.<VisDatasetField>lambdaQuery().eq(VisDatasetField::getDatasetId, req.getSqlId()));
-        if (req.getFields() == null) {
-            return;
-        }
+    private void replaceFields(Long datasetId, List<ConfSqlFieldInfo> fields) {
+        fieldMapper.delete(Wrappers.<VisDatasetField>query().eq("dataset_id", datasetId));
         int sort = 0;
-        for (ConfSqlFieldInfo item : req.getFields()) {
+        for (ConfSqlFieldInfo item : fields) {
             VisDatasetField row = new VisDatasetField();
-            row.setDatasetId(req.getSqlId());
+            row.setDatasetId(datasetId);
             row.setField(item.getField());
             row.setDataType(item.getDataType());
             row.setSuggestRole(item.getSuggestRole());
@@ -224,6 +227,14 @@ public class DatasetAdminService {
         info.setDataType(row.getDataType());
         info.setSuggestRole(row.getSuggestRole());
         info.setRemark(row.getRemark());
+        return info;
+    }
+
+    private VisCardRefInfo toCardRefInfo(VisCard row) {
+        VisCardRefInfo info = new VisCardRefInfo();
+        info.setId(row.getId());
+        info.setCardName(row.getCardName());
+        info.setStatus(row.getStatus());
         return info;
     }
 

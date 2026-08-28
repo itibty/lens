@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.codet.lens.common.FieldConst;
 import com.codet.lens.common.ListResponse;
 import com.codet.lens.common.ResultException;
+import com.codet.lens.sys.service.PermissionTokenService;
 import com.codet.lens.vis.dto.group.VisGroupDtos.AssignNode;
 import com.codet.lens.vis.dto.group.VisGroupDtos.DashGroupInfo;
 import com.codet.lens.vis.dto.group.VisGroupDtos.ManageNode;
@@ -33,6 +34,7 @@ public class VisDashGroupService {
     private final VisDashGroupMapper groupMapper;
     private final VisDashboardMapper dashboardMapper;
     private final VisDashboardAccess dashboardAccess;
+    private final PermissionTokenService permissionTokenService;
 
     public ListResponse<DashGroupInfo> tree() {
         List<VisDashGroup> rows = groupMapper.selectList(Wrappers.<VisDashGroup>lambdaQuery()
@@ -316,6 +318,7 @@ public class VisDashGroupService {
         } else {
             group.modifyCallback();
             groupMapper.updateById(group);
+            invalidateGroupDashboardUsers(group.getId());
         }
         return group.getId();
     }
@@ -348,6 +351,18 @@ public class VisDashGroupService {
         patch.setStatus(FieldConst.EBL.equals(row.getStatus()) ? FieldConst.DBL : FieldConst.EBL);
         patch.modifyCallback();
         groupMapper.updateById(patch);
+        invalidateGroupDashboardUsers(groupId);
+    }
+
+    private void invalidateGroupDashboardUsers(Long groupId) {
+        List<Long> dashboardIds = dashboardMapper.selectList(Wrappers.<VisDashboard>query()
+                        .in("group_id", selfAndDescendantIds(groupId))
+                        .ne("status", FieldConst.DEL)
+                        .select("id"))
+                .stream()
+                .map(VisDashboard::getId)
+                .toList();
+        permissionTokenService.invalidateDashboardUsers(dashboardIds);
     }
 
     private void assertPidNotCycle(Long id, Long pid) {
@@ -363,9 +378,9 @@ public class VisDashGroupService {
 
     private Map<Long, List<Long>> childrenMap() {
         Map<Long, List<Long>> children = new HashMap<>();
-        for (VisDashGroup row : groupMapper.selectList(Wrappers.<VisDashGroup>lambdaQuery()
-                .ne(VisDashGroup::getStatus, FieldConst.DEL)
-                .select(VisDashGroup::getId, VisDashGroup::getPid))) {
+        for (VisDashGroup row : groupMapper.selectList(Wrappers.<VisDashGroup>query()
+                .ne("status", FieldConst.DEL)
+                .select("id", "pid"))) {
             long parentId = row.getPid() == null ? 0L : row.getPid();
             children.computeIfAbsent(parentId, key -> new ArrayList<>()).add(row.getId());
         }

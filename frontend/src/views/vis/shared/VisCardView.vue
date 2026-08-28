@@ -616,7 +616,7 @@ watch(allowDetail, (ok) => {
         class="vis-card-view__loading"
         aria-hidden="true"
       >
-        <span class="i-svg-spinners-ring-resize vis-card-view__loading-icon" />
+        <span class="vis-card-view__loading-icon i-svg-spinners-ring-resize" />
       </div>
     </div>
     <Teleport to="body">

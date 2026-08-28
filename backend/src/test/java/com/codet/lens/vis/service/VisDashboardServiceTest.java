@@ -3,6 +3,7 @@ package com.codet.lens.vis.service;
 import com.codet.lens.common.FieldConst;
 import com.codet.lens.sys.mapper.SysRoleDashboardMapper;
 import com.codet.lens.sys.service.PermissionTokenService;
+import com.codet.lens.vis.dto.dash.VisDashboardSaveRequest;
 import com.codet.lens.vis.entity.VisDashboard;
 import com.codet.lens.vis.mapper.VisCardMapper;
 import com.codet.lens.vis.mapper.VisDashGroupMapper;
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -46,10 +48,59 @@ class VisDashboardServiceTest {
         verify(permissionTokenService).invalidateDashboardUsers(List.of(9501L, 9502L));
     }
 
+    @Test
+    void invalidatesAssignedUsersWhenFullSaveChangesMetadata() {
+        VisDashboard previous = dashboard(9501L, FieldConst.EBL);
+        previous.setDashName("旧名称");
+        when(dashboardMapper.selectById(9501L)).thenReturn(previous);
+        VisDashboardSaveRequest request = new VisDashboardSaveRequest();
+        request.setId(9501L);
+        request.setDashName("新名称");
+        request.setStatus(FieldConst.EBL);
+        request.setGroupId(0L);
+        request.setCards(List.of());
+
+        service.save(request);
+
+        verify(permissionTokenService).invalidateDashboardUsers(9501L);
+    }
+
+    @Test
+    void invalidatesAssignedUsersWhenDashboardsMoveGroup() {
+        VisDashboard first = dashboard(9501L, FieldConst.EBL);
+        first.setGroupId(1L);
+        VisDashboard second = dashboard(9502L, FieldConst.EBL);
+        second.setGroupId(1L);
+        when(dashboardMapper.selectById(9501L)).thenReturn(first);
+        when(dashboardMapper.selectById(9502L)).thenReturn(second);
+
+        service.moveGroup(List.of(9501L, 9502L), 0L);
+
+        verify(permissionTokenService).invalidateDashboardUsers(List.of(9501L, 9502L));
+    }
+
+    @Test
+    void doesNotInvalidateAssignedUsersWhenFullSaveOnlyChangesLayout() {
+        VisDashboard previous = dashboard(9501L, FieldConst.EBL);
+        previous.setDashName("经营看板");
+        when(dashboardMapper.selectById(9501L)).thenReturn(previous);
+        VisDashboardSaveRequest request = new VisDashboardSaveRequest();
+        request.setId(9501L);
+        request.setDashName("经营看板");
+        request.setStatus(FieldConst.EBL);
+        request.setGroupId(0L);
+        request.setCards(List.of());
+
+        service.save(request);
+
+        verify(permissionTokenService, never()).invalidateDashboardUsers(9501L);
+    }
+
     private static VisDashboard dashboard(Long id, String status) {
         VisDashboard row = new VisDashboard();
         row.setId(id);
         row.setStatus(status);
+        row.setGroupId(0L);
         return row;
     }
 }

@@ -24,9 +24,11 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -75,19 +77,20 @@ public class RdsUtil {
                 ResultSet rs = ps.executeQuery();
                 ResultSetMetaData meta = rs.getMetaData();
                 int colCount = meta.getColumnCount();
-                List<SqlColumnMeta> columns = new ArrayList<>();
-                Set<String> seen = new LinkedHashSet<>();
+                List<String> fields = new ArrayList<>(colCount);
                 for (int i = 1; i <= colCount; i++) {
-                    String field = columnField(meta, i);
-                    if (seen.add(field)) {
-                        columns.add(new SqlColumnMeta(field, meta.getColumnTypeName(i), meta.getColumnType(i)));
-                    }
+                    fields.add(columnField(meta, i));
+                }
+                requireUniqueColumnLabels(fields);
+                List<SqlColumnMeta> columns = new ArrayList<>();
+                for (int i = 1; i <= colCount; i++) {
+                    columns.add(new SqlColumnMeta(fields.get(i - 1), meta.getColumnTypeName(i), meta.getColumnType(i)));
                 }
                 List<Map<String, Object>> rows = new ArrayList<>();
                 while (rs.next() && rows.size() < maxRows) {
                     Map<String, Object> row = new LinkedHashMap<>(colCount);
                     for (int i = 1; i <= colCount; i++) {
-                        row.put(columnField(meta, i), rs.getObject(i));
+                        row.put(fields.get(i - 1), rs.getObject(i));
                     }
                     rows.add(row);
                 }
@@ -121,6 +124,24 @@ public class RdsUtil {
             return maxRows;
         }
         return size;
+    }
+
+    static void requireUniqueColumnLabels(List<String> fields) {
+        Set<String> seen = new LinkedHashSet<>();
+        Set<String> duplicates = new LinkedHashSet<>();
+        for (String field : fields) {
+            String normalized = field.toLowerCase(Locale.ROOT);
+            if (!seen.add(normalized)) {
+                duplicates.add(field);
+            }
+        }
+        if (duplicates.isEmpty()) {
+            return;
+        }
+        String names = duplicates.stream().limit(5).collect(Collectors.joining("、"));
+        String suffix = duplicates.size() > 5 ? " 等" : "";
+        throw new IllegalArgumentException("查询结果存在重复列名：" + names + suffix
+                + "。Lens 要求输出列名唯一，请使用 AS 设置唯一别名，例如 a.id AS order_id、b.id AS customer_id");
     }
 
     private static String columnField(ResultSetMetaData meta, int index) throws java.sql.SQLException {

@@ -15,6 +15,7 @@ declare namespace VIS {
     id: string;
     sqlContent: string;
     sqlParams?: string;
+    fields: ConfSqlFieldInfo[];
   };
 
   type ConfSqlFieldInfo = {
@@ -26,11 +27,6 @@ declare namespace VIS {
     suggestRole: "DIMENSION" | "METRIC";
     /** 补充说明 */
     remark?: string;
-  };
-
-  type ConfSqlFieldSaveRequest = {
-    sqlId: string;
-    fields?: ConfSqlFieldInfo[];
   };
 
   type ConfSqlInfo = {
@@ -67,6 +63,8 @@ declare namespace VIS {
     tplEngine: "ENJOY";
     /** 账号状态 */
     status: "EBL" | "DBL";
+    /** 确认更换被卡片引用的数据集的数据源 */
+    confirmSourceChange?: boolean;
   };
 
   type ContrastConfig = {
@@ -139,6 +137,15 @@ declare namespace VIS {
     status?: string;
     dashCount?: number;
     descDashCount?: number;
+  };
+
+  type DatasetSourceChangeWarning = {
+    /** 警告类型 */
+    warningType: string;
+    /** 引用该数据集的卡片数量 */
+    referenceCount: number;
+    /** 受影响的部分卡片，最多返回 5 张 */
+    cards: VisCardRefInfo[];
   };
 
   type DateWindowRequest = {
@@ -772,6 +779,13 @@ declare namespace VIS {
     code?: number;
     msg?: string;
     data?: ConfSqlInfo;
+  };
+
+  type RDatasetSourceChangeWarning = {
+    /** 200成功 */
+    code?: number;
+    msg?: string;
+    data?: DatasetSourceChangeWarning;
   };
 
   type RDateWindowResponse = {

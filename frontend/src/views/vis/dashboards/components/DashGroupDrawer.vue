@@ -2,9 +2,8 @@
  * @Description: 看板分组管理：左树右看板
 -->
 <script setup lang="ts">
+import type { ElTree, FormInstance, FormRules } from 'element-plus'
 import type { CustomDrawerProps } from '@/components/CustomDrawer.vue'
-import type { FormInstance, FormRules } from 'element-plus'
-import type { ElTree } from 'element-plus'
 import { MoreFilled } from '@element-plus/icons-vue'
 import vis from '@/apis/vis/index'
 import CustomDialog from '@/components/CustomDialog.vue'
@@ -20,11 +19,11 @@ interface GroupTreeNode extends VIS.DashGroupInfo {
   virtual?: boolean
 }
 
-const UNGROUPED_ID = '0'
-
 const emits = defineEmits<{
   (e: 'changed'): void
 }>()
+
+const UNGROUPED_ID = '0'
 
 const drawer = reactive<CustomDrawerProps>({
   visible: false,

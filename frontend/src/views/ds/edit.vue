@@ -307,15 +307,14 @@ function handleConfirmTables(tables: string[]) {
   void reloadMetaTree(sourceName, tables)
 }
 
-async function persistSave(sqlId: string, fields?: VIS.ConfSqlFieldItem[]) {
+async function persistSave(sqlId: string, fields: VIS.ConfSqlFieldItem[]) {
   states.saveLoading = true
   try {
-    if (fields)
-      await vis.dataset.editDatasetFields({ sqlId, fields })
     await vis.dataset.editDatasetContent({
       id: sqlId,
       sqlContent: states.sqlCode,
       sqlParams: draftParams.value,
+      fields,
     })
     dirty.value = false
     showToast('保存成功', 'success')
@@ -361,6 +360,8 @@ async function handleSave() {
     fields = confirmed
   }
 
+  if (!fields)
+    return
   await persistSave(sqlId, fields)
 }
 

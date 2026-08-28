@@ -30,7 +30,7 @@ defineProps<{
           :show-after="200"
         >
           <span
-            class="i-mingcute-information-line adv-mod__tip"
+            class="adv-mod__tip i-mingcute-information-line"
             tabindex="0"
           />
         </el-tooltip>

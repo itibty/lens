@@ -9,6 +9,7 @@ import com.codet.lens.vis.rds.dto.conf.ConfSqlFieldInfo;
 import com.codet.lens.vis.dto.item.DimensionItem;
 import com.codet.lens.vis.dto.item.FilterGroup;
 import com.codet.lens.vis.dto.item.FilterItem;
+import com.codet.lens.vis.dto.item.HavingFilterItem;
 import com.codet.lens.vis.dto.item.MetricItem;
 import com.codet.lens.vis.dto.pivot.PivotQueryRequest;
 import com.codet.lens.vis.dto.query.DetailQueryRequest;
@@ -53,6 +54,7 @@ public final class VisCatalogCheck {
             }
         }
         collectFilters(usage.getExtraFilters(), byField, missing, typeIssues);
+        collectHavings(usage.getHavingFilters(), byField, missing, typeIssues);
         if (missing.isEmpty() && typeIssues.isEmpty()) {
             return;
         }
@@ -92,6 +94,7 @@ public final class VisCatalogCheck {
             usage.setDimensions(query.getDimensions());
             usage.setMetrics(query.getMetrics());
             usage.setFilters(query.getFilters());
+            usage.setHavingFilters(query.getHavingFilters());
         }
         usage.setExtraFilters(request.getGlobalFilters());
         return usage;
@@ -113,6 +116,7 @@ public final class VisCatalogCheck {
             usage.setDimensions(dims);
             usage.setMetrics(request.getQuery().getMetrics());
             usage.setFilters(request.getQuery().getFilters());
+            usage.setHavingFilters(request.getQuery().getHavingFilters());
         }
         usage.setExtraFilters(request.getGlobalFilters());
         return usage;
@@ -173,6 +177,22 @@ public final class VisCatalogCheck {
                 if (timeInfo != null) {
                     requireDate(timeInfo, timeField, null, typeIssues);
                 }
+            }
+        }
+    }
+
+    private static void collectHavings(List<HavingFilterItem> havings, Map<String, ConfSqlFieldInfo> byField,
+                                       Set<String> missing, Set<String> typeIssues) {
+        if (CollUtil.isEmpty(havings)) {
+            return;
+        }
+        for (HavingFilterItem item : havings) {
+            if (item == null || StrUtil.isNotBlank(item.getFormula()) || StrUtil.isBlank(item.getField())) {
+                continue;
+            }
+            ConfSqlFieldInfo info = lookup(byField, item.getField(), item.getLabel(), missing);
+            if (info != null && needsNumber(item.getAgg())) {
+                requireNumber(info, item.getField(), item.getLabel(), typeIssues);
             }
         }
     }
@@ -257,5 +277,6 @@ public final class VisCatalogCheck {
         private List<MetricItem> metrics;
         private List<FilterGroup> filters;
         private List<FilterItem> extraFilters;
+        private List<HavingFilterItem> havingFilters;
     }
 }

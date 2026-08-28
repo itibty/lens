@@ -83,7 +83,7 @@ export async function getDatasetDetail(
   });
 }
 
-/** 编辑数据集脚本 POST /datasets/edit-content */
+/** 编辑数据集脚本和字段 POST /datasets/edit-content */
 export async function editDatasetContent(
   body: VIS.ConfSqlContentRequest,
   options?: { [key: string]: any }
@@ -98,34 +98,22 @@ export async function editDatasetContent(
   });
 }
 
-/** 覆盖保存数据集字段 POST /datasets/edit-fields */
-export async function editDatasetFields(
-  body: VIS.ConfSqlFieldSaveRequest,
-  options?: { [key: string]: any }
-) {
-  return request<VIS.RVoid>(`${VIS_BASE_PATH}/datasets/edit-fields`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    data: body,
-    ...(options || {}),
-  });
-}
-
 /** 新建或编辑数据集信息 POST /datasets/edit-info */
 export async function editDatasetInfo(
   body: VIS.ConfSqlInfoRequest,
   options?: { [key: string]: any }
 ) {
-  return request<VIS.RVoid>(`${VIS_BASE_PATH}/datasets/edit-info`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    data: body,
-    ...(options || {}),
-  });
+  return request<VIS.RDatasetSourceChangeWarning>(
+    `${VIS_BASE_PATH}/datasets/edit-info`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      data: body,
+      ...(options || {}),
+    }
+  );
 }
 
 /** 查询数据集字段 GET /datasets/fields */

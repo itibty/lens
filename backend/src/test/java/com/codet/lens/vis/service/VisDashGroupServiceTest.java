@@ -1,6 +1,7 @@
 package com.codet.lens.vis.service;
 
 import com.codet.lens.common.FieldConst;
+import com.codet.lens.sys.service.PermissionTokenService;
 import com.codet.lens.vis.entity.VisDashGroup;
 import com.codet.lens.vis.entity.VisDashboard;
 import com.codet.lens.vis.mapper.VisDashGroupMapper;
@@ -13,6 +14,7 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class VisDashGroupServiceTest {
@@ -20,8 +22,9 @@ class VisDashGroupServiceTest {
     private final VisDashGroupMapper groupMapper = mock(VisDashGroupMapper.class);
     private final VisDashboardMapper dashboardMapper = mock(VisDashboardMapper.class);
     private final VisDashboardAccess dashboardAccess = mock(VisDashboardAccess.class);
+    private final PermissionTokenService permissionTokenService = mock(PermissionTokenService.class);
     private final VisDashGroupService service =
-            new VisDashGroupService(groupMapper, dashboardMapper, dashboardAccess);
+            new VisDashGroupService(groupMapper, dashboardMapper, dashboardAccess, permissionTokenService);
 
     @Test
     void assignTreeDoesNotPromoteDashboardUnderDisabledAncestor() {
@@ -36,6 +39,19 @@ class VisDashGroupServiceTest {
         when(dashboardAccess.assignedDashboardIds()).thenReturn(Set.of(10L));
 
         assertTrue(service.reportTree().getList().isEmpty());
+    }
+
+    @Test
+    void invalidatesAssignedUsersWhenGroupToggled() {
+        when(groupMapper.selectById(1L)).thenReturn(group(1L, 0L, FieldConst.EBL));
+        when(groupMapper.selectList(any())).thenReturn(List.of());
+        VisDashboard dashboard = new VisDashboard();
+        dashboard.setId(10L);
+        when(dashboardMapper.selectList(any())).thenReturn(List.of(dashboard));
+
+        service.toggle(1L);
+
+        verify(permissionTokenService).invalidateDashboardUsers(List.of(10L));
     }
 
     private void mockDisabledAncestorData() {

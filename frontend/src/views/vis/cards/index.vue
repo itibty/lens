@@ -171,171 +171,171 @@ onMounted(() => {
 <template>
   <div class="h-full">
     <PageCard>
-    <template #extra>
-      <el-button
-        v-if="states.permission.write"
-        :icon="Plus"
-        type="primary"
-        @click="handleAdd"
-      >
-        新增
-      </el-button>
-    </template>
+      <template #extra>
+        <el-button
+          v-if="states.permission.write"
+          :icon="Plus"
+          type="primary"
+          @click="handleAdd"
+        >
+          新增
+        </el-button>
+      </template>
 
-    <template #default="scope">
-      <el-form :model="states.query" @submit.prevent>
-        <el-row :gutter="15">
-          <el-col :span="3">
-            <el-input v-model="states.query.id" placeholder="ID" clearable />
-          </el-col>
-          <el-col :span="3">
-            <el-input v-model="states.query.cardName" placeholder="名称" clearable />
-          </el-col>
-          <el-col :span="3">
-            <el-select v-model="states.query.chartType" class="w-full" placeholder="图表类型" clearable>
-              <el-option
-                v-for="item in chartTypeOptions"
-                :key="item.value"
-                :label="item.label"
-                :value="item.value"
-              />
-            </el-select>
-          </el-col>
-          <el-col :span="3">
-            <el-select v-model="states.query.status" class="w-full" placeholder="状态" clearable>
-              <el-option label="启用" value="EBL" />
-              <el-option label="禁用" value="DBL" />
-            </el-select>
-          </el-col>
-          <el-col :span="3">
-            <el-button native-type="submit" :icon="Search" @click="handleQuery">
-              查询
-            </el-button>
-          </el-col>
-        </el-row>
-      </el-form>
+      <template #default="scope">
+        <el-form :model="states.query" @submit.prevent>
+          <el-row :gutter="15">
+            <el-col :span="3">
+              <el-input v-model="states.query.id" placeholder="ID" clearable />
+            </el-col>
+            <el-col :span="3">
+              <el-input v-model="states.query.cardName" placeholder="名称" clearable />
+            </el-col>
+            <el-col :span="3">
+              <el-select v-model="states.query.chartType" class="w-full" placeholder="图表类型" clearable>
+                <el-option
+                  v-for="item in chartTypeOptions"
+                  :key="item.value"
+                  :label="item.label"
+                  :value="item.value"
+                />
+              </el-select>
+            </el-col>
+            <el-col :span="3">
+              <el-select v-model="states.query.status" class="w-full" placeholder="状态" clearable>
+                <el-option label="启用" value="EBL" />
+                <el-option label="禁用" value="DBL" />
+              </el-select>
+            </el-col>
+            <el-col :span="3">
+              <el-button native-type="submit" :icon="Search" @click="handleQuery">
+                查询
+              </el-button>
+            </el-col>
+          </el-row>
+        </el-form>
 
-      <el-table
-        v-spinner="states.loading"
-        class="base-m-t"
-        :border="true"
-        :data="states.records"
-        :max-height="scope.info.heightL1"
-      >
-        <el-table-column label="ID" prop="id" width="100" show-overflow-tooltip />
-        <el-table-column label="类型" width="100">
-          <template #default="{ row }">
-            {{ chartTypeLabel(row.chartType) }}
-          </template>
-        </el-table-column>
-        <el-table-column label="名称" prop="cardName" show-overflow-tooltip />
-        <el-table-column label="描述" prop="cardDesc" show-overflow-tooltip />
-        <el-table-column label="状态" width="80" align="center" prop="status">
-          <template #default="{ row }">
-            <el-tag v-if="row.status === 'EBL'" type="success">
-              启用
-            </el-tag>
-            <el-tag v-else-if="row.status === 'DBL'" type="info">
-              禁用
-            </el-tag>
-            <span v-else>-</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="修改时间" prop="modifyAt" width="180" show-overflow-tooltip />
-        <!-- @vue-generic {VIS.VisCardInfo} -->
-        <el-table-column label="操作" width="220" fixed="right">
-          <template #default="{ row }">
-            <el-button
-              size="small"
-              type="primary"
-              link
-              @click="handleEdit(row)"
-            >
-              编辑
-            </el-button>
-            <el-button
-              v-if="states.permission.write"
-              size="small"
-              type="primary"
-              link
-              @click="handleToggleStatus(row)"
-            >
-              {{ row.status === 'EBL' ? '禁用' : '启用' }}
-            </el-button>
-            <el-button
-              v-if="states.permission.write"
-              size="small"
-              type="primary"
-              link
-              @click="handleDelete(row)"
-            >
-              删除
-            </el-button>
-            <el-button
-              size="small"
-              type="primary"
-              link
-              @click="handleViewRefs(row)"
-            >
-              看板
-            </el-button>
-          </template>
-        </el-table-column>
-      </el-table>
-    </template>
+        <el-table
+          v-spinner="states.loading"
+          class="base-m-t"
+          :border="true"
+          :data="states.records"
+          :max-height="scope.info.heightL1"
+        >
+          <el-table-column label="ID" prop="id" width="100" show-overflow-tooltip />
+          <el-table-column label="类型" width="100">
+            <template #default="{ row }">
+              {{ chartTypeLabel(row.chartType) }}
+            </template>
+          </el-table-column>
+          <el-table-column label="名称" prop="cardName" show-overflow-tooltip />
+          <el-table-column label="描述" prop="cardDesc" show-overflow-tooltip />
+          <el-table-column label="状态" width="80" align="center" prop="status">
+            <template #default="{ row }">
+              <el-tag v-if="row.status === 'EBL'" type="success">
+                启用
+              </el-tag>
+              <el-tag v-else-if="row.status === 'DBL'" type="info">
+                禁用
+              </el-tag>
+              <span v-else>-</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="修改时间" prop="modifyAt" width="180" show-overflow-tooltip />
+          <!-- @vue-generic {VIS.VisCardInfo} -->
+          <el-table-column label="操作" width="220" fixed="right">
+            <template #default="{ row }">
+              <el-button
+                size="small"
+                type="primary"
+                link
+                @click="handleEdit(row)"
+              >
+                编辑
+              </el-button>
+              <el-button
+                v-if="states.permission.write"
+                size="small"
+                type="primary"
+                link
+                @click="handleToggleStatus(row)"
+              >
+                {{ row.status === 'EBL' ? '禁用' : '启用' }}
+              </el-button>
+              <el-button
+                v-if="states.permission.write"
+                size="small"
+                type="primary"
+                link
+                @click="handleDelete(row)"
+              >
+                删除
+              </el-button>
+              <el-button
+                size="small"
+                type="primary"
+                link
+                @click="handleViewRefs(row)"
+              >
+                看板
+              </el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </template>
 
-    <template #footer>
-      <el-pagination
-        class="justify-end mtb-6px"
-        :current-page="states.pageNumber"
-        layout="total, prev, pager, next"
-        :page-size="states.pageSize"
-        :total="states.total"
-        @current-change="handleCurrentChange"
-      />
-    </template>
-  </PageCard>
+      <template #footer>
+        <el-pagination
+          class="justify-end mtb-6px"
+          :current-page="states.pageNumber"
+          layout="total, prev, pager, next"
+          :page-size="states.pageSize"
+          :total="states.total"
+          @current-change="handleCurrentChange"
+        />
+      </template>
+    </PageCard>
 
-  <CustomDialog
-    v-model.visible="refDialog.visible"
-    :title="`引用「${refDialog.cardName}」的看板`"
-    size="small"
-    :show-footer="false"
-    destroy-on-close
-  >
-    <template #custom-dialog-body>
-      <el-table
-        v-spinner="refDialog.loading"
-        :data="refDialog.list"
-        :border="true"
-        max-height="420"
-        empty-text="暂无引用该卡片的看板"
-      >
-        <el-table-column label="名称" prop="dashName" min-width="160" show-overflow-tooltip>
-          <template #default="{ row }">
-            <el-button
-              type="primary"
-              link
-              @click="openDashPreview(row)"
-            >
-              {{ row.dashName || row.id }}
-            </el-button>
-          </template>
-        </el-table-column>
-        <el-table-column label="状态" width="80" align="center">
-          <template #default="{ row }">
-            <el-tag v-if="row.status === 'EBL'" type="success">
-              启用
-            </el-tag>
-            <el-tag v-else-if="row.status === 'DBL'" type="info">
-              禁用
-            </el-tag>
-            <span v-else>-</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="修改时间" prop="modifyAt" width="180" show-overflow-tooltip />
-      </el-table>
-    </template>
-  </CustomDialog>
+    <CustomDialog
+      v-model.visible="refDialog.visible"
+      :title="`引用「${refDialog.cardName}」的看板`"
+      size="small"
+      :show-footer="false"
+      destroy-on-close
+    >
+      <template #custom-dialog-body>
+        <el-table
+          v-spinner="refDialog.loading"
+          :data="refDialog.list"
+          :border="true"
+          max-height="420"
+          empty-text="暂无引用该卡片的看板"
+        >
+          <el-table-column label="名称" prop="dashName" min-width="160" show-overflow-tooltip>
+            <template #default="{ row }">
+              <el-button
+                type="primary"
+                link
+                @click="openDashPreview(row)"
+              >
+                {{ row.dashName || row.id }}
+              </el-button>
+            </template>
+          </el-table-column>
+          <el-table-column label="状态" width="80" align="center">
+            <template #default="{ row }">
+              <el-tag v-if="row.status === 'EBL'" type="success">
+                启用
+              </el-tag>
+              <el-tag v-else-if="row.status === 'DBL'" type="info">
+                禁用
+              </el-tag>
+              <span v-else>-</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="修改时间" prop="modifyAt" width="180" show-overflow-tooltip />
+        </el-table>
+      </template>
+    </CustomDialog>
   </div>
 </template>

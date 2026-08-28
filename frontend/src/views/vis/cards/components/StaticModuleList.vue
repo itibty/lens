@@ -111,7 +111,7 @@ function removeAt(index: number) {
               class="static-mod__handle"
               title="拖动排序"
             >
-              <span class="i-tabler-grip-vertical static-mod__handle-icon" />
+              <span class="static-mod__handle-icon i-tabler-grip-vertical" />
             </span>
             <span class="static-mod__title">{{ moduleLabel(mod) }}</span>
             <button

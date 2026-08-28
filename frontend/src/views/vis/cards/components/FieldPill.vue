@@ -133,7 +133,7 @@ useEventListener(window, 'scroll', () => {
             title="拖动排序"
             @click.stop
           >
-            <span class="i-tabler-grip-vertical field-pill__handle-icon" />
+            <span class="field-pill__handle-icon i-tabler-grip-vertical" />
           </span>
           <span class="field-pill__name ellipsis" :title="name">{{ name }}</span>
           <el-tooltip
@@ -147,7 +147,7 @@ useEventListener(window, 'scroll', () => {
               :class="{ 'is-error': !!error }"
               @click.stop
             >
-              <span class="i-mingcute-information-line field-pill__tip-icon" />
+              <span class="field-pill__tip-icon i-mingcute-information-line" />
             </span>
           </el-tooltip>
           <span
@@ -161,7 +161,7 @@ useEventListener(window, 'scroll', () => {
             title="移除"
             @click.stop="emit('remove')"
           >
-            <span class="i-mingcute-minimize-line field-pill__close-icon" />
+            <span class="field-pill__close-icon i-mingcute-minimize-line" />
           </span>
         </div>
       </div>

@@ -2,8 +2,8 @@
  * @Description: 角色配置可看看板。勾选分组级联子孙，只存看板 id。
 -->
 <script setup lang="ts">
-import type { CustomDrawerProps } from '@/components/CustomDrawer.vue'
 import type { ElTree } from 'element-plus'
+import type { CustomDrawerProps } from '@/components/CustomDrawer.vue'
 import { getRoleDetail, resetRoleDashboards } from '@/apis/admin/role'
 import { listDashboardAssignTree } from '@/apis/vis/dashboard'
 import { showToast } from '@/utils/index'

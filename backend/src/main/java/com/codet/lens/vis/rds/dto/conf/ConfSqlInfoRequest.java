@@ -35,4 +35,7 @@ public class ConfSqlInfoRequest {
     @EnumValue(strValues = {"EBL", "DBL"})
     @NotNull
     private String status;
+
+    @Schema(description = "确认更换被卡片引用的数据集的数据源")
+    private Boolean confirmSourceChange;
 }

@@ -64,11 +64,13 @@ export function buildExecTableRet(data?: VIS.DebugSqlResponse): {
   records: any[]
 } {
   const records = Array.isArray(data?.execRet) ? data.execRet : []
-  if (records.length === 0)
-    return { columns: [], records }
-
   const firstData = records[0] || {}
-  const columns = Object.keys(firstData).map(key => ({
+  const fields = records.length > 0
+    ? Object.keys(firstData)
+    : (data?.columns ?? [])
+        .map(column => column.field)
+        .filter((field): field is string => typeof field === 'string' && field.length > 0)
+  const columns = fields.map(key => ({
     prop: key,
     label: key,
     minWidth: 160,

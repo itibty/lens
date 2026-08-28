@@ -9,14 +9,14 @@ import com.codet.lens.common.PermCodes;
 import com.codet.lens.common.R;
 import com.codet.lens.common.ResultEnum;
 import com.codet.lens.vis.core.query.SqlDialect;
-import com.codet.lens.vis.dto.dataset.VisDatasetInfo;
+import com.codet.lens.vis.dto.dataset.DatasetSourceChangeWarning;
 import com.codet.lens.vis.dto.dataset.VisCardRefInfo;
+import com.codet.lens.vis.dto.dataset.VisDatasetInfo;
 import com.codet.lens.vis.entity.VisDatasource;
 import com.codet.lens.vis.mapper.VisDatasourceMapper;
 import com.codet.lens.vis.rds.core.MetaInfo;
 import com.codet.lens.vis.rds.dto.conf.ConfSqlContentRequest;
 import com.codet.lens.vis.rds.dto.conf.ConfSqlFieldInfo;
-import com.codet.lens.vis.rds.dto.conf.ConfSqlFieldSaveRequest;
 import com.codet.lens.vis.rds.dto.conf.ConfSqlInfo;
 import com.codet.lens.vis.rds.dto.conf.ConfSqlInfoRequest;
 import com.codet.lens.vis.rds.dto.conf.DebugSqlRequest;
@@ -127,14 +127,14 @@ public class DatasetController {
     @Permission(PermCodes.VIS_DATASET_CONF)
     @Operation(operationId = "editDatasetInfo", summary = "新建或编辑数据集信息")
     @PostMapping("/datasets/edit-info")
-    public R<Void> editDatasetInfo(@Validated @RequestBody ConfSqlInfoRequest request) {
+    public R<DatasetSourceChangeWarning> editDatasetInfo(@Validated @RequestBody ConfSqlInfoRequest request) {
         datasetAdminService.saveInfo(request);
         return R.success();
     }
 
     @Tag(name = "DATASET")
     @Permission(PermCodes.VIS_DATASET_CONF)
-    @Operation(operationId = "editDatasetContent", summary = "编辑数据集脚本")
+    @Operation(operationId = "editDatasetContent", summary = "编辑数据集脚本和字段")
     @PostMapping("/datasets/edit-content")
     public R<Void> editDatasetContent(@Validated @RequestBody ConfSqlContentRequest request) {
         datasetAdminService.saveContent(request);
@@ -164,15 +164,6 @@ public class DatasetController {
     @GetMapping("/datasets/fields")
     public R<List<ConfSqlFieldInfo>> listDatasetFields(@NotNull Long sqlId) {
         return R.success(datasetAdminService.listFields(sqlId));
-    }
-
-    @Tag(name = "DATASET")
-    @Permission(PermCodes.VIS_DATASET_CONF)
-    @Operation(operationId = "editDatasetFields", summary = "覆盖保存数据集字段")
-    @PostMapping("/datasets/edit-fields")
-    public R<Void> editDatasetFields(@Validated @RequestBody ConfSqlFieldSaveRequest request) {
-        datasetAdminService.saveFields(request);
-        return R.success();
     }
 
     @Tag(name = "DATASET")

@@ -19,7 +19,7 @@ defineProps<{
       :show-after="200"
     >
       <span
-        class="i-mingcute-information-line vis-style-form__tip-icon"
+        class="vis-style-form__tip-icon i-mingcute-information-line"
         tabindex="0"
       />
     </el-tooltip>

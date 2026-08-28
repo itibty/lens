@@ -73,14 +73,14 @@ function onChange(value: string | null) {
     render-after-expand
     @update:model-value="onChange"
   >
-    <template #default="{ data }">
+    <template #default="{ data: node }">
       <span class="dash-group-option">
         <MenuIcon
-          v-if="(data as VIS.DashGroupInfo).icon"
-          :icon="(data as VIS.DashGroupInfo).icon"
+          v-if="(node as VIS.DashGroupInfo).icon"
+          :icon="(node as VIS.DashGroupInfo).icon"
           class-name="dash-group-option__icon"
         />
-        <span>{{ (data as VIS.DashGroupInfo).groupName }}</span>
+        <span>{{ (node as VIS.DashGroupInfo).groupName }}</span>
       </span>
     </template>
   </el-tree-select>
