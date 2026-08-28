@@ -496,12 +496,15 @@ defineExpose({
 
 <style scoped lang="scss">
 .preview {
+  --vis-preview-bg: #eef2f6;
+
   position: relative;
   /* 给 append 进来的 el-drawer（position:fixed）当包含块，避免盖住左侧字段架 */
   transform: translate(0, 0);
   box-sizing: border-box;
   min-height: 0;
   overflow: hidden;
+  background: var(--vis-preview-bg);
 
   &__main {
     flex: 1 1 0;
@@ -510,6 +513,7 @@ defineExpose({
     flex-direction: column;
     padding: 12px 12px 0;
     overflow: hidden;
+    background: var(--vis-preview-bg);
   }
 
   &__main-head {
@@ -536,9 +540,8 @@ defineExpose({
     flex-direction: column;
     overflow: hidden;
     margin-bottom: 12px;
-    padding: 16px;
     border-radius: 10px;
-    background: #eef2f6;
+    background: var(--vis-preview-bg);
 
     &.is-tile-stage {
       align-items: center;
