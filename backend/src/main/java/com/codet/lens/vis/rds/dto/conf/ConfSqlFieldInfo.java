@@ -19,4 +19,7 @@ public class ConfSqlFieldInfo {
     @Schema(description = "建议用法", allowableValues = {"DIMENSION", "METRIC"},
             requiredMode = Schema.RequiredMode.REQUIRED)
     private String suggestRole;
+
+    @Schema(description = "补充说明")
+    private String remark;
 }

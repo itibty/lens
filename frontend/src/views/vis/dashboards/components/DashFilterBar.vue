@@ -477,15 +477,15 @@ useEventListener(window, 'scroll', onPageScroll, true)
   }
 
   .filter-dock__design & {
-    background: color-mix(in srgb, var(--dash-accent, #3370ff) 11%, var(--dash-card-bg, #fff));
-    border-color: color-mix(in srgb, var(--dash-accent, #3370ff) 26%, transparent);
-    color: var(--dash-accent, #3370ff);
+    background: color-mix(in srgb, var(--dash-accent, #0052d9) 11%, var(--dash-card-bg, #fff));
+    border-color: color-mix(in srgb, var(--dash-accent, #0052d9) 26%, transparent);
+    color: var(--dash-accent, #0052d9);
   }
 
   &:hover,
   &.is-active {
-    border-color: var(--dash-accent, #3370ff);
-    color: var(--dash-accent, #3370ff);
+    border-color: var(--dash-accent, #0052d9);
+    color: var(--dash-accent, #0052d9);
   }
 
   &:disabled {
@@ -531,12 +531,12 @@ useEventListener(window, 'scroll', onPageScroll, true)
   }
 
   &.is-on {
-    background: color-mix(in srgb, var(--dash-accent, #3370ff) 12%, var(--dash-card-bg, #fff));
+    background: color-mix(in srgb, var(--dash-accent, #0052d9) 12%, var(--dash-card-bg, #fff));
   }
 
   &.is-on:hover,
   &.is-on.is-open {
-    background: color-mix(in srgb, var(--dash-accent, #3370ff) 16%, var(--dash-card-bg, #fff));
+    background: color-mix(in srgb, var(--dash-accent, #0052d9) 16%, var(--dash-card-bg, #fff));
   }
 }
 
@@ -607,7 +607,7 @@ useEventListener(window, 'scroll', onPageScroll, true)
   }
 
   &:hover {
-    background: color-mix(in srgb, var(--dash-accent, #3370ff) 14%, transparent);
+    background: color-mix(in srgb, var(--dash-accent, #0052d9) 14%, transparent);
     color: var(--dash-accent, var(--el-color-primary));
   }
 }

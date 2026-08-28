@@ -200,7 +200,6 @@ const { vars: cardStyle } = useNumberFit(rootRef, () => style.value.size, () => 
     grid-template-columns: repeat(auto-fit, minmax(92px, 1fr));
     gap: 6px 16px;
     padding-top: var(--vis-number-gap, 10px);
-    border-top: 1px solid color-mix(in srgb, var(--el-border-color-lighter) 70%, transparent);
   }
 
   &__delta {

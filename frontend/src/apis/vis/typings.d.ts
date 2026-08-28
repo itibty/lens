@@ -24,6 +24,8 @@ declare namespace VIS {
     dataType: "STRING" | "NUMBER" | "DATE" | "DATETIME";
     /** 建议用法 */
     suggestRole: "DIMENSION" | "METRIC";
+    /** 补充说明 */
+    remark?: string;
   };
 
   type ConfSqlFieldSaveRequest = {
@@ -179,6 +181,7 @@ declare namespace VIS {
     jdbcType?: string;
     dataType?: string;
     suggestRole?: string;
+    remark?: string;
   };
 
   type DebugSqlRequest = {

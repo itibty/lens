@@ -238,8 +238,20 @@ const fieldGroups = computed(() => [
               <template #item="{ element }">
                 <div class="field-source">
                   <div class="field-source__pill">
-                    <span class="field-source__name ellipsis">{{ element.field }}</span>
                     <FieldTypeIcon :data-type="element.dataType" />
+                    <span class="field-source__name ellipsis">{{ element.field }}</span>
+                    <el-tooltip
+                      v-if="element.remark"
+                      :content="element.remark"
+                      placement="top"
+                      :show-after="200"
+                    >
+                      <span
+                        class="i-mingcute-information-line field-source__info"
+                        tabindex="0"
+                        @pointerdown.stop
+                      />
+                    </el-tooltip>
                   </div>
                 </div>
               </template>
@@ -385,6 +397,18 @@ const fieldGroups = computed(() => [
       border-color: var(--el-border-color);
       box-shadow: 0 1px 2px rgb(0 0 0 / 6%);
       color: var(--el-text-color-primary);
+    }
+  }
+
+  &__info {
+    flex-shrink: 0;
+    font-size: 14px;
+    color: var(--el-text-color-placeholder);
+    cursor: help;
+
+    &:hover,
+    &:focus-visible {
+      color: var(--el-text-color-secondary);
     }
   }
 

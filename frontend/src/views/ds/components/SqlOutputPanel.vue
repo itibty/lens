@@ -1,22 +1,16 @@
 <!--
- * @Description: SQL 编辑页底部输出面板（可折叠 / 拖高；结果 Tabs）
+ * @Description: SQL 编辑页底部输出面板（可折叠 / 拖高）
 -->
 <script setup lang="ts">
-import type { SqlOutputTab } from './debugResult'
+import type { SqlOutputRun } from './debugResult'
 
 const props = withDefaults(defineProps<{
   loading?: boolean
-  tabs?: SqlOutputTab[]
-  activeTabId?: string
+  run?: SqlOutputRun | null
 }>(), {
   loading: false,
-  tabs: () => [],
-  activeTabId: '',
+  run: null,
 })
-const emit = defineEmits<{
-  'update:activeTabId': [id: string]
-  'closeTab': [id: string]
-}>()
 const OUTPUT_HEIGHT_KEY = 'NA:ds-sql-output-height'
 const DEFAULT_HEIGHT = 240
 const MIN_HEIGHT = 120
@@ -26,27 +20,12 @@ const collapsed = ref(false)
 const panelHeight = ref(DEFAULT_HEIGHT)
 const dragging = ref(false)
 
-/** 当前激活 Tab；id 失效时回退到最后一个 */
-const activeTab = computed(() =>
-  props.tabs.find(tab => tab.id === props.activeTabId) || props.tabs[props.tabs.length - 1],
-)
-
 const stackLines = computed(() => {
-  const raw = activeTab.value?.errorInfo?.stackTrace
+  const raw = props.run?.errorInfo?.stackTrace
   if (!raw)
     return [] as string[]
   return raw.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n')
 })
-
-function selectTab(id: string) {
-  if (id !== props.activeTabId)
-    emit('update:activeTabId', id)
-}
-
-function closeTab(id: string, e: MouseEvent) {
-  e.stopPropagation()
-  emit('closeTab', id)
-}
 
 function readStoredHeight() {
   const raw = localStorage.getItem(OUTPUT_HEIGHT_KEY)
@@ -137,108 +116,87 @@ defineExpose({
       </div>
     </div>
     <div v-show="!collapsed" v-spinner="loading" class="sql-output__body">
-      <template v-if="!tabs.length">
+      <template v-if="!run">
         <div class="sql-output__empty">
           点击「运行」查看输出
         </div>
       </template>
 
-      <template v-else>
-        <div class="sql-output__tabs">
-          <div
-            v-for="tab in tabs"
-            :key="tab.id"
-            class="sql-output__tab"
-            :class="{ 'is-active': tab.id === activeTab?.id }"
-            @click="selectTab(tab.id)"
-          >
-            <span class="sql-output__tab-title">{{ tab.title }}</span>
-            <span
-              class="sql-output__tab-close"
-              title="关闭"
-              @click="closeTab(tab.id, $event)"
-            >
-              <span class="i-mingcute-close-line text-12px" />
-            </span>
-          </div>
-        </div>
-
-        <el-scrollbar class="sql-output__scroll">
-          <div class="sql-output__content">
-            <template v-if="activeTab?.errorInfo">
-              <div class="debug-error">
-                <pre
-                  v-if="activeTab.errorInfo.error"
-                  class="debug-error__block debug-error__summary"
-                >{{ activeTab.errorInfo.error }}</pre>
-                <div
-                  v-if="activeTab.errorInfo.stackTrace"
-                  class="debug-error__block debug-error__stack"
-                >
-                  <div
-                    v-for="(line, index) in stackLines"
-                    :key="index"
-                    class="debug-error__line"
-                  >
-                    <span class="debug-error__lineno">{{ index + 1 }}</span>
-                    <span class="debug-error__code">{{ line || ' ' }}</span>
-                  </div>
-                </div>
-                <pre
-                  v-if="!activeTab.errorInfo.error && !activeTab.errorInfo.stackTrace && activeTab.errorInfo.fallback"
-                  class="debug-error__block debug-error__summary"
-                >{{ activeTab.errorInfo.fallback }}</pre>
-              </div>
-            </template>
-
-            <template v-else>
-              <div class="pb-10px">
-                <ListTable
-                  :key="activeTab.id"
-                  layout="fixed"
-                  :columns="activeTab.columns"
-                  :records="activeTab.records"
-                  :border="true"
-                  :page-size="5"
-                  show-export
-                  show-filter
-                  sortable
-                  :export-name="`sql-result-${activeTab.title}`"
-                />
-              </div>
-              <el-descriptions
-                v-if="activeTab?.debugInfo"
-                :border="true"
-                :column="1"
-                class="custom-el-desc"
-              >
-                <el-descriptions-item>
-                  <template #label>
-                    执行脚本
-                  </template>
-                  <span>{{ activeTab.debugInfo.sql }}</span>
-                </el-descriptions-item>
-                <el-descriptions-item label="执行参数">
-                  {{ activeTab.debugInfo.params }}
-                </el-descriptions-item>
-                <el-descriptions-item
-                  v-for="(timeInfo, index) in activeTab.debugInfo.timeInfos"
-                  :key="index"
-                  :label="timeInfo.taskName"
-                >
-                  {{ formatTimeInfo(timeInfo) }}
-                </el-descriptions-item>
-              </el-descriptions>
+      <el-scrollbar v-else class="sql-output__scroll">
+        <div class="sql-output__content">
+          <template v-if="run.errorInfo">
+            <div class="debug-error">
+              <pre
+                v-if="run.errorInfo.error"
+                class="debug-error__block debug-error__summary"
+              >{{ run.errorInfo.error }}</pre>
               <div
-                v-if="activeTab && !activeTab.records.length && !activeTab.debugInfo"
-                class="sql-output__empty"
+                v-if="run.errorInfo.stackTrace"
+                class="debug-error__block debug-error__stack"
               >
-                暂无数据
+                <div
+                  v-for="(line, index) in stackLines"
+                  :key="index"
+                  class="debug-error__line"
+                >
+                  <span class="debug-error__lineno">{{ index + 1 }}</span>
+                  <span class="debug-error__code">{{ line || ' ' }}</span>
+                </div>
               </div>
-            </template>
-          </div>
-        </el-scrollbar>
-      </template>
+              <pre
+                v-if="!run.errorInfo.error && !run.errorInfo.stackTrace && run.errorInfo.fallback"
+                class="debug-error__block debug-error__summary"
+              >{{ run.errorInfo.fallback }}</pre>
+            </div>
+          </template>
+
+          <template v-else>
+            <div class="pb-10px">
+              <ListTable
+                :key="run.id"
+                layout="fixed"
+                :columns="run.columns"
+                :records="run.records"
+                :border="true"
+                :page-size="5"
+                show-export
+                show-filter
+                sortable
+                export-name="sql-result"
+              />
+            </div>
+            <el-descriptions
+              v-if="run.debugInfo"
+              :border="true"
+              :column="1"
+              class="custom-el-desc"
+            >
+              <el-descriptions-item>
+                <template #label>
+                  执行脚本
+                </template>
+                <span>{{ run.debugInfo.sql }}</span>
+              </el-descriptions-item>
+              <el-descriptions-item label="执行参数">
+                {{ run.debugInfo.params }}
+              </el-descriptions-item>
+              <el-descriptions-item
+                v-for="(timeInfo, index) in run.debugInfo.timeInfos"
+                :key="index"
+                :label="timeInfo.taskName"
+              >
+                {{ formatTimeInfo(timeInfo) }}
+              </el-descriptions-item>
+            </el-descriptions>
+            <div
+              v-if="!run.records.length && !run.debugInfo"
+              class="sql-output__empty"
+            >
+              暂无数据
+            </div>
+          </template>
+        </div>
+      </el-scrollbar>
     </div>
   </div>
 </template>
@@ -296,83 +254,6 @@ $sql-output-header-h: 36px;
     display: flex;
     flex-direction: column;
     overflow: hidden;
-  }
-
-  &__tabs {
-    flex-shrink: 0;
-    display: flex;
-    align-items: flex-end;
-    gap: 4px;
-    padding: 6px 8px 0;
-    overflow-x: auto;
-    background: #f5f7fa;
-    // 用 inset 画底边，避免 overflow 裁切负 margin
-    box-shadow: inset 0 -1px 0 var(--el-border-color-lighter);
-  }
-
-  &__tab {
-    position: relative;
-    flex-shrink: 0;
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    height: 28px;
-    padding: 0 8px 0 10px;
-    border: 1px solid transparent;
-    border-bottom: none;
-    border-radius: 4px 4px 0 0;
-    color: var(--el-text-color-regular);
-    font-size: 12px;
-    line-height: 1;
-    cursor: pointer;
-    user-select: none;
-
-    &:hover {
-      color: var(--el-text-color-primary);
-      background: color-mix(in srgb, #fff 70%, transparent);
-    }
-
-    &.is-active {
-      z-index: 1;
-      color: var(--el-color-primary);
-      background: #fff;
-      border-color: var(--el-border-color-lighter);
-      border-bottom: none;
-      font-weight: 500;
-
-      // 盖住 tab 栏底边线，与下方内容连通
-      &::after {
-        content: '';
-        position: absolute;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        height: 1px;
-        background: #fff;
-      }
-    }
-  }
-
-  &__tab-title {
-    max-width: 120px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  &__tab-close {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 16px;
-    height: 16px;
-    border-radius: 2px;
-    color: var(--el-text-color-secondary);
-
-    &:hover {
-      color: var(--el-color-danger);
-      background: var(--el-fill-color);
-    }
   }
 
   &__scroll {

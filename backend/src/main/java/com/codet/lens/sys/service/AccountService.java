@@ -20,6 +20,8 @@ import com.codet.lens.sys.entity.SysMenu;
 import com.codet.lens.sys.entity.SysUser;
 import com.codet.lens.sys.mapper.SysMenuMapper;
 import com.codet.lens.sys.mapper.SysUserMapper;
+import com.codet.lens.vis.dto.group.VisGroupDtos.ReportNode;
+import com.codet.lens.vis.service.VisDashGroupService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -37,6 +39,7 @@ public class AccountService {
 
     private final SysUserMapper sysUserMapper;
     private final SysMenuMapper sysMenuMapper;
+    private final VisDashGroupService visDashGroupService;
     private final JwtService jwtService;
     private final TokenInvalidateService tokenInvalidateService;
     private final LensProperties properties;
@@ -150,8 +153,27 @@ public class AccountService {
         root.setName("报表中心");
         root.setIcon("report-line");
         root.setUrl("/vis/report");
-        root.setChildren(new ArrayList<>());
+        List<ReportNode> nodes = visDashGroupService.reportTree().getList();
+        root.setChildren(toReportMenus(nodes, FieldConst.REPORT_ROOT_ID));
         return root;
+    }
+
+    private List<UserMenu> toReportMenus(List<ReportNode> nodes, Long fallbackPid) {
+        List<UserMenu> menus = new ArrayList<>();
+        if (nodes == null || nodes.isEmpty())
+            return menus;
+        for (ReportNode node : nodes) {
+            UserMenu menu = new UserMenu();
+            menu.setId(node.getId());
+            long pid = node.getPid() == null || node.getPid() == 0 ? fallbackPid : node.getPid();
+            menu.setPid(pid);
+            menu.setName(node.getName());
+            menu.setUrl(node.getUrl());
+            menu.setIcon(node.getIcon());
+            menu.setChildren(toReportMenus(node.getChildren(), node.getId()));
+            menus.add(menu);
+        }
+        return menus;
     }
 
     private List<UserMenu> toTree(List<SysMenu> rows) {

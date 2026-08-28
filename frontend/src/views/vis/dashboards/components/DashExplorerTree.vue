@@ -232,13 +232,12 @@ defineExpose<DashExplorerTreeInstance>({ setCurrentDashboard })
 <style scoped lang="scss">
 .explorer {
   display: flex;
-  flex: 0 0 292px;
   flex-direction: column;
-  width: 292px;
+  width: 100%;
+  height: 100%;
   min-height: 0;
   padding: 12px;
   box-sizing: border-box;
-  border-right: 1px solid var(--el-border-color-lighter);
   background: var(--el-bg-color);
   contain: layout paint;
   isolation: isolate;

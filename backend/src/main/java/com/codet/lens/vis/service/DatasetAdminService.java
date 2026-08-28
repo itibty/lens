@@ -161,6 +161,7 @@ public class DatasetAdminService {
             row.setField(item.getField());
             row.setDataType(item.getDataType());
             row.setSuggestRole(item.getSuggestRole());
+            row.setRemark(normalizeRemark(item.getRemark()));
             row.setSortNum(sort++);
             row.setStatus(FieldConst.EBL);
             row.createCallback();
@@ -222,6 +223,7 @@ public class DatasetAdminService {
         info.setField(row.getField());
         info.setDataType(row.getDataType());
         info.setSuggestRole(row.getSuggestRole());
+        info.setRemark(row.getRemark());
         return info;
     }
 
@@ -240,6 +242,14 @@ public class DatasetAdminService {
                 .select("id", "card_name", "dataset_id", "status")
                 .orderByDesc("modify_at")
                 .orderByDesc("id"));
+    }
+
+    private static String normalizeRemark(String remark) {
+        String text = StrUtil.trim(remark);
+        if (StrUtil.isEmpty(text)) {
+            return null;
+        }
+        return text.length() > 200 ? text.substring(0, 200) : text;
     }
 
     private static String guessType(String jdbcType) {

@@ -1,10 +1,10 @@
 <!--
- * @Description: DS SQL 编辑页（Meta + 模板编辑 + 运行结果 Tabs）
+ * @Description: DS SQL 编辑页（Meta + 模板编辑 + 运行结果）
 -->
 <script setup name="DsEditScript" lang="ts">
 import type { BindFieldsDialogInstance } from './components/BindFieldsDialog.vue'
 import type { DebugParamsDialogInstance } from './components/DebugParamsDialog.vue'
-import type { SqlOutputTab } from './components/debugResult'
+import type { SqlOutputRun } from './components/debugResult'
 import type { CustomDialogProps } from '@/components/CustomDialog.vue'
 
 import vis from '@/apis/vis/index'
@@ -19,11 +19,9 @@ import BindFieldsDialog from './components/BindFieldsDialog.vue'
 import { FUNCTION_DATASET_CONF } from './components/config'
 import DebugParamsDialog from './components/DebugParamsDialog.vue'
 import {
-  buildOutputTabPayload,
+  buildOutputRun,
   extractDebugErrorInfo,
   resolveSaveGate,
-  SQL_OUTPUT_TAB_LIMIT,
-  SQL_OUTPUT_TAB_LIMIT_TIP,
 } from './components/debugResult'
 import MetaTree from './components/MetaTree.vue'
 import {
@@ -38,8 +36,6 @@ const logger = createLogger('DS_EDIT')
 const { hasFunction } = useAccountStore()
 const canWrite = hasFunction(FUNCTION_DATASET_CONF)
 
-/** 表数量不超过该值时，进页自动全量加载 meta */
-const AUTO_LOAD_TABLE_LIMIT = 50
 const META_WIDTH_KEY = 'NA:ds-meta-side-width'
 const META_WIDTH_DEFAULT = 300
 const META_WIDTH_MIN = 200
@@ -62,9 +58,8 @@ interface IStates {
   jsonCode: string
   sqlCode: string
 
-  /** 底部输出结果 Tabs */
-  outputTabs: SqlOutputTab[]
-  activeOutputTabId: string
+  /** 底部最近一次运行结果 */
+  outputRun: SqlOutputRun | null
 }
 
 const debugParamsDialogRef = ref<DebugParamsDialogInstance>()
@@ -131,8 +126,7 @@ const states = reactive<IStates>({
   jsonCode: '',
   sqlCode: '',
 
-  outputTabs: [],
-  activeOutputTabId: '',
+  outputRun: null,
 })
 
 const dirty = ref(false)
@@ -149,7 +143,7 @@ watch(
 const outputLoading = computed(() => states.runLoading)
 
 const draftParams = computed(() => states.jsonCode || '{}')
-const saveGate = computed(() => resolveSaveGate(states.outputTabs, {
+const saveGate = computed(() => resolveSaveGate(states.outputRun, {
   sqlId: states.info?.id,
   sql: states.sqlCode,
   params: draftParams.value,
@@ -182,70 +176,20 @@ let requestId = 0
 let loadRequestId = 0
 let tableOptionsRequestId = 0
 let metaTreeRequestId = 0
-/** Tab 唯一 id 序号（仅作 key，与展示序号无关） */
-let outputTabSeq = 0
+let outputRunSeq = 0
 
-// ---------- 输出结果 Tabs ----------
-
-function clearOutputTabs() {
-  states.outputTabs = []
-  states.activeOutputTabId = ''
+function clearOutputRun() {
+  states.outputRun = null
 }
 
-/** 运行 Tab 展示序号：取现有最大序号 + 1（删掉高位后可回落） */
-function nextTabSeq(): number {
-  const prefix = '运行'
-  let max = 0
-  for (const tab of states.outputTabs) {
-    if (!tab.title.startsWith(prefix))
-      continue
-    const n = Number(tab.title.slice(prefix.length))
-    if (Number.isFinite(n) && n > max)
-      max = n
+function setOutputRun(run: Omit<SqlOutputRun, 'id'>) {
+  outputRunSeq += 1
+  states.outputRun = {
+    id: `output-${outputRunSeq}`,
+    ...run,
+    columns: run.columns || [],
+    records: run.records || [],
   }
-  return max + 1
-}
-
-/** 是否还能追加 Tab；满员时提示并返回 false */
-function ensureOutputTabSlot(): boolean {
-  if (states.outputTabs.length < SQL_OUTPUT_TAB_LIMIT)
-    return true
-  showToast(SQL_OUTPUT_TAB_LIMIT_TIP, 'warning')
-  return false
-}
-
-function appendOutputTab(tab: Omit<SqlOutputTab, 'id' | 'title'>) {
-  if (!ensureOutputTabSlot())
-    return false
-
-  outputTabSeq += 1
-  const next: SqlOutputTab = {
-    id: `output-${outputTabSeq}`,
-    title: `运行${nextTabSeq()}`,
-    ...tab,
-    columns: tab.columns || [],
-    records: tab.records || [],
-  }
-
-  states.outputTabs = [...states.outputTabs, next]
-  states.activeOutputTabId = next.id
-  return true
-}
-
-function handleCloseOutputTab(id: string) {
-  const idx = states.outputTabs.findIndex(tab => tab.id === id)
-  if (idx < 0)
-    return
-
-  const wasActive = states.activeOutputTabId === id
-  const list = states.outputTabs.filter(tab => tab.id !== id)
-  states.outputTabs = list
-
-  if (!wasActive)
-    return
-  states.activeOutputTabId = list.length
-    ? list[Math.min(idx, list.length - 1)].id
-    : ''
 }
 
 function resetMetaState() {
@@ -254,10 +198,6 @@ function resetMetaState() {
   states.loadedTables = []
   states.optionsLoading = false
   states.metaLoading = false
-}
-
-function tableKey(opt: VIS.OptionString): string {
-  return (opt.value || opt.name || '').trim()
 }
 
 async function fetchConfSql(sqlId: string, initMeta: boolean = false) {
@@ -310,17 +250,7 @@ async function initMetaForSource(sourceName: string, ownerRequestId = loadReques
     const res = await vis.datasource.listDatasourceTables({ sourceName })
     if (ownerRequestId !== loadRequestId || currentRequestId !== tableOptionsRequestId)
       return
-    const list = res.data?.list || []
-    states.tableOptions = list
-
-    if (list.length === 0)
-      return
-
-    // 小库直接加载全部，免去选表
-    if (list.length <= AUTO_LOAD_TABLE_LIMIT) {
-      const all = list.map(tableKey).filter(Boolean)
-      await reloadMetaTree(sourceName, all, ownerRequestId)
-    }
+    states.tableOptions = res.data?.list || []
   }
   catch (e) {
     if (ownerRequestId !== loadRequestId || currentRequestId !== tableOptionsRequestId)
@@ -408,10 +338,19 @@ async function handleSave() {
     return
 
   let fields: VIS.ConfSqlFieldItem[] | undefined
-  const tab = gate.tab
-  if (tab) {
+  const run = gate.run
+  if (run) {
+    let saved: VIS.ConfSqlFieldInfo[] = []
+    try {
+      const res = await vis.dataset.listDatasetFields({ sqlId })
+      saved = res.data ?? []
+    }
+    catch {
+      // 已有说明带不上，仍可继续绑定
+    }
     const confirmed = await bindFieldsDialogRef.value?.showDialog({
-      columns: tab.debugInfo.columns ?? [],
+      columns: run.debugInfo.columns ?? [],
+      saved,
     })
     if (!confirmed)
       return
@@ -423,7 +362,6 @@ async function handleSave() {
   }
 
   await persistSave(sqlId, fields)
-  clearOutputTabs()
 }
 
 function parseExecParams(): Record<string, any> | null {
@@ -438,10 +376,6 @@ function parseExecParams(): Record<string, any> | null {
 }
 
 async function requestDebugSql(body: VIS.DebugSqlRequest) {
-  // 满员先阻断，避免空跑请求
-  if (!ensureOutputTabSlot())
-    return
-
   const runSource = { sourceSql: body.sqlContent, sourceParams: draftParams.value }
   const currentRequestId = ++requestId
   sqlOutputPanelRef.value?.expand()
@@ -452,16 +386,16 @@ async function requestDebugSql(body: VIS.DebugSqlRequest) {
     const res = await vis.dataset.debugDataset(body)
     if (currentRequestId !== requestId)
       return
-    appendOutputTab({
-      ...buildOutputTabPayload(res.data),
+    setOutputRun({
+      ...buildOutputRun(res.data),
       ...runSource,
     })
   }
   catch (err) {
     if (currentRequestId !== requestId)
       return
-    appendOutputTab({
-      ...buildOutputTabPayload(undefined, extractDebugErrorInfo(err)),
+    setOutputRun({
+      ...buildOutputRun(undefined, extractDebugErrorInfo(err)),
       ...runSource,
     })
   }
@@ -507,7 +441,7 @@ const route = useRoute()
 function loadConf(id: string) {
   requestId += 1
   states.runLoading = false
-  clearOutputTabs()
+  clearOutputRun()
   void fetchConfSql(id, true)
   if (!states.delayInit) {
     nextTick(() => {
@@ -627,10 +561,8 @@ onBeforeRouteUpdate((to) => {
           </div>
           <SqlOutputPanel
             ref="sqlOutputPanelRef"
-            v-model:active-tab-id="states.activeOutputTabId"
             :loading="outputLoading"
-            :tabs="states.outputTabs"
-            @close-tab="handleCloseOutputTab"
+            :run="states.outputRun"
           >
             <template #actions>
               <el-button

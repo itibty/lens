@@ -1,10 +1,11 @@
 import type { MaybeRefOrGetter } from 'vue'
 import { isNumberChart, isTrendChart } from '@/views/vis/shared/types'
 
-/** 指标卡约看板 4×5；趋势卡更高更宽，全功能能一次放下 */
+/** 数值类卡片使用接近看板的默认尺寸，其余类型默认铺满预览区 */
 export const PREVIEW_TILE_DEFAULT = {
   number: { w: 240, h: 188 },
   trend: { w: 320, h: 268 },
+  fill: null,
 } as const
 
 const TILE_MIN_W = 168
@@ -17,7 +18,7 @@ export function previewTileKind(chartType?: string): PreviewTileKind | null {
     return 'trend'
   if (isNumberChart(chartType))
     return 'number'
-  return null
+  return String(chartType || '').trim() ? 'fill' : null
 }
 
 function clamp(n: number, min: number, max: number) {
@@ -29,15 +30,16 @@ export function usePreviewTile(
   kind: MaybeRefOrGetter<PreviewTileKind | null>,
   stage: MaybeRefOrGetter<HTMLElement | null | undefined>,
 ) {
-  const tileW = ref<number>(PREVIEW_TILE_DEFAULT.number.w)
-  const tileH = ref<number>(PREVIEW_TILE_DEFAULT.number.h)
+  const tileW = ref<number | null>(null)
+  const tileH = ref<number | null>(null)
   const tileDragging = ref(false)
 
   watch(() => toValue(kind), (next) => {
     if (!next)
       return
-    tileW.value = PREVIEW_TILE_DEFAULT[next].w
-    tileH.value = PREVIEW_TILE_DEFAULT[next].h
+    const preset = PREVIEW_TILE_DEFAULT[next]
+    tileW.value = preset?.w ?? null
+    tileH.value = preset?.h ?? null
   })
 
   function tileBounds() {
@@ -55,8 +57,9 @@ export function usePreviewTile(
     tileDragging.value = true
     const startX = event.clientX
     const startY = event.clientY
-    const startW = tileW.value
-    const startH = tileH.value
+    const tileRect = (event.currentTarget as HTMLElement | null)?.parentElement?.getBoundingClientRect()
+    const startW = tileW.value ?? tileRect?.width ?? PREVIEW_TILE_DEFAULT.number.w
+    const startH = tileH.value ?? tileRect?.height ?? PREVIEW_TILE_DEFAULT.number.h
 
     const onMove = (next: PointerEvent) => {
       const { maxW, maxH } = tileBounds()
@@ -73,8 +76,8 @@ export function usePreviewTile(
   }
 
   const tileStyle = computed(() => ({
-    width: `${tileW.value}px`,
-    height: `${tileH.value}px`,
+    width: tileW.value == null ? '100%' : `${tileW.value}px`,
+    height: tileH.value == null ? '100%' : `${tileH.value}px`,
   }))
 
   return { tileDragging, tileStyle, onTileDragStart }

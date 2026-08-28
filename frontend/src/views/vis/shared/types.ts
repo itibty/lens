@@ -586,6 +586,7 @@ export interface DatasetField {
   label?: string
   dataType?: DatasetFieldDataType
   suggestRole?: DatasetFieldRole
+  remark?: string
 }
 
 export function isDateField(dataType?: DatasetFieldDataType) {

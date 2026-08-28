@@ -44,10 +44,12 @@ export function fromApiDataType(raw?: string): DatasetFieldDataType | undefined 
 }
 
 export function fromConfSqlField(row: VIS.ConfSqlFieldInfo): DatasetField {
+  const remark = row.remark?.trim()
   return {
     field: row.field,
     dataType: fromApiDataType(row.dataType),
     suggestRole: row.suggestRole,
+    ...(remark ? { remark } : {}),
   }
 }
 

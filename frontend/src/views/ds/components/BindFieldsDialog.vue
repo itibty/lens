@@ -7,6 +7,7 @@ import type { CustomDialogProps } from '@/components/CustomDialog.vue'
 export interface BindFieldsDialogInstance {
   showDialog: (payload: {
     columns: VIS.DebugSqlColumn[]
+    saved?: VIS.ConfSqlFieldInfo[]
   }) => Promise<VIS.ConfSqlFieldItem[] | null>
   showView: (payload: { fields: VIS.ConfSqlFieldInfo[] }) => void
 }
@@ -19,6 +20,7 @@ interface BindFieldRow {
   dataType: FieldDataType
   suggestRole: FieldRole
   jdbcType?: string
+  remark: string
 }
 
 const DATA_TYPE_OPTIONS: Array<{ label: string, value: FieldDataType }> = [
@@ -46,7 +48,8 @@ let settle: ((fields: VIS.ConfSqlFieldItem[] | null) => void) | null = null
 
 const dialog = reactive<CustomDialogProps>({
   visible: false,
-  size: 'small',
+  size: '',
+  width: '920px',
   title: '绑定字段',
   cancelText: '取消',
   confirmText: '确定',
@@ -105,23 +108,34 @@ function dataTypeLabel(value?: string) {
   return DATA_TYPE_LABELS[asDataType(value)]
 }
 
-function toRows(columns: VIS.DebugSqlColumn[]): BindFieldRow[] {
+function toRows(columns: VIS.DebugSqlColumn[], saved: VIS.ConfSqlFieldInfo[] = []): BindFieldRow[] {
+  const bySaved = new Map(
+    saved.filter(item => item.field).map(item => [item.field, item]),
+  )
   return columns
     .filter((item): item is VIS.DebugSqlColumn & { field: string } => !!item.field)
-    .map(item => ({
-      field: item.field,
-      dataType: asDataType(item.dataType),
-      suggestRole: asRole(item.suggestRole),
-      jdbcType: item.jdbcType,
-    }))
+    .map((item) => {
+      const exist = bySaved.get(item.field)
+      return {
+        field: item.field,
+        dataType: asDataType(exist?.dataType ?? item.dataType),
+        suggestRole: asRole(exist?.suggestRole ?? item.suggestRole),
+        jdbcType: item.jdbcType,
+        remark: exist?.remark ?? item.remark ?? '',
+      }
+    })
 }
 
 function collectFields(): VIS.ConfSqlFieldItem[] {
-  return rows.value.map(row => ({
-    field: row.field,
-    dataType: row.dataType,
-    suggestRole: row.suggestRole,
-  }))
+  return rows.value.map((row) => {
+    const remark = row.remark.trim()
+    return {
+      field: row.field,
+      dataType: row.dataType,
+      suggestRole: row.suggestRole,
+      ...(remark ? { remark } : {}),
+    }
+  })
 }
 
 function resolvePending(fields: VIS.ConfSqlFieldItem[] | null) {
@@ -132,10 +146,11 @@ function resolvePending(fields: VIS.ConfSqlFieldItem[] | null) {
 
 function showDialog(payload: {
   columns: VIS.DebugSqlColumn[]
+  saved?: VIS.ConfSqlFieldInfo[]
 }): Promise<VIS.ConfSqlFieldItem[] | null> {
   resolvePending(null)
   applyEditChrome()
-  rows.value = toRows(payload.columns)
+  rows.value = toRows(payload.columns, payload.saved)
   dialog.visible = true
   return new Promise((resolve) => {
     settle = resolve
@@ -215,6 +230,17 @@ defineExpose<BindFieldsDialogInstance>({
                 />
               </el-select>
               <span v-else>{{ dataTypeLabel(row.dataType) }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="说明" min-width="180">
+            <template #default="{ row }">
+              <el-input
+                v-if="mode === 'edit'"
+                v-model="row.remark"
+                maxlength="200"
+                placeholder="请输入"
+              />
+              <span v-else>{{ row.remark || '—' }}</span>
             </template>
           </el-table-column>
         </el-table>

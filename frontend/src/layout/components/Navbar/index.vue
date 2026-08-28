@@ -7,12 +7,21 @@
 -->
 <script setup lang="ts" name="LayoutNavbar">
 import type { MenuInfo } from '@/core/data'
+import type { ModifyAccountPwdDialogInstance } from '@/views/account/components/ModifyAccountPwdDialog.vue'
 import MenuIcon from '@/components/MenuIcon.vue'
 import { menuIconClass } from '@/core/menuIcons'
 import LayoutNotice from '@/layout/components/Notice/index.vue'
 import { useAccountStore } from '@/stores/modules/account'
 import { useAppStore } from '@/stores/modules/app'
 import { useMenuStore } from '@/stores/modules/menu'
+import ModifyAccountPwdDialog from '@/views/account/components/ModifyAccountPwdDialog.vue'
+
+const SLOGANS = [
+  '让数据更清晰',
+  '看见数据价值',
+  '聚焦数据洞见',
+  '数据驱动决策',
+] as const
 
 const accountStore = useAccountStore()
 const menuStore = useMenuStore()
@@ -22,32 +31,37 @@ const { appSetting } = storeToRefs(useAppStore())
 const router = useRouter()
 const route = useRoute()
 const rootPopoverVisible = ref(false)
+const accountPopoverVisible = ref(false)
+const modifyPwdDialogRef = ref<ModifyAccountPwdDialogInstance>()
+const slogan = SLOGANS[Math.floor(Math.random() * SLOGANS.length)]
 
 const activeRootName = computed(() =>
   rootMenus.value.find(item => item.id === activeRootId.value)?.name || '',
 )
 
+const displayName = computed(() => userInfo.value.username || '')
+
 async function handleLogout() {
+  accountPopoverVisible.value = false
   await accountStore.logout()
   router.push({
     path: '/login',
   })
 }
-function handleProfile() {
-  router.push({
-    path: '/account',
-  })
+
+function handleModifyPassword() {
+  accountPopoverVisible.value = false
+  modifyPwdDialogRef.value?.showDialog()
 }
 function goHome() {
   const url = menuStore.resolveHomeUrl()
   router.push(url || { path: '/index' })
 }
 
-async function switchRoot(root: MenuInfo) {
+function switchRoot(root: MenuInfo) {
   rootPopoverVisible.value = false
   const wasSame = activeRootId.value === root.id
   menuStore.activateRoot(root.id)
-  await menuStore.ensureReportTree()
   const url = menuStore.findFirstLeafUrl(root.id)
   if (!url || url === route.fullPath || url === route.path)
     return
@@ -67,7 +81,9 @@ async function switchRoot(root: MenuInfo) {
       >
         <img class="w-24px" src="@/assets/icons/logo.svg" alt="logo">
         <div class="logo-txt">
-          Lens
+          <span class="logo-title">Lens</span>
+          <span class="logo-divider" />
+          <span class="logo-slogan">{{ slogan }}</span>
         </div>
       </div>
       <el-popover
@@ -112,32 +128,51 @@ async function switchRoot(root: MenuInfo) {
       <div v-if="false" class="nav-link mr-10px flex-xy">
         <LayoutNotice />
       </div>
-      <el-popover :width="210" popper-class="account-popover">
+      <el-popover
+        v-model:visible="accountPopoverVisible"
+        :width="220"
+        popper-class="account-popover"
+      >
         <template #reference>
-          <el-button circle class="account-trigger" aria-label="账号菜单">
-            <span class="i-mingcute-user-3-line" />
-          </el-button>
+          <button
+            type="button"
+            class="account-trigger clickable"
+            :title="displayName"
+          >
+            {{ displayName }}
+          </button>
         </template>
         <template #default>
-          <div
-            class="base-border-bottom item-line flex items-center justify-between text-12px"
+          <div class="account-popover__profile">
+            <div class="account-popover__avatar">
+              <span class="i-mingcute-user-3-fill" />
+            </div>
+            <div class="account-popover__identity">
+              <strong>{{ userInfo.realName || userInfo.username }}</strong>
+              <span>{{ userInfo.username }}</span>
+            </div>
+          </div>
+          <button
+            type="button"
+            class="account-popover__action"
+            @click="handleModifyPassword"
           >
-            <div>
-              {{ userInfo.realName || userInfo.username }}
-            </div>
-            <div class="clickable hover-link" @click="handleLogout">
-              退出
-            </div>
-          </div>
-          <div class="item-line flex items-center justify-between text-12px">
-            <div class="hover-link clickable" @click="handleProfile">
-              个人中心
-            </div>
-          </div>
+            <span class="i-mingcute-key-2-line" />
+            修改密码
+          </button>
+          <button
+            type="button"
+            class="account-popover__action"
+            @click="handleLogout"
+          >
+            <span class="i-mingcute-exit-line" />
+            退出登录
+          </button>
         </template>
       </el-popover>
     </div>
   </div>
+  <ModifyAccountPwdDialog ref="modifyPwdDialogRef" />
 </template>
 
 <style lang="scss" scoped>
@@ -157,7 +192,8 @@ async function switchRoot(root: MenuInfo) {
       color: var(--na-navbar-title-color);
     }
 
-    .root-nav-trigger {
+    .root-nav-trigger,
+    .account-trigger {
       color: var(--na-navbar-text-color);
 
       &:hover,
@@ -175,7 +211,8 @@ async function switchRoot(root: MenuInfo) {
       color: #2e2e2e;
     }
 
-    .root-nav-trigger {
+    .root-nav-trigger,
+    .account-trigger {
       color: #707070;
 
       &:hover,
@@ -195,7 +232,8 @@ async function switchRoot(root: MenuInfo) {
       color: #fff;
     }
 
-    .root-nav-trigger {
+    .root-nav-trigger,
+    .account-trigger {
       color: #c8d7e6;
 
       &:hover,
@@ -220,12 +258,47 @@ async function switchRoot(root: MenuInfo) {
   }
 
   .logo-txt {
-    font-weight: bolder;
-    margin-left: 10px;
-    height: 100%;
     display: flex;
+    height: 100%;
     align-items: center;
+    margin-left: 10px;
+    white-space: nowrap;
   }
+
+  .logo-title {
+    font-weight: 700;
+  }
+
+  .logo-divider {
+    width: 1px;
+    height: 12px;
+    margin: 0 7px;
+    background: currentColor;
+    opacity: 0.28;
+  }
+
+  .logo-slogan {
+    font-size: 11px;
+    font-weight: 400;
+    opacity: 0.68;
+  }
+}
+
+.account-trigger {
+  height: 28px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: var(--el-border-radius-base);
+  background: transparent;
+  font: inherit;
+  font-size: 13px;
+  line-height: 28px;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: inherit;
+  cursor: pointer;
 }
 
 .root-nav-trigger {
@@ -258,11 +331,77 @@ async function switchRoot(root: MenuInfo) {
 <style lang="scss">
 .account-popover {
   padding: 0 !important;
+  overflow: hidden;
 
-  .item-line {
-    padding: 12px 16px;
-    color: hsl(0deg 0% 0% / 85%);
-    line-height: 1.5;
+  &__profile {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px;
+    border-bottom: 1px solid var(--el-border-color-lighter);
+  }
+
+  &__avatar {
+    display: flex;
+    flex: 0 0 36px;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--el-color-primary-light-9);
+    color: var(--el-color-primary);
+    font-size: 20px;
+  }
+
+  &__identity {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 3px;
+
+    strong,
+    span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    strong {
+      color: var(--el-text-color-primary);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    span {
+      color: var(--el-text-color-secondary);
+      font-size: 12px;
+    }
+  }
+
+  &__action {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    width: 100%;
+    height: 38px;
+    padding: 0 14px;
+    border: 0;
+    background: transparent;
+    color: var(--el-text-color-regular);
+    font: inherit;
+    font-size: 13px;
+    text-align: left;
+    cursor: pointer;
+
+    > span {
+      font-size: 16px;
+    }
+
+    &:hover {
+      background: var(--el-fill-color-light);
+      color: var(--el-color-primary);
+    }
   }
 }
 

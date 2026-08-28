@@ -101,6 +101,7 @@ public class VisDatasetService {
                     info.setField(row.getField());
                     info.setDataType(row.getDataType());
                     info.setSuggestRole(row.getSuggestRole());
+                    info.setRemark(row.getRemark());
                     return info;
                 })
                 .toList();

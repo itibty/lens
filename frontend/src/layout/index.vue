@@ -24,15 +24,9 @@ function isReportShell(path: string) {
 watch(
   () => route.fullPath,
   async () => {
-    const prev = menuStore.activeRootId
     menuStore.syncActiveRootFromRoute(route)
-    const entered = menuStore.activeRootId !== prev
-    if (entered)
-      await menuStore.ensureReportTree()
     if (!isReportShell(route.path))
       return
-    if (!entered)
-      await menuStore.ensureReportTree()
     const url = menuStore.findFirstLeafUrl(menuStore.activeRootId)
     if (url && url !== route.path && url !== route.fullPath)
       await router.push(url)

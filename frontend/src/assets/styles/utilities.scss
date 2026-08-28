@@ -101,9 +101,18 @@ $DIRECTIONS: (left, right, top, bottom);
   position: absolute;
   z-index: 2;
 
-  &:not(.resize-handle--fade):hover,
-  .is-resizing > &:not(.resize-handle--fade) {
+  &:not(.resize-handle--fade)::before {
+    content: '';
+    position: absolute;
+    pointer-events: none;
+    opacity: 0;
     background: var(--na-resizer-color);
+    transition: opacity 0.15s;
+  }
+
+  &:not(.resize-handle--fade):hover::before,
+  .is-resizing > &:not(.resize-handle--fade)::before {
+    opacity: 1;
   }
 }
 
@@ -112,6 +121,14 @@ $DIRECTIONS: (left, right, top, bottom);
   bottom: 0;
   width: var(--na-resizer-size);
   cursor: col-resize;
+
+  &:not(.resize-handle--fade)::before {
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 2px;
+    transform: translateX(-50%);
+  }
 }
 
 .resize-handle--row {
@@ -119,6 +136,14 @@ $DIRECTIONS: (left, right, top, bottom);
   right: 0;
   height: var(--na-resizer-size);
   cursor: ns-resize;
+
+  &:not(.resize-handle--fade)::before {
+    top: 50%;
+    right: 0;
+    left: 0;
+    height: 2px;
+    transform: translateY(-50%);
+  }
 }
 
 .resize-handle--left {
@@ -135,6 +160,27 @@ $DIRECTIONS: (left, right, top, bottom);
 
 .resize-handle--bottom {
   bottom: var(--na-resizer-offset);
+}
+
+.resize-handle--col.resize-handle--split {
+  position: relative;
+  top: auto;
+  right: auto;
+  bottom: auto;
+  left: auto;
+  flex: 0 0 var(--na-resizer-size);
+  align-self: stretch;
+
+  &::before {
+    opacity: 1;
+    background: var(--el-border-color-lighter);
+    transition: background-color 0.15s;
+  }
+
+  &:hover::before,
+  .is-resizing > &::before {
+    background: var(--na-resizer-color);
+  }
 }
 
 .resize-handle--fade {

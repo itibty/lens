@@ -15,6 +15,7 @@ public class VisDatasetField extends BaseEntity {
     private String field;
     private String dataType;
     private String suggestRole;
+    private String remark;
     private Integer sortNum;
     private String status;
 }

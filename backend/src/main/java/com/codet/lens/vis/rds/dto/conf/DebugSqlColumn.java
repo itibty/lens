@@ -13,4 +13,5 @@ public class DebugSqlColumn {
     private String jdbcType;
     private String dataType;
     private String suggestRole;
+    private String remark;
 }

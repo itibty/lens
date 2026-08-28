@@ -48,6 +48,10 @@ pkg-stats.html
 .vite-inspect/
 .mocks/
 
+# Unified application build
+/app/
+/.app-build-*/
+
 # Agent / 辅助工具
 .superpowers/
 .codebuddy/

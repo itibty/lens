@@ -1,6 +1,7 @@
 package com.codet.lens.sys.service;
 
 import com.codet.lens.common.FieldConst;
+import com.codet.lens.sys.dto.SysDtos.ResetRoleDashboardsRequest;
 import com.codet.lens.sys.dto.SysDtos.SaveRoleRequest;
 import com.codet.lens.sys.entity.SysRole;
 import com.codet.lens.sys.mapper.SysMenuMapper;
@@ -8,6 +9,8 @@ import com.codet.lens.sys.mapper.SysRoleDashboardMapper;
 import com.codet.lens.sys.mapper.SysRoleMapper;
 import com.codet.lens.sys.mapper.SysRoleMenuMapper;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -41,6 +44,30 @@ class RoleAdminServiceTest {
         service.save(saveRequest("same-code", "只改名称"));
 
         verify(permissionTokenService, never()).invalidateRoleUsers(10L);
+    }
+
+    @Test
+    void invalidatesUsersWhenRoleDashboardsChange() {
+        when(roleMapper.selectById(10L)).thenReturn(role("same-code"));
+
+        ResetRoleDashboardsRequest request = new ResetRoleDashboardsRequest();
+        request.setRoleId(10L);
+        request.setDashboardIds(List.of(9501L));
+        service.resetDashboards(request);
+
+        verify(permissionTokenService).invalidateRoleUsers(10L);
+    }
+
+    @Test
+    void invalidatesUsersWhenRoleDashboardsCleared() {
+        when(roleMapper.selectById(10L)).thenReturn(role("same-code"));
+
+        ResetRoleDashboardsRequest request = new ResetRoleDashboardsRequest();
+        request.setRoleId(10L);
+        request.setDashboardIds(List.of());
+        service.resetDashboards(request);
+
+        verify(permissionTokenService).invalidateRoleUsers(10L);
     }
 
     private static SysRole role(String roleCode) {

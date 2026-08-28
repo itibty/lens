@@ -286,7 +286,7 @@ function onMenuAction(key: string) {
 .dash-tile.is-editable:not(.is-full):not(.is-locked):focus-within,
 .dash-tile:not(.is-full):not(.is-locked).is-resizing,
 .dash-tile.is-editable:not(.is-full):not(.is-locked):has(.vis-card-view.is-menu-open) {
-  outline: 3px solid var(--dash-accent, #3370ff);
+  outline: 3px solid var(--dash-accent, #0052d9);
   outline-offset: -1px;
 }
 
@@ -359,7 +359,7 @@ function onMenuAction(key: string) {
   height: 16px;
   border: 2px solid #fff;
   border-radius: 50%;
-  background: var(--dash-accent, #3370ff);
+  background: var(--dash-accent, #0052d9);
   touch-action: none;
   pointer-events: none;
 

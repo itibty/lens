@@ -7,6 +7,7 @@ import type { DashDesignerInstance, DashDesignerSavedPayload } from './component
 import type { DashExplorerTreeInstance } from './components/DashExplorerTree.vue'
 import type { DashManageNode, ExplorerCommand } from './dashManage'
 import vis from '@/apis/vis/index'
+import { useResizablePanel } from '@/hooks/resizablePanel'
 import { useAccountStore } from '@/stores/modules/account'
 import { showConfirm, showToast } from '@/utils/index'
 import MenuIconPicker from '@/views/permission/menu/components/MenuIconPicker.vue'
@@ -15,7 +16,7 @@ import DashDesigner from './components/DashDesigner.vue'
 import DashExplorerTree from './components/DashExplorerTree.vue'
 import DashGroupTreeSelect from './components/DashGroupTreeSelect.vue'
 import { FUNCTION_DASHBOARD_CONF } from './config'
-import { REPORT_CENTER_ID, ROOT_GROUP_ID, normalizeDashManageNodes, toStoreGroupId } from './dashManage'
+import { normalizeDashManageNodes, REPORT_CENTER_ID, ROOT_GROUP_ID, toStoreGroupId } from './dashManage'
 
 defineOptions({ name: 'VisDashboards' })
 
@@ -28,6 +29,18 @@ const treeData = ref<DashManageNode[]>([])
 const treeLoading = ref(false)
 const actionLoading = ref(false)
 const selectedId = ref('')
+const {
+  containerRef: layoutRef,
+  panelWidth: explorerWidth,
+  resizing: explorerResizing,
+  onResizeStart: onExplorerResizeStart,
+} = useResizablePanel({
+  storageKey: 'NA:vis-dashboard-explorer-width',
+  defaultWidth: 292,
+  minWidth: 220,
+  maxWidth: 520,
+  minRemainingWidth: 540,
+})
 
 const groupDialogOpen = ref(false)
 const groupDialogTitle = ref('新增分组')
@@ -469,14 +482,28 @@ onMounted(() => {
       :provide-scope="false"
       class="dashboards-page"
     >
-      <div class="dashboards-layout">
-        <DashExplorerTree
-          ref="explorerRef"
-          :data="treeData"
-          :loading="treeLoading"
-          :can-write="canWrite"
-          @select="onTreeSelect"
-          @command="onTreeCommand"
+      <div
+        ref="layoutRef"
+        class="dashboards-layout"
+        :class="{ 'is-resizing': explorerResizing }"
+      >
+        <aside
+          class="dashboards-sidebar"
+          :style="{ width: `${explorerWidth}px` }"
+        >
+          <DashExplorerTree
+            ref="explorerRef"
+            :data="treeData"
+            :loading="treeLoading"
+            :can-write="canWrite"
+            @select="onTreeSelect"
+            @command="onTreeCommand"
+          />
+        </aside>
+        <div
+          class="resize-handle resize-handle--col resize-handle--split"
+          title="拖动调整宽度"
+          @mousedown="onExplorerResizeStart"
         />
         <main class="dashboards-main">
           <DashDesigner
@@ -641,6 +668,17 @@ onMounted(() => {
   height: 100%;
   min-height: 0;
   overflow: hidden;
+
+  &.is-resizing {
+    cursor: col-resize;
+  }
+}
+
+.dashboards-sidebar {
+  position: relative;
+  flex: 0 0 auto;
+  min-width: 0;
+  height: 100%;
 }
 
 .dashboards-main {

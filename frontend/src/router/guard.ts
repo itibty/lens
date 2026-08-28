@@ -43,6 +43,27 @@ function redirectIfShell(to: RouteLocationNormalized, menuStore: ReturnType<type
   return { path, replace: true }
 }
 
+async function bootstrapSession(
+  accountStore: ReturnType<typeof useAccountStore>,
+  menuStore: ReturnType<typeof useMenuStore>,
+  to: RouteLocationNormalized,
+) {
+  await accountStore.fetchUserInfo()
+  await menuStore.fetchUserMenus()
+  menuStore.syncActiveRootFromRoute(to)
+  if (!accountStore.hasUserInfo())
+    throw new Error('获取用户信息失败')
+}
+
+function stayOnLogin(
+  accountStore: ReturnType<typeof useAccountStore>,
+  menuStore: ReturnType<typeof useMenuStore>,
+) {
+  accountStore.resetUserInfo()
+  menuStore.clearMenus()
+  return true
+}
+
 export function setupRouteGuard() {
   // 无需认证白名单
   const NO_AUTH_PATHS = ['/404', '/url-frame']
@@ -54,15 +75,21 @@ export function setupRouteGuard() {
     const { path } = to
     const accessToken = storageUtil.get(CacheKeyNameEnum.accessToken)
     if (path === LOGIN_PATH) {
-      if (accessToken) {
-        if (accountStore.hasUserInfo()) {
-          const home = menuStore.resolveHomeUrl()
-          return { path: home || DEFAULT_HOME_PATH }
-        }
-        return { path: '/' }
+      if (!accessToken)
+        return true
+      if (accountStore.hasUserInfo()) {
+        const home = menuStore.resolveHomeUrl()
+        return { path: home || DEFAULT_HOME_PATH }
       }
-
-      return true
+      try {
+        await bootstrapSession(accountStore, menuStore, to)
+        const home = menuStore.resolveHomeUrl()
+        return { path: home || DEFAULT_HOME_PATH }
+      }
+      catch {
+        // 后端不可用时留在登录页，避免踢回 / 再失败白屏
+        return stayOnLogin(accountStore, menuStore)
+      }
     }
     else if (NO_AUTH_PATHS.includes(path)) {
       return true
@@ -75,23 +102,13 @@ export function setupRouteGuard() {
         }
         else {
           try {
-            await accountStore.fetchUserInfo() // 获取用户信息
-            await menuStore.fetchUserMenus() // 获取用户菜单
-            menuStore.syncActiveRootFromRoute(to)
-            await menuStore.ensureReportTree()
-            if (!accountStore.hasUserInfo()) {
-              throw new Error('获取用户信息失败')
-            }
+            await bootstrapSession(accountStore, menuStore, to)
             return redirectIfShell(to, menuStore) ?? { ...to, replace: true }
           }
           catch {
-            const currentToken = storageUtil.get(CacheKeyNameEnum.accessToken)
-            if (!currentToken) {
-              return getLoginLocation(to.fullPath)
-            }
             accountStore.resetUserInfo()
             menuStore.clearMenus()
-            return false
+            return getLoginLocation(to.fullPath)
           }
         }
       }

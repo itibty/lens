@@ -27,7 +27,7 @@ export const DASH_THEME_PRESETS: DashThemePreset[] = [
       canvas: '#f3f4f6',
       card: '#ffffff',
       title: '#1f2329',
-      accent: '#3370ff',
+      accent: '#0052d9',
       border: '#e5e7eb',
       btnBg: '#ffffff',
       radius: 12,

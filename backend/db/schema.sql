@@ -133,6 +133,7 @@ CREATE TABLE `vis_dataset_field` (
   `field` varchar(64) NOT NULL,
   `data_type` varchar(16) NOT NULL COMMENT 'STRING|NUMBER|DATE|DATETIME',
   `suggest_role` varchar(16) NOT NULL COMMENT 'DIMENSION|METRIC',
+  `remark` varchar(200) DEFAULT NULL COMMENT '补充说明',
   `sort_num` int DEFAULT 0,
   `status` char(3) NOT NULL DEFAULT 'EBL',
   `create_at` bigint DEFAULT NULL,
@@ -207,14 +208,13 @@ CREATE TABLE `vis_dashboard_card` (
 -- 菜单 id 对齐路由 meta.menuId。报表中心是虚拟根，不入库。
 -- 角色只关联 FUNC；有任意功能点才露出上级 MENU。
 INSERT INTO `sys_menu` (`id`, `pid`, `menu_name`, `menu_type`, `route_path`, `icon`, `sort_num`, `perm_code`, `status`) VALUES
-(1, 0, '系统', 'MENU', NULL, 'settings-3-line', 90, NULL, 'EBL'),
-(2, 1, '用户管理', 'MENU', '/sys/users', 'user-3-line', 10, NULL, 'EBL'),
-(3, 1, '角色管理', 'MENU', '/sys/roles', 'group-3-line', 20, NULL, 'EBL'),
-(4, 1, '菜单管理', 'MENU', '/sys/menus', 'menu-line', 30, NULL, 'EBL'),
-(16, 0, '可视化', 'MENU', NULL, 'chart-bar-line', 10, NULL, 'EBL'),
-(11, 16, '数据集', 'MENU', '/vis/datasets', 'storage-line', 10, NULL, 'EBL'),
-(17, 16, '卡片', 'MENU', '/vis/cards', 'layout-4-line', 20, NULL, 'EBL'),
-(18, 16, '看板', 'MENU', '/vis/dashboards', 'dashboard-3-line', 30, NULL, 'EBL'),
+(16, 0, '后台管理', 'MENU', NULL, 'settings-3-line', 10, NULL, 'EBL'),
+(17, 16, '卡片', 'MENU', '/vis/cards', 'layout-4-line', 10, NULL, 'EBL'),
+(18, 16, '看板', 'MENU', '/vis/dashboards', 'dashboard-3-line', 20, NULL, 'EBL'),
+(11, 16, '数据集', 'MENU', '/vis/datasets', 'storage-line', 30, NULL, 'EBL'),
+(4, 16, '菜单', 'MENU', '/sys/menus', 'menu-line', 40, NULL, 'EBL'),
+(3, 16, '角色', 'MENU', '/sys/roles', 'group-3-line', 50, NULL, 'EBL'),
+(2, 16, '用户', 'MENU', '/sys/users', 'user-3-line', 60, NULL, 'EBL'),
 (200, 2, '查看', 'FUNC', NULL, NULL, 1, 'sys:user:query', 'EBL'),
 (201, 2, '编辑', 'FUNC', NULL, NULL, 2, 'sys:user:write', 'EBL'),
 (300, 3, '查看', 'FUNC', NULL, NULL, 1, 'sys:role:query', 'EBL'),
@@ -227,8 +227,8 @@ INSERT INTO `sys_menu` (`id`, `pid`, `menu_name`, `menu_type`, `route_path`, `ic
 
 INSERT INTO `vis_dash_group` (`id`, `pid`, `group_name`, `icon`, `sort_num`, `status`) VALUES
 (9601, 0, '经营分析', 'board-line', 10, 'EBL'),
-(9602, 0, '查询筛选', 'search-line', 20, 'EBL'),
-(9603, 0, '图表示例', 'chart-pie-line', 30, 'EBL');
+(9602, 0, '销售运营', 'chart-line-line', 20, 'EBL'),
+(9603, 0, '商品洞察', 'box-2-line', 30, 'EBL');
 
 INSERT INTO `sys_role` (`id`, `role_name`, `role_code`, `role_note`, `status`, `create_at`, `create_by`)
 VALUES (1, '超级管理员', 'admin', '全部权限', 'EBL', 0, 0);

@@ -10,7 +10,7 @@ export default [
     name: 'Vis',
     meta: {
       menuId: '16',
-      title: '可视化',
+      title: '后台管理',
     },
     children: [
       {

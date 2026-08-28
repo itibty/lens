@@ -1,9 +1,23 @@
 server:
   port: 8080
+  compression:
+    enabled: true
+    min-response-size: 2KB
 
 spring:
   application:
     name: lens
+  web:
+    resources:
+      chain:
+        enabled: true
+        compressed: true
+      static-locations:
+        - classpath:/META-INF/resources/
+        - classpath:/resources/
+        - classpath:/static/
+        - classpath:/public/
+        - file:./ui/
   datasource:
     url: jdbc:mysql://127.0.0.1:3306/lens?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
     username: root

@@ -35,7 +35,8 @@ public final class SqlFieldCatalog {
                         .setField(column.getField())
                         .setJdbcType(column.getJdbcType())
                         .setDataType(exist.getDataType())
-                        .setSuggestRole(exist.getSuggestRole()));
+                        .setSuggestRole(exist.getSuggestRole())
+                        .setRemark(exist.getRemark()));
             } else {
                 result.add(column);
             }

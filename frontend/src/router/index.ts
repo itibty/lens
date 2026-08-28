@@ -66,9 +66,7 @@ export const routes = [
       },
       {
         path: '/account',
-        name: 'Account',
-        component: () => import('@/views/account/index.vue'),
-        meta: { title: '个人中心' },
+        redirect: '/index',
       },
       {
         path: '/url-frame',

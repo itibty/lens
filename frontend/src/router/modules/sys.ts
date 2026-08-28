@@ -9,8 +9,8 @@ export default [
     component: Layout,
     name: 'Sys',
     meta: {
-      menuId: '1',
-      title: '系统',
+      menuId: '16',
+      title: '后台管理',
     },
     children: [
       {

@@ -6,6 +6,7 @@ import { delMenu, listMenuTree } from '@/apis/admin/menu'
 import MenuIcon from '@/components/MenuIcon.vue'
 import { menuIconClass } from '@/core/menuIcons'
 import { SYS_MENU_WRITE } from '@/core/permCodes'
+import { useResizablePanel } from '@/hooks/resizablePanel'
 import { useAccountStore } from '@/stores/modules/account'
 import { useMenuStore } from '@/stores/modules/menu'
 import { showConfirm, showToast } from '@/utils/index'
@@ -32,6 +33,18 @@ const treeRef = ref<InstanceType<typeof ElTree>>()
 const menuStore = useMenuStore()
 const { hasFunction } = useAccountStore()
 const canWrite = hasFunction(SYS_MENU_WRITE)
+const {
+  containerRef: menuAdminRef,
+  panelWidth: treeWidth,
+  resizing: treeResizing,
+  onResizeStart: onTreeResizeStart,
+} = useResizablePanel({
+  storageKey: 'NA:sys-menu-tree-width',
+  defaultWidth: 292,
+  minWidth: 220,
+  maxWidth: 520,
+  minRemainingWidth: 540,
+})
 
 const treeRecords = computed(() => stripFuncs(records.value))
 const selectedNode = computed(() => findNode(records.value, selectedId.value))
@@ -139,8 +152,16 @@ onMounted(() => fetchData())
     :scroll-content="false"
     :provide-scope="false"
   >
-    <div v-loading="loading" class="menu-admin">
-      <aside class="menu-admin__tree">
+    <div
+      ref="menuAdminRef"
+      v-loading="loading"
+      class="menu-admin"
+      :class="{ 'is-resizing': treeResizing }"
+    >
+      <aside
+        class="menu-admin__tree"
+        :style="{ width: `${treeWidth}px` }"
+      >
         <div class="menu-admin__head">
           <el-input
             v-model="keyword"
@@ -228,6 +249,11 @@ onMounted(() => fetchData())
           </div>
         </el-scrollbar>
       </aside>
+      <div
+        class="resize-handle resize-handle--col resize-handle--split"
+        title="拖动调整宽度"
+        @mousedown="onTreeResizeStart"
+      />
       <section class="menu-admin__main">
         <template v-if="selectedNode">
           <el-scrollbar class="menu-admin__body">
@@ -258,17 +284,21 @@ onMounted(() => fetchData())
   height: 100%;
   min-height: 0;
   overflow: hidden;
+
+  &.is-resizing {
+    cursor: col-resize;
+  }
 }
 
 .menu-admin__tree {
+  position: relative;
   display: flex;
-  flex: 0 0 292px;
+  flex: 0 0 auto;
   flex-direction: column;
-  width: 292px;
+  min-width: 0;
   min-height: 0;
   padding: 12px;
   box-sizing: border-box;
-  border-right: 1px solid var(--el-border-color-lighter);
   background: var(--el-bg-color);
 }
 

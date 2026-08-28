@@ -232,7 +232,7 @@ function onResizePointerDown(corner: 'nw' | 'ne' | 'sw' | 'se', event: PointerEv
 .dash-group.is-editable:focus-within,
 .dash-group.is-resizing,
 .dash-group.is-editable:has(.vis-card-view.is-menu-open) {
-  outline: 3px solid var(--dash-accent, #3370ff);
+  outline: 3px solid var(--dash-accent, #0052d9);
   outline-offset: -1px;
 }
 
@@ -295,7 +295,7 @@ function onResizePointerDown(corner: 'nw' | 'ne' | 'sw' | 'se', event: PointerEv
   height: 16px;
   border: 2px solid #fff;
   border-radius: 50%;
-  background: var(--dash-accent, #3370ff);
+  background: var(--dash-accent, #0052d9);
   touch-action: none;
   pointer-events: none;
 

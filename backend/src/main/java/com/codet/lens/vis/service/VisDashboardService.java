@@ -13,6 +13,7 @@ import com.codet.lens.common.ResultException;
 import com.codet.lens.common.ConvertUtil;
 import com.codet.lens.sys.entity.SysRoleDashboard;
 import com.codet.lens.sys.mapper.SysRoleDashboardMapper;
+import com.codet.lens.sys.service.PermissionTokenService;
 import com.codet.lens.vis.core.dash.VisDashWidgets;
 import com.codet.lens.vis.dto.dash.QueryVisDashboardRequest;
 import com.codet.lens.vis.dto.dash.VisDashboardInfo;
@@ -50,6 +51,7 @@ public class VisDashboardService {
     private final VisDashGroupMapper dashGroupMapper;
     private final VisDashGroupService dashGroupService;
     private final VisDashboardAccess dashboardAccess;
+    private final PermissionTokenService permissionTokenService;
 
     public PageResponse<VisDashboardInfo> query(QueryVisDashboardRequest request) {
         LambdaQueryWrapper<VisDashboard> wrapper = Wrappers.<VisDashboard>lambdaQuery()
@@ -154,10 +156,12 @@ public class VisDashboardService {
         patch.setStatus(FieldConst.EBL.equals(row.getStatus()) ? FieldConst.DBL : FieldConst.EBL);
         patch.modifyCallback();
         visDashboardMapper.updateById(patch);
+        permissionTokenService.invalidateDashboardUsers(dashboardId);
     }
 
     @Transactional(rollbackFor = Exception.class)
     public void delete(List<Long> ids) {
+        permissionTokenService.invalidateDashboardUsers(ids);
         VisDashboard entity = new VisDashboard();
         entity.setStatus(FieldConst.DEL);
         entity.modifyCallback();

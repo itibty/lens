@@ -15,7 +15,7 @@ import MenuItem from './MenuItem.vue'
 const appStore = useAppStore()
 const menuStore = useMenuStore()
 const { appSetting } = storeToRefs(appStore)
-const { menus, filterKeyword, activeRootId, reportTreeLoading } = storeToRefs(menuStore)
+const { menus, filterKeyword, activeRootId } = storeToRefs(menuStore)
 const route = useRoute()
 
 const activeMenu = computed<string>(() => {
@@ -63,7 +63,7 @@ const openedIndexes = computed(() => {
     <div v-if="showSidebarFilter" class="filter-wrap">
       <MenuFilter />
     </div>
-    <div v-spinner="reportTreeLoading" class="menu-wrap">
+    <div class="menu-wrap">
       <el-scrollbar>
         <el-menu
           :key="filterKeyword || activeRootId"
@@ -105,11 +105,18 @@ const openedIndexes = computed(() => {
   :deep(.sidebar) {
     border-right: none !important;
 
+    .el-menu-item,
+    .el-sub-menu__title {
+      min-width: 0;
+    }
+
     .title-text {
-      line-height: 1.1;
-      // 菜单名支持换行
-      // white-space: normal; //折叠菜单UI有异常
+      display: block;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
       white-space: nowrap;
+      line-height: 1.3;
     }
 
     .icon {

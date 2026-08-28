@@ -1,5 +1,5 @@
 /**
- * DS SQL 输出面板：结果解析、错误提取、Tab 数据结构
+ * DS SQL 输出面板：结果解析、错误提取
  */
 import type { ColumnInfo } from '@/components/table/ListTable.vue'
 
@@ -9,10 +9,9 @@ export interface SqlOutputErrorInfo {
   fallback?: string
 }
 
-/** 单次运行结果（由 edit 追加为 Tab） */
-export interface SqlOutputTab {
+/** 最近一次运行结果 */
+export interface SqlOutputRun {
   id: string
-  title: string
   errorInfo?: SqlOutputErrorInfo
   debugInfo?: VIS.DebugSqlResponse
   columns: ColumnInfo[]
@@ -22,12 +21,6 @@ export interface SqlOutputTab {
   /** 这次运行送出的参数原文 */
   sourceParams?: string
 }
-
-/** 结果 Tab 数量上限（超出时阻断并提示，不自动丢弃） */
-export const SQL_OUTPUT_TAB_LIMIT = 10
-
-export const SQL_OUTPUT_TAB_LIMIT_TIP
-  = `结果最多保留 ${SQL_OUTPUT_TAB_LIMIT} 个 Tab，请先关闭后再试`
 
 /** 从业务失败 / HTTP 失败包体中取出 DebugSqlResponse */
 export function pickDebugPayload(source: unknown): VIS.DebugSqlResponse | undefined {
@@ -84,14 +77,14 @@ export function buildExecTableRet(data?: VIS.DebugSqlResponse): {
 }
 
 /**
- * 将运行响应整理为 Tab 内容（不含 id / title，由调用方编号）
+ * 将运行响应整理为输出内容（不含 id，由调用方编号）
  * @param data 接口成功返回体
  * @param errorInfo HTTP/网络层失败信息
  */
-export function buildOutputTabPayload(
+export function buildOutputRun(
   data?: VIS.DebugSqlResponse,
   errorInfo?: SqlOutputErrorInfo,
-): Omit<SqlOutputTab, 'id' | 'title'> {
+): Omit<SqlOutputRun, 'id'> {
   if (errorInfo) {
     return {
       errorInfo,
@@ -120,47 +113,41 @@ export function buildOutputTabPayload(
   }
 }
 
-/** 输出栏里最后一次「运行」（按追加顺序） */
-export function latestRunTab(tabs: SqlOutputTab[]): SqlOutputTab | undefined {
-  return tabs[tabs.length - 1]
-}
-
 export function isSuccessfulRun(
-  tab?: SqlOutputTab,
-): tab is SqlOutputTab & { debugInfo: VIS.DebugSqlResponse } {
-  return !!(tab && !tab.errorInfo && tab.debugInfo)
+  run?: SqlOutputRun | null,
+): run is SqlOutputRun & { debugInfo: VIS.DebugSqlResponse } {
+  return !!(run && !run.errorInfo && run.debugInfo)
 }
 
 export function runMatchesDraft(
-  tab: SqlOutputTab | undefined,
+  run: SqlOutputRun | undefined,
   sql: string,
   params: string,
 ): boolean {
-  if (!tab)
+  if (!run)
     return false
-  return tab.sourceSql === sql && (tab.sourceParams ?? '{}') === (params || '{}')
+  return run.sourceSql === sql && (run.sourceParams ?? '{}') === (params || '{}')
 }
 
 export type CurrentRun
-  = SqlOutputTab & { debugInfo: VIS.DebugSqlResponse }
+  = SqlOutputRun & { debugInfo: VIS.DebugSqlResponse }
 
 export type SaveGate
-  = | { ok: true, tab?: CurrentRun }
+  = | { ok: true, run?: CurrentRun }
     | { ok: false, reason: string }
 
 /** 必须先跑通当前稿才能保存 */
 export function resolveSaveGate(
-  tabs: SqlOutputTab[],
+  run: SqlOutputRun | null | undefined,
   draft: { sqlId?: string, sql: string, params: string },
 ): SaveGate {
   if (!draft.sqlId)
     return { ok: false, reason: '数据集不存在，无法保存' }
 
-  const tab = latestRunTab(tabs)
-  if (isSuccessfulRun(tab) && runMatchesDraft(tab, draft.sql, draft.params))
-    return { ok: true, tab }
+  if (isSuccessfulRun(run) && runMatchesDraft(run, draft.sql, draft.params))
+    return { ok: true, run }
 
-  if (!isSuccessfulRun(tab))
+  if (!isSuccessfulRun(run))
     return { ok: false, reason: '请先运行成功后再保存' }
   return { ok: false, reason: '脚本或参数已修改，请重新运行后再保存' }
 }

@@ -20,7 +20,7 @@ export const HEATMAP_COLOR_PRESETS: ChartPalettePreset[] = [
   {
     id: 'DEFAULT',
     label: '默认',
-    palette: ['#D9E7FF', '#1664FF'],
+    palette: ['#D9E7FF', '#0052D9'],
   },
   {
     id: 'GRADIENT',
@@ -94,7 +94,7 @@ export function pieGradientOrdinal(
 
 /**
  * 几何图系列色。
- * DEFAULT 只作预览，渲染不写 spec.color，沿用 VChart 官方色。
+ * DEFAULT 使用品牌主色开头的默认系列色。
  * CONTRAST = Tableau 10 前 8 色；COLORBLIND = Okabe-Ito（不含黑）。
  * GRADIENT / WARM_GRADIENT 仅饼图 / 词云 / 矩形树图：按名次均分色带。热力图用 HEATMAP_COLOR_PRESETS。
  */
@@ -102,7 +102,7 @@ export const CHART_SERIES_PALETTES: ChartPalettePreset[] = [
   {
     id: 'DEFAULT',
     label: '默认',
-    palette: ['#1664FF', '#1AC6FF', '#FF8A00', '#3CC780', '#7442D4', '#FFC400', '#304D77', '#B48DEB'],
+    palette: ['#0052D9', '#1AC6FF', '#FF8A00', '#3CC780', '#7442D4', '#FFC400', '#304D77', '#B48DEB'],
   },
   {
     id: 'GRADIENT',
@@ -173,10 +173,10 @@ export function resolveHeatmapColorRange(visual?: Pick<VisVisualConfig, 'chartTh
     ?? HEATMAP_COLOR_PRESETS[0].palette
 }
 
-/** DEFAULT / 名次渐变 返回 undefined；渐变由饼图 / 词云按名次写 ordinal */
+/** 名次渐变返回 undefined；饼图 / 词云按名次写 ordinal。 */
 export function resolveChartSeriesColors(visual?: Pick<VisVisualConfig, 'chartTheme'>): string[] | undefined {
   const id = resolveChartThemeId(visual)
-  if (id === DEFAULT_CHART_THEME || VALUE_GRADIENT_IDS.has(id))
+  if (VALUE_GRADIENT_IDS.has(id))
     return undefined
   return SERIES_MAP[id]
 }

@@ -28,7 +28,7 @@ const menuIndex = computed(() => props.menu.url || props.menu.id)
       <el-icon v-if="menuIconClass(menu.icon)" :size="22">
         <MenuIcon :icon="menu.icon" class-name="icon" />
       </el-icon>
-      <span class="title-text">{{ menu.name }}</span>
+      <span class="title-text" :title="menu.name">{{ menu.name }}</span>
     </template>
     <template v-for="item in menu.children" :key="item.id">
       <MenuItem v-if="!item.hidden" :menu="item" />
@@ -39,7 +39,7 @@ const menuIndex = computed(() => props.menu.url || props.menu.id)
       <MenuIcon :icon="menu.icon" class-name="icon" />
     </el-icon>
     <template #title>
-      <span class="title-text">{{ menu.name }}</span>
+      <span class="title-text" :title="menu.name">{{ menu.name }}</span>
       <el-tag
         v-if="menu.tag"
         class="absolute right-10px"

@@ -1,13 +1,13 @@
 // nprogress 页面进度条
 #nprogress {
   .bar {
-    background: #f9e72c !important; // #0049B0
+    background: var(--el-color-primary-light-3) !important;
     height: 2px;
   }
 
   .peg {
     box-shadow:
-      0 0 10px #f9e72c,
-      0 0 5px #f9e72c !important;
+      0 0 10px var(--el-color-primary-light-3),
+      0 0 5px var(--el-color-primary-light-3) !important;
   }
 }

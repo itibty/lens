@@ -107,20 +107,20 @@ public class RoleAdminService {
         require(req.getRoleId());
         roleDashboardMapper.delete(Wrappers.<SysRoleDashboard>lambdaQuery()
                 .eq(SysRoleDashboard::getRoleId, req.getRoleId()));
-        if (req.getDashboardIds() == null || req.getDashboardIds().isEmpty()) {
-            return;
-        }
-        long now = System.currentTimeMillis();
-        for (Long dashboardId : req.getDashboardIds()) {
-            if (dashboardId == null) {
-                continue;
+        if (req.getDashboardIds() != null) {
+            long now = System.currentTimeMillis();
+            for (Long dashboardId : req.getDashboardIds()) {
+                if (dashboardId == null) {
+                    continue;
+                }
+                SysRoleDashboard link = new SysRoleDashboard();
+                link.setRoleId(req.getRoleId());
+                link.setDashboardId(dashboardId);
+                link.setCreateAt(now);
+                roleDashboardMapper.insert(link);
             }
-            SysRoleDashboard link = new SysRoleDashboard();
-            link.setRoleId(req.getRoleId());
-            link.setDashboardId(dashboardId);
-            link.setCreateAt(now);
-            roleDashboardMapper.insert(link);
         }
+        permissionTokenService.invalidateRoleUsers(req.getRoleId());
     }
 
     public void toggle(Long roleId) {
