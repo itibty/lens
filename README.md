@@ -4,6 +4,8 @@
 
 Lens is a lightweight BI platform for defining datasets, designing cards and dashboards, and sharing reports with business users by role.
 
+Product walkthrough: [docs/product.md](docs/product.md).
+
 ## Features
 
 - Connect data sources and define read-only datasets with SQL
