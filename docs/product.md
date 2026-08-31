@@ -1,6 +1,6 @@
 # Lens
 
-SQL datasets → cards → dashboards. Demo: Qiming Retail orders.
+SQL datasets → cards → dashboards.
 
 ## Dataset
 
@@ -30,7 +30,7 @@ Trend and pivot:
 
 ## Dashboard
 
-Drop cards on a grid. Global filters (region, channel) apply to the whole page.
+Drop cards on a grid. Global filters apply to the whole page.
 
 ![Designer](images/10-dashboard-designer.png)
 
@@ -40,6 +40,6 @@ Drop cards on a grid. Global filters (region, channel) apply to the whole page.
 
 Business view of the same cards. Filters only — no design chrome.
 
-![Cockpit](images/13-report-center.png)
+![Report](images/13-report-center.png)
 
-![Products](images/14-report-product.png)
+![Another report](images/14-report-product.png)
