@@ -7,6 +7,7 @@ import com.codet.lens.sys.mapper.SysMenuMapper;
 import com.codet.lens.sys.mapper.SysRoleMenuMapper;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -35,6 +36,20 @@ class MenuAdminServiceTest {
 
         service.save(saveRequest("same:code", "只改名称"));
 
+        verify(permissionTokenService, never()).invalidateMenuUsers(100L);
+    }
+
+    @Test
+    void preservesDisabledStatusWhenEditOmitsStatus() {
+        SysMenu menu = functionMenu("same:code");
+        menu.setStatus(FieldConst.DBL);
+        when(menuMapper.selectById(100L)).thenReturn(menu);
+        SaveMenuRequest request = saveRequest("same:code", "只改名称");
+        request.setStatus(null);
+
+        service.save(request);
+
+        assertEquals(FieldConst.DBL, menu.getStatus());
         verify(permissionTokenService, never()).invalidateMenuUsers(100L);
     }
 

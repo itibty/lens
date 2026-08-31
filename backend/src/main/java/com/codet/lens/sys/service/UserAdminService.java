@@ -79,9 +79,13 @@ public class UserAdminService {
     @Transactional
     public Long save(SaveUserRequest req) {
         SysUser user = req.getId() == null ? new SysUser() : require(req.getId());
+        String previousStatus = user.getStatus();
+        String nextStatus = StrUtil.isBlank(req.getStatus())
+                ? (req.getId() == null ? FieldConst.EBL : previousStatus)
+                : req.getStatus();
         user.setUsername(req.getUsername());
         user.setRealName(req.getRealName());
-        user.setStatus(StrUtil.blankToDefault(req.getStatus(), FieldConst.EBL));
+        user.setStatus(nextStatus);
         if (req.getId() == null) {
             if (StrUtil.isBlank(req.getPassword())) {
                 throw ResultException.fail("密码不能为空");
@@ -95,7 +99,7 @@ public class UserAdminService {
             }
             user.modifyCallback();
             userMapper.updateById(user);
-            if (StrUtil.isNotBlank(req.getPassword()) || FieldConst.DBL.equals(user.getStatus())) {
+            if (StrUtil.isNotBlank(req.getPassword()) || !Objects.equals(previousStatus, nextStatus)) {
                 tokenInvalidateService.invalidate(user.getId());
             }
         }

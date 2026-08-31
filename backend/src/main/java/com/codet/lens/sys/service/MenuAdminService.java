@@ -68,7 +68,9 @@ public class MenuAdminService {
         }
         SysMenu menu = req.getId() == null ? new SysMenu() : require(req.getId());
         String nextPermCode = FieldConst.MENU.equals(req.getMenuType()) ? null : req.getPermCode();
-        String nextStatus = StrUtil.blankToDefault(req.getStatus(), FieldConst.EBL);
+        String nextStatus = StrUtil.isBlank(req.getStatus())
+                ? (req.getId() == null ? FieldConst.EBL : menu.getStatus())
+                : req.getStatus();
         boolean authChanged = req.getId() != null
                 && (!Objects.equals(menu.getMenuType(), req.getMenuType())
                 || !Objects.equals(menu.getPermCode(), nextPermCode)

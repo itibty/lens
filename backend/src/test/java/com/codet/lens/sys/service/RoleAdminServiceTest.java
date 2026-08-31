@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -43,6 +44,20 @@ class RoleAdminServiceTest {
 
         service.save(saveRequest("same-code", "只改名称"));
 
+        verify(permissionTokenService, never()).invalidateRoleUsers(10L);
+    }
+
+    @Test
+    void preservesDisabledStatusWhenEditOmitsStatus() {
+        SysRole role = role("same-code");
+        role.setStatus(FieldConst.DBL);
+        when(roleMapper.selectById(10L)).thenReturn(role);
+        SaveRoleRequest request = saveRequest("same-code", "只改名称");
+        request.setStatus(null);
+
+        service.save(request);
+
+        assertEquals(FieldConst.DBL, role.getStatus());
         verify(permissionTokenService, never()).invalidateRoleUsers(10L);
     }
 
