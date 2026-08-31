@@ -3,6 +3,7 @@
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
+DROP TABLE IF EXISTS `sys_role_dashboard`;
 DROP TABLE IF EXISTS `sys_role_menu`;
 DROP TABLE IF EXISTS `sys_user_role`;
 DROP TABLE IF EXISTS `sys_menu`;
@@ -11,6 +12,7 @@ DROP TABLE IF EXISTS `sys_user`;
 DROP TABLE IF EXISTS `vis_dashboard_card`;
 DROP TABLE IF EXISTS `vis_card`;
 DROP TABLE IF EXISTS `vis_dashboard`;
+DROP TABLE IF EXISTS `vis_dash_group`;
 DROP TABLE IF EXISTS `vis_dataset_field`;
 DROP TABLE IF EXISTS `vis_dataset`;
 DROP TABLE IF EXISTS `vis_datasource`;
