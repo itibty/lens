@@ -23,6 +23,7 @@
         <hutool.version>5.8.38</hutool.version>
         <activerecord.version>5.2.2</activerecord.version>
         <easyexcel.version>4.0.3</easyexcel.version>
+        <owasp-html-sanitizer.version>20260313.1</owasp-html-sanitizer.version>
     </properties>
 
     <dependencies>
@@ -84,6 +85,11 @@
             <groupId>com.alibaba</groupId>
             <artifactId>easyexcel</artifactId>
             <version>${easyexcel.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.googlecode.owasp-java-html-sanitizer</groupId>
+            <artifactId>owasp-java-html-sanitizer</artifactId>
+            <version>${owasp-html-sanitizer.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springdoc</groupId>

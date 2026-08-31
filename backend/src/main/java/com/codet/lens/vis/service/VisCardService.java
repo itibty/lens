@@ -11,6 +11,7 @@ import com.codet.lens.common.FieldConst;
 import com.codet.lens.common.ResultEnum;
 import com.codet.lens.common.ResultException;
 import com.codet.lens.common.ConvertUtil;
+import com.codet.lens.vis.core.card.RichTextSanitizer;
 import com.codet.lens.vis.dto.card.QueryVisCardRequest;
 import com.codet.lens.vis.dto.card.VisCardInfo;
 import com.codet.lens.vis.dto.card.VisCardSaveRequest;
@@ -107,6 +108,9 @@ public class VisCardService {
         VisCard entity = BeanUtil.copyProperties(request, VisCard.class);
         entity.setChartType(type.getCode());
         entity.setCardName(entity.getCardName().trim());
+        if (type == ChartTypeEnum.RICH_TEXT) {
+            entity.setVisualJson(RichTextSanitizer.sanitizeVisualJson(entity.getVisualJson()));
+        }
         if (!type.needsDataset()) {
             if (entity.getDatasetId() == null) {
                 entity.setDatasetId(0L);
