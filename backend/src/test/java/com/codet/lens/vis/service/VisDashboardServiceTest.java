@@ -13,6 +13,9 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -21,10 +24,11 @@ import static org.mockito.Mockito.when;
 class VisDashboardServiceTest {
 
     private final VisDashboardMapper dashboardMapper = mock(VisDashboardMapper.class);
+    private final VisDashboardCardMapper dashboardCardMapper = mock(VisDashboardCardMapper.class);
     private final PermissionTokenService permissionTokenService = mock(PermissionTokenService.class);
     private final VisDashboardService service = new VisDashboardService(
             dashboardMapper,
-            mock(VisDashboardCardMapper.class),
+            dashboardCardMapper,
             mock(VisCardMapper.class),
             mock(SysRoleDashboardMapper.class),
             mock(VisDashGroupMapper.class),
@@ -58,6 +62,7 @@ class VisDashboardServiceTest {
         request.setDashName("新名称");
         request.setStatus(FieldConst.EBL);
         request.setGroupId(0L);
+        request.setConfigJson("{\"widgets\":[]}");
         request.setCards(List.of());
 
         service.save(request);
@@ -89,11 +94,28 @@ class VisDashboardServiceTest {
         request.setDashName("经营看板");
         request.setStatus(FieldConst.EBL);
         request.setGroupId(0L);
+        request.setConfigJson("{\"widgets\":[]}");
         request.setCards(List.of());
 
         service.save(request);
 
         verify(permissionTokenService, never()).invalidateDashboardUsers(9501L);
+        verify(dashboardCardMapper).delete(any());
+    }
+
+    @Test
+    void rejectsFullSaveWithoutWidgetsBeforeClearingAssociations() {
+        VisDashboardSaveRequest request = new VisDashboardSaveRequest();
+        request.setDashName("经营看板");
+        request.setStatus(FieldConst.EBL);
+        request.setConfigJson("{}");
+        request.setCards(List.of());
+
+        var error = assertThrows(RuntimeException.class, () -> service.save(request));
+
+        assertEquals("看板配置必须包含 widgets 数组", error.getMessage());
+        verify(dashboardCardMapper, never()).delete(any());
+        verify(dashboardMapper, never()).insert(any(VisDashboard.class));
     }
 
     private static VisDashboard dashboard(Long id, String status) {

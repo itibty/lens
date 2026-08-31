@@ -8,7 +8,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -31,7 +30,7 @@ public final class VisDashWidgets {
 
     public static List<Long> collectCardIds(String configJson) {
         if (StrUtil.isBlank(configJson)) {
-            return Collections.emptyList();
+            throw fail("看板配置不能为空");
         }
         JsonNode root;
         try {
@@ -40,14 +39,14 @@ public final class VisDashWidgets {
             throw fail("看板配置不是合法 JSON");
         }
         if (root == null || root.isNull()) {
-            return Collections.emptyList();
+            throw fail("看板配置必须是对象");
         }
         if (!root.isObject()) {
             throw fail("看板配置必须是对象");
         }
         JsonNode widgets = root.get("widgets");
         if (widgets == null || widgets.isNull()) {
-            return Collections.emptyList();
+            throw fail("看板配置必须包含 widgets 数组");
         }
         if (!widgets.isArray()) {
             throw fail("widgets 必须是数组");
