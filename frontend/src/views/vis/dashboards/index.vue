@@ -25,6 +25,8 @@ const canWrite = hasFunction(FUNCTION_DASHBOARD_CONF)
 
 const designerRef = ref<DashDesignerInstance>()
 const explorerRef = ref<DashExplorerTreeInstance>()
+const route = useRoute()
+const router = useRouter()
 const treeData = ref<DashManageNode[]>([])
 const treeLoading = ref(false)
 const actionLoading = ref(false)
@@ -114,6 +116,22 @@ function toGroupTree(nodes: DashManageNode[]): VIS.DashGroupInfo[] {
 
 const groupTree = computed(() => toGroupTree(treeData.value))
 
+function routeDashboardId() {
+  const raw = route.query.id
+  return String(Array.isArray(raw) ? raw[0] || '' : raw || '')
+}
+
+async function replaceRouteDashboard(id: string) {
+  if (routeDashboardId() === id)
+    return
+  const query = { ...route.query }
+  if (id)
+    query.id = id
+  else
+    delete query.id
+  await router.replace({ query })
+}
+
 function setSelected(id: string) {
   selectedId.value = id
 }
@@ -158,6 +176,7 @@ async function refreshTree(preferId?: string, fallbackIds: string[] = [], select
         await clearSelection(selectionConfirmed)
     }
     explorerRef.value?.setCurrentDashboard(selectedId.value)
+    await replaceRouteDashboard(selectedId.value)
   }
   catch (e) {
     if (currentRequestId === treeRequestId)
@@ -181,7 +200,9 @@ async function clearSelection(confirmed = false) {
 async function onTreeSelect(node: DashManageNode) {
   cancelDashboardDetailRequest()
   const changed = await selectDashboard(node.id)
-  if (!changed)
+  if (changed)
+    await replaceRouteDashboard(node.id)
+  else
     explorerRef.value?.setCurrentDashboard(selectedId.value)
 }
 
@@ -470,8 +491,38 @@ function onDesignerSaved(payload: DashDesignerSavedPayload) {
   void refreshTree(selectedId.value || payload.id)
 }
 
+let routeSelectionRequestId = 0
+watch(
+  () => routeDashboardId(),
+  async (id) => {
+    if (!treeData.value.length)
+      return
+    const currentRequestId = ++routeSelectionRequestId
+    const dashes = flattenDashboards(treeData.value)
+    const targetId = dashes.some(node => node.id === id) ? id : dashes[0]?.id || ''
+    if (targetId === selectedId.value) {
+      if (id !== targetId)
+        await replaceRouteDashboard(targetId)
+      return
+    }
+    const changed = targetId
+      ? await selectDashboard(targetId)
+      : await clearSelection()
+    if (currentRequestId !== routeSelectionRequestId)
+      return
+    if (!changed) {
+      explorerRef.value?.setCurrentDashboard(selectedId.value)
+      await replaceRouteDashboard(selectedId.value)
+      return
+    }
+    explorerRef.value?.setCurrentDashboard(targetId)
+    if (id !== targetId)
+      await replaceRouteDashboard(targetId)
+  },
+)
+
 onMounted(() => {
-  void refreshTree()
+  void refreshTree(routeDashboardId())
 })
 </script>
 
@@ -673,6 +724,15 @@ onMounted(() => {
   &.is-resizing {
     cursor: col-resize;
   }
+}
+
+.dashboards-layout > .resize-handle::before {
+  opacity: 0;
+}
+
+.dashboards-layout > .resize-handle:hover::before,
+.dashboards-layout.is-resizing > .resize-handle::before {
+  opacity: 1;
 }
 
 .dashboards-sidebar {

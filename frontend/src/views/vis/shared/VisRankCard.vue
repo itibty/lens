@@ -5,12 +5,12 @@
 import type { RankItemView } from '@/views/vis/shared/rankCard'
 import type { VisVisualConfig } from '@/views/vis/shared/types'
 import {
-
   rankSizeVars,
   resolveRankBarColor,
   resolveRankItems,
   resolveRankOptions,
 } from '@/views/vis/shared/rankCard'
+import RankMedal from '@/views/vis/shared/RankMedal.vue'
 
 const props = withDefaults(defineProps<{
   visual: VisVisualConfig
@@ -73,22 +73,24 @@ function onRowClick(item: { record: Record<string, unknown> }, event: MouseEvent
         :style="{ gridColumn: slot.col }"
         @click="onRowClick(slot.item, $event)"
       >
-        <span class="vis-rank-card__medal">{{ slot.place }}</span>
-        <span class="vis-rank-card__athlete-name">{{ slot.item.name }}</span>
-        <span
-          v-if="opt.showValue || opt.showPercent"
-          class="vis-rank-card__athlete-nums"
-        >
-          <span v-if="opt.showValue">{{ slot.item.valueText }}</span>
-          <span
-            v-if="opt.showPercent"
-            class="vis-rank-card__pct"
-          >{{ slot.item.percentText }}</span>
-        </span>
-        <div
-          class="vis-rank-card__stand"
-          aria-hidden="true"
+        <RankMedal
+          class="vis-rank-card__medal"
+          :rank="slot.place"
+          :tone="slot.tone"
         />
+        <div class="vis-rank-card__athlete-card">
+          <span class="vis-rank-card__athlete-name">{{ slot.item.name }}</span>
+          <span
+            v-if="opt.showValue || opt.showPercent"
+            class="vis-rank-card__athlete-nums"
+          >
+            <span v-if="opt.showValue">{{ slot.item.valueText }}</span>
+            <span
+              v-if="opt.showPercent"
+              class="vis-rank-card__pct"
+            >{{ slot.item.percentText }}</span>
+          </span>
+        </div>
       </button>
     </div>
 
@@ -164,13 +166,15 @@ function onRowClick(item: { record: Record<string, unknown> }, event: MouseEvent
 
   &__podium {
     display: grid;
-    grid-template-columns: 1fr 1.2fr 1fr;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     align-items: end;
     gap: 4px;
-    padding: 8px 0 0;
+    padding: 4px 0 2px;
   }
 
   &__athlete {
+    --vis-rank-podium-tint: rgb(192 200 208 / 28%);
+
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -180,12 +184,17 @@ function onRowClick(item: { record: Record<string, unknown> }, event: MouseEvent
     background: transparent;
     color: inherit;
     text-align: center;
+    transition: transform 0.18s ease;
 
     &.is-interactive {
       cursor: pointer;
 
-      &:hover .vis-rank-card__athlete-name {
-        color: var(--el-color-primary);
+      &:hover {
+        transform: translateY(-3px);
+
+        .vis-rank-card__athlete-card {
+          background: linear-gradient(180deg, var(--vis-rank-podium-tint), transparent 100%);
+        }
       }
     }
   }
@@ -193,39 +202,25 @@ function onRowClick(item: { record: Record<string, unknown> }, event: MouseEvent
   &__medal {
     position: relative;
     z-index: 1;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 2.05em;
-    height: 2.05em;
-    border-radius: 50%;
-    font-size: calc(var(--vis-rank-no, 14px) * 1);
-    font-weight: 700;
-    font-variant-numeric: tabular-nums;
-    line-height: 1;
-    box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 70%),
-      inset 0 -2px 4px rgb(15 23 42 / 16%),
-      0 2px 6px rgb(15 23 42 / 16%);
+    flex: 0 0 auto;
+    width: calc(var(--vis-rank-no, 14px) * 3.15);
+    margin-bottom: calc(var(--vis-rank-no, 14px) * -2.35);
+  }
 
-    &::after {
-      content: '';
-      position: absolute;
-      inset: 3px;
-      z-index: -1;
-      border-radius: 50%;
-      border: 1.5px solid rgb(255 255 255 / 55%);
-      box-shadow:
-        inset 0 0 0 1px rgb(15 23 42 / 10%),
-        0 0 0 1px rgb(15 23 42 / 8%);
-    }
+  &__athlete-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    min-width: 0;
+    padding: calc(var(--vis-rank-no, 14px) * 2.7) 6px 10px;
+    box-sizing: border-box;
+    border-radius: 10px;
+    transition: background 0.18s ease;
   }
 
   &__athlete-name {
-    position: relative;
-    z-index: 1;
     width: 100%;
-    margin-top: 6px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -234,127 +229,45 @@ function onRowClick(item: { record: Record<string, unknown> }, event: MouseEvent
   }
 
   &__athlete-nums {
-    position: relative;
-    z-index: 1;
     display: inline-flex;
     align-items: baseline;
     justify-content: center;
     flex-wrap: wrap;
     gap: 4px;
     margin-top: 2px;
-    padding-bottom: 4px;
     font-size: var(--vis-rank-value, 14px);
     font-weight: 600;
     font-variant-numeric: tabular-nums;
     line-height: 1.3;
   }
 
-  &__stand {
-    flex: 0 0 auto;
-    display: block;
-    width: 100%;
-    height: 16px;
-    margin-top: 14px;
-    border-radius: 5px 5px 0 0;
-    background:
-      linear-gradient(180deg, rgb(255 255 255 / 38%) 0 5px, transparent 5px),
-      linear-gradient(180deg, #eef2f6 0%, #d5dbe3 46%, #c3cad4 100%);
-    box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 70%),
-      inset 0 -1px 0 rgb(15 23 42 / 6%);
-  }
-
   .is-gold {
-    .vis-rank-card__medal {
-      width: 2.32em;
-      height: 2.32em;
-      color: #7a5208;
-      font-size: calc(var(--vis-rank-no, 14px) * 1.08);
-      background:
-        radial-gradient(circle at 30% 26%, #fff8d2 0 20%, transparent 44%),
-        linear-gradient(158deg, #ffe27a 0%, #f0c43a 36%, #c99216 68%, #e6b52e 100%);
-      box-shadow:
-        inset 0 1px 0 rgb(255 255 255 / 75%),
-        inset 0 -3px 5px rgb(140 90 8 / 28%),
-        0 2px 8px rgb(201 152 24 / 38%);
+    --vis-rank-podium-tint: rgb(255 189 41 / 28%);
 
-      &::after {
-        border-color: rgb(255 236 170 / 72%);
-        box-shadow:
-          inset 0 0 0 1px rgb(168 112 12 / 22%),
-          0 0 0 1px rgb(176 120 16 / 18%);
-      }
+    .vis-rank-card__medal {
+      width: calc(var(--vis-rank-no, 14px) * 3.45);
     }
 
     .vis-rank-card__athlete-name {
       font-weight: 600;
     }
 
-    .vis-rank-card__stand {
-      height: 42px;
-      background:
-        linear-gradient(180deg, rgb(255 255 255 / 46%) 0 6px, transparent 6px),
-        linear-gradient(180deg, #f4f7fb 0%, #dce3ec 48%, #c7d0db 100%);
+    .vis-rank-card__athlete-card {
+      padding-bottom: 20px;
     }
   }
 
   .is-silver {
-    .vis-rank-card__medal {
-      width: 2.12em;
-      height: 2.12em;
-      color: #3d4450;
-      background:
-        radial-gradient(circle at 30% 26%, #fff 0 20%, transparent 44%),
-        linear-gradient(158deg, #f7f8fa 0%, #c8ccd3 36%, #8f97a3 68%, #d0d4db 100%);
-      box-shadow:
-        inset 0 1px 0 rgb(255 255 255 / 80%),
-        inset 0 -3px 5px rgb(70 78 90 / 22%),
-        0 2px 8px rgb(100 110 124 / 28%);
-
-      &::after {
-        border-color: rgb(255 255 255 / 78%);
-        box-shadow:
-          inset 0 0 0 1px rgb(90 98 110 / 20%),
-          0 0 0 1px rgb(110 118 130 / 16%);
-      }
-    }
-
     .vis-rank-card__athlete-name {
       font-weight: 600;
-    }
-
-    .vis-rank-card__stand {
-      height: 26px;
     }
   }
 
   .is-bronze {
-    .vis-rank-card__medal {
-      width: 2.05em;
-      height: 2.05em;
-      color: #5c3414;
-      background:
-        radial-gradient(circle at 30% 26%, #f8e0c4 0 20%, transparent 44%),
-        linear-gradient(158deg, #f0c49a 0%, #d08a4a 36%, #a85c22 68%, #d4924e 100%);
-      box-shadow:
-        inset 0 1px 0 rgb(255 236 214 / 70%),
-        inset 0 -3px 5px rgb(120 56 12 / 28%),
-        0 2px 8px rgb(179 107 46 / 32%);
-
-      &::after {
-        border-color: rgb(255 214 168 / 70%);
-        box-shadow:
-          inset 0 0 0 1px rgb(140 70 20 / 22%),
-          0 0 0 1px rgb(160 86 28 / 16%);
-      }
-    }
+    --vis-rank-podium-tint: rgb(205 127 50 / 24%);
 
     .vis-rank-card__athlete-name {
       font-weight: 600;
-    }
-
-    .vis-rank-card__stand {
-      height: 16px;
     }
   }
 

@@ -113,7 +113,7 @@ defineExpose<DashExplorerTreeInstance>({ setCurrentDashboard })
         trigger="click"
         @command="onHeadCommand"
       >
-        <el-button class="explorer__more">
+        <el-button class="explorer__more" text>
           <span class="explorer-node__more-icon i-mingcute-more-2-line" />
         </el-button>
         <template #dropdown>
@@ -236,7 +236,7 @@ defineExpose<DashExplorerTreeInstance>({ setCurrentDashboard })
   width: 100%;
   height: 100%;
   min-height: 0;
-  padding: 12px;
+  padding: 12px 4px 12px 8px;
   box-sizing: border-box;
   background: var(--el-bg-color);
   contain: layout paint;
@@ -271,7 +271,7 @@ defineExpose<DashExplorerTreeInstance>({ setCurrentDashboard })
   align-items: center;
   gap: 6px;
   min-width: 0;
-  padding-right: 4px;
+  padding-right: 2px;
 
   &.is-disabled {
     color: var(--el-text-color-placeholder);
@@ -313,6 +313,7 @@ defineExpose<DashExplorerTreeInstance>({ setCurrentDashboard })
 
 :deep(.el-tree-node__content) {
   height: 34px;
+  border-radius: 6px;
   transition: none;
 }
 

@@ -125,7 +125,7 @@ export interface DashCardRadiusPreset {
   value: number
 }
 
-export const DEFAULT_DASH_CARD_RADIUS: DashCardRadiusId = 'md'
+export const DEFAULT_DASH_CARD_RADIUS: DashCardRadiusId = 'lg'
 
 export const DASH_CARD_RADIUS_PRESETS: DashCardRadiusPreset[] = [
   { id: 'none', name: '直角', value: 0 },
@@ -164,21 +164,21 @@ export function resolveDashSurfaceMode(id?: string): DashSurfaceMode {
 
 export const DASH_SURFACE_MODE_KEY: InjectionKey<ComputedRef<DashSurfaceMode>> = Symbol('dash-surface-mode')
 
-const SOLID_SHADOW = '0 1px 2px rgb(15 23 42 / 4%)'
+const PAPER_SHADOW = '0 1px 2px rgb(15 23 42 / 5%), 0 6px 16px rgb(15 23 42 / 3%)'
 
 function surfaceVars(mode: DashSurfaceMode): Record<string, string> {
   if (mode === 'dark') {
     return {
       '--dash-card-blur': 'none',
-      '--dash-card-shadow': '0 1px 2px rgb(0 0 0 / 35%)',
-      '--dash-btn-shadow': '0 1px 2px rgb(0 0 0 / 28%)',
+      '--dash-card-shadow': '0 1px 2px rgb(0 0 0 / 22%), 0 6px 16px rgb(0 0 0 / 12%)',
+      '--dash-btn-shadow': 'none',
       '--dash-chrome-shadow': '0 1px 0 color-mix(in srgb, var(--dash-border) 88%, transparent)',
     }
   }
   return {
     '--dash-card-blur': 'none',
-    '--dash-card-shadow': SOLID_SHADOW,
-    '--dash-btn-shadow': SOLID_SHADOW,
+    '--dash-card-shadow': PAPER_SHADOW,
+    '--dash-btn-shadow': 'none',
     '--dash-chrome-shadow': '0 1px 0 color-mix(in srgb, var(--dash-border, #e5e7eb) 85%, transparent)',
   }
 }

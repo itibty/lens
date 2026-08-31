@@ -223,7 +223,7 @@ function onResizePointerDown(corner: 'nw' | 'ne' | 'sw' | 'se', event: PointerEv
   box-sizing: border-box;
   padding: 0;
   background: var(--dash-group-bg, var(--dash-card-bg, var(--el-bg-color)));
-  border: 1px solid color-mix(in srgb, var(--dash-border, var(--el-border-color)) 78%, transparent);
+  border: none;
   border-radius: var(--dash-card-radius, 12px);
   @include page.frost(card);
 }
@@ -232,7 +232,7 @@ function onResizePointerDown(corner: 'nw' | 'ne' | 'sw' | 'se', event: PointerEv
 .dash-group.is-editable:focus-within,
 .dash-group.is-resizing,
 .dash-group.is-editable:has(.vis-card-view.is-menu-open) {
-  outline: 3px solid var(--dash-accent, #0052d9);
+  outline: 3px solid color-mix(in srgb, var(--dash-accent, #0052d9) 68%, var(--dash-card-bg, #fff));
   outline-offset: -1px;
 }
 

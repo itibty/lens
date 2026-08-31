@@ -63,7 +63,6 @@ const {
   isFilled,
   opLabel,
   chipLabel,
-  chipOp,
   displayText,
   popperWidth,
 } = useDashFilterChips(values)
@@ -295,12 +294,8 @@ useEventListener(window, 'scroll', onPageScroll, true)
             :class="{ 'is-on': isFilled(def), 'is-open': openUid === def.uid }"
             @click.stop="toggleChip(def.uid)"
           >
-            <span class="filter-chip__k">{{ chipLabel(def) }}</span>
+            <span class="filter-chip__k">{{ chipLabel(def) }}：</span>
             <span class="filter-chip__v">
-              <span
-                v-if="chipOp(def)"
-                class="filter-chip__op"
-              >{{ chipOp(def) }}</span>
               <span class="filter-chip__value">{{ displayText(def, labelsOf(def.uid)) }}</span>
               <span
                 v-if="isFilled(def)"
@@ -531,17 +526,16 @@ useEventListener(window, 'scroll', onPageScroll, true)
   }
 
   &.is-on {
-    background: color-mix(in srgb, var(--dash-accent, #0052d9) 12%, var(--dash-card-bg, #fff));
+    background: color-mix(in srgb, var(--dash-accent, #0052d9) 22%, var(--dash-card-bg, #fff));
   }
 
   &.is-on:hover,
   &.is-on.is-open {
-    background: color-mix(in srgb, var(--dash-accent, #0052d9) 16%, var(--dash-card-bg, #fff));
+    background: color-mix(in srgb, var(--dash-accent, #0052d9) 28%, var(--dash-card-bg, #fff));
   }
 }
 
 .filter-chip__k,
-.filter-chip__op,
 .filter-chip__value {
   line-height: 1;
 }
@@ -550,7 +544,7 @@ useEventListener(window, 'scroll', onPageScroll, true)
   display: inline-flex;
   flex-shrink: 0;
   align-items: center;
-  padding: 0 10px 0 12px;
+  padding: 0 2px 0 12px;
   color: var(--dash-content-muted, var(--el-text-color-secondary));
   font-size: 12px;
 }
@@ -560,18 +554,15 @@ useEventListener(window, 'scroll', onPageScroll, true)
   align-items: center;
   gap: 5px;
   min-width: 0;
-  padding: 0 10px 0 8px;
-  box-shadow: inset 1px 0 0 color-mix(in srgb, var(--dash-title, #1f2329) 8%, transparent);
+  padding: 0 10px 0 0;
 }
 
 .filter-chip.is-on .filter-chip__v {
   padding-right: 6px;
 }
 
-.filter-chip__op {
-  flex-shrink: 0;
-  color: var(--dash-content-muted, var(--el-text-color-placeholder));
-  font-size: 12px;
+.filter-chip.is-on .filter-chip__k {
+  color: color-mix(in srgb, var(--dash-accent, #0052d9) 76%, var(--dash-content-color, #1f2329));
 }
 
 .filter-chip__value {
@@ -589,6 +580,7 @@ useEventListener(window, 'scroll', onPageScroll, true)
 
 .filter-chip.is-on .filter-chip__value {
   color: var(--dash-accent, var(--el-color-primary));
+  font-weight: 600;
 }
 
 .filter-chip__clear {
@@ -605,6 +597,15 @@ useEventListener(window, 'scroll', onPageScroll, true)
     width: 11px;
     height: 11px;
   }
+
+  &:hover {
+    background: color-mix(in srgb, var(--dash-accent, #0052d9) 14%, transparent);
+    color: var(--dash-accent, var(--el-color-primary));
+  }
+}
+
+.filter-chip.is-on .filter-chip__clear {
+  color: var(--dash-accent, var(--el-color-primary));
 
   &:hover {
     background: color-mix(in srgb, var(--dash-accent, #0052d9) 14%, transparent);

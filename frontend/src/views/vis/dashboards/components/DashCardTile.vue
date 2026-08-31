@@ -261,7 +261,7 @@ function onMenuAction(key: string) {
   min-height: 0;
   box-sizing: border-box;
   background: var(--dash-card-bg, var(--el-bg-color));
-  border: 1px solid color-mix(in srgb, var(--dash-border, var(--el-border-color)) 78%, transparent);
+  border: none;
   border-radius: var(--dash-card-radius, 12px);
   @include page.frost(card);
 
@@ -286,7 +286,7 @@ function onMenuAction(key: string) {
 .dash-tile.is-editable:not(.is-full):not(.is-locked):focus-within,
 .dash-tile:not(.is-full):not(.is-locked).is-resizing,
 .dash-tile.is-editable:not(.is-full):not(.is-locked):has(.vis-card-view.is-menu-open) {
-  outline: 3px solid var(--dash-accent, #0052d9);
+  outline: 3px solid color-mix(in srgb, var(--dash-accent, #0052d9) 68%, var(--dash-card-bg, #fff));
   outline-offset: -1px;
 }
 

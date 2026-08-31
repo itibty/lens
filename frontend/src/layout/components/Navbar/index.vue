@@ -259,8 +259,8 @@ function switchRoot(root: MenuInfo) {
 
   .logo-txt {
     display: flex;
-    height: 100%;
-    align-items: center;
+    height: auto;
+    align-items: flex-end;
     margin-left: 10px;
     white-space: nowrap;
   }
