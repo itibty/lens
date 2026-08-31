@@ -297,6 +297,7 @@ function submitDashboard() {
           icon: dashboardForm.icon || undefined,
           status: dashboardForm.status,
           groupId,
+          configJson: JSON.stringify({ widgets: [] }),
           cards: [],
         })
         const newId = res.data != null ? String(res.data) : ''

@@ -23,9 +23,6 @@ public class QueryConfSqlRequest extends PageRequest {
     @Schema(description = "数据源id")
     private Long dsId;
 
-    @Schema(description = "数据源名")
-    private String dsName;
-
     @Schema(description = "状态", allowableValues = {"EBL", "DBL"})
     @EnumValue(strValues = {"EBL", "DBL"})
     private String status;

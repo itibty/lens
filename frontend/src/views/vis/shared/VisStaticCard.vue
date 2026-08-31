@@ -3,6 +3,7 @@
 -->
 <script setup lang="ts">
 import type { VisVisualConfig } from './types'
+import { sanitizeRichText } from './sanitizeRichText'
 import { hasStaticContent, resolveStaticUrl } from './staticCard'
 import {
   resolveCalloutTone,
@@ -55,12 +56,12 @@ const stack = computed(() => resolveStaticModules(props.visual).map((mod, index)
       text: mod.text,
     }
   }
-  const html = mod.html ?? ''
+  const rawHtml = mod.html ?? ''
   return {
     key: mod._uid || `richtext-${index}`,
     kind: 'richtext' as const,
-    html,
-    fullDoc: /<html[\s>]/i.test(html),
+    html: sanitizeRichText(rawHtml),
+    fullDoc: /<html[\s>]/i.test(rawHtml),
   }
 }))
 
@@ -90,6 +91,7 @@ function srcdocOf(html: string) {
           v-if="item.kind === 'richtext' && item.fullDoc"
           class="vis-static-card__doc"
           :srcdoc="srcdocOf(item.html)"
+          sandbox=""
           title="富文本预览"
         />
         <div

@@ -10,8 +10,10 @@ import com.codet.lens.vis.mapper.VisDashboardCardMapper;
 import com.codet.lens.vis.mapper.VisDashboardMapper;
 import com.codet.lens.vis.mapper.VisDatasetMapper;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -89,6 +91,23 @@ class VisCardServiceTest {
         when(cardMapper.update(any(VisCard.class), any())).thenReturn(1);
 
         assertEquals(20L, service.save(editRequest(20L)));
+    }
+
+    @Test
+    void sanitizesRichTextBeforeSaving() {
+        VisCardSaveRequest request = new VisCardSaveRequest();
+        request.setCardName("说明卡片");
+        request.setChartType("richtext");
+        request.setStatus(FieldConst.EBL);
+        request.setVisualJson("""
+                {"chartType":"richtext","richtext":{"html":"<p onclick=\\"steal()\\">正文</p>"}}
+                """);
+
+        service.save(request);
+
+        ArgumentCaptor<VisCard> captor = ArgumentCaptor.forClass(VisCard.class);
+        verify(cardMapper).insert(captor.capture());
+        assertFalse(captor.getValue().getVisualJson().contains("onclick"));
     }
 
     private static VisCardSaveRequest editRequest(Long id) {

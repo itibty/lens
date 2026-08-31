@@ -55,7 +55,9 @@ public class RoleAdminService {
     @Transactional
     public Long save(SaveRoleRequest req) {
         SysRole role = req.getId() == null ? new SysRole() : require(req.getId());
-        String nextStatus = StrUtil.blankToDefault(req.getStatus(), FieldConst.EBL);
+        String nextStatus = StrUtil.isBlank(req.getStatus())
+                ? (req.getId() == null ? FieldConst.EBL : role.getStatus())
+                : req.getStatus();
         boolean authChanged = req.getId() != null
                 && (!nextStatus.equals(role.getStatus()) || !Objects.equals(req.getRoleCode(), role.getRoleCode()));
         role.setRoleName(req.getRoleName());

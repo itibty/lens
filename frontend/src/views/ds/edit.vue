@@ -318,7 +318,7 @@ async function persistSave(sqlId: string, fields: VIS.ConfSqlFieldItem[]) {
     })
     dirty.value = false
     showToast('保存成功', 'success')
-    markListStale('DS')
+    markListStale('VisDatasets')
   }
   finally {
     states.saveLoading = false
@@ -595,6 +595,7 @@ onBeforeRouteUpdate((to) => {
           ref="debugParamsDialogRef"
           v-model="states.jsonCode"
           :sql-content="states.sqlCode"
+          :dataset-id="states.info?.id"
         />
         <BindFieldsDialog ref="bindFieldsDialogRef" />
 

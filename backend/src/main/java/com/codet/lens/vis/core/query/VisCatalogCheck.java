@@ -167,9 +167,11 @@ public final class VisCatalogCheck {
             if (metric == null || StrUtil.isBlank(metric.getField())) {
                 continue;
             }
-            ConfSqlFieldInfo info = lookup(byField, metric.getField(), metric.getLabel(), missing);
-            if (info != null && needsNumber(metric.getAgg())) {
-                requireNumber(info, metric.getField(), metric.getLabel(), typeIssues);
+            if (StrUtil.isBlank(metric.getFormula())) {
+                ConfSqlFieldInfo info = lookup(byField, metric.getField(), metric.getLabel(), missing);
+                if (info != null && needsNumber(metric.getAgg())) {
+                    requireNumber(info, metric.getField(), metric.getLabel(), typeIssues);
+                }
             }
             if (metric.getContrast() != null && StrUtil.isNotBlank(metric.getContrast().getTimeField())) {
                 String timeField = metric.getContrast().getTimeField();

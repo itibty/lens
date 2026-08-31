@@ -16,6 +16,7 @@ export interface DebugParamsDialogInstance {
 const props = defineProps<{
   modelValue: string
   sqlContent: string
+  datasetId?: string
 }>()
 
 const emits = defineEmits<{
@@ -85,6 +86,10 @@ async function handlePreview() {
     showToast('请先填写 SQL 脚本', 'warning')
     return
   }
+  if (!props.datasetId) {
+    showToast('数据集不存在，无法预览', 'error')
+    return
+  }
 
   previewLoading.value = true
   resetPreview()
@@ -93,6 +98,7 @@ async function handlePreview() {
       sqlContent: props.sqlContent,
       execSql: false,
       params,
+      id: props.datasetId,
     })
     if (hasDebugBusinessError(res.data)) {
       previewError.value = {
