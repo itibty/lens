@@ -163,6 +163,18 @@ function firstVisibleLeafUrl(menu: MenuInfo): string | undefined {
   return isBlank(menu.url) ? undefined : menu.url
 }
 
+function firstVisibleLeafUrlInPath(menu: MenuInfo, shellPath: string): string | undefined {
+  const children = (menu.children ?? []).filter(item => !item.hidden)
+  for (const child of children) {
+    const url = firstVisibleLeafUrlInPath(child, shellPath)
+    if (url)
+      return url
+  }
+  const url = isBlank(menu.url) ? undefined : menu.url
+  const path = menuPathname(url)
+  return path === shellPath || path.startsWith(`${shellPath}/`) ? url : undefined
+}
+
 // 定义store: 用"use"开头，"store"结尾
 export const useMenuStore = defineStore('menu', () => {
   const allMenus = ref<MenuInfo[]>([]) // 用户全菜单
@@ -234,8 +246,9 @@ export const useMenuStore = defineStore('menu', () => {
     const menuId = (route.meta.menuId || route.meta.rootMenuId) as string | undefined
     if (menuId) {
       const byId = allMenus.value.find(menu => menu.id === menuId)
-      if (byId)
-        return firstVisibleLeafUrl(byId)
+      if (byId) {
+        return firstVisibleLeafUrlInPath(byId, path) || firstVisibleLeafUrl(byId)
+      }
     }
     const root = allMenus.value.find((menu) => {
       const rec = allMenuIdRoute[menu.id]
