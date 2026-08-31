@@ -5,7 +5,7 @@
  * @LastEditors: Chuang
  * @Description: 数据源管理
 -->
-<script setup name="DS" lang="ts">
+<script setup name="VisDatasets" lang="ts">
 import type { BindFieldsDialogInstance } from './components/BindFieldsDialog.vue'
 import type { ConfSqlDialogInstance } from './components/ConfSqlDialog.vue'
 import { Plus, Search } from '@element-plus/icons-vue'
@@ -40,7 +40,6 @@ const states = reactive<IStates>({
     id: null,
     sqlName: null,
     sqlDesc: null,
-    dsName: null,
     status: null,
   },
   loading: false,
@@ -162,7 +161,7 @@ async function handleViewFields(row: VIS.ConfSqlInfo) {
   }
 }
 
-useKeepAlive(['DsEditScript'], fetchData)
+useKeepAlive(['VisDatasetEdit'], fetchData)
 
 onMounted(() => {
   handleQuery()
@@ -199,9 +198,6 @@ onMounted(() => {
                 :value="item.value"
               />
             </el-select>
-          </el-col>
-          <el-col :span="3">
-            <el-input v-model="states.query.dsName" placeholder="数据源" clearable />
           </el-col>
           <el-col :span="3">
             <el-input v-model="states.query.sqlDesc" placeholder="备注" clearable />
