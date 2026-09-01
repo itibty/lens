@@ -5,6 +5,7 @@
 import type { ISpec } from '@visactor/vchart'
 import VChart, { darkTheme } from '@visactor/vchart'
 import { useResizeObserver } from '@vueuse/core'
+import { FONT_SANS } from '@/core/fonts'
 import { unwrapChartDatum } from '@/views/vis/shared/chartDatum'
 
 const props = withDefaults(defineProps<{
@@ -94,16 +95,24 @@ function darkIndicator(value: unknown) {
 }
 
 function withSurfaceTheme(spec: ISpec): ISpec {
-  if (!props.dark)
-    return spec
   const source = spec as unknown as Record<string, unknown>
-  const base = darkTheme as unknown as Record<string, unknown>
   const current = plainRecord(source.theme)
+  if (!props.dark) {
+    return {
+      ...source,
+      theme: {
+        fontFamily: FONT_SANS,
+        ...current,
+      },
+    } as ISpec
+  }
+  const base = darkTheme as unknown as Record<string, unknown>
   return {
     ...source,
     ...(source.indicator ? { indicator: darkIndicator(source.indicator) } : {}),
     theme: {
       ...base,
+      fontFamily: FONT_SANS,
       ...current,
       component: {
         ...plainRecord(base.component),

@@ -167,7 +167,7 @@ $sql-doc-muted: var(--el-text-color-secondary, #909399);
 }
 
 code {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-family: var(--na-font-mono);
   font-size: 12px;
   color: #c7254e;
   background: var(--el-fill-color-light, #f5f7fa);

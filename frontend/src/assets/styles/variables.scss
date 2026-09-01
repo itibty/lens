@@ -28,5 +28,8 @@ $schenbrunn-yellow: #f7e14d; //申布伦黄
     'primary': (
       'base': $cfe-color-primary,
     ),
+  ),
+  $font-family: (
+    '': 'var(--na-font-sans)',
   )
 );

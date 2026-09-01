@@ -7,6 +7,7 @@
  */
 import type { App, DirectiveBinding } from 'vue'
 import { UIConfig } from '@/core/config'
+import { FONT_SANS } from '@/core/fonts'
 import { useAccountStore } from '@/stores/modules/account'
 
 interface WatermarkOptions {
@@ -50,15 +51,13 @@ function addWaterMarker(parentNode: HTMLElement, options: WatermarkOptions): voi
 
   const cans: CanvasRenderingContext2D = can.getContext('2d')!
   cans.rotate((-20 * Math.PI) / 180)
-  cans.font = options.font || '20px SimHei'
+  cans.font = options.font || `20px ${FONT_SANS}`
   cans.fillStyle = options.textColor || 'rgba(128, 128, 128, 0.1)'
   cans.textAlign = 'center'
   cans.textBaseline = 'middle'
   cans.fillText(options.text || '', can.width / 3, can.height / 2)
   if (options.subText) {
-    cans.font
-      = options.font
-        || '12px -apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif,Apple Color Emoji,Segoe UI Emoji,PingFang SC,Microsoft YaHei'
+    cans.font = options.font || `12px ${FONT_SANS}`
     cans.fillText(options.subText, can.width / 3, can.height / 2 + 20)
   }
 

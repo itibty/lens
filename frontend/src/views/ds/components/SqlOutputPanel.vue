@@ -279,7 +279,7 @@ $sql-output-header-h: 36px;
   overflow: hidden;
   border: 1px solid var(--el-border-color-lighter);
   background: #fafafa;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+  font-family: var(--na-font-mono);
 
   &__block {
     margin: 0;

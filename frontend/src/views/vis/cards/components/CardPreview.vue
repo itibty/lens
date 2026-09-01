@@ -739,7 +739,7 @@ defineExpose({
 
   &__sql-code {
     margin: 0;
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-family: var(--na-font-mono);
     font-size: 12px;
     line-height: 1.55;
     white-space: pre-wrap;

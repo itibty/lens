@@ -489,7 +489,7 @@ watch(html, (next) => {
     border: none;
     border-radius: 0;
     box-shadow: none;
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-family: var(--na-font-mono);
     font-size: 12px;
     line-height: 1.55;
     resize: none;
@@ -501,9 +501,7 @@ watch(html, (next) => {
   min-height: 0;
   padding: 10px 12px;
   overflow: auto;
-  font:
-    13px / 1.55 system-ui,
-    sans-serif;
+  font: 13px / 1.55 var(--na-font-sans);
   color: var(--el-text-color-primary);
   outline: none;
 

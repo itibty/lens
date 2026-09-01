@@ -43,9 +43,7 @@ const text = computed(() => props.text?.trim() ?? '')
   border-radius: 8px;
   border: 1px solid transparent;
   border-left-width: 3px;
-  font:
-    13px / 1.55 system-ui,
-    sans-serif;
+  font: 13px / 1.55 var(--na-font-sans);
   color: var(--vis-content-color, var(--el-text-color-primary));
 
   &.is-info {

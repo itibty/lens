@@ -1,5 +1,7 @@
 // -- element 样式调整 --
 .el-table {
+  font-variant-numeric: tabular-nums;
+
   thead {
     --el-table-header-bg-color: var(--el-fill-color-light);
     --el-table-header-text-color: var(--el-text-color-primary);
@@ -69,7 +71,14 @@
 
 .borderless-input {
   --el-input-border-color: transparent;
+  --el-input-hover-border-color: transparent;
   --el-input-focus-border-color: transparent;
+  --el-input-bg-color: var(--el-fill-color-light);
+
+  &:hover,
+  &.is-focus {
+    --el-input-bg-color: var(--el-fill-color);
+  }
 }
 
 .tdesign-loading {

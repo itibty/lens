@@ -100,7 +100,7 @@ defineExpose<DashExplorerTreeInstance>({ setCurrentDashboard })
     <div class="explorer__head">
       <el-input
         v-model="keyword"
-        class="explorer__search"
+        class="explorer__search borderless-input"
         clearable
         :prefix-icon="Search"
         placeholder="请输入关键词"

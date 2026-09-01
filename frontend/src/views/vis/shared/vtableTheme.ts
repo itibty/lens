@@ -1,6 +1,7 @@
 import type { TYPES } from '@visactor/vtable'
 import type { VisChartThemeId, VisVisualConfig } from './types'
 import { themes } from '@visactor/vtable'
+import { FONT_SANS } from '@/core/fonts'
 import { resolveChartThemeId } from './chartPalette'
 import { resolveTableStyle } from './tableStyle'
 
@@ -55,6 +56,7 @@ export const VTABLE_EMPTY_TIP = {
   spaceBetweenTextAndIcon: 0,
   textStyle: {
     fontSize: 13,
+    fontFamily: FONT_SANS,
     color: '#909399',
   },
   icon: {
@@ -161,7 +163,7 @@ const BASE_FRAME = {
   shadowOffsetY: 0,
 } as const
 
-const HEADER_FONT = { fontSize: CELL_FONT_SIZE, fontWeight: 600 } as const
+const HEADER_FONT = { fontSize: CELL_FONT_SIZE, fontWeight: 600, fontFamily: FONT_SANS } as const
 
 export function resolveTableHeaderIconColor(visual?: VisVisualConfig, dark = false) {
   if (dark)
@@ -194,6 +196,7 @@ export function resolveVTableTheme(visual?: VisVisualConfig, dark = false): ITab
       underlayBackgroundColor: 'transparent',
       defaultStyle: {
         fontSize: CELL_FONT_SIZE,
+        fontFamily: FONT_SANS,
         color: DARK_TEXT,
         borderColor: DARK_BORDER,
       },
@@ -202,6 +205,7 @@ export function resolveVTableTheme(visual?: VisVisualConfig, dark = false): ITab
       cornerHeaderStyle: header,
       bodyStyle: {
         fontSize: CELL_FONT_SIZE,
+        fontFamily: FONT_SANS,
         fontWeight: 400,
         color: DARK_TEXT,
         bgColor: striped ? stripeBg(DARK_STRIPE, DARK_BODY_BG) : DARK_BODY_BG,
@@ -236,12 +240,13 @@ export function resolveVTableTheme(visual?: VisVisualConfig, dark = false): ITab
   if (!chrome) {
     return themes.DEFAULT.extends({
       underlayBackgroundColor: 'transparent',
-      defaultStyle: { fontSize: CELL_FONT_SIZE },
+      defaultStyle: { fontSize: CELL_FONT_SIZE, fontFamily: FONT_SANS },
       headerStyle: HEADER_FONT,
       rowHeaderStyle: HEADER_FONT,
       cornerHeaderStyle: HEADER_FONT,
       bodyStyle: {
         fontSize: CELL_FONT_SIZE,
+        fontFamily: FONT_SANS,
         fontWeight: 400,
         ...(striped ? { bgColor: stripeBg(DEFAULT_STRIPE) } : {}),
       },
@@ -276,6 +281,7 @@ export function resolveVTableTheme(visual?: VisVisualConfig, dark = false): ITab
     underlayBackgroundColor: 'transparent',
     defaultStyle: {
       fontSize: CELL_FONT_SIZE,
+      fontFamily: FONT_SANS,
       color: chrome.bodyColor,
       borderColor: chrome.border,
     },
@@ -284,6 +290,7 @@ export function resolveVTableTheme(visual?: VisVisualConfig, dark = false): ITab
     cornerHeaderStyle: header,
     bodyStyle: {
       fontSize: CELL_FONT_SIZE,
+      fontFamily: FONT_SANS,
       fontWeight: 400,
       color: chrome.bodyColor,
       bgColor: striped ? stripeBg(chrome.stripeOdd) : BODY_BG,

@@ -45,7 +45,7 @@ const panelRef = ref<HTMLElement | null>(null)
 const scrollMaxHeight = ref(360)
 
 const POPOVER_EDGE = 16
-const POPOVER_CHROME = 28
+const POPOVER_CHROME = 8
 
 function updateScrollMaxHeight() {
   const viewH = window.innerHeight
@@ -174,6 +174,7 @@ useEventListener(window, 'scroll', () => {
     >
       <el-scrollbar
         class="field-pill-config__scroll"
+        view-class="field-pill-config__view"
         :max-height="scrollMaxHeight"
       >
         <slot />
@@ -411,7 +412,8 @@ useEventListener(window, 'scroll', () => {
 .vis-field-pill-popper {
   max-width: min(360px, calc(100vw - 24px));
   max-height: calc(100vh - 16px);
-  padding: 10px 12px !important;
+  // 四边 padding 都进滚动内容，滑块贴顶、底、右
+  padding: 0 !important;
   box-sizing: border-box;
 
   .el-popper__arrow {
@@ -422,8 +424,15 @@ useEventListener(window, 'scroll', () => {
     min-width: 0;
   }
 
-  .field-pill-config__scroll {
-    padding-right: 4px;
+  .field-pill-config__view {
+    padding: 10px 12px;
+    box-sizing: border-box;
+  }
+
+  .el-scrollbar__bar.is-vertical {
+    top: 0;
+    right: 0;
+    bottom: 0;
   }
 }
 </style>

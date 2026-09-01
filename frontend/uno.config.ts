@@ -62,6 +62,10 @@ export default defineConfig({
     colors: {
       // ...
     },
+    fontFamily: {
+      sans: 'var(--na-font-sans)',
+      mono: 'var(--na-font-mono)',
+    },
   },
   presets: [
     presetWind3(), //  Tailwind CSS v3 / Windi CSS compact preset

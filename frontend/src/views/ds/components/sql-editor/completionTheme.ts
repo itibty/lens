@@ -4,6 +4,7 @@
  */
 import type { Extension } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
+import { FONT_MONO } from '@/core/fonts'
 
 /** 品牌主色，与 variables.scss $cfe-color-primary 一致 */
 const PRIMARY = '#0052d9'
@@ -28,7 +29,7 @@ export function completionPanelTheme(): Extension {
 
     '.cm-tooltip.cm-tooltip-autocomplete': {
       '& > ul': {
-        'fontFamily': 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+        'fontFamily': FONT_MONO,
         'fontSize': '12px',
         'minWidth': '220px',
         'maxWidth': '360px',

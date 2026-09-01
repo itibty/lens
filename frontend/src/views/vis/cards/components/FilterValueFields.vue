@@ -168,14 +168,12 @@ const rangePickerType = computed(() => {
         v-if="kind === 'number'"
         v-model="oneNumber"
         class="w-full"
-        size="small"
         controls-position="right"
         placeholder="数值"
       />
       <el-date-picker
         v-else-if="kind === 'date' || kind === 'datetime' || kind === 'timestamp'"
         class="w-full"
-        size="small"
         :type="datePickerType"
         :value-format="dateValueFormat"
         :model-value="oneTemporal as any"
@@ -185,7 +183,6 @@ const rangePickerType = computed(() => {
       <div v-else class="filter-value__with-tip">
         <el-input
           v-model="oneText"
-          size="small"
           :placeholder="op === 'like' || op === 'not_like' ? '关键字' : '值'"
         />
         <el-tooltip
@@ -204,7 +201,6 @@ const rangePickerType = computed(() => {
         <el-input-number
           v-model="betweenStartNum"
           class="filter-value__num"
-          size="small"
           controls-position="right"
           placeholder="下限"
         />
@@ -212,7 +208,6 @@ const rangePickerType = computed(() => {
         <el-input-number
           v-model="betweenEndNum"
           class="filter-value__num"
-          size="small"
           controls-position="right"
           placeholder="上限"
         />
@@ -220,7 +215,6 @@ const rangePickerType = computed(() => {
       <el-date-picker
         v-else-if="kind === 'date' || kind === 'datetime' || kind === 'timestamp'"
         class="w-full"
-        size="small"
         :type="rangePickerType"
         :value-format="dateValueFormat"
         :model-value="rangeTemporal as any"
@@ -229,9 +223,9 @@ const rangePickerType = computed(() => {
         @update:model-value="rangeTemporal = $event"
       />
       <div v-else class="filter-value__between">
-        <el-input v-model="betweenStartText" size="small" placeholder="下限" />
+        <el-input v-model="betweenStartText" placeholder="下限" />
         <span class="filter-value__sep">~</span>
-        <el-input v-model="betweenEndText" size="small" placeholder="上限" />
+        <el-input v-model="betweenEndText" placeholder="上限" />
       </div>
     </template>
 
@@ -239,7 +233,6 @@ const rangePickerType = computed(() => {
       <el-select
         v-model="manyTags"
         class="w-full"
-        size="small"
         multiple
         filterable
         allow-create
