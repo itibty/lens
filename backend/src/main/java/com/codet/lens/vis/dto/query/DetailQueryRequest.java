@@ -2,10 +2,9 @@ package com.codet.lens.vis.dto.query;
 
 import com.codet.lens.vis.dto.item.FilterItem;
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
-
-import java.util.List;
 
 @Schema(description = "卡片明细查询请求（构成行，不聚合）")
 @Getter

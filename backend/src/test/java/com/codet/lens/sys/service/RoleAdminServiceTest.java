@@ -1,16 +1,15 @@
 package com.codet.lens.sys.service;
 
-import com.codet.lens.common.FieldConst;
-import com.codet.lens.sys.dto.SysDtos.ResetRoleDashboardsRequest;
-import com.codet.lens.sys.dto.SysDtos.SaveRoleRequest;
+import com.codet.lens.common.base.Status;
+import com.codet.lens.sys.dto.role.ResetRoleDashboardsRequest;
+import com.codet.lens.sys.dto.role.SaveRoleRequest;
 import com.codet.lens.sys.entity.SysRole;
 import com.codet.lens.sys.mapper.SysMenuMapper;
 import com.codet.lens.sys.mapper.SysRoleDashboardMapper;
 import com.codet.lens.sys.mapper.SysRoleMapper;
 import com.codet.lens.sys.mapper.SysRoleMenuMapper;
-import org.junit.jupiter.api.Test;
-
 import java.util.List;
+import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
@@ -50,14 +49,14 @@ class RoleAdminServiceTest {
     @Test
     void preservesDisabledStatusWhenEditOmitsStatus() {
         SysRole role = role("same-code");
-        role.setStatus(FieldConst.DBL);
+        role.setStatus(Status.DBL);
         when(roleMapper.selectById(10L)).thenReturn(role);
         SaveRoleRequest request = saveRequest("same-code", "只改名称");
         request.setStatus(null);
 
         service.save(request);
 
-        assertEquals(FieldConst.DBL, role.getStatus());
+        assertEquals(Status.DBL, role.getStatus());
         verify(permissionTokenService, never()).invalidateRoleUsers(10L);
     }
 
@@ -90,7 +89,7 @@ class RoleAdminServiceTest {
         role.setId(10L);
         role.setRoleName("角色");
         role.setRoleCode(roleCode);
-        role.setStatus(FieldConst.EBL);
+        role.setStatus(Status.EBL);
         return role;
     }
 
@@ -99,7 +98,7 @@ class RoleAdminServiceTest {
         request.setId(10L);
         request.setRoleName(roleName);
         request.setRoleCode(roleCode);
-        request.setStatus(FieldConst.EBL);
+        request.setStatus(Status.EBL);
         return request;
     }
 }

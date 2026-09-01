@@ -2,8 +2,8 @@ package com.codet.lens.vis.service;
 
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import com.codet.lens.common.FieldConst;
-import com.codet.lens.common.ResultException;
+import com.codet.lens.common.base.ResultException;
+import com.codet.lens.common.base.Status;
 import com.codet.lens.vis.core.dash.VisDashFilters;
 import com.codet.lens.vis.dto.item.FilterItem;
 import com.codet.lens.vis.dto.pivot.PivotQueryConfig;
@@ -20,12 +20,11 @@ import com.codet.lens.vis.mapper.VisDashboardMapper;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-
+import java.util.function.Consumer;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 
 /**
  * 查数请求绑定。
@@ -103,7 +102,7 @@ public class VisBoundQueryService {
 
     public String cardTitle(Long cardId) {
         VisCard card = cardMapper.selectById(cardId);
-        if (card == null || FieldConst.DEL.equals(card.getStatus()))
+        if (card == null || Status.DEL.equals(card.getStatus()))
             return "card_" + cardId;
         return StrUtil.blankToDefault(card.getCardName(), "card_" + cardId);
     }
@@ -118,9 +117,9 @@ public class VisBoundQueryService {
         if (dashboardId == null || cardId == null || cardId == 0)
             throw ResultException.fail("看板或卡片无效");
         VisDashboard dash = dashboardMapper.selectById(dashboardId);
-        if (dash == null || FieldConst.DEL.equals(dash.getStatus()))
+        if (dash == null || Status.DEL.equals(dash.getStatus()))
             throw ResultException.fail("看板不存在");
-        if (FieldConst.DBL.equals(dash.getStatus()) && !dashboardAccess.canDesign())
+        if (Status.DBL.equals(dash.getStatus()) && !dashboardAccess.canDesign())
             throw ResultException.fail("看板已禁用");
         Long n = dashboardCardMapper.selectCount(Wrappers.<VisDashboardCard>lambdaQuery()
                 .eq(VisDashboardCard::getDashboardId, dashboardId)
@@ -128,9 +127,9 @@ public class VisBoundQueryService {
         if (n == null || n == 0)
             throw ResultException.fail("卡片不属于该看板");
         VisCard card = cardMapper.selectById(cardId);
-        if (card == null || FieldConst.DEL.equals(card.getStatus()))
+        if (card == null || Status.DEL.equals(card.getStatus()))
             throw ResultException.fail("卡片不存在");
-        if (FieldConst.DBL.equals(card.getStatus()))
+        if (Status.DBL.equals(card.getStatus()))
             throw ResultException.fail("卡片已禁用");
         return new BoundCard(dash, card);
     }

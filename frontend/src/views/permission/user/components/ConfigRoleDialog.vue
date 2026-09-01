@@ -16,7 +16,7 @@ export interface ConfigRoleDialogInstance {
   showDialog: (row: ADMIN.UserInfo) => void
 }
 
-type RoleRow = ADMIN.UserRoleInfo & { dateRange?: number[] }
+type RoleRow = ADMIN.UserRoleInfo & { dateRange?: string[] }
 
 interface IStates {
   form: ADMIN.ResetRolesRequest
@@ -124,7 +124,7 @@ function showDialog(row: ADMIN.UserInfo) {
     const endAt = toMillis('endAt' in item ? item.endAt : undefined)
     return {
       ...item,
-      dateRange: startAt && endAt ? [startAt, endAt] : undefined,
+      dateRange: startAt && endAt ? [String(startAt), String(endAt)] : undefined,
     } as RoleRow
   })
   dialog.visible = true
@@ -140,8 +140,8 @@ function doSubmit() {
     for (const item of (body.roleInfos ?? []) as RoleRow[]) {
       const dateRange = item.dateRange
       if (dateRange && dateRange.length === 2) {
-        item.startAt = dateRange[0]
-        item.endAt = dateRange[1]
+        item.startAt = String(dateRange[0])
+        item.endAt = String(dateRange[1])
       }
       else {
         delete item.startAt

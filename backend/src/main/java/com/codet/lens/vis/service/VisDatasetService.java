@@ -4,9 +4,14 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.codet.lens.common.FieldConst;
-import com.codet.lens.common.ListResponse;
-import com.codet.lens.common.ResultException;
+import com.codet.lens.common.base.ListResponse;
+import com.codet.lens.common.base.ResultException;
+import com.codet.lens.common.base.Status;
+import com.codet.lens.vis.core.query.RdsUtil;
+import com.codet.lens.vis.core.query.SqlConf;
+import com.codet.lens.vis.core.query.SqlTplPara;
+import com.codet.lens.vis.core.query.SqlTplRet;
+import com.codet.lens.vis.dto.dataset.ConfSqlFieldInfo;
 import com.codet.lens.vis.dto.dataset.VisDatasetInfo;
 import com.codet.lens.vis.entity.VisDataset;
 import com.codet.lens.vis.entity.VisDatasetField;
@@ -14,19 +19,13 @@ import com.codet.lens.vis.entity.VisDatasource;
 import com.codet.lens.vis.mapper.VisDatasetFieldMapper;
 import com.codet.lens.vis.mapper.VisDatasetMapper;
 import com.codet.lens.vis.mapper.VisDatasourceMapper;
-import com.codet.lens.vis.rds.bo.SqlConf;
-import com.codet.lens.vis.rds.bo.SqlTplPara;
-import com.codet.lens.vis.rds.bo.SqlTplRet;
-import com.codet.lens.vis.rds.core.RdsUtil;
-import com.codet.lens.vis.rds.dto.conf.ConfSqlFieldInfo;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
@@ -42,7 +41,7 @@ public class VisDatasetService {
     public ListResponse<VisDatasetInfo> listOptions(String keyword, Long selectedId, Integer limit) {
         String search = StrUtil.trim(keyword);
         QueryWrapper<VisDataset> query = new QueryWrapper<VisDataset>()
-                .eq("status", FieldConst.EBL)
+                .eq("status", Status.EBL)
                 .orderByDesc("id")
                 .select("id", "dataset_name", "dataset_desc");
         if (StrUtil.isNotBlank(search)) {
@@ -61,7 +60,7 @@ public class VisDatasetService {
                 .collect(Collectors.toCollection(ArrayList::new));
         if (selectedId != null && list.stream().noneMatch(item -> selectedId.equals(item.getId()))) {
             VisDataset selected = datasetMapper.selectById(selectedId);
-            if (selected != null && FieldConst.EBL.equals(selected.getStatus())) {
+            if (selected != null && Status.EBL.equals(selected.getStatus())) {
                 list.add(0, toInfo(selected));
             }
         }
@@ -93,7 +92,7 @@ public class VisDatasetService {
     private List<ConfSqlFieldInfo> listSavedFields(Long datasetId) {
         return fieldMapper.selectList(Wrappers.<VisDatasetField>lambdaQuery()
                         .eq(VisDatasetField::getDatasetId, datasetId)
-                        .eq(VisDatasetField::getStatus, FieldConst.EBL)
+                        .eq(VisDatasetField::getStatus, Status.EBL)
                         .orderByAsc(VisDatasetField::getSortNum))
                 .stream()
                 .map(row -> {
@@ -109,7 +108,7 @@ public class VisDatasetService {
 
     private SqlConf toSqlConf(VisDataset row) {
         VisDatasource source = datasourceMapper.selectById(row.getSourceId());
-        if (source == null || !FieldConst.EBL.equals(source.getStatus())) {
+        if (source == null || !Status.EBL.equals(source.getStatus())) {
             throw ResultException.fail(datasetLabel(row) + "关联的数据源不可用");
         }
         SqlConf conf = new SqlConf();
@@ -124,10 +123,10 @@ public class VisDatasetService {
 
     private VisDataset requireRow(Long datasetId) {
         VisDataset row = datasetId == null ? null : datasetMapper.selectById(datasetId);
-        if (row == null || FieldConst.DEL.equals(row.getStatus())) {
+        if (row == null || Status.DEL.equals(row.getStatus())) {
             throw ResultException.fail("数据集已不可用");
         }
-        if (FieldConst.DBL.equals(row.getStatus())) {
+        if (Status.DBL.equals(row.getStatus())) {
             throw ResultException.fail(datasetLabel(row) + "已停用");
         }
         return row;

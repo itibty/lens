@@ -66,6 +66,24 @@ export async function queryRoles(
   );
 }
 
+/** 配置看板 POST /sys/roles/reset-dashboards */
+export async function resetRoleDashboards(
+  body: ADMIN.ResetRoleDashboardsRequest,
+  options?: { [key: string]: any }
+) {
+  return request<ADMIN.RString>(
+    `${ADMIN_BASE_PATH}/sys/roles/reset-dashboards`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      data: body,
+      ...(options || {}),
+    }
+  );
+}
+
 /** 配置功能 POST /sys/roles/reset-functions */
 export async function resetRoleFunctions(
   body: ADMIN.ResetRoleMenusRequest,
@@ -97,24 +115,6 @@ export async function resetRoleMenus(
     data: body,
     ...(options || {}),
   });
-}
-
-/** 配置看板 POST /sys/roles/reset-dashboards */
-export async function resetRoleDashboards(
-  body: ADMIN.ResetRoleDashboardsRequest,
-  options?: { [key: string]: any }
-) {
-  return request<ADMIN.RString>(
-    `${ADMIN_BASE_PATH}/sys/roles/reset-dashboards`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      data: body,
-      ...(options || {}),
-    }
-  );
 }
 
 /** 启用或禁用角色 POST /sys/roles/toggle-status */

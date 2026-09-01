@@ -41,17 +41,20 @@ pnpm dev                            # dev server on :5173
 pnpm build                          # type-check + production build
 pnpm type-check                     # vue-tsc --noEmit
 pnpm lint / pnpm lint-fix           # eslint
-pnpm generate-api -- --service=vis # regenerate API clients from OpenAPI
+pnpm generate-api                   # regenerate admin + vis API clients from OpenAPI
 ```
 
 ## Architecture
 
 ### Backend (`com.codet.lens`)
 
-- `auth/` — JWT auth, `AuthInterceptor`, `@PublicAccess`/`@Permission` annotations
-- `common/` — shared: `R<T>` response wrapper, `BaseEntity`, `PageRequest`/`PageResponse`, `ResultException`
-- `sys/` — account/role/menu admin (controllers: `SysController`)
-- `vis/` — core BI: datasets, cards, dashboards, queries, RDS (runtime data source) query engine
+- `common/` — shared infrastructure, split by concern:
+  - `auth/` — JWT, `AuthInterceptor`, `@PublicAccess`/`@Permission`
+  - `base/` — `R<T>`, `ResultException`/`ResultEnum`, `BaseEntity`, `Status`, page/list wrappers, `EnumValue`, Long serializers
+  - `util/` — `ConvertUtil`, `JsonUtil`, `WebUtil`
+  - `config/` — MyBatis / Jackson / OpenAPI / `LensProperties` / `ExceptionAdvice` / `WebMvcConfig` / SPA routing filter
+- `sys/` — account/role/menu admin; `SysPerms`; controllers/DTOs split by auth/user/role/menu
+- `vis/` — core BI: datasets, cards, dashboards, queries; `VisPerms`
 
 OpenAPI groups: `admin` (auth/sys paths) and `vis` (BI paths). Docs at `/v3/api-docs`, Swagger at `/swagger-ui.html`.
 
@@ -68,12 +71,10 @@ OpenAPI groups: `admin` (auth/sys paths) and `vis` (BI paths). Docs at `/v3/api-
 Regenerate from running backend's OpenAPI spec:
 
 ```shell
-pnpm generate-api -- --service=vis
+pnpm generate-api
 ```
 
-**Important:** Only run for `vis`. Do not run for `admin` — the admin API client is maintained manually.
-
-The generator (`build/generate/openapi.config.cjs`) fetches from `http://127.0.0.1:8080/v3/api-docs/{service}` and writes to `src/apis/{service}/`. `int64` fields are mapped to `string` to preserve precision.
+The generator (`build/generate/openapi.config.cjs`) fetches from `http://127.0.0.1:8080/v3/api-docs/{service}` and writes to `src/apis/{service}/`. `int64` fields are mapped to `string` to preserve precision. Do not edit `src/apis/admin/**` or `src/apis/vis/**` by hand.
 
 ## Response Convention
 
@@ -115,6 +116,5 @@ Snowflake IDs are serialized as **strings** (not numbers) to avoid JS precision 
 
 ## Default Credentials
 
-- Admin: `admin` / `Aa123456`
 - MySQL: `root` / `Aa123456` (configured in `application.yml`)
 - Redis: `127.0.0.1:6379` / `Aa123456` (configured in `application.yml`)

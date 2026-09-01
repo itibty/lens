@@ -1,17 +1,16 @@
 package com.codet.lens.vis.service;
 
-import com.codet.lens.common.FieldConst;
+import com.codet.lens.common.base.Status;
 import com.codet.lens.sys.mapper.SysRoleDashboardMapper;
 import com.codet.lens.sys.service.PermissionTokenService;
 import com.codet.lens.vis.dto.dash.VisDashboardSaveRequest;
 import com.codet.lens.vis.entity.VisDashboard;
 import com.codet.lens.vis.mapper.VisCardMapper;
-import com.codet.lens.vis.mapper.VisDashGroupMapper;
 import com.codet.lens.vis.mapper.VisDashboardCardMapper;
 import com.codet.lens.vis.mapper.VisDashboardMapper;
-import org.junit.jupiter.api.Test;
-
+import com.codet.lens.vis.mapper.VisDashGroupMapper;
 import java.util.List;
+import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -38,7 +37,7 @@ class VisDashboardServiceTest {
 
     @Test
     void invalidatesAssignedUsersWhenDashboardToggled() {
-        when(dashboardMapper.selectById(9501L)).thenReturn(dashboard(9501L, FieldConst.EBL));
+        when(dashboardMapper.selectById(9501L)).thenReturn(dashboard(9501L, Status.EBL));
 
         service.toggleStatus(9501L);
 
@@ -54,13 +53,13 @@ class VisDashboardServiceTest {
 
     @Test
     void invalidatesAssignedUsersWhenFullSaveChangesMetadata() {
-        VisDashboard previous = dashboard(9501L, FieldConst.EBL);
+        VisDashboard previous = dashboard(9501L, Status.EBL);
         previous.setDashName("旧名称");
         when(dashboardMapper.selectById(9501L)).thenReturn(previous);
         VisDashboardSaveRequest request = new VisDashboardSaveRequest();
         request.setId(9501L);
         request.setDashName("新名称");
-        request.setStatus(FieldConst.EBL);
+        request.setStatus(Status.EBL);
         request.setGroupId(0L);
         request.setConfigJson("{\"widgets\":[]}");
         request.setCards(List.of());
@@ -72,9 +71,9 @@ class VisDashboardServiceTest {
 
     @Test
     void invalidatesAssignedUsersWhenDashboardsMoveGroup() {
-        VisDashboard first = dashboard(9501L, FieldConst.EBL);
+        VisDashboard first = dashboard(9501L, Status.EBL);
         first.setGroupId(1L);
-        VisDashboard second = dashboard(9502L, FieldConst.EBL);
+        VisDashboard second = dashboard(9502L, Status.EBL);
         second.setGroupId(1L);
         when(dashboardMapper.selectById(9501L)).thenReturn(first);
         when(dashboardMapper.selectById(9502L)).thenReturn(second);
@@ -86,13 +85,13 @@ class VisDashboardServiceTest {
 
     @Test
     void doesNotInvalidateAssignedUsersWhenFullSaveOnlyChangesLayout() {
-        VisDashboard previous = dashboard(9501L, FieldConst.EBL);
+        VisDashboard previous = dashboard(9501L, Status.EBL);
         previous.setDashName("经营看板");
         when(dashboardMapper.selectById(9501L)).thenReturn(previous);
         VisDashboardSaveRequest request = new VisDashboardSaveRequest();
         request.setId(9501L);
         request.setDashName("经营看板");
-        request.setStatus(FieldConst.EBL);
+        request.setStatus(Status.EBL);
         request.setGroupId(0L);
         request.setConfigJson("{\"widgets\":[]}");
         request.setCards(List.of());
@@ -107,7 +106,7 @@ class VisDashboardServiceTest {
     void rejectsFullSaveWithoutWidgetsBeforeClearingAssociations() {
         VisDashboardSaveRequest request = new VisDashboardSaveRequest();
         request.setDashName("经营看板");
-        request.setStatus(FieldConst.EBL);
+        request.setStatus(Status.EBL);
         request.setConfigJson("{}");
         request.setCards(List.of());
 

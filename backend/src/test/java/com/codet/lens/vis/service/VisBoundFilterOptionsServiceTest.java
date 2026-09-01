@@ -1,15 +1,14 @@
 package com.codet.lens.vis.service;
 
-import com.codet.lens.common.FieldConst;
+import com.codet.lens.common.base.Status;
 import com.codet.lens.vis.dto.dataset.VisBoundFilterOptionsRequest;
 import com.codet.lens.vis.dto.dataset.VisFilterOptionsRequest;
 import com.codet.lens.vis.dto.dataset.VisFilterOptionsResponse;
 import com.codet.lens.vis.entity.VisDashboard;
 import com.codet.lens.vis.mapper.VisDashboardMapper;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
@@ -27,7 +26,7 @@ class VisBoundFilterOptionsServiceTest {
     @Test
     void bindsDatasetAndFieldsFromSavedDashboardConfig() {
         VisDashboard dashboard = new VisDashboard()
-                .setStatus(FieldConst.EBL)
+                .setStatus(Status.EBL)
                 .setConfigJson("""
                         {"filters":[{"uid":"region","options":{"source":"dataset","datasetId":"9101",
                           "field":"region_code","labelField":"region_name"}}]}

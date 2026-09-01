@@ -1,13 +1,12 @@
 package com.codet.lens.vis.dto.dash;
 
-import com.codet.lens.common.FieldConst;
-import com.codet.lens.common.Long2DatetimeStr;
-import tools.jackson.databind.annotation.JsonSerialize;
+import com.codet.lens.common.base.Long2DatetimeStr;
+import com.codet.lens.common.base.Status;
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
-
-import java.util.List;
+import tools.jackson.databind.annotation.JsonSerialize;
 
 @Schema(description = "可视化看板")
 @Getter
@@ -32,7 +31,7 @@ public class VisDashboardInfo {
     @Schema(description = "图标")
     private String icon;
 
-    @Schema(description = "状态", allowableValues = {FieldConst.EBL, FieldConst.DBL},
+    @Schema(description = "状态", allowableValues = {Status.EBL, Status.DBL},
             requiredMode = Schema.RequiredMode.REQUIRED)
     private String status;
 

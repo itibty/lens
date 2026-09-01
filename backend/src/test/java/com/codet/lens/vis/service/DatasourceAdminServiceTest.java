@@ -1,9 +1,9 @@
 package com.codet.lens.vis.service;
 
-import com.codet.lens.common.FieldConst;
+import com.codet.lens.common.base.Status;
 import com.codet.lens.vis.entity.VisDatasource;
 import com.codet.lens.vis.mapper.VisDatasourceMapper;
-import com.codet.lens.vis.rds.core.DatasourceRegistry;
+import com.codet.lens.vis.core.query.DatasourceRegistry;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -36,7 +36,7 @@ class DatasourceAdminServiceTest {
         VisDatasource row = new VisDatasource()
                 .setSourceName(sourceName)
                 .setDbType(dbType)
-                .setStatus(FieldConst.EBL);
+                .setStatus(Status.EBL);
         row.setId(id);
         return row;
     }

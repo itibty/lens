@@ -3,13 +3,26 @@ package com.codet.lens.vis.service;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import com.codet.lens.common.ConvertUtil;
-import com.codet.lens.common.FieldConst;
-import com.codet.lens.common.ListResponse;
-import com.codet.lens.common.PageResponse;
-import com.codet.lens.common.ResultEnum;
-import com.codet.lens.common.ResultException;
+import com.codet.lens.common.base.ListResponse;
+import com.codet.lens.common.base.PageResponse;
+import com.codet.lens.common.base.ResultEnum;
+import com.codet.lens.common.base.ResultException;
+import com.codet.lens.common.base.Status;
+import com.codet.lens.common.util.ConvertUtil;
+import com.codet.lens.vis.core.query.RdsUtil;
+import com.codet.lens.vis.core.query.SqlColumnMeta;
+import com.codet.lens.vis.core.query.SqlSelectResult;
+import com.codet.lens.vis.core.query.SqlTplPara;
+import com.codet.lens.vis.core.query.SqlTplRet;
+import com.codet.lens.vis.dto.dataset.ConfSqlContentRequest;
+import com.codet.lens.vis.dto.dataset.ConfSqlFieldInfo;
+import com.codet.lens.vis.dto.dataset.ConfSqlInfo;
+import com.codet.lens.vis.dto.dataset.ConfSqlInfoRequest;
 import com.codet.lens.vis.dto.dataset.DatasetSourceChangeWarning;
+import com.codet.lens.vis.dto.dataset.DebugSqlColumn;
+import com.codet.lens.vis.dto.dataset.DebugSqlRequest;
+import com.codet.lens.vis.dto.dataset.DebugSqlResponse;
+import com.codet.lens.vis.dto.dataset.QueryConfSqlRequest;
 import com.codet.lens.vis.dto.dataset.VisCardRefInfo;
 import com.codet.lens.vis.entity.VisCard;
 import com.codet.lens.vis.entity.VisDataset;
@@ -19,23 +32,6 @@ import com.codet.lens.vis.mapper.VisCardMapper;
 import com.codet.lens.vis.mapper.VisDatasetFieldMapper;
 import com.codet.lens.vis.mapper.VisDatasetMapper;
 import com.codet.lens.vis.mapper.VisDatasourceMapper;
-import com.codet.lens.vis.rds.bo.SqlColumnMeta;
-import com.codet.lens.vis.rds.bo.SqlSelectResult;
-import com.codet.lens.vis.rds.bo.SqlTplPara;
-import com.codet.lens.vis.rds.bo.SqlTplRet;
-import com.codet.lens.vis.rds.core.RdsUtil;
-import com.codet.lens.vis.rds.dto.conf.ConfSqlContentRequest;
-import com.codet.lens.vis.rds.dto.conf.ConfSqlFieldInfo;
-import com.codet.lens.vis.rds.dto.conf.ConfSqlInfo;
-import com.codet.lens.vis.rds.dto.conf.ConfSqlInfoRequest;
-import com.codet.lens.vis.rds.dto.conf.DebugSqlColumn;
-import com.codet.lens.vis.rds.dto.conf.DebugSqlRequest;
-import com.codet.lens.vis.rds.dto.conf.DebugSqlResponse;
-import com.codet.lens.vis.rds.dto.conf.QueryConfSqlRequest;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
@@ -43,6 +39,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -55,7 +54,7 @@ public class DatasetAdminService {
 
     public PageResponse<ConfSqlInfo> query(QueryConfSqlRequest req) {
         IPage<VisDataset> page = datasetMapper.selectPage(req.getPage().toIPage(), Wrappers.<VisDataset>lambdaQuery()
-                .ne(VisDataset::getStatus, FieldConst.DEL)
+                .ne(VisDataset::getStatus, Status.DEL)
                 .eq(req.getId() != null, VisDataset::getId, req.getId())
                 .eq(req.getDsId() != null, VisDataset::getSourceId, req.getDsId())
                 .eq(StrUtil.isNotBlank(req.getStatus()), VisDataset::getStatus, req.getStatus())
@@ -130,7 +129,7 @@ public class DatasetAdminService {
                     + " 张卡片引用，请先处理卡片：" + names + suffix);
         }
         for (VisDataset row : datasets) {
-            row.setStatus(FieldConst.DEL);
+            row.setStatus(Status.DEL);
             row.modifyCallback();
             datasetMapper.updateById(row);
         }
@@ -148,7 +147,7 @@ public class DatasetAdminService {
         require(sqlId);
         return fieldMapper.selectList(Wrappers.<VisDatasetField>lambdaQuery()
                         .eq(VisDatasetField::getDatasetId, sqlId)
-                        .eq(VisDatasetField::getStatus, FieldConst.EBL)
+                        .eq(VisDatasetField::getStatus, Status.EBL)
                         .orderByAsc(VisDatasetField::getSortNum))
                 .stream()
                 .map(this::toField)
@@ -166,7 +165,7 @@ public class DatasetAdminService {
             row.setSuggestRole(item.getSuggestRole());
             row.setRemark(normalizeRemark(item.getRemark()));
             row.setSortNum(sort++);
-            row.setStatus(FieldConst.EBL);
+            row.setStatus(Status.EBL);
             row.createCallback();
             fieldMapper.insert(row);
         }
@@ -240,7 +239,7 @@ public class DatasetAdminService {
 
     private VisDataset require(Long id) {
         VisDataset row = datasetMapper.selectById(id);
-        if (row == null || FieldConst.DEL.equals(row.getStatus())) {
+        if (row == null || Status.DEL.equals(row.getStatus())) {
             throw ResultException.fail("数据集不存在");
         }
         return row;
@@ -249,7 +248,7 @@ public class DatasetAdminService {
     private List<VisCard> findRefCards(List<Long> datasetIds) {
         return cardMapper.selectList(Wrappers.<VisCard>query()
                 .in("dataset_id", datasetIds)
-                .ne("status", FieldConst.DEL)
+                .ne("status", Status.DEL)
                 .select("id", "card_name", "dataset_id", "status")
                 .orderByDesc("modify_at")
                 .orderByDesc("id"));

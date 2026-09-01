@@ -1,15 +1,14 @@
 package com.codet.lens.sys.service;
 
-import com.codet.lens.auth.TokenInvalidateService;
+import com.codet.lens.common.auth.TokenInvalidateService;
 import com.codet.lens.sys.entity.SysRoleDashboard;
 import com.codet.lens.sys.entity.SysRoleMenu;
 import com.codet.lens.sys.entity.SysUserRole;
 import com.codet.lens.sys.mapper.SysRoleDashboardMapper;
 import com.codet.lens.sys.mapper.SysRoleMenuMapper;
 import com.codet.lens.sys.mapper.SysUserRoleMapper;
-import org.junit.jupiter.api.Test;
-
 import java.util.List;
+import org.junit.jupiter.api.Test;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;

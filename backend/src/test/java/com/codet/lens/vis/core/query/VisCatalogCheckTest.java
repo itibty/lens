@@ -1,16 +1,15 @@
 package com.codet.lens.vis.core.query;
 
-import com.codet.lens.common.ResultException;
+import com.codet.lens.common.base.ResultException;
 import com.codet.lens.vis.dto.item.HavingFilterItem;
 import com.codet.lens.vis.dto.item.MetricItem;
 import com.codet.lens.vis.dto.pivot.PivotQueryConfig;
 import com.codet.lens.vis.dto.pivot.PivotQueryRequest;
 import com.codet.lens.vis.dto.query.QueryConfig;
 import com.codet.lens.vis.dto.query.QueryRequest;
-import com.codet.lens.vis.rds.dto.conf.ConfSqlFieldInfo;
-import org.junit.jupiter.api.Test;
-
+import com.codet.lens.vis.dto.dataset.ConfSqlFieldInfo;
 import java.util.List;
+import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;

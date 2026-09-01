@@ -1,4 +1,4 @@
--- Lens BI 当前唯一初始化基线（结构 + 种子菜单/角色；管理员账号由应用首次启动写入）
+-- Lens BI 当前唯一初始化基线（结构 + 种子菜单/角色）
 -- 权限码与当前 Controller 对齐；本脚本会重建表，不用于已有库的增量升级。
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;

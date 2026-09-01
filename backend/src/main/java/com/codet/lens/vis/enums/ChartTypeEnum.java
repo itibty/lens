@@ -1,10 +1,9 @@
 package com.codet.lens.vis.enums;
 
-import lombok.Getter;
-
 import java.util.Arrays;
 import java.util.Map;
 import java.util.stream.Collectors;
+import lombok.Getter;
 
 /** 图表类型。PIVOT 只能走透视接口，其余走普通查询。 */
 @Getter

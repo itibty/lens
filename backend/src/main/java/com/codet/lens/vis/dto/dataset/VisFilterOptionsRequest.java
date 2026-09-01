@@ -1,11 +1,10 @@
 package com.codet.lens.vis.dto.dataset;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Getter;
-import lombok.Setter;
-
 import jakarta.validation.constraints.NotNull;
 import java.util.List;
+import lombok.Getter;
+import lombok.Setter;
 
 @Schema(description = "筛选枚举查询")
 @Getter

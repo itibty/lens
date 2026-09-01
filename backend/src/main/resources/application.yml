@@ -42,8 +42,6 @@ mybatis-plus:
 lens:
   jwt-secret: lens-dev-token-secret-change-me
   jwt-ttl-ms: 43200000
-  admin-username: admin
-  admin-password: Aa123456
 
 springdoc:
   api-docs:

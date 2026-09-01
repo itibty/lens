@@ -1,19 +1,18 @@
 package com.codet.lens.sys.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.codet.lens.auth.TokenInvalidateService;
+import com.codet.lens.common.auth.TokenInvalidateService;
 import com.codet.lens.sys.entity.SysRoleDashboard;
 import com.codet.lens.sys.entity.SysRoleMenu;
 import com.codet.lens.sys.entity.SysUserRole;
 import com.codet.lens.sys.mapper.SysRoleDashboardMapper;
 import com.codet.lens.sys.mapper.SysRoleMenuMapper;
 import com.codet.lens.sys.mapper.SysUserRoleMapper;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-
 import java.util.Collection;
 import java.util.Set;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor

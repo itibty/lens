@@ -1,11 +1,11 @@
 package com.codet.lens.vis.dto.card;
 
-import com.codet.lens.common.FieldConst;
-import com.codet.lens.common.Long2DatetimeStr;
-import tools.jackson.databind.annotation.JsonSerialize;
+import com.codet.lens.common.base.Long2DatetimeStr;
+import com.codet.lens.common.base.Status;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
+import tools.jackson.databind.annotation.JsonSerialize;
 
 @Schema(description = "可视化卡片")
 @Getter
@@ -33,7 +33,7 @@ public class VisCardInfo {
     @Schema(description = "可视化配置")
     private String visualJson;
 
-    @Schema(description = "状态", allowableValues = {FieldConst.EBL, FieldConst.DBL},
+    @Schema(description = "状态", allowableValues = {Status.EBL, Status.DBL},
             requiredMode = Schema.RequiredMode.REQUIRED)
     private String status;
 

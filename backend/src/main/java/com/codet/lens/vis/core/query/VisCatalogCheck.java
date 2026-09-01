@@ -2,10 +2,8 @@ package com.codet.lens.vis.core.query;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
-import com.codet.lens.common.ResultEnum;
-import com.codet.lens.common.ResultException;
-import com.codet.lens.vis.rds.core.SqlFieldTypes;
-import com.codet.lens.vis.rds.dto.conf.ConfSqlFieldInfo;
+import com.codet.lens.common.base.ResultEnum;
+import com.codet.lens.common.base.ResultException;
 import com.codet.lens.vis.dto.item.DimensionItem;
 import com.codet.lens.vis.dto.item.FilterGroup;
 import com.codet.lens.vis.dto.item.FilterItem;
@@ -16,17 +14,17 @@ import com.codet.lens.vis.dto.query.DetailQueryRequest;
 import com.codet.lens.vis.dto.query.QueryConfig;
 import com.codet.lens.vis.dto.query.QueryRequest;
 import com.codet.lens.vis.enums.AggFunctionEnum;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-
+import com.codet.lens.vis.dto.dataset.ConfSqlFieldInfo;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 /**
  * 查询前对照数据集字段目录。不校验 Enjoy 参数、公式内部列、结果列过滤。

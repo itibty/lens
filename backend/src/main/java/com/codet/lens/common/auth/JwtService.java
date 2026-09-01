@@ -1,0 +1,86 @@
+package com.codet.lens.common.auth;
+
+import cn.hutool.core.util.IdUtil;
+import cn.hutool.jwt.JWT;
+import cn.hutool.jwt.JWTPayload;
+import cn.hutool.jwt.JWTUtil;
+import cn.hutool.jwt.JWTValidator;
+import cn.hutool.jwt.signers.JWTSignerUtil;
+import com.codet.lens.common.config.LensProperties;
+import java.nio.charset.StandardCharsets;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
+import lombok.extern.slf4j.Slf4j;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
+
+@Slf4j
+@Component
+@RequiredArgsConstructor
+public class JwtService {
+    private static final String CLAIM_ROLES = "roles";
+    private static final String CLAIM_PERMS = "perms";
+    private static final String CLAIM_IAT_MS = "iatMs";
+
+    private final LensProperties properties;
+
+    public String createToken(String userId, Collection<String> roles, Collection<String> perms, long expiresAt) {
+        long iatMs = System.currentTimeMillis();
+        return JWT.create()
+                .setSubject(userId)
+                .setJWTId(IdUtil.fastSimpleUUID())
+                .setIssuedAt(new Date(iatMs))
+                .setExpiresAt(new Date(expiresAt))
+                .setPayload(CLAIM_ROLES, roles)
+                .setPayload(CLAIM_PERMS, perms)
+                .setPayload(CLAIM_IAT_MS, iatMs)
+                .setKey(properties.getJwtSecret().getBytes(StandardCharsets.UTF_8))
+                .sign();
+    }
+
+    public AuthUser parse(String token) {
+        try {
+            JWTValidator.of(token)
+                    .validateAlgorithm(JWTSignerUtil.hs256(properties.getJwtSecret().getBytes(StandardCharsets.UTF_8)))
+                    .validateDate(new Date());
+        } catch (Exception e) {
+            return null;
+        }
+        JWTPayload payload = JWTUtil.parseToken(token).getPayload();
+        AuthUser user = new AuthUser();
+        user.setSubject(String.valueOf(payload.getClaim(JWTPayload.SUBJECT)));
+        user.setIatMs(toLong(payload.getClaim(CLAIM_IAT_MS)));
+        user.setRoles(toStringSet(payload.getClaim(CLAIM_ROLES)));
+        user.setPerms(toStringSet(payload.getClaim(CLAIM_PERMS)));
+        return user;
+    }
+
+    private static long toLong(Object raw) {
+        if (raw instanceof Number n) {
+            return n.longValue();
+        }
+        if (raw == null) {
+            return 0L;
+        }
+        try {
+            return Long.parseLong(raw.toString());
+        } catch (NumberFormatException ignored) {
+            return 0L;
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Set<String> toStringSet(Object claim) {
+        Set<String> set = new HashSet<>();
+        if (claim instanceof Collection<?> col) {
+            for (Object item : col) {
+                if (item != null) {
+                    set.add(item.toString());
+                }
+            }
+        }
+        return set;
+    }
+}

@@ -3,7 +3,6 @@ package com.codet.lens.vis.core.pivot;
 import cn.hutool.core.collection.CollUtil;
 import com.codet.lens.vis.dto.pivot.PivotColumn;
 import com.codet.lens.vis.dto.pivot.PivotRow;
-
 import java.util.*;
 
 /**

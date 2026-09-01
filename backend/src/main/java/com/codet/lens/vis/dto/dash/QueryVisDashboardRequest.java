@@ -1,8 +1,8 @@
 package com.codet.lens.vis.dto.dash;
 
-import com.codet.lens.common.PageRequest;
-import com.codet.lens.common.FieldConst;
-import com.codet.lens.common.EnumValue;
+import com.codet.lens.common.base.EnumValue;
+import com.codet.lens.common.base.PageRequest;
+import com.codet.lens.common.base.Status;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
@@ -24,7 +24,7 @@ public class QueryVisDashboardRequest extends PageRequest {
     @Schema(description = "看板名")
     private String dashName;
 
-    @Schema(description = "状态", allowableValues = {FieldConst.EBL, FieldConst.DBL})
-    @EnumValue(strValues = {FieldConst.EBL, FieldConst.DBL})
+    @Schema(description = "状态", allowableValues = {Status.EBL, Status.DBL})
+    @EnumValue(strValues = {Status.EBL, Status.DBL})
     private String status;
 }

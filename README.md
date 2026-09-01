@@ -37,7 +37,6 @@ cd backend && mvn -DskipTests spring-boot:run
 cd frontend && pnpm i && pnpm dev
 ```
 
-Default account: `admin` / `Aa123456`.  
 MySQL default: `root` / `Aa123456`.  
 Redis default: `127.0.0.1:6379`, password `Aa123456`.
 

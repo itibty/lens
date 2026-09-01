@@ -1,7 +1,7 @@
 package com.codet.lens.vis.service;
 
-import com.codet.lens.common.FieldConst;
-import com.codet.lens.common.ResultException;
+import com.codet.lens.common.base.ResultException;
+import com.codet.lens.common.base.Status;
 import com.codet.lens.vis.dto.card.VisCardSaveRequest;
 import com.codet.lens.vis.entity.VisCard;
 import com.codet.lens.vis.entity.VisDataset;
@@ -33,7 +33,7 @@ class VisCardServiceTest {
 
     @Test
     void rejectsSavingDataCardAgainstDisabledDataset() {
-        VisDataset dataset = new VisDataset().setStatus(FieldConst.DBL);
+        VisDataset dataset = new VisDataset().setStatus(Status.DBL);
         when(datasetMapper.selectById(10L)).thenReturn(dataset);
         VisCardSaveRequest request = new VisCardSaveRequest();
         request.setCardName("区域营收");
@@ -59,7 +59,7 @@ class VisCardServiceTest {
 
     @Test
     void rejectsEditingDeletedCard() {
-        VisCard deleted = new VisCard().setStatus(FieldConst.DEL);
+        VisCard deleted = new VisCard().setStatus(Status.DEL);
         deleted.setId(20L);
         when(cardMapper.selectById(20L)).thenReturn(deleted);
 
@@ -72,7 +72,7 @@ class VisCardServiceTest {
 
     @Test
     void rejectsEditWhenCardWasDeletedConcurrently() {
-        VisCard existing = new VisCard().setStatus(FieldConst.EBL);
+        VisCard existing = new VisCard().setStatus(Status.EBL);
         existing.setId(20L);
         when(cardMapper.selectById(20L)).thenReturn(existing);
         when(cardMapper.update(any(VisCard.class), any())).thenReturn(0);
@@ -85,7 +85,7 @@ class VisCardServiceTest {
 
     @Test
     void updatesExistingCard() {
-        VisCard existing = new VisCard().setStatus(FieldConst.EBL);
+        VisCard existing = new VisCard().setStatus(Status.EBL);
         existing.setId(20L);
         when(cardMapper.selectById(20L)).thenReturn(existing);
         when(cardMapper.update(any(VisCard.class), any())).thenReturn(1);
@@ -98,7 +98,7 @@ class VisCardServiceTest {
         VisCardSaveRequest request = new VisCardSaveRequest();
         request.setCardName("说明卡片");
         request.setChartType("richtext");
-        request.setStatus(FieldConst.EBL);
+        request.setStatus(Status.EBL);
         request.setVisualJson("""
                 {"chartType":"richtext","richtext":{"html":"<p onclick=\\"steal()\\">正文</p>"}}
                 """);
@@ -115,7 +115,7 @@ class VisCardServiceTest {
         request.setId(id);
         request.setCardName("说明卡片");
         request.setChartType("richtext");
-        request.setStatus(FieldConst.EBL);
+        request.setStatus(Status.EBL);
         request.setVisualJson("{}");
         return request;
     }

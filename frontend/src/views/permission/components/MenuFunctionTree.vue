@@ -52,7 +52,7 @@ function fetchData() {
     })
 }
 
-function filterNode(value: string, data: ADMIN.MenuTree): boolean {
+function filterNode(value: string, data: Partial<Pick<ADMIN.MenuTree, 'menuName' | 'permCode' | 'routePath'>>): boolean {
   if (!value)
     return true
   const kw = value.toLowerCase()

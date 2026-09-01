@@ -5,12 +5,12 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import com.codet.lens.common.ListResponse;
-import com.codet.lens.common.PageResponse;
-import com.codet.lens.common.FieldConst;
-import com.codet.lens.common.ResultEnum;
-import com.codet.lens.common.ResultException;
-import com.codet.lens.common.ConvertUtil;
+import com.codet.lens.common.base.ListResponse;
+import com.codet.lens.common.base.PageResponse;
+import com.codet.lens.common.base.ResultEnum;
+import com.codet.lens.common.base.ResultException;
+import com.codet.lens.common.base.Status;
+import com.codet.lens.common.util.ConvertUtil;
 import com.codet.lens.vis.core.card.RichTextSanitizer;
 import com.codet.lens.vis.dto.card.QueryVisCardRequest;
 import com.codet.lens.vis.dto.card.VisCardInfo;
@@ -25,13 +25,12 @@ import com.codet.lens.vis.mapper.VisCardMapper;
 import com.codet.lens.vis.mapper.VisDashboardCardMapper;
 import com.codet.lens.vis.mapper.VisDashboardMapper;
 import com.codet.lens.vis.mapper.VisDatasetMapper;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /** 卡片配置。删卡片会硬删各看板占位。 */
 @Service
@@ -46,7 +45,7 @@ public class VisCardService {
 
     public PageResponse<VisCardInfo> query(QueryVisCardRequest request) {
         IPage<VisCardInfo> page = visCardMapper.selectPage(request.getPage().toIPage(), Wrappers.<VisCard>lambdaQuery()
-                        .ne(VisCard::getStatus, FieldConst.DEL)
+                        .ne(VisCard::getStatus, Status.DEL)
                         .eq(request.getId() != null, VisCard::getId, request.getId())
                         .eq(request.getDatasetId() != null, VisCard::getDatasetId, request.getDatasetId())
                         .eq(StrUtil.isNotBlank(request.getStatus()), VisCard::getStatus, request.getStatus())
@@ -76,7 +75,7 @@ public class VisCardService {
         }
         List<VisDashboardRefInfo> list = visDashboardMapper.selectList(Wrappers.<VisDashboard>lambdaQuery()
                         .in(VisDashboard::getId, dashboardIds)
-                        .ne(VisDashboard::getStatus, FieldConst.DEL)
+                        .ne(VisDashboard::getStatus, Status.DEL)
                         .select(VisDashboard::getId, VisDashboard::getDashName,
                                 VisDashboard::getStatus, VisDashboard::getModifyAt)
                         .orderByDesc(VisDashboard::getModifyAt)
@@ -126,7 +125,7 @@ public class VisCardService {
             entity.modifyCallback();
             int updated = visCardMapper.update(entity, Wrappers.<VisCard>lambdaUpdate()
                     .eq(VisCard::getId, request.getId())
-                    .ne(VisCard::getStatus, FieldConst.DEL));
+                    .ne(VisCard::getStatus, Status.DEL));
             if (updated != 1) {
                 throw fail("卡片不存在");
             }
@@ -139,7 +138,7 @@ public class VisCardService {
         VisCard row = requireCard(cardId);
         VisCard patch = new VisCard();
         patch.setId(cardId);
-        patch.setStatus(FieldConst.EBL.equals(row.getStatus()) ? FieldConst.DBL : FieldConst.EBL);
+        patch.setStatus(Status.EBL.equals(row.getStatus()) ? Status.DBL : Status.EBL);
         patch.modifyCallback();
         visCardMapper.updateById(patch);
     }
@@ -147,10 +146,10 @@ public class VisCardService {
     @Transactional(rollbackFor = Exception.class)
     public void delete(List<Long> ids) {
         VisCard entity = new VisCard();
-        entity.setStatus(FieldConst.DEL);
+        entity.setStatus(Status.DEL);
         entity.modifyCallback();
         visCardMapper.update(entity, Wrappers.<VisCard>lambdaUpdate()
-                .ne(VisCard::getStatus, FieldConst.DEL)
+                .ne(VisCard::getStatus, Status.DEL)
                 .in(VisCard::getId, ids));
         visDashboardCardMapper.delete(Wrappers.<VisDashboardCard>lambdaQuery()
                 .in(VisDashboardCard::getCardId, ids));
@@ -158,7 +157,7 @@ public class VisCardService {
 
     private VisCard requireCard(Long cardId) {
         VisCard row = visCardMapper.selectById(cardId);
-        if (row == null || FieldConst.DEL.equals(row.getStatus())) {
+        if (row == null || Status.DEL.equals(row.getStatus())) {
             throw fail("卡片不存在");
         }
         return row;
@@ -166,10 +165,10 @@ public class VisCardService {
 
     private void requireDatasetEnabled(Long datasetId) {
         VisDataset dataset = visDatasetMapper.selectById(datasetId);
-        if (dataset == null || FieldConst.DEL.equals(dataset.getStatus())) {
+        if (dataset == null || Status.DEL.equals(dataset.getStatus())) {
             throw fail("数据集不存在");
         }
-        if (!FieldConst.EBL.equals(dataset.getStatus())) {
+        if (!Status.EBL.equals(dataset.getStatus())) {
             throw fail("数据集已禁用");
         }
     }

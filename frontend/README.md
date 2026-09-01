@@ -22,7 +22,7 @@ Vue 3 应用，覆盖数据集、卡片、看板设计，以及账号、角色�
 | 路径 | 说明 |
 |------|------|
 | `src/views/` | 页面：可视化、数据集、报表、权限、登录 |
-| `src/apis/` | 接口客户端（vis 由 OpenAPI 生成） |
+| `src/apis/` | 接口客户端（`admin/`、`vis/` 均由 OpenAPI 生成，勿手改） |
 | `src/stores/` | Pinia |
 | `src/router/` | 路由 |
 | `src/components/` | 通用组件 |
@@ -46,10 +46,10 @@ pnpm lint
 pnpm lint-fix
 ```
 
-生成 API（需后端已启动；只生成 vis，不要对 admin 跑 generate）：
+生成 API（需后端已启动）：
 
 ```shell
-pnpm generate-api -- --service=vis
+pnpm generate-api
 ```
 
 依赖：

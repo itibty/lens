@@ -1,8 +1,7 @@
 package com.codet.lens.vis.controller;
 
-import com.codet.lens.auth.Permission;
-import com.codet.lens.common.PermCodes;
-import com.codet.lens.common.R;
+import com.codet.lens.common.auth.Permission;
+import com.codet.lens.common.base.R;
 import com.codet.lens.vis.dto.card.VisCardInfo;
 import com.codet.lens.vis.dto.dash.VisDashboardInfo;
 import com.codet.lens.vis.dto.dataset.VisBoundFilterOptionsRequest;
@@ -24,10 +23,15 @@ import com.codet.lens.vis.service.VisDashboardService;
 import com.codet.lens.vis.service.VisDataService;
 import com.codet.lens.vis.service.VisDateWindowService;
 import com.codet.lens.vis.service.VisFilterOptionsService;
+import com.codet.lens.vis.VisPerms;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.constraints.NotNull;
+import java.io.IOException;
+import java.net.URLEncoder;
+import java.time.format.DateTimeFormatter;
+import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -35,11 +39,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.io.IOException;
-import java.net.URLEncoder;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 
 @Tag(name = "QUERY")
 @RestController
@@ -81,7 +80,7 @@ public class VisQueryController {
     }
 
     @Operation(operationId = "listFilterOptions", summary = "设计态筛选枚举")
-    @Permission({PermCodes.VIS_CARD_CONF, PermCodes.VIS_DASHBOARD_CONF})
+    @Permission({VisPerms.VIS_CARD_CONF, VisPerms.VIS_DASHBOARD_CONF})
     @PostMapping("/vis/filter-options")
     public R<VisFilterOptionsResponse> listFilterOptions(
             @Validated @RequestBody VisFilterOptionsRequest request) {

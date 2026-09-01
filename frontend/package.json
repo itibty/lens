@@ -15,7 +15,7 @@
     "lint": "eslint .",
     "lint-fix": "eslint . --fix",
     "lint-staged": "npx lint-staged",
-    "generate-api": "node ./build/generate/openapi.config.cjs",
+    "generate-api": "node ./build/generate/openapi.config.cjs --service=admin,vis",
     "init-hooks": "npx simple-git-hooks",
     "check-upgrade": "npm-check -u -i \"{sass,typescript,@visactor/*}\"",
     "preinstall": "npx only-allow pnpm",

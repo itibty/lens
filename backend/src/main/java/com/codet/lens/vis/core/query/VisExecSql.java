@@ -1,20 +1,18 @@
 package com.codet.lens.vis.core.query;
 
 import cn.hutool.core.collection.CollUtil;
-import com.codet.lens.auth.AuthContext;
-import com.codet.lens.common.PermCodes;
-import com.codet.lens.common.ResultEnum;
-import com.codet.lens.common.ResultException;
-import com.codet.lens.common.WebUtil;
-import com.codet.lens.vis.rds.bo.ExecSqlInfo;
-import com.codet.lens.vis.rds.core.QueryContext;
+import com.codet.lens.common.auth.AuthContext;
+import com.codet.lens.common.base.ResultEnum;
+import com.codet.lens.common.base.ResultException;
+import com.codet.lens.common.util.WebUtil;
+import com.codet.lens.vis.VisPerms;
+import com.codet.lens.vis.dto.query.ExecSqlInfo;
 import jakarta.servlet.http.HttpServletRequest;
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
-
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class VisExecSql {
@@ -28,7 +26,7 @@ public final class VisExecSql {
             return false;
         }
         return AuthContext.get() != null && AuthContext.get().hasAnyPerm(
-                PermCodes.VIS_DATASET_CONF);
+                VisPerms.VIS_DATASET_CONF);
     }
 
     public static List<ExecSqlInfo> listOrNull(QueryContext ctx) {

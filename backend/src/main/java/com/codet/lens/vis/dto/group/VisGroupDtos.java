@@ -1,8 +1,8 @@
 package com.codet.lens.vis.dto.group;
 
-import com.codet.lens.common.EnumValue;
-import com.codet.lens.common.FieldConst;
-import com.codet.lens.common.TreeNode;
+import com.codet.lens.common.base.EnumValue;
+import com.codet.lens.common.base.Status;
+import com.codet.lens.common.base.TreeNode;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -34,7 +34,7 @@ public class VisGroupDtos {
         @Size(max = 50)
         private String icon;
         private Integer sortNum;
-        @EnumValue(strValues = {FieldConst.EBL, FieldConst.DBL})
+        @EnumValue(strValues = {Status.EBL, Status.DBL})
         private String status;
     }
 

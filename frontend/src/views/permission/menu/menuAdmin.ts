@@ -11,7 +11,7 @@ export function stripFuncs(nodes: ADMIN.MenuTree[]): ADMIN.MenuTree[] {
       const children = node.children?.length ? stripFuncs(node.children) : []
       return {
         ...node,
-        children: children.length ? children : undefined,
+        children,
       }
     })
 }

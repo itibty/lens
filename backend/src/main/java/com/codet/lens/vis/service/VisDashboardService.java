@@ -6,11 +6,11 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import com.codet.lens.common.PageResponse;
-import com.codet.lens.common.FieldConst;
-import com.codet.lens.common.ResultEnum;
-import com.codet.lens.common.ResultException;
-import com.codet.lens.common.ConvertUtil;
+import com.codet.lens.common.base.PageResponse;
+import com.codet.lens.common.base.ResultEnum;
+import com.codet.lens.common.base.ResultException;
+import com.codet.lens.common.base.Status;
+import com.codet.lens.common.util.ConvertUtil;
 import com.codet.lens.sys.entity.SysRoleDashboard;
 import com.codet.lens.sys.mapper.SysRoleDashboardMapper;
 import com.codet.lens.sys.service.PermissionTokenService;
@@ -21,17 +21,13 @@ import com.codet.lens.vis.dto.dash.VisDashboardLayoutItem;
 import com.codet.lens.vis.dto.dash.VisDashboardMetadataUpdateRequest;
 import com.codet.lens.vis.dto.dash.VisDashboardSaveRequest;
 import com.codet.lens.vis.entity.VisCard;
-import com.codet.lens.vis.entity.VisDashGroup;
 import com.codet.lens.vis.entity.VisDashboard;
 import com.codet.lens.vis.entity.VisDashboardCard;
+import com.codet.lens.vis.entity.VisDashGroup;
 import com.codet.lens.vis.mapper.VisCardMapper;
-import com.codet.lens.vis.mapper.VisDashGroupMapper;
 import com.codet.lens.vis.mapper.VisDashboardCardMapper;
 import com.codet.lens.vis.mapper.VisDashboardMapper;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
+import com.codet.lens.vis.mapper.VisDashGroupMapper;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -39,6 +35,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /** 看板配置。整看板一次保存：元数据 + widgets 成员索引。 */
 @Service
@@ -56,7 +55,7 @@ public class VisDashboardService {
 
     public PageResponse<VisDashboardInfo> query(QueryVisDashboardRequest request) {
         LambdaQueryWrapper<VisDashboard> wrapper = Wrappers.<VisDashboard>lambdaQuery()
-                .ne(VisDashboard::getStatus, FieldConst.DEL)
+                .ne(VisDashboard::getStatus, Status.DEL)
                 .eq(request.getId() != null, VisDashboard::getId, request.getId())
                 .eq(StrUtil.isNotBlank(request.getStatus()), VisDashboard::getStatus, request.getStatus())
                 .like(StrUtil.isNotBlank(request.getDashName()), VisDashboard::getDashName, request.getDashName())
@@ -90,7 +89,7 @@ public class VisDashboardService {
         entity.setGroupId(request.getGroupId() == null ? 0L : request.getGroupId());
         if (entity.getGroupId() != 0) {
             VisDashGroup group = dashGroupMapper.selectById(entity.getGroupId());
-            if (group == null || FieldConst.DEL.equals(group.getStatus())) {
+            if (group == null || Status.DEL.equals(group.getStatus())) {
                 throw fail("分组不存在");
             }
         }
@@ -117,7 +116,7 @@ public class VisDashboardService {
         long groupId = request.getGroupId() == null ? 0L : request.getGroupId();
         if (groupId != 0) {
             VisDashGroup group = dashGroupMapper.selectById(groupId);
-            if (group == null || FieldConst.DEL.equals(group.getStatus())) {
+            if (group == null || Status.DEL.equals(group.getStatus())) {
                 throw fail("分组不存在");
             }
         }
@@ -125,7 +124,7 @@ public class VisDashboardService {
         patch.modifyCallback();
         visDashboardMapper.update(patch, Wrappers.<VisDashboard>lambdaUpdate()
                 .eq(VisDashboard::getId, request.getId())
-                .ne(VisDashboard::getStatus, FieldConst.DEL)
+                .ne(VisDashboard::getStatus, Status.DEL)
                 .set(VisDashboard::getDashName, request.getDashName().trim())
                 .set(VisDashboard::getDashDesc, request.getDashDesc())
                 .set(VisDashboard::getIcon, StrUtil.blankToDefault(request.getIcon(), null))
@@ -143,7 +142,7 @@ public class VisDashboardService {
         long target = groupId == null ? 0L : groupId;
         if (target != 0) {
             VisDashGroup group = dashGroupMapper.selectById(target);
-            if (group == null || FieldConst.DEL.equals(group.getStatus())) {
+            if (group == null || Status.DEL.equals(group.getStatus())) {
                 throw fail("分组不存在");
             }
         }
@@ -158,7 +157,7 @@ public class VisDashboardService {
         patch.setGroupId(target);
         patch.modifyCallback();
         visDashboardMapper.update(patch, Wrappers.<VisDashboard>lambdaUpdate()
-                .ne(VisDashboard::getStatus, FieldConst.DEL)
+                .ne(VisDashboard::getStatus, Status.DEL)
                 .in(VisDashboard::getId, dashboardIds));
         permissionTokenService.invalidateDashboardUsers(changedIds);
     }
@@ -168,7 +167,7 @@ public class VisDashboardService {
         VisDashboard row = requireDashboard(dashboardId);
         VisDashboard patch = new VisDashboard();
         patch.setId(dashboardId);
-        patch.setStatus(FieldConst.EBL.equals(row.getStatus()) ? FieldConst.DBL : FieldConst.EBL);
+        patch.setStatus(Status.EBL.equals(row.getStatus()) ? Status.DBL : Status.EBL);
         patch.modifyCallback();
         visDashboardMapper.updateById(patch);
         permissionTokenService.invalidateDashboardUsers(dashboardId);
@@ -178,10 +177,10 @@ public class VisDashboardService {
     public void delete(List<Long> ids) {
         permissionTokenService.invalidateDashboardUsers(ids);
         VisDashboard entity = new VisDashboard();
-        entity.setStatus(FieldConst.DEL);
+        entity.setStatus(Status.DEL);
         entity.modifyCallback();
         visDashboardMapper.update(entity, Wrappers.<VisDashboard>lambdaUpdate()
-                .ne(VisDashboard::getStatus, FieldConst.DEL)
+                .ne(VisDashboard::getStatus, Status.DEL)
                 .in(VisDashboard::getId, ids));
         visDashboardCardMapper.delete(Wrappers.<VisDashboardCard>lambdaQuery()
                 .in(VisDashboardCard::getDashboardId, ids));
@@ -261,7 +260,7 @@ public class VisDashboardService {
 
     private VisDashboard requireDashboard(Long dashboardId) {
         VisDashboard row = visDashboardMapper.selectById(dashboardId);
-        if (row == null || FieldConst.DEL.equals(row.getStatus())) {
+        if (row == null || Status.DEL.equals(row.getStatus())) {
             throw fail("看板不存在");
         }
         return row;
@@ -270,7 +269,7 @@ public class VisDashboardService {
     private void requireCardsExist(List<Long> cardIds) {
         List<VisCard> rows = visCardMapper.selectList(Wrappers.<VisCard>lambdaQuery()
                 .in(VisCard::getId, cardIds)
-                .ne(VisCard::getStatus, FieldConst.DEL));
+                .ne(VisCard::getStatus, Status.DEL));
         Set<Long> found = rows.stream().map(VisCard::getId).collect(Collectors.toSet());
         for (Long cardId : cardIds) {
             if (!found.contains(cardId)) {
@@ -287,7 +286,7 @@ public class VisDashboardService {
         List<Long> cardIds = placements.stream().map(VisDashboardCard::getCardId).collect(Collectors.toList());
         Map<Long, String> statusById = visCardMapper.selectList(Wrappers.<VisCard>lambdaQuery()
                         .in(VisCard::getId, cardIds)
-                        .ne(VisCard::getStatus, FieldConst.DEL)
+                        .ne(VisCard::getStatus, Status.DEL)
                         .select(VisCard::getId, VisCard::getStatus))
                 .stream()
                 .collect(Collectors.toMap(VisCard::getId, VisCard::getStatus, (a, b) -> a));

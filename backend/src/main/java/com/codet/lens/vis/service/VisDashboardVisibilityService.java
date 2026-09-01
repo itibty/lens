@@ -1,19 +1,18 @@
 package com.codet.lens.vis.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.codet.lens.common.FieldConst;
-import com.codet.lens.vis.entity.VisDashGroup;
+import com.codet.lens.common.base.Status;
 import com.codet.lens.vis.entity.VisDashboard;
-import com.codet.lens.vis.mapper.VisDashGroupMapper;
+import com.codet.lens.vis.entity.VisDashGroup;
 import com.codet.lens.vis.mapper.VisDashboardMapper;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-
+import com.codet.lens.vis.mapper.VisDashGroupMapper;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
@@ -27,12 +26,12 @@ public class VisDashboardVisibilityService {
             return Set.of();
         Set<Long> effectiveGroups = effectiveGroupIds(groupMapper.selectList(
                 new QueryWrapper<VisDashGroup>()
-                        .ne("status", FieldConst.DEL)
+                        .ne("status", Status.DEL)
                         .select("id", "pid", "status")));
         Set<Long> visible = new HashSet<>();
         for (VisDashboard dashboard : dashboardMapper.selectList(new QueryWrapper<VisDashboard>()
                 .in("id", dashboardIds)
-                .eq("status", FieldConst.EBL)
+                .eq("status", Status.EBL)
                 .select("id", "group_id"))) {
             long groupId = dashboard.getGroupId() == null ? 0L : dashboard.getGroupId();
             if (groupId == 0 || effectiveGroups.contains(groupId))
@@ -62,7 +61,7 @@ public class VisDashboardVisibilityService {
         if (cached != null)
             return cached;
         VisDashGroup group = groups.get(groupId);
-        if (group == null || !FieldConst.EBL.equals(group.getStatus()) || !visiting.add(groupId)) {
+        if (group == null || !Status.EBL.equals(group.getStatus()) || !visiting.add(groupId)) {
             memo.put(groupId, false);
             return false;
         }

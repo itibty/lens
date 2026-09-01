@@ -2,10 +2,9 @@ package com.codet.lens.sys.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.codet.lens.sys.entity.SysMenu;
+import java.util.List;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
-
-import java.util.List;
 
 public interface SysMenuMapper extends BaseMapper<SysMenu> {
 

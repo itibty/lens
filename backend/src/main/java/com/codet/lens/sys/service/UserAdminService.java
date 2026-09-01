@@ -4,32 +4,31 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.crypto.digest.BCrypt;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import com.codet.lens.auth.TokenInvalidateService;
-import com.codet.lens.common.ConvertUtil;
-import com.codet.lens.common.FieldConst;
-import com.codet.lens.common.PageResponse;
-import com.codet.lens.common.ResultException;
-import com.codet.lens.sys.dto.SysDtos.QueryUserRequest;
-import com.codet.lens.sys.dto.SysDtos.ResetPwdRequest;
-import com.codet.lens.sys.dto.SysDtos.ResetRolesRequest;
-import com.codet.lens.sys.dto.SysDtos.SaveUserRequest;
-import com.codet.lens.sys.dto.SysDtos.UserInfo;
-import com.codet.lens.sys.dto.SysDtos.UserRoleInfo;
+import com.codet.lens.common.auth.TokenInvalidateService;
+import com.codet.lens.common.base.PageResponse;
+import com.codet.lens.common.base.ResultException;
+import com.codet.lens.common.base.Status;
+import com.codet.lens.common.util.ConvertUtil;
+import com.codet.lens.sys.dto.user.QueryUserRequest;
+import com.codet.lens.sys.dto.user.ResetPwdRequest;
+import com.codet.lens.sys.dto.user.ResetRolesRequest;
+import com.codet.lens.sys.dto.user.SaveUserRequest;
+import com.codet.lens.sys.dto.user.UserInfo;
+import com.codet.lens.sys.dto.user.UserRoleInfo;
 import com.codet.lens.sys.entity.SysRole;
 import com.codet.lens.sys.entity.SysUser;
 import com.codet.lens.sys.entity.SysUserRole;
 import com.codet.lens.sys.mapper.SysRoleMapper;
 import com.codet.lens.sys.mapper.SysUserMapper;
 import com.codet.lens.sys.mapper.SysUserRoleMapper;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -81,7 +80,7 @@ public class UserAdminService {
         SysUser user = req.getId() == null ? new SysUser() : require(req.getId());
         String previousStatus = user.getStatus();
         String nextStatus = StrUtil.isBlank(req.getStatus())
-                ? (req.getId() == null ? FieldConst.EBL : previousStatus)
+                ? (req.getId() == null ? Status.EBL : previousStatus)
                 : req.getStatus();
         user.setUsername(req.getUsername());
         user.setRealName(req.getRealName());
@@ -124,10 +123,10 @@ public class UserAdminService {
 
     public void toggle(Long userId) {
         SysUser user = require(userId);
-        user.setStatus(FieldConst.EBL.equals(user.getStatus()) ? FieldConst.DBL : FieldConst.EBL);
+        user.setStatus(Status.EBL.equals(user.getStatus()) ? Status.DBL : Status.EBL);
         user.modifyCallback();
         userMapper.updateById(user);
-        if (FieldConst.DBL.equals(user.getStatus())) {
+        if (Status.DBL.equals(user.getStatus())) {
             tokenInvalidateService.invalidate(userId);
         }
     }

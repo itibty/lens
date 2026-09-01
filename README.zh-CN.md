@@ -30,7 +30,7 @@ cd backend && mvn -DskipTests spring-boot:run
 cd frontend && pnpm i && pnpm dev
 ```
 
-默认账号 `admin` / `Aa123456`。Redis 默认 `127.0.0.1:6379`，密码 `Aa123456`。
+Redis 默认 `127.0.0.1:6379`，密码 `Aa123456`。
 
 ## 构建与运行
 

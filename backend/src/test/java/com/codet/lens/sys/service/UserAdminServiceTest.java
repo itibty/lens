@@ -1,8 +1,8 @@
 package com.codet.lens.sys.service;
 
-import com.codet.lens.auth.TokenInvalidateService;
-import com.codet.lens.common.FieldConst;
-import com.codet.lens.sys.dto.SysDtos.SaveUserRequest;
+import com.codet.lens.common.auth.TokenInvalidateService;
+import com.codet.lens.common.base.Status;
+import com.codet.lens.sys.dto.user.SaveUserRequest;
 import com.codet.lens.sys.entity.SysUser;
 import com.codet.lens.sys.mapper.SysRoleMapper;
 import com.codet.lens.sys.mapper.SysUserMapper;
@@ -31,7 +31,7 @@ class UserAdminServiceTest {
         user.setId(10L);
         user.setUsername("disabled-user");
         user.setRealName("禁用用户");
-        user.setStatus(FieldConst.DBL);
+        user.setStatus(Status.DBL);
         when(userMapper.selectById(10L)).thenReturn(user);
 
         SaveUserRequest request = new SaveUserRequest();
@@ -41,7 +41,7 @@ class UserAdminServiceTest {
 
         service.save(request);
 
-        assertEquals(FieldConst.DBL, user.getStatus());
+        assertEquals(Status.DBL, user.getStatus());
         verify(tokenInvalidateService, never()).invalidate(10L);
     }
 }

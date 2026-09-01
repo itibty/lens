@@ -1,7 +1,7 @@
 package com.codet.lens.vis.core.query;
 
-import com.codet.lens.common.ResultEnum;
-import com.codet.lens.common.ResultException;
+import com.codet.lens.common.base.ResultEnum;
+import com.codet.lens.common.base.ResultException;
 import com.codet.lens.vis.dto.item.ContrastConfig;
 import com.codet.lens.vis.dto.item.MetricItem;
 import com.codet.lens.vis.dto.query.ContrastInfo;
@@ -9,14 +9,13 @@ import com.codet.lens.vis.dto.query.ContrastRange;
 import com.codet.lens.vis.enums.ContrastCalcTypeEnum;
 import com.codet.lens.vis.enums.ContrastMethodEnum;
 import com.codet.lens.vis.enums.DateValueExpEnum;
+import java.time.format.DateTimeFormatter;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalAdjusters;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalAdjusters;
 
 /**
  * 评估期 {@code valueExp} → 日历闭区间，再按 {@code calcMethod} 平移出对比期。

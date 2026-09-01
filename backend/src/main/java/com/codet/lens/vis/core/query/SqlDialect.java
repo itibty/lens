@@ -1,10 +1,8 @@
 package com.codet.lens.vis.core.query;
 
 import cn.hutool.core.util.StrUtil;
-import com.codet.lens.common.FieldConst;
-import com.codet.lens.common.ResultException;
+import com.codet.lens.common.base.ResultException;
 import com.codet.lens.vis.enums.TimeGrainEnum;
-
 import java.util.Locale;
 
 /**
@@ -12,8 +10,8 @@ import java.util.Locale;
  */
 public enum SqlDialect {
 
-    MYSQL(FieldConst.MYSQL, '`', '`'),
-    POSTGRES(FieldConst.POSTGRES, '"', '"');
+    MYSQL("MYSQL", '`', '`'),
+    POSTGRES("POSTGRES", '"', '"');
 
     private final String typeCode;
     private final char open;
@@ -29,9 +27,9 @@ public enum SqlDialect {
         if (StrUtil.isBlank(typeCategory))
             throw unsupported(typeCategory);
         String type = typeCategory.trim().toUpperCase(Locale.ROOT);
-        if (FieldConst.MYSQL.equals(type))
+        if (MYSQL.getTypeCode().equals(type))
             return MYSQL;
-        if (FieldConst.POSTGRES.equals(type) || "POSTGRESQL".equals(type))
+        if (POSTGRES.getTypeCode().equals(type) || "POSTGRESQL".equals(type))
             return POSTGRES;
         throw unsupported(typeCategory);
     }

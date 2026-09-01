@@ -1,12 +1,10 @@
 package com.codet.lens.vis.dto.query;
 
-import com.codet.lens.vis.rds.bo.ExecSqlInfo;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Getter;
-import lombok.Setter;
-
 import java.util.List;
 import java.util.Map;
+import lombok.Getter;
+import lombok.Setter;
 
 @Schema(description = "普通查询结果")
 @Getter

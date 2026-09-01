@@ -1,16 +1,15 @@
 package com.codet.lens.vis.dto.dash;
 
-import com.codet.lens.common.FieldConst;
-import com.codet.lens.common.EnumValue;
+import com.codet.lens.common.base.EnumValue;
+import com.codet.lens.common.base.Status;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Getter;
-import lombok.Setter;
-
-import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import jakarta.validation.Valid;
 import java.util.List;
+import lombok.Getter;
+import lombok.Setter;
 
 @Schema(description = "新建|编辑看板")
 @Getter
@@ -36,9 +35,9 @@ public class VisDashboardSaveRequest {
     @Size(max = 50)
     private String icon;
 
-    @Schema(description = "状态", allowableValues = {FieldConst.EBL, FieldConst.DBL}, requiredMode = Schema.RequiredMode.REQUIRED)
+    @Schema(description = "状态", allowableValues = {Status.EBL, Status.DBL}, requiredMode = Schema.RequiredMode.REQUIRED)
     @NotBlank
-    @EnumValue(strValues = {FieldConst.EBL, FieldConst.DBL})
+    @EnumValue(strValues = {Status.EBL, Status.DBL})
     private String status;
 
     @Schema(description = "看板完整配置，必须明确包含 widgets 数组", requiredMode = Schema.RequiredMode.REQUIRED)

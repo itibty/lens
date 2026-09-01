@@ -5,9 +5,8 @@ import com.codet.lens.vis.core.query.VisQueryPrep;
 import com.codet.lens.vis.dto.query.ContrastRange;
 import com.codet.lens.vis.dto.query.DateWindowRequest;
 import com.codet.lens.vis.dto.query.DateWindowResponse;
-import org.springframework.stereotype.Service;
-
 import java.time.LocalDate;
+import org.springframework.stereotype.Service;
 
 /** 配置态日期快捷 / 对比窗预览。 */
 @Service

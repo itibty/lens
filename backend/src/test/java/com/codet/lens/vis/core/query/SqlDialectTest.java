@@ -1,16 +1,15 @@
 package com.codet.lens.vis.core.query;
 
-import com.codet.lens.common.ResultException;
+import com.codet.lens.common.base.ResultException;
 import com.codet.lens.vis.dto.item.ContrastConfig;
 import com.codet.lens.vis.dto.item.DimensionItem;
 import com.codet.lens.vis.dto.item.MetricItem;
 import com.codet.lens.vis.enums.TimeGrainEnum;
-import org.junit.jupiter.api.Test;
-
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;

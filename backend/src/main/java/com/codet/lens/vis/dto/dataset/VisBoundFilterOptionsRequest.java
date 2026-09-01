@@ -1,10 +1,9 @@
 package com.codet.lens.vis.dto.dataset;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
-
-import java.util.List;
 
 @Schema(description = "看板筛选枚举查询")
 @Getter

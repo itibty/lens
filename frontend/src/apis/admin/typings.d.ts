@@ -1,13 +1,21 @@
 declare namespace ADMIN {
   type AccountInfo = {
-    id?: string;
-    username?: string;
-    realName?: string;
-    phone?: string;
-    email?: string;
-    status?: string;
-    roleCodes?: string[];
-    functionCodes?: string[];
+    /** 用户 id */
+    id: string;
+    /** 用户名 */
+    username: string;
+    /** 姓名 */
+    realName: string;
+    /** 手机 */
+    phone: string;
+    /** 邮箱 */
+    email: string;
+    /** 状态 */
+    status: "EBL" | "DBL";
+    /** 角色编码 */
+    roleCodes: string[];
+    /** 功能权限码 */
+    functionCodes: string[];
   };
 
   type delMenuParams = {
@@ -20,222 +28,293 @@ declare namespace ADMIN {
 
   type ListResponseMenuTree = {
     /** 列表 */
-    list?: MenuTree[];
+    list: MenuTree[];
   };
 
   type ListResponseUserMenu = {
     /** 列表 */
-    list?: UserMenu[];
+    list: UserMenu[];
   };
 
   type LoginRequest = {
+    /** 用户名 */
     username: string;
+    /** 密码 */
     password: string;
   };
 
   type LoginResponse = {
-    token?: string;
-    tokenExpireAt?: string;
-    userInfo?: AccountInfo;
+    /** 令牌，Bearer 前缀 */
+    token: string;
+    /** 令牌过期时间，毫秒时间戳 */
+    tokenExpireAt: string;
+    /** 当前用户 */
+    userInfo: AccountInfo;
   };
 
   type MenuTree = {
     /** id */
-    id?: string;
+    id: string;
     /** parent id */
-    pid?: string;
+    pid: string;
     /** 子节点 */
-    children?: MenuTree[];
-    menuName?: string;
-    /** MENU | FUNC */
-    menuType?: string;
+    children: MenuTree[];
+    /** 菜单名 */
+    menuName: string;
+    /** 类型 */
+    menuType: "MENU" | "FUNC";
+    /** 路由 */
     routePath?: string;
+    /** 图标 */
     icon?: string;
+    /** 排序 */
     sortNum?: number;
+    /** 权限码 */
     permCode?: string;
-    status?: string;
+    /** 状态 */
+    status: "EBL" | "DBL";
   };
 
   type ModifyPwdRequest = {
+    /** 原密码 */
     oldPassword: string;
+    /** 新密码 */
     newPassword: string;
   };
 
   type PageCondition = {
     /** 当前页 */
-    pageNumber?: number;
+    pageNumber: number;
     /** 每页大小 */
-    pageSize?: number;
+    pageSize: number;
   };
 
   type PageResponseRoleInfo = {
     /** 当前页 */
-    pageNumber?: number;
+    pageNumber: number;
     /** 每页大小 */
-    pageSize?: number;
+    pageSize: number;
     /** 总条数 */
-    total?: number;
+    total: number;
     /** 总页数 */
-    pages?: number;
+    pages: number;
     /** 记录 */
-    records?: RoleInfo[];
+    records: RoleInfo[];
   };
 
   type PageResponseUserInfo = {
     /** 当前页 */
-    pageNumber?: number;
+    pageNumber: number;
     /** 每页大小 */
-    pageSize?: number;
+    pageSize: number;
     /** 总条数 */
-    total?: number;
+    total: number;
     /** 总页数 */
-    pages?: number;
+    pages: number;
     /** 记录 */
-    records?: UserInfo[];
+    records: UserInfo[];
   };
 
   type QueryRoleRequest = {
     /** 分页 */
     page: PageCondition;
+    /** 角色名 */
     roleName?: string;
+    /** 角色编码 */
     roleCode?: string;
-    status?: string;
+    /** 状态 */
+    status?: "EBL" | "DBL";
   };
 
   type QueryUserRequest = {
     /** 分页 */
     page: PageCondition;
+    /** 用户名 */
     username?: string;
+    /** 姓名 */
     realName?: string;
-    status?: string;
+    /** 状态 */
+    status?: "EBL" | "DBL";
   };
 
   type ResetPwdRequest = {
+    /** 用户 id */
     userId: string;
+    /** 新密码 */
     password: string;
   };
 
-  type ResetRoleMenusRequest = {
-    roleId: string;
-    menuIds?: string[];
-  };
-
   type ResetRoleDashboardsRequest = {
+    /** 角色 id */
     roleId: string;
+    /** 看板 id */
     dashboardIds?: string[];
   };
 
+  type ResetRoleMenusRequest = {
+    /** 角色 id */
+    roleId: string;
+    /** 菜单 id */
+    menuIds?: string[];
+  };
+
   type ResetRolesRequest = {
+    /** 用户 id */
     userId: string;
+    /** 角色及生效区间 */
     roleInfos?: UserRoleInfo[];
   };
 
   type RListResponseMenuTree = {
     /** 200成功 */
-    code?: number;
-    msg?: string;
+    code: number;
+    /** 提示 */
+    msg: string;
+    /** 数据 */
     data?: ListResponseMenuTree;
   };
 
   type RListResponseUserMenu = {
     /** 200成功 */
-    code?: number;
-    msg?: string;
+    code: number;
+    /** 提示 */
+    msg: string;
+    /** 数据 */
     data?: ListResponseUserMenu;
   };
 
   type RLoginResponse = {
     /** 200成功 */
-    code?: number;
-    msg?: string;
+    code: number;
+    /** 提示 */
+    msg: string;
+    /** 数据 */
     data?: LoginResponse;
   };
 
   type RLong = {
     /** 200成功 */
-    code?: number;
-    msg?: string;
+    code: number;
+    /** 提示 */
+    msg: string;
+    /** 数据 */
     data?: string;
   };
 
   type RoleInfo = {
-    id?: string;
-    roleName?: string;
-    roleCode?: string;
+    /** 角色 id */
+    id: string;
+    /** 角色名 */
+    roleName: string;
+    /** 角色编码 */
+    roleCode: string;
+    /** 备注 */
     roleNote?: string;
-    status?: string;
-    menuIds?: string[];
-    dashboardIds?: string[];
+    /** 状态 */
+    status: "EBL" | "DBL";
+    /** 菜单 id */
+    menuIds: string[];
+    /** 看板 id */
+    dashboardIds: string[];
   };
 
   type RPageResponseRoleInfo = {
     /** 200成功 */
-    code?: number;
-    msg?: string;
+    code: number;
+    /** 提示 */
+    msg: string;
+    /** 数据 */
     data?: PageResponseRoleInfo;
   };
 
   type RPageResponseUserInfo = {
     /** 200成功 */
-    code?: number;
-    msg?: string;
+    code: number;
+    /** 提示 */
+    msg: string;
+    /** 数据 */
     data?: PageResponseUserInfo;
   };
 
   type RRoleInfo = {
     /** 200成功 */
-    code?: number;
-    msg?: string;
+    code: number;
+    /** 提示 */
+    msg: string;
+    /** 数据 */
     data?: RoleInfo;
   };
 
   type RSimpleResponseAccountInfo = {
     /** 200成功 */
-    code?: number;
-    msg?: string;
+    code: number;
+    /** 提示 */
+    msg: string;
+    /** 数据 */
     data?: SimpleResponseAccountInfo;
   };
 
   type RString = {
     /** 200成功 */
-    code?: number;
-    msg?: string;
+    code: number;
+    /** 提示 */
+    msg: string;
+    /** 数据 */
     data?: string;
   };
 
   type SaveMenuRequest = {
+    /** 菜单 id。新增不传 */
     id?: string;
+    /** 父菜单 id */
     pid?: string;
+    /** 菜单名 */
     menuName: string;
-    /** MENU | FUNC */
-    menuType: string;
+    /** 类型 */
+    menuType: "MENU" | "FUNC";
+    /** 路由 */
     routePath?: string;
+    /** 图标 */
     icon?: string;
+    /** 排序 */
     sortNum?: number;
+    /** 权限码。FUNC 必填 */
     permCode?: string;
-    status?: string;
+    /** 状态 */
+    status?: "EBL" | "DBL";
   };
 
   type SaveRoleRequest = {
+    /** 角色 id。新增不传 */
     id?: string;
+    /** 角色名 */
     roleName: string;
+    /** 角色编码 */
     roleCode: string;
+    /** 备注 */
     roleNote?: string;
-    status?: string;
+    /** 状态 */
+    status?: "EBL" | "DBL";
   };
 
   type SaveUserRequest = {
+    /** 用户 id。新增不传 */
     id?: string;
+    /** 用户名 */
     username: string;
+    /** 姓名 */
     realName: string;
-    status?: string;
+    /** 状态 */
+    status?: "EBL" | "DBL";
+    /** 密码。编辑时可空 */
     password?: string;
+    /** 角色 id */
     roleIds?: string[];
   };
 
   type SimpleResponseAccountInfo = {
     /** 数据 */
-    info?: AccountInfo;
+    info: AccountInfo;
   };
 
   type toggleRoleStatusParams = {
@@ -247,33 +326,47 @@ declare namespace ADMIN {
   };
 
   type UserInfo = {
-    id?: string;
-    username?: string;
-    realName?: string;
-    status?: string;
+    /** 用户 id */
+    id: string;
+    /** 用户名 */
+    username: string;
+    /** 姓名 */
+    realName: string;
+    /** 状态 */
+    status: "EBL" | "DBL";
+    /** 最近登录时间 */
     lastLoginAt?: string;
-    roleNames?: string;
-    roleIds?: string[];
-    roleInfos?: UserRoleInfo[];
-  };
-
-  type UserRoleInfo = {
-    roleId?: string;
-    roleName?: string;
-    startAt?: string | number;
-    endAt?: string | number;
+    /** 角色名，逗号拼接 */
+    roleNames: string;
+    /** 角色 id */
+    roleIds: string[];
+    /** 角色及生效区间 */
+    roleInfos: UserRoleInfo[];
   };
 
   type UserMenu = {
     /** id */
-    id?: string;
+    id: string;
     /** parent id */
-    pid?: string;
+    pid: string;
     /** 子节点 */
-    children?: UserMenu[];
+    children: UserMenu[];
     /** 菜单名 */
-    name?: string;
+    name: string;
+    /** 路由 */
     url?: string;
+    /** 图标 */
     icon?: string;
+  };
+
+  type UserRoleInfo = {
+    /** 角色 id */
+    roleId: string;
+    /** 角色名 */
+    roleName?: string;
+    /** 生效开始时间，毫秒时间戳 */
+    startAt?: string;
+    /** 生效结束时间，毫秒时间戳 */
+    endAt?: string;
   };
 }

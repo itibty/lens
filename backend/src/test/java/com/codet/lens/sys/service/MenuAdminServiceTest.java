@@ -1,7 +1,7 @@
 package com.codet.lens.sys.service;
 
-import com.codet.lens.common.FieldConst;
-import com.codet.lens.sys.dto.SysDtos.SaveMenuRequest;
+import com.codet.lens.common.base.Status;
+import com.codet.lens.sys.dto.menu.SaveMenuRequest;
 import com.codet.lens.sys.entity.SysMenu;
 import com.codet.lens.sys.mapper.SysMenuMapper;
 import com.codet.lens.sys.mapper.SysRoleMenuMapper;
@@ -42,14 +42,14 @@ class MenuAdminServiceTest {
     @Test
     void preservesDisabledStatusWhenEditOmitsStatus() {
         SysMenu menu = functionMenu("same:code");
-        menu.setStatus(FieldConst.DBL);
+        menu.setStatus(Status.DBL);
         when(menuMapper.selectById(100L)).thenReturn(menu);
         SaveMenuRequest request = saveRequest("same:code", "只改名称");
         request.setStatus(null);
 
         service.save(request);
 
-        assertEquals(FieldConst.DBL, menu.getStatus());
+        assertEquals(Status.DBL, menu.getStatus());
         verify(permissionTokenService, never()).invalidateMenuUsers(100L);
     }
 
@@ -58,9 +58,9 @@ class MenuAdminServiceTest {
         menu.setId(100L);
         menu.setPid(1L);
         menu.setMenuName("功能");
-        menu.setMenuType(FieldConst.FUNC);
+        menu.setMenuType("FUNC");
         menu.setPermCode(permCode);
-        menu.setStatus(FieldConst.EBL);
+        menu.setStatus(Status.EBL);
         return menu;
     }
 
@@ -69,9 +69,9 @@ class MenuAdminServiceTest {
         request.setId(100L);
         request.setPid(1L);
         request.setMenuName(name);
-        request.setMenuType(FieldConst.FUNC);
+        request.setMenuType("FUNC");
         request.setPermCode(permCode);
-        request.setStatus(FieldConst.EBL);
+        request.setStatus(Status.EBL);
         return request;
     }
 }

@@ -2,24 +2,23 @@ package com.codet.lens.sys.service;
 
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import com.codet.lens.common.FieldConst;
-import com.codet.lens.common.ResultException;
-import com.codet.lens.sys.dto.SysDtos.MenuTree;
-import com.codet.lens.sys.dto.SysDtos.SaveMenuRequest;
+import com.codet.lens.common.base.ResultException;
+import com.codet.lens.common.base.Status;
+import com.codet.lens.sys.dto.menu.MenuTree;
+import com.codet.lens.sys.dto.menu.SaveMenuRequest;
 import com.codet.lens.sys.entity.SysMenu;
+import com.codet.lens.sys.entity.SysRoleMenu;
 import com.codet.lens.sys.mapper.SysMenuMapper;
 import com.codet.lens.sys.mapper.SysRoleMenuMapper;
-import com.codet.lens.sys.entity.SysRoleMenu;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -31,7 +30,7 @@ public class MenuAdminService {
 
     public List<MenuTree> tree() {
         List<SysMenu> rows = menuMapper.selectList(Wrappers.<SysMenu>lambdaQuery()
-                .ne(SysMenu::getStatus, FieldConst.DEL)
+                .ne(SysMenu::getStatus, Status.DEL)
                 .orderByAsc(SysMenu::getSortNum));
         Map<Long, MenuTree> map = new HashMap<>();
         for (SysMenu row : rows) {
@@ -63,21 +62,21 @@ public class MenuAdminService {
 
     @Transactional
     public Long save(SaveMenuRequest req) {
-        if (!FieldConst.MENU.equals(req.getMenuType()) && !FieldConst.FUNC.equals(req.getMenuType())) {
+        if (!"MENU".equals(req.getMenuType()) && !"FUNC".equals(req.getMenuType())) {
             throw ResultException.fail("菜单类型无效");
         }
         SysMenu menu = req.getId() == null ? new SysMenu() : require(req.getId());
-        String nextPermCode = FieldConst.MENU.equals(req.getMenuType()) ? null : req.getPermCode();
+        String nextPermCode = "MENU".equals(req.getMenuType()) ? null : req.getPermCode();
         String nextStatus = StrUtil.isBlank(req.getStatus())
-                ? (req.getId() == null ? FieldConst.EBL : menu.getStatus())
+                ? (req.getId() == null ? Status.EBL : menu.getStatus())
                 : req.getStatus();
         boolean authChanged = req.getId() != null
                 && (!Objects.equals(menu.getMenuType(), req.getMenuType())
                 || !Objects.equals(menu.getPermCode(), nextPermCode)
                 || !Objects.equals(menu.getStatus(), nextStatus));
         boolean changedToMenu = req.getId() != null
-                && FieldConst.FUNC.equals(menu.getMenuType())
-                && FieldConst.MENU.equals(req.getMenuType());
+                && "FUNC".equals(menu.getMenuType())
+                && "MENU".equals(req.getMenuType());
         menu.setPid(req.getPid() == null ? 0L : req.getPid());
         menu.setMenuName(req.getMenuName());
         menu.setMenuType(req.getMenuType());
@@ -107,12 +106,12 @@ public class MenuAdminService {
     public void delete(Long menuId) {
         long children = menuMapper.selectCount(Wrappers.<SysMenu>lambdaQuery()
                 .eq(SysMenu::getPid, menuId)
-                .ne(SysMenu::getStatus, FieldConst.DEL));
+                .ne(SysMenu::getStatus, Status.DEL));
         if (children > 0) {
             throw ResultException.fail("请先删除子菜单");
         }
         SysMenu menu = require(menuId);
-        menu.setStatus(FieldConst.DEL);
+        menu.setStatus(Status.DEL);
         menu.modifyCallback();
         menuMapper.updateById(menu);
         permissionTokenService.invalidateMenuUsers(menuId);
@@ -121,7 +120,7 @@ public class MenuAdminService {
 
     private SysMenu require(Long id) {
         SysMenu menu = menuMapper.selectById(id);
-        if (menu == null || FieldConst.DEL.equals(menu.getStatus())) {
+        if (menu == null || Status.DEL.equals(menu.getStatus())) {
             throw ResultException.fail("菜单不存在");
         }
         return menu;

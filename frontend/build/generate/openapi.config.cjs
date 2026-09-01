@@ -2,10 +2,11 @@
  * @Description: 生成 Api 调用代码（@umijs/openapi）
  *
  * 用法：
+ *   pnpm generate-api
  *   pnpm generate-api -- --service=vis
  *   pnpm generate-api -- --service=admin,vis
  *
- * 也可：node ./build/generate/openapi.config.cjs --service=vis
+ * 也可：node ./build/generate/openapi.config.cjs --service=admin,vis
  *
  * https://www.npmjs.com/package/@umijs/openapi
  */
@@ -18,16 +19,13 @@ const APIS_ROOT = path.resolve(__dirname, '../../src/apis')
 
 function parseServices() {
   const arg = process.argv.find(a => a.startsWith('--service='))
-  if (!arg) {
-    console.error('[generate-api] 请指定 --service=admin 或 --service=vis（可逗号多选）')
-    console.error('  例：pnpm generate-api -- --service=vis')
+  const raw = arg ? arg.slice('--service='.length) : 'admin,vis'
+  const names = raw.split(',').map(s => s.trim()).filter(Boolean)
+  if (!names.length) {
+    console.error('[generate-api] --service 为空，可选：admin, vis（可逗号多选）')
     process.exit(1)
   }
-  return arg
-    .slice('--service='.length)
-    .split(',')
-    .map(s => s.trim())
-    .filter(Boolean)
+  return names
 }
 
 /** int64 → string，避免 JS 精度问题 */

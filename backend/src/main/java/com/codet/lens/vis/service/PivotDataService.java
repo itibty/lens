@@ -1,25 +1,19 @@
 package com.codet.lens.vis.service;
 
 import cn.hutool.core.collection.CollUtil;
-import com.codet.lens.vis.rds.bo.SqlConf;
-import com.codet.lens.vis.rds.bo.SqlTplRet;
-import com.codet.lens.vis.rds.core.QueryContext;
-import com.codet.lens.vis.rds.core.QueryContextHolder;
-import com.codet.lens.vis.rds.core.RdsUtil;
 import com.codet.lens.vis.core.pivot.PivotGrains;
 import com.codet.lens.vis.core.pivot.PivotResultAssembler;
 import com.codet.lens.vis.core.query.*;
+import com.codet.lens.vis.dto.item.DimensionItem;
+import com.codet.lens.vis.dto.item.MetricItem;
 import com.codet.lens.vis.dto.pivot.PivotQueryConfig;
 import com.codet.lens.vis.dto.pivot.PivotQueryRequest;
 import com.codet.lens.vis.dto.pivot.PivotQueryResponse;
-import com.codet.lens.vis.dto.item.DimensionItem;
-import com.codet.lens.vis.dto.item.MetricItem;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor

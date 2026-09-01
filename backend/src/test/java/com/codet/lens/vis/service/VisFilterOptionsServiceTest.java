@@ -1,9 +1,8 @@
 package com.codet.lens.vis.service;
 
-import com.codet.lens.vis.rds.bo.SqlTplRet;
-import org.junit.jupiter.api.Test;
-
+import com.codet.lens.vis.core.query.SqlTplRet;
 import java.util.List;
+import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;

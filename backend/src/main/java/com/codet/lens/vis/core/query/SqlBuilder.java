@@ -2,16 +2,15 @@ package com.codet.lens.vis.core.query;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
-import com.codet.lens.common.ResultEnum;
-import com.codet.lens.common.ResultException;
+import com.codet.lens.common.base.ResultEnum;
+import com.codet.lens.common.base.ResultException;
 import com.codet.lens.vis.dto.item.DimensionItem;
 import com.codet.lens.vis.dto.item.MetricItem;
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class SqlBuilder {

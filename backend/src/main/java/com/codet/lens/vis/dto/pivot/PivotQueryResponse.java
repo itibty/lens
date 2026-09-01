@@ -1,11 +1,10 @@
 package com.codet.lens.vis.dto.pivot;
 
-import com.codet.lens.vis.rds.bo.ExecSqlInfo;
+import com.codet.lens.vis.dto.query.ExecSqlInfo;
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
-
-import java.util.List;
 
 @Schema(description = "透视表查询响应")
 @Getter

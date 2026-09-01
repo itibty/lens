@@ -2,11 +2,10 @@ package com.codet.lens.vis.dto.query;
 
 import com.codet.lens.vis.dto.item.FilterItem;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Getter;
-import lombok.Setter;
-
 import java.util.List;
 import java.util.Map;
+import lombok.Getter;
+import lombok.Setter;
 
 @Schema(description = "卡片数据查询请求")
 @Getter

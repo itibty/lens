@@ -59,7 +59,7 @@ function onNodeClick(data: ADMIN.MenuTree) {
   selectedId.value = data.id || ''
 }
 
-function filterNode(value: string, data: ADMIN.MenuTree) {
+function filterNode(value: string, data: Partial<Pick<ADMIN.MenuTree, 'menuName' | 'icon' | 'routePath' | 'permCode'>>) {
   if (!value)
     return true
   const kw = value.toLowerCase()
@@ -165,7 +165,7 @@ onMounted(() => fetchData())
         <div class="menu-admin__head">
           <el-input
             v-model="keyword"
-            class="menu-admin__search"
+            class="menu-admin__search borderless-input"
             clearable
             :prefix-icon="Search"
             placeholder="搜索菜单"
@@ -178,7 +178,7 @@ onMounted(() => fetchData())
             trigger="click"
             @command="onHeadCommand"
           >
-            <el-button class="menu-admin__more">
+            <el-button text class="menu-admin__more">
               <span class="menu-tree-node__more-icon i-mingcute-more-2-line" />
             </el-button>
             <template #dropdown>

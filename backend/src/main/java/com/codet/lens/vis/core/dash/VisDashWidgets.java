@@ -1,12 +1,11 @@
 package com.codet.lens.vis.core.dash;
 
 import cn.hutool.core.util.StrUtil;
-import com.codet.lens.common.ResultEnum;
-import com.codet.lens.common.ResultException;
+import com.codet.lens.common.base.ResultEnum;
+import com.codet.lens.common.base.ResultException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;

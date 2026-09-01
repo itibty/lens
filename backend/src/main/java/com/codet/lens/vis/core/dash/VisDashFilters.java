@@ -5,7 +5,6 @@ import cn.hutool.core.util.StrUtil;
 import com.codet.lens.vis.dto.item.FilterItem;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashSet;

@@ -1,11 +1,10 @@
 package com.codet.lens.vis.dto.pivot;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Getter;
-import lombok.Setter;
-
 import java.util.List;
 import java.util.Map;
+import lombok.Getter;
+import lombok.Setter;
 
 @Schema(description = "透视表数据行")
 @Getter

@@ -1,10 +1,9 @@
 package com.codet.lens.vis.dto.dataset;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
-
-import java.util.List;
 
 @Schema(description = "数据集更换数据源警告")
 @Getter

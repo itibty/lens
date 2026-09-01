@@ -1,11 +1,11 @@
 package com.codet.lens.vis.service;
 
-import com.codet.lens.common.FieldConst;
-import com.codet.lens.common.ResultException;
+import com.codet.lens.common.base.ResultException;
+import com.codet.lens.common.base.Status;
+import com.codet.lens.vis.core.query.DatasourceRegistry;
 import com.codet.lens.vis.core.query.SqlDialect;
 import com.codet.lens.vis.entity.VisDatasource;
 import com.codet.lens.vis.mapper.VisDatasourceMapper;
-import com.codet.lens.vis.rds.core.DatasourceRegistry;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,7 +22,7 @@ public class DatasourceAdminService {
         String oldSourceName = null;
         if (request.getId() == null) {
             request.setDbType(SqlDialect.of(request.getDbType()).getTypeCode());
-            request.setStatus(FieldConst.EBL);
+            request.setStatus(Status.EBL);
             request.createCallback();
             int inserted = datasourceMapper.insert(request);
             if (inserted != 1)
@@ -38,7 +38,7 @@ public class DatasourceAdminService {
                 throw ResultException.fail("数据源不存在");
         }
         VisDatasource saved = datasourceMapper.selectById(request.getId());
-        if (saved == null || FieldConst.DEL.equals(saved.getStatus()))
+        if (saved == null || Status.DEL.equals(saved.getStatus()))
             throw ResultException.fail("数据源不存在");
         datasourceRegistry.refresh(oldSourceName, saved);
         return saved.getId();
@@ -46,7 +46,7 @@ public class DatasourceAdminService {
 
     private VisDatasource require(Long id) {
         VisDatasource row = datasourceMapper.selectById(id);
-        if (row == null || FieldConst.DEL.equals(row.getStatus()))
+        if (row == null || Status.DEL.equals(row.getStatus()))
             throw ResultException.fail("数据源不存在");
         return row;
     }

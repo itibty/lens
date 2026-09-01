@@ -1,20 +1,19 @@
 package com.codet.lens.vis.service;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import com.codet.lens.auth.AuthContext;
-import com.codet.lens.auth.AuthUser;
-import com.codet.lens.common.PermCodes;
-import com.codet.lens.common.ResultEnum;
-import com.codet.lens.common.ResultException;
+import com.codet.lens.common.auth.AuthContext;
+import com.codet.lens.common.auth.AuthUser;
+import com.codet.lens.common.base.ResultEnum;
+import com.codet.lens.common.base.ResultException;
 import com.codet.lens.sys.mapper.SysRoleDashboardMapper;
 import com.codet.lens.vis.entity.VisDashboardCard;
 import com.codet.lens.vis.mapper.VisDashboardCardMapper;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-
+import com.codet.lens.vis.VisPerms;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
@@ -72,7 +71,7 @@ public class VisDashboardAccess {
     public boolean canDesign() {
         AuthUser user = AuthContext.get();
         return user != null && user.hasAnyPerm(
-                PermCodes.VIS_CARD_CONF, PermCodes.VIS_DASHBOARD_CONF);
+                VisPerms.VIS_CARD_CONF, VisPerms.VIS_DASHBOARD_CONF);
     }
 
     public Set<Long> assignedDashboardIds() {

@@ -1,11 +1,11 @@
 declare namespace VIS {
   type AssignNode = {
     /** id */
-    id?: string;
+    id: string;
     /** parent id */
-    pid?: string;
+    pid: string;
     /** 子节点 */
-    children?: AssignNode[];
+    children: AssignNode[];
     name?: string;
     icon?: string;
     nodeType?: string;
@@ -126,11 +126,11 @@ declare namespace VIS {
 
   type DashGroupInfo = {
     /** id */
-    id?: string;
+    id: string;
     /** parent id */
-    pid?: string;
+    pid: string;
     /** 子节点 */
-    children?: DashGroupInfo[];
+    children: DashGroupInfo[];
     groupName?: string;
     icon?: string;
     sortNum?: number;
@@ -442,61 +442,61 @@ declare namespace VIS {
 
   type ListResponseAssignNode = {
     /** 列表 */
-    list?: AssignNode[];
+    list: AssignNode[];
   };
 
   type ListResponseDashGroupInfo = {
     /** 列表 */
-    list?: DashGroupInfo[];
+    list: DashGroupInfo[];
   };
 
   type ListResponseDsOption = {
     /** 列表 */
-    list?: DsOption[];
+    list: DsOption[];
   };
 
   type ListResponseManageNode = {
     /** 列表 */
-    list?: ManageNode[];
+    list: ManageNode[];
   };
 
   type ListResponseNameValue = {
     /** 列表 */
-    list?: NameValue[];
+    list: NameValue[];
   };
 
   type ListResponseReportNode = {
     /** 列表 */
-    list?: ReportNode[];
+    list: ReportNode[];
   };
 
   type ListResponseSchemaInfo = {
     /** 列表 */
-    list?: SchemaInfo[];
+    list: SchemaInfo[];
   };
 
   type ListResponseVisCardRefInfo = {
     /** 列表 */
-    list?: VisCardRefInfo[];
+    list: VisCardRefInfo[];
   };
 
   type ListResponseVisDashboardRefInfo = {
     /** 列表 */
-    list?: VisDashboardRefInfo[];
+    list: VisDashboardRefInfo[];
   };
 
   type ListResponseVisDatasetInfo = {
     /** 列表 */
-    list?: VisDatasetInfo[];
+    list: VisDatasetInfo[];
   };
 
   type ManageNode = {
     /** id */
-    id?: string;
+    id: string;
     /** parent id */
-    pid?: string;
+    pid: string;
     /** 子节点 */
-    children?: ManageNode[];
+    children: ManageNode[];
     nodeType?: string;
     name?: string;
     icon?: string;
@@ -557,7 +557,7 @@ declare namespace VIS {
     /** 总页数 */
     pages: number;
     /** 记录 */
-    records?: ConfSqlInfo[];
+    records: ConfSqlInfo[];
   };
 
   type PageResponseVisCardInfo = {
@@ -570,7 +570,7 @@ declare namespace VIS {
     /** 总页数 */
     pages: number;
     /** 记录 */
-    records?: VisCardInfo[];
+    records: VisCardInfo[];
   };
 
   type PageResponseVisDashboardInfo = {
@@ -583,7 +583,7 @@ declare namespace VIS {
     /** 总页数 */
     pages: number;
     /** 记录 */
-    records?: VisDashboardInfo[];
+    records: VisDashboardInfo[];
   };
 
   type PivotColumn = {
@@ -710,8 +710,6 @@ declare namespace VIS {
     sqlDesc?: string;
     /** 数据源id */
     dsId?: string;
-    /** 数据源名 */
-    dsName?: string;
     /** 状态 */
     status?: "EBL" | "DBL";
   };
@@ -776,39 +774,47 @@ declare namespace VIS {
 
   type RConfSqlInfo = {
     /** 200成功 */
-    code?: number;
-    msg?: string;
+    code: number;
+    /** 提示 */
+    msg: string;
+    /** 数据 */
     data?: ConfSqlInfo;
   };
 
   type RDatasetSourceChangeWarning = {
     /** 200成功 */
-    code?: number;
-    msg?: string;
+    code: number;
+    /** 提示 */
+    msg: string;
+    /** 数据 */
     data?: DatasetSourceChangeWarning;
   };
 
   type RDateWindowResponse = {
     /** 200成功 */
-    code?: number;
-    msg?: string;
+    code: number;
+    /** 提示 */
+    msg: string;
+    /** 数据 */
     data?: DateWindowResponse;
   };
 
   type RDebugSqlResponse = {
     /** 200成功 */
-    code?: number;
-    msg?: string;
+    code: number;
+    /** 提示 */
+    msg: string;
+    /** 数据 */
     data?: DebugSqlResponse;
   };
 
   type ReportNode = {
     /** id */
-    id?: string;
+    id: string;
     /** parent id */
-    pid?: string;
+    pid: string;
     /** 子节点 */
-    children?: ReportNode[];
+    children: ReportNode[];
     name?: string;
     icon?: string;
     url?: string;
@@ -817,155 +823,199 @@ declare namespace VIS {
 
   type RListConfSqlFieldInfo = {
     /** 200成功 */
-    code?: number;
-    msg?: string;
+    code: number;
+    /** 提示 */
+    msg: string;
+    /** 数据 */
     data?: ConfSqlFieldInfo[];
   };
 
   type RListResponseAssignNode = {
     /** 200成功 */
-    code?: number;
-    msg?: string;
+    code: number;
+    /** 提示 */
+    msg: string;
+    /** 数据 */
     data?: ListResponseAssignNode;
   };
 
   type RListResponseDashGroupInfo = {
     /** 200成功 */
-    code?: number;
-    msg?: string;
+    code: number;
+    /** 提示 */
+    msg: string;
+    /** 数据 */
     data?: ListResponseDashGroupInfo;
   };
 
   type RListResponseDsOption = {
     /** 200成功 */
-    code?: number;
-    msg?: string;
+    code: number;
+    /** 提示 */
+    msg: string;
+    /** 数据 */
     data?: ListResponseDsOption;
   };
 
   type RListResponseManageNode = {
     /** 200成功 */
-    code?: number;
-    msg?: string;
+    code: number;
+    /** 提示 */
+    msg: string;
+    /** 数据 */
     data?: ListResponseManageNode;
   };
 
   type RListResponseNameValue = {
     /** 200成功 */
-    code?: number;
-    msg?: string;
+    code: number;
+    /** 提示 */
+    msg: string;
+    /** 数据 */
     data?: ListResponseNameValue;
   };
 
   type RListResponseReportNode = {
     /** 200成功 */
-    code?: number;
-    msg?: string;
+    code: number;
+    /** 提示 */
+    msg: string;
+    /** 数据 */
     data?: ListResponseReportNode;
   };
 
   type RListResponseSchemaInfo = {
     /** 200成功 */
-    code?: number;
-    msg?: string;
+    code: number;
+    /** 提示 */
+    msg: string;
+    /** 数据 */
     data?: ListResponseSchemaInfo;
   };
 
   type RListResponseVisCardRefInfo = {
     /** 200成功 */
-    code?: number;
-    msg?: string;
+    code: number;
+    /** 提示 */
+    msg: string;
+    /** 数据 */
     data?: ListResponseVisCardRefInfo;
   };
 
   type RListResponseVisDashboardRefInfo = {
     /** 200成功 */
-    code?: number;
-    msg?: string;
+    code: number;
+    /** 提示 */
+    msg: string;
+    /** 数据 */
     data?: ListResponseVisDashboardRefInfo;
   };
 
   type RListResponseVisDatasetInfo = {
     /** 200成功 */
-    code?: number;
-    msg?: string;
+    code: number;
+    /** 提示 */
+    msg: string;
+    /** 数据 */
     data?: ListResponseVisDatasetInfo;
   };
 
   type RLong = {
     /** 200成功 */
-    code?: number;
-    msg?: string;
+    code: number;
+    /** 提示 */
+    msg: string;
+    /** 数据 */
     data?: string;
   };
 
   type RPageResponseConfSqlInfo = {
     /** 200成功 */
-    code?: number;
-    msg?: string;
+    code: number;
+    /** 提示 */
+    msg: string;
+    /** 数据 */
     data?: PageResponseConfSqlInfo;
   };
 
   type RPageResponseVisCardInfo = {
     /** 200成功 */
-    code?: number;
-    msg?: string;
+    code: number;
+    /** 提示 */
+    msg: string;
+    /** 数据 */
     data?: PageResponseVisCardInfo;
   };
 
   type RPageResponseVisDashboardInfo = {
     /** 200成功 */
-    code?: number;
-    msg?: string;
+    code: number;
+    /** 提示 */
+    msg: string;
+    /** 数据 */
     data?: PageResponseVisDashboardInfo;
   };
 
   type RPivotQueryResponse = {
     /** 200成功 */
-    code?: number;
-    msg?: string;
+    code: number;
+    /** 提示 */
+    msg: string;
+    /** 数据 */
     data?: PivotQueryResponse;
   };
 
   type RQueryDataResponse = {
     /** 200成功 */
-    code?: number;
-    msg?: string;
+    code: number;
+    /** 提示 */
+    msg: string;
+    /** 数据 */
     data?: QueryDataResponse;
   };
 
   type RString = {
     /** 200成功 */
-    code?: number;
-    msg?: string;
+    code: number;
+    /** 提示 */
+    msg: string;
+    /** 数据 */
     data?: string;
   };
 
   type RVisCardInfo = {
     /** 200成功 */
-    code?: number;
-    msg?: string;
+    code: number;
+    /** 提示 */
+    msg: string;
+    /** 数据 */
     data?: VisCardInfo;
   };
 
   type RVisDashboardInfo = {
     /** 200成功 */
-    code?: number;
-    msg?: string;
+    code: number;
+    /** 提示 */
+    msg: string;
+    /** 数据 */
     data?: VisDashboardInfo;
   };
 
   type RVisFilterOptionsResponse = {
     /** 200成功 */
-    code?: number;
-    msg?: string;
+    code: number;
+    /** 提示 */
+    msg: string;
+    /** 数据 */
     data?: VisFilterOptionsResponse;
   };
 
   type RVoid = {
     /** 200成功 */
-    code?: number;
-    msg?: string;
+    code: number;
+    /** 提示 */
+    msg: string;
+    /** 数据 */
     data?: any;
   };
 
@@ -1143,8 +1193,8 @@ declare namespace VIS {
     icon?: string;
     /** 状态 */
     status: "EBL" | "DBL";
-    /** 看板配置 */
-    configJson?: string;
+    /** 看板完整配置，必须明确包含 widgets 数组 */
+    configJson: string;
     /** 看板卡片成员。布局以 configJson.widgets 为准，此列表仅作兼容占位 */
     cards: VisDashboardLayoutItem[];
   };

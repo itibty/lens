@@ -7,15 +7,14 @@ import com.codet.lens.vis.enums.AggFunctionEnum;
 import com.codet.lens.vis.enums.FilterOpEnum;
 import com.codet.lens.vis.enums.SortDirEnum;
 import com.codet.lens.vis.enums.TimeGrainEnum;
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
-
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 
 /**
  * 可视化 SQL 拼装（聚合/条件表达式、WHERE/HAVING/ORDER）。完整性校验在 {@link VisQueryPrep}。

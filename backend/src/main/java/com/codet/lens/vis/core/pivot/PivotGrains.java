@@ -2,14 +2,13 @@ package com.codet.lens.vis.core.pivot;
 
 import cn.hutool.core.collection.CollUtil;
 import com.codet.lens.vis.dto.item.DimensionItem;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 /**
  * 按行/列小计、总计开关生成同级 GROUP BY 粒度（行粒度 × 列粒度）。

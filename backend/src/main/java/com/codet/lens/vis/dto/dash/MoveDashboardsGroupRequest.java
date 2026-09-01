@@ -3,10 +3,9 @@ package com.codet.lens.vis.dto.dash;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
-
-import java.util.List;
 
 @Schema(description = "看板移入分组")
 @Getter

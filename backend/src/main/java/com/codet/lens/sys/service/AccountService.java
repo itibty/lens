@@ -3,28 +3,25 @@ package com.codet.lens.sys.service;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.crypto.digest.BCrypt;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import com.codet.lens.auth.AuthContext;
-import com.codet.lens.auth.JwtService;
-import com.codet.lens.auth.TokenInvalidateService;
-import com.codet.lens.common.FieldConst;
-import com.codet.lens.common.LensProperties;
-import com.codet.lens.common.ListResponse;
-import com.codet.lens.common.ResultException;
-import com.codet.lens.common.SimpleResponse;
-import com.codet.lens.sys.dto.AccountDtos.AccountInfo;
-import com.codet.lens.sys.dto.AccountDtos.LoginRequest;
-import com.codet.lens.sys.dto.AccountDtos.LoginResponse;
-import com.codet.lens.sys.dto.AccountDtos.ModifyPwdRequest;
-import com.codet.lens.sys.dto.AccountDtos.UserMenu;
+import com.codet.lens.common.auth.AuthContext;
+import com.codet.lens.common.auth.JwtService;
+import com.codet.lens.common.auth.TokenInvalidateService;
+import com.codet.lens.common.base.ListResponse;
+import com.codet.lens.common.base.ResultException;
+import com.codet.lens.common.base.SimpleResponse;
+import com.codet.lens.common.base.Status;
+import com.codet.lens.common.config.LensProperties;
+import com.codet.lens.sys.dto.auth.AccountInfo;
+import com.codet.lens.sys.dto.auth.LoginRequest;
+import com.codet.lens.sys.dto.auth.LoginResponse;
+import com.codet.lens.sys.dto.auth.ModifyPwdRequest;
+import com.codet.lens.sys.dto.auth.UserMenu;
 import com.codet.lens.sys.entity.SysMenu;
 import com.codet.lens.sys.entity.SysUser;
 import com.codet.lens.sys.mapper.SysMenuMapper;
 import com.codet.lens.sys.mapper.SysUserMapper;
 import com.codet.lens.vis.dto.group.VisGroupDtos.ReportNode;
 import com.codet.lens.vis.service.VisDashGroupService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -32,6 +29,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
@@ -47,7 +46,7 @@ public class AccountService {
     public LoginResponse login(LoginRequest req) {
         SysUser user = sysUserMapper.selectOne(Wrappers.<SysUser>lambdaQuery()
                 .eq(SysUser::getUsername, req.getUsername())
-                .eq(SysUser::getStatus, FieldConst.EBL));
+                .eq(SysUser::getStatus, Status.EBL));
         if (user == null || !BCrypt.checkpw(req.getPassword(), user.getPassword())) {
             throw ResultException.fail("登录失败");
         }
@@ -62,7 +61,7 @@ public class AccountService {
         String token = jwtService.createToken(user.getId().toString(), roles, perms, expiresAt);
         sysUserMapper.updateLastLoginAt(user.getId(), System.currentTimeMillis());
         LoginResponse resp = new LoginResponse();
-        resp.setToken(FieldConst.TOKEN_PREFIX + token);
+        resp.setToken("Bearer " + token);
         resp.setTokenExpireAt(expiresAt);
         resp.setUserInfo(toInfo(user, roles, perms));
         return resp;
@@ -84,11 +83,11 @@ public class AccountService {
         Long userId = AuthContext.getUserIdLong();
         long now = System.currentTimeMillis();
         List<SysMenu> all = sysMenuMapper.selectList(Wrappers.<SysMenu>lambdaQuery()
-                .eq(SysMenu::getStatus, FieldConst.EBL)
+                .eq(SysMenu::getStatus, Status.EBL)
                 .orderByAsc(SysMenu::getSortNum));
         Set<Long> visibleMenuIds = visibleMenuIds(userId, now, all);
         List<SysMenu> rows = all.stream()
-                .filter(m -> FieldConst.MENU.equals(m.getMenuType()))
+                .filter(m -> "MENU".equals(m.getMenuType()))
                 .filter(m -> visibleMenuIds.contains(m.getId()))
                 .toList();
         List<UserMenu> roots = toTree(rows);
@@ -148,13 +147,13 @@ public class AccountService {
 
     private UserMenu reportCenterRoot() {
         UserMenu root = new UserMenu();
-        root.setId(FieldConst.REPORT_ROOT_ID);
+        root.setId(VisDashGroupService.REPORT_ROOT_ID);
         root.setPid(0L);
         root.setName("报表中心");
         root.setIcon("report-line");
         root.setUrl("/vis/report");
         List<ReportNode> nodes = visDashGroupService.reportTree().getList();
-        root.setChildren(toReportMenus(nodes, FieldConst.REPORT_ROOT_ID));
+        root.setChildren(toReportMenus(nodes, VisDashGroupService.REPORT_ROOT_ID));
         return root;
     }
 

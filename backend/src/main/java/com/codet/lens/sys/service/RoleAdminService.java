@@ -3,15 +3,15 @@ package com.codet.lens.sys.service;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import com.codet.lens.common.ConvertUtil;
-import com.codet.lens.common.FieldConst;
-import com.codet.lens.common.PageResponse;
-import com.codet.lens.common.ResultException;
-import com.codet.lens.sys.dto.SysDtos.QueryRoleRequest;
-import com.codet.lens.sys.dto.SysDtos.ResetRoleDashboardsRequest;
-import com.codet.lens.sys.dto.SysDtos.ResetRoleMenusRequest;
-import com.codet.lens.sys.dto.SysDtos.RoleInfo;
-import com.codet.lens.sys.dto.SysDtos.SaveRoleRequest;
+import com.codet.lens.common.base.PageResponse;
+import com.codet.lens.common.base.ResultException;
+import com.codet.lens.common.base.Status;
+import com.codet.lens.common.util.ConvertUtil;
+import com.codet.lens.sys.dto.role.QueryRoleRequest;
+import com.codet.lens.sys.dto.role.ResetRoleDashboardsRequest;
+import com.codet.lens.sys.dto.role.ResetRoleMenusRequest;
+import com.codet.lens.sys.dto.role.RoleInfo;
+import com.codet.lens.sys.dto.role.SaveRoleRequest;
 import com.codet.lens.sys.entity.SysMenu;
 import com.codet.lens.sys.entity.SysRole;
 import com.codet.lens.sys.entity.SysRoleDashboard;
@@ -20,14 +20,13 @@ import com.codet.lens.sys.mapper.SysMenuMapper;
 import com.codet.lens.sys.mapper.SysRoleDashboardMapper;
 import com.codet.lens.sys.mapper.SysRoleMapper;
 import com.codet.lens.sys.mapper.SysRoleMenuMapper;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -56,7 +55,7 @@ public class RoleAdminService {
     public Long save(SaveRoleRequest req) {
         SysRole role = req.getId() == null ? new SysRole() : require(req.getId());
         String nextStatus = StrUtil.isBlank(req.getStatus())
-                ? (req.getId() == null ? FieldConst.EBL : role.getStatus())
+                ? (req.getId() == null ? Status.EBL : role.getStatus())
                 : req.getStatus();
         boolean authChanged = req.getId() != null
                 && (!nextStatus.equals(role.getStatus()) || !Objects.equals(req.getRoleCode(), role.getRoleCode()));
@@ -86,8 +85,8 @@ public class RoleAdminService {
             return;
         }
         Set<Long> funcIds = new HashSet<>(menuMapper.selectList(Wrappers.<SysMenu>lambdaQuery()
-                        .eq(SysMenu::getMenuType, FieldConst.FUNC)
-                        .ne(SysMenu::getStatus, FieldConst.DEL)
+                        .eq(SysMenu::getMenuType, "FUNC")
+                        .ne(SysMenu::getStatus, Status.DEL)
                         .in(SysMenu::getId, req.getMenuIds()))
                 .stream().map(SysMenu::getId).toList());
         long now = System.currentTimeMillis();
@@ -127,7 +126,7 @@ public class RoleAdminService {
 
     public void toggle(Long roleId) {
         SysRole role = require(roleId);
-        role.setStatus(FieldConst.EBL.equals(role.getStatus()) ? FieldConst.DBL : FieldConst.EBL);
+        role.setStatus(Status.EBL.equals(role.getStatus()) ? Status.DBL : Status.EBL);
         role.modifyCallback();
         roleMapper.updateById(role);
         permissionTokenService.invalidateRoleUsers(roleId);
@@ -145,7 +144,7 @@ public class RoleAdminService {
                 .stream().map(SysRoleMenu::getMenuId).toList();
         if (!menuIds.isEmpty()) {
             Set<Long> funcIds = new HashSet<>(menuMapper.selectList(Wrappers.<SysMenu>lambdaQuery()
-                            .eq(SysMenu::getMenuType, FieldConst.FUNC)
+                            .eq(SysMenu::getMenuType, "FUNC")
                             .in(SysMenu::getId, menuIds))
                     .stream().map(SysMenu::getId).toList());
             menuIds = menuIds.stream().filter(funcIds::contains).toList();

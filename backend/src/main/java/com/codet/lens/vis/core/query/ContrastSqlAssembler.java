@@ -3,19 +3,18 @@ package com.codet.lens.vis.core.query;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
-import com.codet.lens.common.ResultEnum;
-import com.codet.lens.common.ResultException;
+import com.codet.lens.common.base.ResultEnum;
+import com.codet.lens.common.base.ResultException;
 import com.codet.lens.vis.dto.item.*;
 import com.codet.lens.vis.dto.query.*;
 import com.codet.lens.vis.enums.ContrastCalcTypeEnum;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 /**
  * 有对比指标时：{@code WITH ds} + main + 每指标两窗 CTE，外层算列后再滤、排、LIMIT。

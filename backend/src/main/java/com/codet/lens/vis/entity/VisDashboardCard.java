@@ -1,10 +1,10 @@
 package com.codet.lens.vis.entity;
 
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.codet.lens.common.BaseEntity;
+import com.codet.lens.common.base.BaseEntity;
+import lombok.experimental.Accessors;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.experimental.Accessors;
 
 /** 看板卡片成员索引。布局在 vis_dashboard.config_json.widgets */
 @TableName("vis_dashboard_card")

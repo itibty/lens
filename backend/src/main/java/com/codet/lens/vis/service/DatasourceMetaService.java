@@ -1,18 +1,13 @@
 package com.codet.lens.vis.service;
 
 import cn.hutool.core.util.StrUtil;
-import com.codet.lens.common.FieldConst;
-import com.codet.lens.common.ResultException;
+import com.codet.lens.common.base.ResultException;
+import com.codet.lens.common.base.Status;
+import com.codet.lens.vis.core.query.DatasourceRegistry;
 import com.codet.lens.vis.core.query.SqlDialect;
+import com.codet.lens.vis.dto.dataset.MetaInfo;
 import com.codet.lens.vis.entity.VisDatasource;
 import com.codet.lens.vis.mapper.VisDatasourceMapper;
-import com.codet.lens.vis.rds.core.DatasourceRegistry;
-import com.codet.lens.vis.rds.core.MetaInfo;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-
-import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
@@ -25,6 +20,10 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import javax.sql.DataSource;
+import lombok.extern.slf4j.Slf4j;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 
 /**
  * 当前连接 catalog/schema 的表、字段和索引元数据。
@@ -111,7 +110,7 @@ public class DatasourceMetaService {
     private VisDatasource requireSource(String sourceName) {
         VisDatasource source = datasourceMapper.selectList(null).stream()
                 .filter(row -> sourceName.equals(row.getSourceName())
-                        && FieldConst.EBL.equals(row.getStatus()))
+                        && Status.EBL.equals(row.getStatus()))
                 .findFirst()
                 .orElse(null);
         if (source == null) {
@@ -125,7 +124,7 @@ public class DatasourceMetaService {
         String type = StrUtil.blankToDefault(dbType, "").toUpperCase(Locale.ROOT);
         String catalog = StrUtil.trim(connection.getCatalog());
         String schema = StrUtil.trim(connection.getSchema());
-        if (FieldConst.MYSQL.equals(type) || "MARIADB".equals(type)) {
+        if (SqlDialect.MYSQL.getTypeCode().equals(type) || "MARIADB".equals(type)) {
             String name = StrUtil.blankToDefault(catalog, schema);
             return new Scope(requireScopeName(name), catalog, null);
         }

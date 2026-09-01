@@ -2,23 +2,19 @@ package com.codet.lens.vis.service;
 
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import com.codet.lens.common.FieldConst;
-import com.codet.lens.common.ListResponse;
-import com.codet.lens.common.ResultException;
+import com.codet.lens.common.base.ListResponse;
+import com.codet.lens.common.base.ResultException;
+import com.codet.lens.common.base.Status;
 import com.codet.lens.sys.service.PermissionTokenService;
 import com.codet.lens.vis.dto.group.VisGroupDtos.AssignNode;
 import com.codet.lens.vis.dto.group.VisGroupDtos.DashGroupInfo;
 import com.codet.lens.vis.dto.group.VisGroupDtos.ManageNode;
 import com.codet.lens.vis.dto.group.VisGroupDtos.ReportNode;
 import com.codet.lens.vis.dto.group.VisGroupDtos.SaveDashGroupRequest;
-import com.codet.lens.vis.entity.VisDashGroup;
 import com.codet.lens.vis.entity.VisDashboard;
-import com.codet.lens.vis.mapper.VisDashGroupMapper;
+import com.codet.lens.vis.entity.VisDashGroup;
 import com.codet.lens.vis.mapper.VisDashboardMapper;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
+import com.codet.lens.vis.mapper.VisDashGroupMapper;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -26,10 +22,16 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
 public class VisDashGroupService {
+
+    /** 虚拟根：报表中心，不入库 */
+    public static final long REPORT_ROOT_ID = 90L;
 
     private final VisDashGroupMapper groupMapper;
     private final VisDashboardMapper dashboardMapper;
@@ -38,12 +40,12 @@ public class VisDashGroupService {
 
     public ListResponse<DashGroupInfo> tree() {
         List<VisDashGroup> rows = groupMapper.selectList(Wrappers.<VisDashGroup>lambdaQuery()
-                .ne(VisDashGroup::getStatus, FieldConst.DEL)
+                .ne(VisDashGroup::getStatus, Status.DEL)
                 .orderByAsc(VisDashGroup::getSortNum)
                 .orderByAsc(VisDashGroup::getId));
         Map<Long, Long> dashCount = new HashMap<>();
         for (VisDashboard dash : dashboardMapper.selectList(Wrappers.<VisDashboard>lambdaQuery()
-                .ne(VisDashboard::getStatus, FieldConst.DEL)
+                .ne(VisDashboard::getStatus, Status.DEL)
                 .select(VisDashboard::getId, VisDashboard::getGroupId))) {
             long gid = dash.getGroupId() == null ? 0L : dash.getGroupId();
             dashCount.merge(gid, 1L, Long::sum);
@@ -84,12 +86,12 @@ public class VisDashGroupService {
 
     public ListResponse<AssignNode> assignTree() {
         List<VisDashGroup> groups = groupMapper.selectList(Wrappers.<VisDashGroup>lambdaQuery()
-                .ne(VisDashGroup::getStatus, FieldConst.DEL)
+                .ne(VisDashGroup::getStatus, Status.DEL)
                 .orderByAsc(VisDashGroup::getSortNum)
                 .orderByAsc(VisDashGroup::getId));
         Set<Long> effectiveGroupIds = VisDashboardVisibilityService.effectiveGroupIds(groups);
         List<VisDashboard> dashes = dashboardMapper.selectList(Wrappers.<VisDashboard>lambdaQuery()
-                .eq(VisDashboard::getStatus, FieldConst.EBL)
+                .eq(VisDashboard::getStatus, Status.EBL)
                 .orderByAsc(VisDashboard::getId));
         Map<Long, AssignNode> groupNodes = new LinkedHashMap<>();
         for (VisDashGroup group : groups) {
@@ -142,7 +144,7 @@ public class VisDashGroupService {
         if (visible.isEmpty())
             return new ListResponse<>(List.of());
         AssignNode root = new AssignNode();
-        root.setId(FieldConst.REPORT_ROOT_ID);
+        root.setId(REPORT_ROOT_ID);
         root.setPid(0L);
         root.setName("报表中心");
         root.setIcon("report-line");
@@ -158,12 +160,12 @@ public class VisDashGroupService {
             return new ListResponse<>(List.of());
 
         List<VisDashGroup> groups = groupMapper.selectList(Wrappers.<VisDashGroup>lambdaQuery()
-                .ne(VisDashGroup::getStatus, FieldConst.DEL)
+                .ne(VisDashGroup::getStatus, Status.DEL)
                 .orderByAsc(VisDashGroup::getSortNum)
                 .orderByAsc(VisDashGroup::getId));
         Set<Long> effectiveGroupIds = VisDashboardVisibilityService.effectiveGroupIds(groups);
         List<VisDashboard> dashes = dashboardMapper.selectList(Wrappers.<VisDashboard>lambdaQuery()
-                .eq(VisDashboard::getStatus, FieldConst.EBL)
+                .eq(VisDashboard::getStatus, Status.EBL)
                 .in(VisDashboard::getId, assigned)
                 .orderByAsc(VisDashboard::getId));
 
@@ -221,11 +223,11 @@ public class VisDashGroupService {
 
     public ListResponse<ManageNode> manageTree() {
         List<VisDashGroup> groups = groupMapper.selectList(Wrappers.<VisDashGroup>lambdaQuery()
-                .ne(VisDashGroup::getStatus, FieldConst.DEL)
+                .ne(VisDashGroup::getStatus, Status.DEL)
                 .orderByAsc(VisDashGroup::getSortNum)
                 .orderByAsc(VisDashGroup::getId));
         List<VisDashboard> dashes = dashboardMapper.selectList(Wrappers.<VisDashboard>lambdaQuery()
-                .ne(VisDashboard::getStatus, FieldConst.DEL)
+                .ne(VisDashboard::getStatus, Status.DEL)
                 .orderByDesc(VisDashboard::getId));
 
         Map<Long, ManageNode> groupNodes = new LinkedHashMap<>();
@@ -311,7 +313,7 @@ public class VisDashGroupService {
         group.setGroupName(req.getGroupName().trim());
         group.setIcon(req.getIcon());
         group.setSortNum(req.getSortNum() == null ? 0 : req.getSortNum());
-        group.setStatus(StrUtil.blankToDefault(req.getStatus(), FieldConst.EBL));
+        group.setStatus(StrUtil.blankToDefault(req.getStatus(), Status.EBL));
         if (req.getId() == null) {
             group.createCallback();
             groupMapper.insert(group);
@@ -328,17 +330,17 @@ public class VisDashGroupService {
         require(groupId);
         long children = groupMapper.selectCount(Wrappers.<VisDashGroup>lambdaQuery()
                 .eq(VisDashGroup::getPid, groupId)
-                .ne(VisDashGroup::getStatus, FieldConst.DEL));
+                .ne(VisDashGroup::getStatus, Status.DEL));
         if (children > 0)
             throw ResultException.fail("请先删除子分组");
         long dashes = dashboardMapper.selectCount(Wrappers.<VisDashboard>lambdaQuery()
                 .eq(VisDashboard::getGroupId, groupId)
-                .ne(VisDashboard::getStatus, FieldConst.DEL));
+                .ne(VisDashboard::getStatus, Status.DEL));
         if (dashes > 0)
             throw ResultException.fail("分组下还有看板，不能删除");
         VisDashGroup patch = new VisDashGroup();
         patch.setId(groupId);
-        patch.setStatus(FieldConst.DEL);
+        patch.setStatus(Status.DEL);
         patch.modifyCallback();
         groupMapper.updateById(patch);
     }
@@ -348,7 +350,7 @@ public class VisDashGroupService {
         VisDashGroup row = require(groupId);
         VisDashGroup patch = new VisDashGroup();
         patch.setId(groupId);
-        patch.setStatus(FieldConst.EBL.equals(row.getStatus()) ? FieldConst.DBL : FieldConst.EBL);
+        patch.setStatus(Status.EBL.equals(row.getStatus()) ? Status.DBL : Status.EBL);
         patch.modifyCallback();
         groupMapper.updateById(patch);
         invalidateGroupDashboardUsers(groupId);
@@ -357,7 +359,7 @@ public class VisDashGroupService {
     private void invalidateGroupDashboardUsers(Long groupId) {
         List<Long> dashboardIds = dashboardMapper.selectList(Wrappers.<VisDashboard>query()
                         .in("group_id", selfAndDescendantIds(groupId))
-                        .ne("status", FieldConst.DEL)
+                        .ne("status", Status.DEL)
                         .select("id"))
                 .stream()
                 .map(VisDashboard::getId)
@@ -379,7 +381,7 @@ public class VisDashGroupService {
     private Map<Long, List<Long>> childrenMap() {
         Map<Long, List<Long>> children = new HashMap<>();
         for (VisDashGroup row : groupMapper.selectList(Wrappers.<VisDashGroup>query()
-                .ne("status", FieldConst.DEL)
+                .ne("status", Status.DEL)
                 .select("id", "pid"))) {
             long parentId = row.getPid() == null ? 0L : row.getPid();
             children.computeIfAbsent(parentId, key -> new ArrayList<>()).add(row.getId());
@@ -406,7 +408,7 @@ public class VisDashGroupService {
 
     private VisDashGroup require(Long id) {
         VisDashGroup row = groupMapper.selectById(id);
-        if (row == null || FieldConst.DEL.equals(row.getStatus()))
+        if (row == null || Status.DEL.equals(row.getStatus()))
             throw ResultException.fail("分组不存在");
         return row;
     }

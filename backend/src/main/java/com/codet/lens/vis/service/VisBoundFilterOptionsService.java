@@ -1,7 +1,7 @@
 package com.codet.lens.vis.service;
 
-import com.codet.lens.common.FieldConst;
-import com.codet.lens.common.ResultException;
+import com.codet.lens.common.base.ResultException;
+import com.codet.lens.common.base.Status;
 import com.codet.lens.vis.core.dash.VisDashFilters;
 import com.codet.lens.vis.dto.dataset.VisBoundFilterOptionsRequest;
 import com.codet.lens.vis.dto.dataset.VisFilterOptionsRequest;
@@ -26,10 +26,10 @@ public class VisBoundFilterOptionsService {
                                          VisBoundFilterOptionsRequest request) {
         dashboardAccess.assertCanView(dashboardId);
         VisDashboard dashboard = dashboardMapper.selectById(dashboardId);
-        if (dashboard == null || FieldConst.DEL.equals(dashboard.getStatus())) {
+        if (dashboard == null || Status.DEL.equals(dashboard.getStatus())) {
             throw ResultException.fail("看板不存在");
         }
-        if (FieldConst.DBL.equals(dashboard.getStatus()) && !dashboardAccess.canDesign()) {
+        if (Status.DBL.equals(dashboard.getStatus()) && !dashboardAccess.canDesign()) {
             throw ResultException.fail("看板已禁用");
         }
         VisDashFilters.OptionSource source =

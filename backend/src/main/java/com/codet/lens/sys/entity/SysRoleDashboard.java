@@ -3,9 +3,9 @@ package com.codet.lens.sys.entity;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import lombok.experimental.Accessors;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.experimental.Accessors;
 
 @TableName("sys_role_dashboard")
 @Getter

@@ -1,15 +1,14 @@
 package com.codet.lens.vis.service;
 
-import com.codet.lens.common.FieldConst;
+import com.codet.lens.common.base.Status;
 import com.codet.lens.sys.service.PermissionTokenService;
-import com.codet.lens.vis.entity.VisDashGroup;
 import com.codet.lens.vis.entity.VisDashboard;
-import com.codet.lens.vis.mapper.VisDashGroupMapper;
+import com.codet.lens.vis.entity.VisDashGroup;
 import com.codet.lens.vis.mapper.VisDashboardMapper;
-import org.junit.jupiter.api.Test;
-
+import com.codet.lens.vis.mapper.VisDashGroupMapper;
 import java.util.List;
 import java.util.Set;
+import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -43,7 +42,7 @@ class VisDashGroupServiceTest {
 
     @Test
     void invalidatesAssignedUsersWhenGroupToggled() {
-        when(groupMapper.selectById(1L)).thenReturn(group(1L, 0L, FieldConst.EBL));
+        when(groupMapper.selectById(1L)).thenReturn(group(1L, 0L, Status.EBL));
         when(groupMapper.selectList(any())).thenReturn(List.of());
         VisDashboard dashboard = new VisDashboard();
         dashboard.setId(10L);
@@ -55,9 +54,9 @@ class VisDashGroupServiceTest {
     }
 
     private void mockDisabledAncestorData() {
-        VisDashGroup parent = group(1L, 0L, FieldConst.DBL);
-        VisDashGroup child = group(2L, 1L, FieldConst.EBL);
-        VisDashboard dashboard = new VisDashboard().setGroupId(2L).setStatus(FieldConst.EBL);
+        VisDashGroup parent = group(1L, 0L, Status.DBL);
+        VisDashGroup child = group(2L, 1L, Status.EBL);
+        VisDashboard dashboard = new VisDashboard().setGroupId(2L).setStatus(Status.EBL);
         dashboard.setId(10L);
         when(groupMapper.selectList(any())).thenReturn(List.of(parent, child));
         when(dashboardMapper.selectList(any())).thenReturn(List.of(dashboard));

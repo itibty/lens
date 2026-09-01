@@ -2,22 +2,21 @@ package com.codet.lens.vis.core.query;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
-import com.codet.lens.common.ResultEnum;
-import com.codet.lens.common.ResultException;
+import com.codet.lens.common.base.ResultEnum;
+import com.codet.lens.common.base.ResultException;
+import com.codet.lens.vis.dto.item.*;
 import com.codet.lens.vis.dto.pivot.PivotQueryConfig;
 import com.codet.lens.vis.dto.pivot.PivotQueryRequest;
-import com.codet.lens.vis.dto.item.*;
 import com.codet.lens.vis.dto.query.*;
 import com.codet.lens.vis.enums.*;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.time.LocalDate;
+import java.util.*;
+import java.util.regex.Pattern;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
-import java.util.*;
-import java.util.regex.Pattern;
 
 /**
  * 卡片配置完整性校验 + 全局空项过滤。拼 SQL 层不再重复这些检查。

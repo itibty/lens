@@ -13,8 +13,7 @@ JDK 21 + Spring Boot 4.1，提供登录鉴权、系统管理和可视化配置 /
 
 | 路径 | 说明 |
 |------|------|
-| `src/main/java/com/codet/lens/auth/` | 登录鉴权 |
-| `src/main/java/com/codet/lens/common/` | 通用响应、分页、异常 |
+| `src/main/java/com/codet/lens/common/` | 鉴权、通用响应、配置 |
 | `src/main/java/com/codet/lens/sys/` | 账号、角色、菜单 |
 | `src/main/java/com/codet/lens/vis/` | 数据集、卡片、看板、查数 |
 | `db/` | `schema.sql`、`demo.sql` |
@@ -31,7 +30,6 @@ mvn -DskipTests spring-boot:run
 mvn -DskipTests package
 ```
 
-- 账号：`admin` / `Aa123456`
 - Swagger：`http://127.0.0.1:8080/swagger-ui.html`
 - 库：本机 MySQL `lens`，默认 `root` / `Aa123456`
 - Redis：`127.0.0.1:6379`，密码 `Aa123456`（禁用/改密/改角色后旧 token 立刻失效）

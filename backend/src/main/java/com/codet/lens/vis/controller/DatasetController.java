@@ -1,34 +1,35 @@
 package com.codet.lens.vis.controller;
 
-import com.codet.lens.auth.Permission;
-import com.codet.lens.common.FieldConst;
-import com.codet.lens.common.IdsRequest;
-import com.codet.lens.common.ListResponse;
-import com.codet.lens.common.PageResponse;
-import com.codet.lens.common.PermCodes;
-import com.codet.lens.common.R;
-import com.codet.lens.common.ResultEnum;
+import com.codet.lens.common.auth.Permission;
+import com.codet.lens.common.base.IdsRequest;
+import com.codet.lens.common.base.ListResponse;
+import com.codet.lens.common.base.PageResponse;
+import com.codet.lens.common.base.R;
+import com.codet.lens.common.base.ResultEnum;
+import com.codet.lens.common.base.Status;
 import com.codet.lens.vis.core.query.SqlDialect;
+import com.codet.lens.vis.dto.dataset.ConfSqlContentRequest;
+import com.codet.lens.vis.dto.dataset.ConfSqlFieldInfo;
+import com.codet.lens.vis.dto.dataset.ConfSqlInfo;
+import com.codet.lens.vis.dto.dataset.ConfSqlInfoRequest;
 import com.codet.lens.vis.dto.dataset.DatasetSourceChangeWarning;
+import com.codet.lens.vis.dto.dataset.DebugSqlRequest;
+import com.codet.lens.vis.dto.dataset.DebugSqlResponse;
+import com.codet.lens.vis.dto.dataset.MetaInfo;
+import com.codet.lens.vis.dto.dataset.QueryConfSqlRequest;
 import com.codet.lens.vis.dto.dataset.VisCardRefInfo;
 import com.codet.lens.vis.dto.dataset.VisDatasetInfo;
 import com.codet.lens.vis.entity.VisDatasource;
 import com.codet.lens.vis.mapper.VisDatasourceMapper;
-import com.codet.lens.vis.rds.core.MetaInfo;
-import com.codet.lens.vis.rds.dto.conf.ConfSqlContentRequest;
-import com.codet.lens.vis.rds.dto.conf.ConfSqlFieldInfo;
-import com.codet.lens.vis.rds.dto.conf.ConfSqlInfo;
-import com.codet.lens.vis.rds.dto.conf.ConfSqlInfoRequest;
-import com.codet.lens.vis.rds.dto.conf.DebugSqlRequest;
-import com.codet.lens.vis.rds.dto.conf.DebugSqlResponse;
-import com.codet.lens.vis.rds.dto.conf.QueryConfSqlRequest;
 import com.codet.lens.vis.service.DatasetAdminService;
 import com.codet.lens.vis.service.DatasourceAdminService;
 import com.codet.lens.vis.service.DatasourceMetaService;
 import com.codet.lens.vis.service.VisDatasetService;
+import com.codet.lens.vis.VisPerms;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.NotNull;
+import java.util.List;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -39,8 +40,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
 
 @RestController
 @Validated
@@ -54,12 +53,12 @@ public class DatasetController {
     private final VisDatasetService visDatasetService;
 
     @Tag(name = "DATASOURCE")
-    @Permission(PermCodes.VIS_DATASET_CONF)
+    @Permission(VisPerms.VIS_DATASET_CONF)
     @Operation(operationId = "listDatasourceOptions", summary = "数据源选项")
     @PostMapping("/datasources/{dsType}/options")
     public R<ListResponse<DsOption>> listDatasourceOptions(@PathVariable String dsType) {
         List<DsOption> list = datasourceMapper.selectList(null).stream()
-                .filter(r -> FieldConst.EBL.equals(r.getStatus()))
+                .filter(r -> Status.EBL.equals(r.getStatus()))
                 .filter(r -> SqlDialect.supports(r.getDbType()))
                 .map(r -> {
                     DsOption opt = new DsOption();
@@ -74,7 +73,7 @@ public class DatasetController {
     }
 
     @Tag(name = "DATASOURCE")
-    @Permission(PermCodes.VIS_DATASET_CONF)
+    @Permission(VisPerms.VIS_DATASET_CONF)
     @Operation(operationId = "listDatasourceTables", summary = "数据表选项")
     @GetMapping("/datasources/{sourceName}/tables")
     public R<ListResponse<NameValue>> listDatasourceTables(@PathVariable String sourceName) {
@@ -90,7 +89,7 @@ public class DatasetController {
     }
 
     @Tag(name = "DATASOURCE")
-    @Permission(PermCodes.VIS_DATASET_CONF)
+    @Permission(VisPerms.VIS_DATASET_CONF)
     @Operation(operationId = "getDatasourceMetaTree", summary = "元数据树")
     @GetMapping("/datasources/{sourceName}/meta-tree")
     public R<ListResponse<MetaInfo.SchemaInfo>> getDatasourceMetaTree(
@@ -100,7 +99,7 @@ public class DatasetController {
     }
 
     @Tag(name = "DATASOURCE")
-    @Permission(PermCodes.VIS_DATASET_CONF)
+    @Permission(VisPerms.VIS_DATASET_CONF)
     @Operation(operationId = "editDatasource", summary = "新建或编辑数据源")
     @PostMapping("/datasources/edit")
     public R<Long> editDatasource(@RequestBody VisDatasource body) {
@@ -108,7 +107,7 @@ public class DatasetController {
     }
 
     @Tag(name = "DATASET")
-    @Permission(PermCodes.VIS_DATASET_CONF)
+    @Permission(VisPerms.VIS_DATASET_CONF)
     @Operation(operationId = "queryDatasets", summary = "分页查询数据集")
     @PostMapping("/datasets/query")
     public R<PageResponse<ConfSqlInfo>> queryDatasets(@RequestBody QueryConfSqlRequest request) {
@@ -116,7 +115,7 @@ public class DatasetController {
     }
 
     @Tag(name = "DATASET")
-    @Permission(PermCodes.VIS_DATASET_CONF)
+    @Permission(VisPerms.VIS_DATASET_CONF)
     @Operation(operationId = "getDatasetDetail", summary = "数据集详情")
     @GetMapping("/datasets/detail")
     public R<ConfSqlInfo> getDatasetDetail(@NotNull Long sqlId) {
@@ -124,7 +123,7 @@ public class DatasetController {
     }
 
     @Tag(name = "DATASET")
-    @Permission(PermCodes.VIS_DATASET_CONF)
+    @Permission(VisPerms.VIS_DATASET_CONF)
     @Operation(operationId = "editDatasetInfo", summary = "新建或编辑数据集信息")
     @PostMapping("/datasets/edit-info")
     public R<DatasetSourceChangeWarning> editDatasetInfo(@Validated @RequestBody ConfSqlInfoRequest request) {
@@ -133,7 +132,7 @@ public class DatasetController {
     }
 
     @Tag(name = "DATASET")
-    @Permission(PermCodes.VIS_DATASET_CONF)
+    @Permission(VisPerms.VIS_DATASET_CONF)
     @Operation(operationId = "editDatasetContent", summary = "编辑数据集脚本和字段")
     @PostMapping("/datasets/edit-content")
     public R<Void> editDatasetContent(@Validated @RequestBody ConfSqlContentRequest request) {
@@ -142,7 +141,7 @@ public class DatasetController {
     }
 
     @Tag(name = "DATASET")
-    @Permission(PermCodes.VIS_DATASET_CONF)
+    @Permission(VisPerms.VIS_DATASET_CONF)
     @Operation(operationId = "listDatasetCards", summary = "查询引用数据集的卡片")
     @GetMapping("/datasets/cards")
     public R<ListResponse<VisCardRefInfo>> listDatasetCards(@NotNull Long datasetId) {
@@ -150,7 +149,7 @@ public class DatasetController {
     }
 
     @Tag(name = "DATASET")
-    @Permission(PermCodes.VIS_DATASET_CONF)
+    @Permission(VisPerms.VIS_DATASET_CONF)
     @Operation(operationId = "delDataset", summary = "删除数据集")
     @PostMapping("/datasets/del")
     public R<Void> delDataset(@Validated @RequestBody IdsRequest request) {
@@ -159,7 +158,7 @@ public class DatasetController {
     }
 
     @Tag(name = "DATASET")
-    @Permission(PermCodes.VIS_DATASET_CONF)
+    @Permission(VisPerms.VIS_DATASET_CONF)
     @Operation(operationId = "listDatasetFields", summary = "查询数据集字段")
     @GetMapping("/datasets/fields")
     public R<List<ConfSqlFieldInfo>> listDatasetFields(@NotNull Long sqlId) {
@@ -167,7 +166,7 @@ public class DatasetController {
     }
 
     @Tag(name = "DATASET")
-    @Permission(PermCodes.VIS_DATASET_CONF)
+    @Permission(VisPerms.VIS_DATASET_CONF)
     @Operation(operationId = "debugDataset", summary = "调试数据集脚本")
     @PostMapping("/datasets/debug")
     public R<DebugSqlResponse> debugDataset(@Validated @RequestBody DebugSqlRequest request) {
@@ -180,7 +179,7 @@ public class DatasetController {
 
     @Tag(name = "DATASET")
     @Operation(operationId = "listDatasetOptions", summary = "数据集选项")
-    @Permission({PermCodes.VIS_CARD_CONF, PermCodes.VIS_DASHBOARD_CONF})
+    @Permission({VisPerms.VIS_CARD_CONF, VisPerms.VIS_DASHBOARD_CONF})
     @GetMapping("/datasets/options")
     public R<ListResponse<VisDatasetInfo>> listDatasetOptions(
             @RequestParam(required = false) String keyword,
@@ -191,7 +190,7 @@ public class DatasetController {
 
     @Tag(name = "DATASET")
     @Operation(operationId = "listDatasetFieldsById", summary = "数据集字段")
-    @Permission({PermCodes.VIS_CARD_CONF, PermCodes.VIS_DASHBOARD_CONF})
+    @Permission({VisPerms.VIS_CARD_CONF, VisPerms.VIS_DASHBOARD_CONF})
     @GetMapping("/datasets/{datasetId}/fields")
     public R<List<ConfSqlFieldInfo>> listDatasetFieldsById(
             @NotNull(message = "datasetId不能为空") @PathVariable Long datasetId) {
