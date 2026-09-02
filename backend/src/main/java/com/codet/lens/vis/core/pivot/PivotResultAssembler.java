@@ -7,6 +7,7 @@ import java.util.*;
 
 /**
  * 透视长表 → 带 path/role 的结构化结果。列 id 供行 values 引用。
+ * 有 orderList 时保持长表遇见顺序（明细 SQL 的 ORDER BY）；未指定时再按维值正序兜底。
  */
 public final class PivotResultAssembler {
 
@@ -21,7 +22,8 @@ public final class PivotResultAssembler {
     public static Result toResult(List<Map<String, Object>> longRows,
                                   List<String> rowFields,
                                   List<String> colFields,
-                                  List<String> metrics) {
+                                  List<String> metrics,
+                                  boolean followEncounterOrder) {
         List<String> rows = new ArrayList<>(CollUtil.emptyIfNull(rowFields));
         List<String> cols = new ArrayList<>(CollUtil.emptyIfNull(colFields));
         List<String> metricAliases = new ArrayList<>(CollUtil.emptyIfNull(metrics));
@@ -47,16 +49,18 @@ public final class PivotResultAssembler {
             byRow.computeIfAbsent(rowPath, k -> new LinkedHashMap<>()).put(colPath, cells);
         }
 
-        List<List<Object>> sortedCols = new ArrayList<>(colOrder.keySet());
-        if (sortedCols.isEmpty() && cols.isEmpty()) {
-            sortedCols.add(Collections.emptyList());
+        List<List<Object>> colPaths = new ArrayList<>(colOrder.keySet());
+        if (colPaths.isEmpty() && cols.isEmpty()) {
+            colPaths.add(Collections.emptyList());
         }
-        sortedCols.sort(PATH_ORDER);
+        if (!followEncounterOrder) {
+            colPaths.sort(PATH_ORDER);
+        }
 
         List<PivotColumn> columns = new ArrayList<>();
         Map<List<Object>, String> colIds = new LinkedHashMap<>();
-        for (int i = 0; i < sortedCols.size(); i++) {
-            List<Object> path = sortedCols.get(i);
+        for (int i = 0; i < colPaths.size(); i++) {
+            List<Object> path = colPaths.get(i);
             String id = "c" + (i + 1);
             colIds.put(path, id);
             PivotColumn column = new PivotColumn();
@@ -66,11 +70,13 @@ public final class PivotResultAssembler {
             columns.add(column);
         }
 
-        List<List<Object>> sortedRows = new ArrayList<>(byRow.keySet());
-        sortedRows.sort(PATH_ORDER);
+        List<List<Object>> rowPaths = new ArrayList<>(byRow.keySet());
+        if (!followEncounterOrder) {
+            rowPaths.sort(PATH_ORDER);
+        }
 
         List<PivotRow> resultRows = new ArrayList<>();
-        for (List<Object> rowPath : sortedRows) {
+        for (List<Object> rowPath : rowPaths) {
             PivotRow row = new PivotRow();
             row.setPath(rowPath);
             row.setRole(roleOf(rowPath.size(), rows.size()));
@@ -119,7 +125,7 @@ public final class PivotResultAssembler {
     }
 
     /**
-     * 同前缀时更长的（明细）在前，短的（小计/总计）在后；否则按取值比较。
+     * 未指定排序时的兜底：同前缀时更长的（明细）在前，短的（小计/总计）在后；否则按取值正序。
      */
     static final Comparator<List<Object>> PATH_ORDER = (left, right) -> {
         int n = Math.min(left.size(), right.size());

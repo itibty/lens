@@ -9,6 +9,7 @@ import com.codet.lens.vis.enums.SortDirEnum;
 import com.codet.lens.vis.enums.TimeGrainEnum;
 import java.sql.Timestamp;
 import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -85,6 +86,20 @@ public final class SqlExprHelper {
                 clause.append(leftExpr)
                         .append(" ").append(opEnum.getValue()).append(" ?");
                 return;
+            case EQ:
+            case NE:
+            case GT:
+            case GTE:
+            case LT:
+            case LTE:
+                if (isDateOnlyPoint(values)) {
+                    appendDateOnlyCompare(leftExpr, opEnum, String.valueOf(values[0]).trim(), clause, allParams);
+                    return;
+                }
+                allParams.add(values[0]);
+                clause.append(leftExpr)
+                        .append(" ").append(opEnum.getValue()).append(" ?");
+                return;
             default:
                 allParams.add(values[0]);
                 clause.append(leftExpr)
@@ -93,13 +108,49 @@ public final class SqlExprHelper {
     }
 
     /**
+     * 纯日期字面量按自然日收成半开区间，与 between / valueExp 一致。
+     * 带时分秒或无法解析的日期串仍精确比较。
+     */
+    static void appendDateOnlyCompare(String leftExpr, FilterOpEnum op, String day,
+                                      StringBuilder clause, List<Object> allParams) {
+        String[] bounds = DateValueExpResolver.toHalfOpenDateTime(day, day);
+        Timestamp start = Timestamp.valueOf(bounds[0]);
+        Timestamp next = Timestamp.valueOf(bounds[1]);
+        switch (op) {
+            case EQ -> appendHalfOpenRange(leftExpr, start, next, clause, allParams);
+            case NE -> {
+                allParams.add(start);
+                allParams.add(next);
+                clause.append("(").append(leftExpr).append(" < ? OR ").append(leftExpr).append(" >= ?)");
+            }
+            case GTE -> appendBound(leftExpr, ">=", start, clause, allParams);
+            case GT -> appendBound(leftExpr, ">=", next, clause, allParams);
+            case LT -> appendBound(leftExpr, "<", start, clause, allParams);
+            case LTE -> appendBound(leftExpr, "<", next, clause, allParams);
+            default -> throw new IllegalArgumentException("不是日期比较: " + op);
+        }
+    }
+
+    private static void appendBound(String leftExpr, String op, Timestamp bound,
+                                    StringBuilder clause, List<Object> allParams) {
+        allParams.add(bound);
+        clause.append("(").append(leftExpr).append(" ").append(op).append(" ?)");
+    }
+
+    /**
      * {@code field >= start 00:00:00 AND field < end+1 00:00:00}，外加括号以便出现在 OR 组里。
      */
     public static void appendDateRangeHalfOpen(String leftExpr, String startInclusive, String endInclusive,
                                               StringBuilder clause, List<Object> allParams) {
         String[] bounds = DateValueExpResolver.toHalfOpenDateTime(startInclusive, endInclusive);
-        allParams.add(Timestamp.valueOf(bounds[0]));
-        allParams.add(Timestamp.valueOf(bounds[1]));
+        appendHalfOpenRange(leftExpr, Timestamp.valueOf(bounds[0]), Timestamp.valueOf(bounds[1]),
+                clause, allParams);
+    }
+
+    private static void appendHalfOpenRange(String leftExpr, Timestamp start, Timestamp next,
+                                            StringBuilder clause, List<Object> allParams) {
+        allParams.add(start);
+        allParams.add(next);
         clause.append("(").append(leftExpr).append(" >= ? AND ").append(leftExpr).append(" < ?)");
     }
 
@@ -107,8 +158,24 @@ public final class SqlExprHelper {
         return values != null && values.length >= 2 && isIsoDate(values[0]) && isIsoDate(values[1]);
     }
 
+    private static boolean isDateOnlyPoint(Object[] values) {
+        return values != null && values.length >= 1 && isIsoDate(values[0]);
+    }
+
     private static boolean isIsoDate(Object raw) {
-        return raw != null && ISO_DATE.matcher(String.valueOf(raw).trim()).matches();
+        if (raw == null) {
+            return false;
+        }
+        String text = String.valueOf(raw).trim();
+        if (!ISO_DATE.matcher(text).matches()) {
+            return false;
+        }
+        try {
+            LocalDate.parse(text);
+            return true;
+        } catch (DateTimeParseException e) {
+            return false;
+        }
     }
 
     public static String resolveDimAlias(DimensionItem dim) {

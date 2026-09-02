@@ -168,6 +168,7 @@ function isDateDimension(dim: VIS.DimensionItem, fields?: DatasetField[]) {
   return isDateField(dataType) || dataType === 'timestamp'
 }
 
+/** 设计器禁止日期维 + 同环比；后端不拒，接口/旧 JSON 仍可能带上。 */
 function pushDateDimContrastConflict(
   issues: QueryIssue[],
   dims: VIS.DimensionItem[],

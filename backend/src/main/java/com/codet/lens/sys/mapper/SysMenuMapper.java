@@ -2,20 +2,28 @@ package com.codet.lens.sys.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.codet.lens.sys.entity.SysMenu;
+import java.util.Collection;
 import java.util.List;
+import org.apache.ibatis.annotations.Lang;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.scripting.xmltags.XMLLanguageDriver;
 
 public interface SysMenuMapper extends BaseMapper<SysMenu> {
 
+    @Lang(XMLLanguageDriver.class)
     @Select("""
-            select m.* from sys_menu m
+            <script>
+            select distinct m.* from sys_menu m
             join sys_role_menu rm on rm.menu_id = m.id
-            join sys_user_role ur on ur.role_id = rm.role_id
-            join sys_role r on r.id = ur.role_id
-            where ur.user_id = #{userId} and r.status = 'EBL'             and m.status = 'EBL' and m.menu_type = 'FUNC'
-              and (ur.start_at is null or ur.start_at <= #{now})
-              and (ur.end_at is null or ur.end_at >= #{now})
+            join sys_role r on r.id = rm.role_id
+            where r.status = 'EBL'
+              and m.status = 'EBL' and m.menu_type = 'FUNC'
+              and r.role_code in
+              <foreach collection="roleCodes" item="code" open="(" separator="," close=")">
+                #{code}
+              </foreach>
+            </script>
             """)
-    List<SysMenu> findUserFuncs(@Param("userId") Long userId, @Param("now") Long now);
+    List<SysMenu> findFuncsByRoleCodes(@Param("roleCodes") Collection<String> roleCodes);
 }

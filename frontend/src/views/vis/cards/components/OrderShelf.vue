@@ -11,6 +11,8 @@ import ShelfTitle from './ShelfTitle.vue'
 const props = defineProps<{
   dimensions: DimensionPill[]
   metrics: MetricPill[]
+  /** 透视：有排序时行/列跟查询遇见序，没写则按维值正序 */
+  forPivot?: boolean
 }>()
 
 const orderList = defineModel<OrderPill[]>('orderList', { required: true })
@@ -74,12 +76,16 @@ function pillName(item: OrderPill) {
 const emptyHint = computed(() =>
   candidates.value.length ? '选择已投放的维度或指标' : '请先添加维度或指标',
 )
+
+const tip = computed(() => props.forPivot
+  ? '有排序时行、列按查询遇见顺序；没写排序时按维值正序'
+  : undefined)
 </script>
 
 <template>
   <div class="shelf">
     <div class="shelf__head">
-      <ShelfTitle>
+      <ShelfTitle :tip="tip">
         排序
       </ShelfTitle>
       <div class="shelf__extra">

@@ -197,13 +197,9 @@ function buildRecords(data: VIS.PivotQueryResponse, treeDisplay = false): Record
   return records
 }
 
-function isPivotDetailRow(row: VIS.PivotRow) {
-  return row.role !== 'total' && row.role !== 'subtotal'
-}
-
-/** 没有明细行（只有总计/小计或空数组）视为无数据 */
+/** 没有任何行才算空。只有小计/总计也要展示：结果过滤只藏最细格，合计仍是真值。 */
 export function isPivotDataEmpty(data: VIS.PivotQueryResponse) {
-  return !(data.rows ?? []).some(isPivotDetailRow)
+  return !(data.rows ?? []).length
 }
 
 export type PivotSortOrder = 'asc' | 'desc'

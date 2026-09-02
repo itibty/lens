@@ -139,6 +139,7 @@ public class UserAdminService {
         }).toList());
     }
 
+    /** 整单替换。页面只提交成对有效期或两端皆空；单边原样写入，不做补全或拒绝。 */
     private void resetRoleInfos(Long userId, List<UserRoleInfo> roleInfos) {
         userRoleMapper.delete(Wrappers.<SysUserRole>lambdaQuery().eq(SysUserRole::getUserId, userId));
         long now = System.currentTimeMillis();

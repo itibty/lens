@@ -686,6 +686,7 @@ onBeforeRouteUpdate((to) => {
                       v-model:order-list="orderPills"
                       :dimensions="orderDimensionPills"
                       :metrics="metricPills"
+                      :for-pivot="isPivot"
                     />
                     <el-collapse v-model="states.advancedOpen" class="designer__advanced">
                       <el-collapse-item title="高级设置" name="advanced">
@@ -729,6 +730,7 @@ onBeforeRouteUpdate((to) => {
                             v-model:having-filters="havingPills"
                             :metrics="metricPills"
                             :issues="shapeIssues"
+                            :for-pivot="isPivot"
                           />
                           <ParamShelf
                             v-model:params="paramPills"

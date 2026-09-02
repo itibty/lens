@@ -62,6 +62,7 @@ const typeOptions = computed(() => {
 
 const dimensionFields = ref<DatasetField[]>([])
 const metricFields = ref<DatasetField[]>([])
+let fieldsRequestId = 0
 
 const optionIds = computed(() => new Set(datasets.value.map(item => String(item.id))))
 
@@ -76,24 +77,31 @@ function splitFields(list: DatasetField[]) {
 }
 
 async function loadFields(id: string) {
+  const currentRequestId = ++fieldsRequestId
   if (!id) {
     fields.value = []
     splitFields([])
+    loadingFields.value = false
     return
   }
   loadingFields.value = true
   try {
     const res = await vis.dataset.listDatasetFieldsById({ datasetId: id })
+    if (currentRequestId !== fieldsRequestId)
+      return
     const list = (res.data ?? []).map(fromConfSqlField)
     fields.value = list
     splitFields(list)
   }
   catch {
+    if (currentRequestId !== fieldsRequestId)
+      return
     fields.value = []
     splitFields([])
   }
   finally {
-    loadingFields.value = false
+    if (currentRequestId === fieldsRequestId)
+      loadingFields.value = false
   }
 }
 
@@ -103,11 +111,10 @@ watch(
     keyword.value = ''
     typeFilter.value = ''
     if (!need) {
-      fields.value = []
-      splitFields([])
+      void loadFields('')
       return
     }
-    loadFields(id)
+    void loadFields(id)
   },
   { immediate: true },
 )

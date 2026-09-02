@@ -340,6 +340,9 @@ public final class VisQueryPrep {
         }
     }
 
+    /**
+     * 透视不允许 contrast。日期维 + 同环比设计器会拦，此处不拒，JOIN 仍按全部维度对齐。
+     */
     private static void validateMetrics(List<MetricItem> metrics, boolean required, boolean allowContrast,
                                         LocalDate today) {
         if (CollUtil.isEmpty(metrics)) {

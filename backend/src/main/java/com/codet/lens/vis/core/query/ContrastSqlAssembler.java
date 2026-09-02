@@ -18,6 +18,7 @@ import lombok.NoArgsConstructor;
 
 /**
  * 有对比指标时：{@code WITH ds} + main + 每指标两窗 CTE，外层算列后再滤、排、LIMIT。
+ * 窗之间按全部维度 JOIN。日期维会导致评估期/对比期桶对不上，设计器禁止该组合，接口不拒。
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class ContrastSqlAssembler {
@@ -207,6 +208,7 @@ public final class ContrastSqlAssembler {
         }
     }
 
+    /** 含日期维时两窗桶值不同，对不上；设计器已禁该组合。 */
     private static String joinOn(List<DimensionItem> dims, SqlDialect dialect) {
         if (CollUtil.isEmpty(dims)) {
             return "1 = 1";

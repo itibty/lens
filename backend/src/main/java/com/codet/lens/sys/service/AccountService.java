@@ -4,6 +4,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.crypto.digest.BCrypt;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.codet.lens.common.auth.AuthContext;
+import com.codet.lens.common.auth.AuthUser;
 import com.codet.lens.common.auth.JwtService;
 import com.codet.lens.common.auth.TokenInvalidateService;
 import com.codet.lens.common.base.ListResponse;
@@ -52,8 +53,8 @@ public class AccountService {
         }
         tokenInvalidateService.invalidate(user.getId());
         long now = System.currentTimeMillis();
-        // 产品约定：仅签发登录时已生效角色；未来 start_at 到点不会刷新现有 JWT，用户需重新登录。
-        // 已生效角色的 end_at 仍会压缩 token 有效期，保证角色到期时自动撤权。
+        // 仅签发当时已生效角色。/auth/me、菜单、看板都认这份 JWT，不再按 now 扩权。
+        // 配置变更踢人；start_at 到点不踢，需重新登录。end_at 压缩 token 过期。
         Set<String> roles = new HashSet<>(sysUserMapper.findRoleCodes(user.getId(), now));
         Set<String> perms = new HashSet<>(sysUserMapper.findPermCodes(user.getId(), now));
         Long earliestRoleEndAt = sysUserMapper.findEarliestRoleEndAt(user.getId(), now);
@@ -73,19 +74,17 @@ public class AccountService {
         if (user == null) {
             throw ResultException.fail("用户不存在");
         }
-        long now = System.currentTimeMillis();
-        Set<String> roles = new HashSet<>(sysUserMapper.findRoleCodes(userId, now));
-        Set<String> perms = new HashSet<>(sysUserMapper.findPermCodes(userId, now));
+        AuthUser auth = AuthContext.get();
+        Set<String> roles = auth == null ? Set.of() : new HashSet<>(auth.getRoles());
+        Set<String> perms = auth == null ? Set.of() : new HashSet<>(auth.getPerms());
         return new SimpleResponse<>(toInfo(user, roles, perms));
     }
 
     public ListResponse<UserMenu> menus() {
-        Long userId = AuthContext.getUserIdLong();
-        long now = System.currentTimeMillis();
         List<SysMenu> all = sysMenuMapper.selectList(Wrappers.<SysMenu>lambdaQuery()
                 .eq(SysMenu::getStatus, Status.EBL)
                 .orderByAsc(SysMenu::getSortNum));
-        Set<Long> visibleMenuIds = visibleMenuIds(userId, now, all);
+        Set<Long> visibleMenuIds = visibleMenuIds(jwtRoleCodes(), all);
         List<SysMenu> rows = all.stream()
                 .filter(m -> "MENU".equals(m.getMenuType()))
                 .filter(m -> visibleMenuIds.contains(m.getId()))
@@ -128,12 +127,20 @@ public class AccountService {
         return info;
     }
 
-    private Set<Long> visibleMenuIds(Long userId, long now, List<SysMenu> all) {
+    private static Set<String> jwtRoleCodes() {
+        AuthUser auth = AuthContext.get();
+        return auth == null ? Set.of() : auth.getRoles();
+    }
+
+    private Set<Long> visibleMenuIds(Set<String> roleCodes, List<SysMenu> all) {
         Map<Long, SysMenu> byId = new HashMap<>();
         for (SysMenu row : all)
             byId.put(row.getId(), row);
         Set<Long> ids = new HashSet<>();
-        for (SysMenu func : sysMenuMapper.findUserFuncs(userId, now)) {
+        if (roleCodes == null || roleCodes.isEmpty()) {
+            return ids;
+        }
+        for (SysMenu func : sysMenuMapper.findFuncsByRoleCodes(roleCodes)) {
             Long pid = func.getPid();
             while (pid != null && pid != 0) {
                 if (!ids.add(pid))

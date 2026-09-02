@@ -103,6 +103,7 @@ public class VisCardService {
             if (StrUtil.isBlank(request.getQueryJson())) {
                 throw fail("查询配置不能为空");
             }
+            // query_json 只校验非空。日期维 + 同环比由设计器拦住，保存不二次语义检查。
         }
         VisCard entity = BeanUtil.copyProperties(request, VisCard.class);
         entity.setChartType(type.getCode());

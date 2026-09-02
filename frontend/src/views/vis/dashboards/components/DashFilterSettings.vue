@@ -90,6 +90,35 @@ const previewLoading = ref(false)
 const previewError = ref('')
 let previewSeq = 0
 
+function createDatasetFieldLoader(
+  target: Ref<DatasetField[]>,
+  loading: Ref<boolean>,
+) {
+  let seq = 0
+  return async (datasetId: string) => {
+    const current = ++seq
+    target.value = []
+    if (!datasetId) {
+      loading.value = false
+      return
+    }
+    loading.value = true
+    try {
+      const res = await vis.dataset.listDatasetFieldsById({ datasetId })
+      if (current !== seq)
+        return
+      target.value = (res.data ?? []).map(fromConfSqlField)
+    }
+    finally {
+      if (current === seq)
+        loading.value = false
+    }
+  }
+}
+
+const loadFields = createDatasetFieldLoader(fields, loadingFields)
+const loadOptionFields = createDatasetFieldLoader(optionFields, loadingOptionFields)
+
 function onTargetDatasetsVisible(visible: boolean) {
   if (visible)
     reloadTargetDatasets()
@@ -98,34 +127,6 @@ function onTargetDatasetsVisible(visible: boolean) {
 function onOptionDatasetsVisible(visible: boolean) {
   if (visible)
     reloadOptionDatasets()
-}
-
-async function loadFields(datasetId: string) {
-  fields.value = []
-  if (!datasetId)
-    return
-  loadingFields.value = true
-  try {
-    const res = await vis.dataset.listDatasetFieldsById({ datasetId })
-    fields.value = (res.data ?? []).map(fromConfSqlField)
-  }
-  finally {
-    loadingFields.value = false
-  }
-}
-
-async function loadOptionFields(datasetId: string) {
-  optionFields.value = []
-  if (!datasetId)
-    return
-  loadingOptionFields.value = true
-  try {
-    const res = await vis.dataset.listDatasetFieldsById({ datasetId })
-    optionFields.value = (res.data ?? []).map(fromConfSqlField)
-  }
-  finally {
-    loadingOptionFields.value = false
-  }
 }
 
 function patchOptions(partial: Partial<NonNullable<VisDashFilterDef['options']>>) {
@@ -350,10 +351,7 @@ watch(
     return String(selected.value?.options?.datasetId || '').trim()
   },
   (datasetId) => {
-    if (datasetId)
-      void loadOptionFields(datasetId)
-    else
-      optionFields.value = []
+    void loadOptionFields(datasetId)
   },
   { immediate: true },
 )

@@ -15,6 +15,7 @@ import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+/** 透视查数。HAVING 只过滤最细交叉格；有 orderList 时组装保持明细 SQL 行序。 */
 @Service
 @RequiredArgsConstructor
 public class PivotDataService {
@@ -63,7 +64,8 @@ public class PivotDataService {
                 metricAliases.add(SqlExprHelper.resolveMetricAlias(metric));
             }
             PivotResultAssembler.Result assembled = PivotResultAssembler.toResult(
-                    longRows, aliases(rowDims), aliases(colDims), metricAliases
+                    longRows, aliases(rowDims), aliases(colDims), metricAliases,
+                    CollUtil.isNotEmpty(config.getOrderList())
             );
 
             PivotQueryResponse response = new PivotQueryResponse();
@@ -94,18 +96,23 @@ public class PivotDataService {
         bo.setInnerSql(tplRet.getSql());
         bo.setInnerParams(tplRet.getParams());
         bo.setDialect(SqlDialect.of(dsType));
-        if (grain.isDetail()) {
-            bo.setHavingFilters(config.getHavingFilters());
-            bo.setOrderList(config.getOrderList());
-            bo.setLimit(config.getLimit());
-            bo.setMaxLimit(MAX_LIMIT);
-            if (config.getLimit() == null) {
-                bo.setLimit(maxRows);
-            }
-        } else {
-            bo.setSkipLimit(true);
-        }
+        applyDetailDisplayControls(bo, grain.isDetail(), config, maxRows);
         return bo;
+    }
+
+    /**
+     * 透视 A1：HAVING / ORDER / LIMIT 只装饰最细交叉格（展示过滤）。
+     * 小计、总计按同一 WHERE 在更粗粒度上重算真值，不再套 HAVING。
+     */
+    static void applyDetailDisplayControls(QueryBO bo, boolean detail, PivotQueryConfig config, int maxRows) {
+        if (!detail) {
+            bo.setSkipLimit(true);
+            return;
+        }
+        bo.setHavingFilters(config.getHavingFilters());
+        bo.setOrderList(config.getOrderList());
+        bo.setLimit(config.getLimit() != null ? config.getLimit() : maxRows);
+        bo.setMaxLimit(MAX_LIMIT);
     }
 
     private static List<String> aliases(List<DimensionItem> dims) {

@@ -75,10 +75,11 @@ public class VisDashboardAccess {
     }
 
     public Set<Long> assignedDashboardIds() {
-        Long userId = AuthContext.getUserIdLong();
-        if (userId == null)
+        AuthUser user = AuthContext.get();
+        Set<String> roleCodes = user == null ? Set.of() : user.getRoles();
+        if (roleCodes == null || roleCodes.isEmpty())
             return Set.of();
-        List<Long> ids = roleDashboardMapper.findUserDashboardIds(userId, System.currentTimeMillis());
+        List<Long> ids = roleDashboardMapper.findDashboardIdsByRoleCodes(roleCodes);
         return ids == null
                 ? Set.of()
                 : dashboardVisibility.filterVisibleDashboardIds(new HashSet<>(ids));

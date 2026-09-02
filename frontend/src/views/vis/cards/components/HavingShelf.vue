@@ -22,7 +22,13 @@ import FilterConditionForm from './FilterConditionForm.vue'
 const props = defineProps<{
   metrics: VIS.MetricItem[]
   issues?: QueryIssue[]
+  /** 透视：HAVING 只滤最细交叉格，小计/总计仍按全部数据汇总 */
+  forPivot?: boolean
 }>()
+
+const tip = computed(() => props.forPivot
+  ? '只过滤最细交叉格；小计、总计仍按筛选后的全部数据汇总'
+  : '对汇总结果再过滤，相当于 HAVING')
 
 const shelfError = computed(() => shelfMessage(props.issues, 'having'))
 
@@ -85,7 +91,7 @@ function pillName(item: HavingPill) {
 <template>
   <AdvancedModule
     title="结果过滤"
-    tip="对汇总结果再过滤，相当于 HAVING"
+    :tip="tip"
     :invalid="!!shelfError"
   >
     <template #extra>
