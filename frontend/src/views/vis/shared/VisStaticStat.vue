@@ -3,26 +3,20 @@
 -->
 <script setup lang="ts">
 import type { VisStatItem } from './types'
-import { numberSizeVars } from './numberStyle'
 import { formatStaticStat } from './staticModules'
 
-const props = withDefaults(defineProps<{
+const props = defineProps<{
   items: VisStatItem[]
-  size?: 'sm' | 'md'
-}>(), {
-  size: 'sm',
-})
+}>()
 
 const views = computed(() => props.items.map(formatStaticStat))
 const many = computed(() => views.value.length > 1)
-const rootStyle = computed(() => numberSizeVars(props.size))
 </script>
 
 <template>
   <div
     class="vis-static-stat"
     :class="{ 'is-group': many }"
-    :style="rootStyle"
   >
     <div
       v-for="(item, index) in views"

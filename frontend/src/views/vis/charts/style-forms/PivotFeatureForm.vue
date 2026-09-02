@@ -32,7 +32,7 @@ const TOTAL_OPTIONS = [
     key: 'rowTotal',
     placeKey: 'rowTotalPlace',
     label: '行总计',
-    tip: TABLE_FEATURE_TIPS.rowTotal,
+    tip: undefined,
     places: [
       { value: 'start', label: '顶部' },
       { value: 'end', label: '底部' },
@@ -52,7 +52,7 @@ const TOTAL_OPTIONS = [
     key: 'columnTotal',
     placeKey: 'columnTotalPlace',
     label: '列总计',
-    tip: TABLE_FEATURE_TIPS.columnTotal,
+    tip: undefined,
     places: [
       { value: 'start', label: '左侧' },
       { value: 'end', label: '右侧' },
@@ -127,7 +127,7 @@ function setPlace(key: keyof typeof placeModel, value: string | number | boolean
         <el-switch v-model="treeDisplay" size="small" />
       </div>
       <div class="vis-style-form__row">
-        <StyleFormLabel :tip="TABLE_FEATURE_TIPS.sortColumn">
+        <StyleFormLabel>
           排序
         </StyleFormLabel>
         <el-switch v-model="sortColumn" size="small" />
@@ -139,7 +139,7 @@ function setPlace(key: keyof typeof placeModel, value: string | number | boolean
       name="display"
     >
       <div class="vis-style-form__row">
-        <StyleFormLabel :tip="TABLE_FEATURE_TIPS.striped">
+        <StyleFormLabel>
           斑马纹
         </StyleFormLabel>
         <el-switch v-model="striped" size="small" />

@@ -366,7 +366,6 @@ export function staticProgressVisual(parent: VisVisualConfig, hasLabel: boolean)
       showPercent: true,
       showValue: true,
       showLabel: hasLabel,
-      size: 'sm',
     },
   }
 }

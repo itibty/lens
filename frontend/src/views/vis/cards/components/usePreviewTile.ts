@@ -1,21 +1,28 @@
 import type { MaybeRefOrGetter } from 'vue'
-import { isNumberChart, isTrendChart } from '@/views/vis/shared/types'
+import { isNumberChart, isProgressChart, isTrendChart } from '@/views/vis/shared/types'
 
-/** 数值类卡片使用接近看板的默认尺寸，其余类型默认铺满预览区 */
+/** 宽近看板 4 列。进度/趋势要更高才放得下环和走势；指标卡跟看板 4×5 即可 */
+const NUMBER_TILE = { w: 240, h: 188 } as const
+const TALL_TILE = { w: 240, h: 268 } as const
+
 export const PREVIEW_TILE_DEFAULT = {
-  number: { w: 240, h: 188 },
-  trend: { w: 320, h: 268 },
+  number: NUMBER_TILE,
+  progress: TALL_TILE,
+  trend: TALL_TILE,
   fill: null,
 } as const
 
 const TILE_MIN_W = 168
-const TILE_MIN_H = 140
+/** 低于完整小卡（标题+环/条+数值）；仍可拖到看板 4×5 附近看紧凑效果 */
+const TILE_MIN_H = 188
 
 export type PreviewTileKind = keyof typeof PREVIEW_TILE_DEFAULT
 
 export function previewTileKind(chartType?: string): PreviewTileKind | null {
   if (isTrendChart(chartType))
     return 'trend'
+  if (isProgressChart(chartType))
+    return 'progress'
   if (isNumberChart(chartType))
     return 'number'
   return String(chartType || '').trim() ? 'fill' : null

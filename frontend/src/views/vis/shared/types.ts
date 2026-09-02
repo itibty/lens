@@ -194,7 +194,7 @@ export interface VisWebConfig {
   url?: string
 }
 
-export type VisProgressShape = 'bar' | 'ring'
+export type VisProgressShape = 'bar' | 'ring' | 'gauge'
 
 /** 指标卡 / 进度条共用的数值格式 */
 export type VisNumberDecimals = 'auto' | 0 | 1 | 2
@@ -228,7 +228,7 @@ export interface VisKpiOptions extends VisNumberFormat {
   color?: string
   /** 轨道颜色；空 = 浅底 */
   trackColor?: string
-  /** 字号与条高；默认 md */
+  /** 条高与条内完成率；默认 md。行名字号不跟此项走 */
   size?: VisProgressSize
   /** 期限；不写则不画时间线 */
   periodMode?: VisKpiPeriodMode
@@ -240,7 +240,7 @@ export interface VisKpiOptions extends VisNumberFormat {
 
 /** 进度条（挂在 visual.progress；当前 / 目标，字段均可缺省） */
 export interface VisProgressOptions extends VisNumberFormat {
-  /** 形态；默认 bar */
+  /** 形态；默认 bar。gauge = 上大半环 */
   shape?: VisProgressShape
   /** 固定目标；有第 2 个指标时不读 */
   target?: number
@@ -256,11 +256,7 @@ export interface VisProgressOptions extends VisNumberFormat {
   color?: string
   /** 轨道颜色；空 = 浅底 */
   trackColor?: string
-  /** 字号与条/环尺寸；默认 md */
-  size?: VisProgressSize
 }
-
-export type VisNumberSize = VisProgressSize
 
 /** 趋势卡（挂在 visual.trend；数字样式仍走 visual.number） */
 export interface VisTrendOptions {
@@ -294,8 +290,6 @@ export interface VisNumberStyle extends VisNumberFormat {
   showAuxLabel?: boolean
   /** 主值文字色；空 = 卡片内容色 / 默认 */
   color?: string
-  /** 主值 / 辅值 / 指标名成套尺寸；默认 md */
-  size?: VisNumberSize
 }
 
 export type ChartType
@@ -394,7 +388,7 @@ export function isRankChart(chartType?: string) {
   return String(chartType || '').toLowerCase() === 'rank'
 }
 
-/** 指标卡 / 趋势卡共用 visual.number 的字号与配色 */
+/** 指标卡 / 趋势卡共用 visual.number 的数字格式与配色 */
 export function isNumberStyleChart(chartType?: string) {
   return isNumberChart(chartType) || isTrendChart(chartType)
 }

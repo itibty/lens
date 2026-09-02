@@ -2,7 +2,8 @@
  * @Description: 目标进度尺寸预设
 -->
 <script setup lang="ts">
-import type { VisProgressSize, VisVisualConfig } from '@/views/vis/shared/types'
+import type { VisKpiSize } from '@/views/vis/shared/kpiCard'
+import type { VisVisualConfig } from '@/views/vis/shared/types'
 import { KPI_DEFAULTS, KPI_SIZE_PRESETS, kpiPickerSize, kpiSizeSpec } from '@/views/vis/shared/kpiCard'
 import { useVisualBranch } from './composables/useVisualBranch'
 
@@ -11,7 +12,7 @@ const branch = useVisualBranch(visual, 'kpi')
 
 const size = computed({
   get: () => kpiPickerSize(visual.value.kpi?.size ?? KPI_DEFAULTS.size),
-  set: (value: VisProgressSize) => {
+  set: (value: VisKpiSize) => {
     if (value === KPI_DEFAULTS.size)
       branch.clearKey('size')
     else

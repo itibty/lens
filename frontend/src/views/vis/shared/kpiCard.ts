@@ -1,4 +1,4 @@
-import type { VisKpiOptions, VisKpiPeriodMode, VisProgressSize, VisQueryConfig, VisVisualConfig } from './types'
+import type { VisKpiOptions, VisKpiPeriodMode, VisQueryConfig, VisVisualConfig } from './types'
 import { resolveAccentByPaint } from './accentPresets'
 import { resolveCardChrome } from './cardTheme'
 import { formatMetricNumber, toFiniteNumber } from './numberStyle'
@@ -9,62 +9,22 @@ import {
   progressColorPatch,
   progressColorPreview,
   progressMetricNames,
-  progressSizeOf,
   progressSizeVars,
 } from './progressCard'
 import { dimensionAlias, isKpiChart, metricAlias, regularMetrics } from './types'
 
-const KPI_BAR_HEIGHT: Record<VisProgressSize, number> = {
-  xs: 20,
+export type VisKpiSize = 'sm' | 'md' | 'lg'
+
+const KPI_BAR_HEIGHT: Record<VisKpiSize, number> = {
   sm: 20,
   md: 32,
   lg: 48,
-  xl: 48,
 }
 
-const KPI_BAR_PERCENT: Record<VisProgressSize, number> = {
-  xs: 12,
+const KPI_BAR_PERCENT: Record<VisKpiSize, number> = {
   sm: 12,
   md: 15,
   lg: 18,
-  xl: 18,
-}
-
-const KPI_SIZE_ALIAS: Record<VisProgressSize, 'sm' | 'md' | 'lg'> = {
-  xs: 'sm',
-  sm: 'sm',
-  md: 'md',
-  lg: 'lg',
-  xl: 'lg',
-}
-
-export const KPI_SIZE_PRESETS: Array<{ id: 'sm' | 'md' | 'lg', name: string }> = [
-  { id: 'sm', name: '小' },
-  { id: 'md', name: '中' },
-  { id: 'lg', name: '大' },
-]
-
-export function kpiPickerSize(size?: string) {
-  const id = progressSizeOf(size).id
-  return KPI_SIZE_ALIAS[id]
-}
-
-export const KPI_COLOR_PRESETS = PROGRESS_COLOR_PRESETS
-export const kpiColorPatch = progressColorPatch
-export const kpiColorPreview = progressColorPreview
-export { progressMetricNames as kpiMetricNames }
-
-export function kpiSizeSpec(item: { id: VisProgressSize }) {
-  return [KPI_BAR_PERCENT[item.id], KPI_BAR_HEIGHT[item.id]]
-}
-
-export function kpiSizeVars(size?: string) {
-  const s = progressSizeOf(size)
-  return {
-    ...progressSizeVars(size),
-    '--vis-progress-bar': `${KPI_BAR_HEIGHT[s.id]}px`,
-    '--vis-kpi-bar-percent': `${KPI_BAR_PERCENT[s.id]}px`,
-  }
 }
 
 export const KPI_DEFAULTS = {
@@ -80,11 +40,44 @@ export const KPI_DEFAULTS = {
   Pick<VisKpiOptions, 'showPercent' | 'showValue' | 'percentDecimals' | 'decimals' | 'separator' | 'prefix' | 'compact' | 'size'>
 >
 
+export const KPI_SIZE_PRESETS: Array<{ id: VisKpiSize, name: string }> = [
+  { id: 'sm', name: '小' },
+  { id: 'md', name: '中' },
+  { id: 'lg', name: '大' },
+]
+
+export function kpiWeightOf(size?: string): VisKpiSize {
+  if (size === 'sm' || size === 'lg')
+    return size
+  return KPI_DEFAULTS.size
+}
+
+export function kpiPickerSize(size?: string) {
+  return kpiWeightOf(size)
+}
+
+export const KPI_COLOR_PRESETS = PROGRESS_COLOR_PRESETS
+export const kpiColorPatch = progressColorPatch
+export const kpiColorPreview = progressColorPreview
+export { progressMetricNames as kpiMetricNames }
+
+export function kpiSizeSpec(item: { id: VisKpiSize }) {
+  return [KPI_BAR_PERCENT[item.id], KPI_BAR_HEIGHT[item.id]]
+}
+
+export function kpiSizeVars(size?: string) {
+  const id = kpiWeightOf(size)
+  return {
+    ...progressSizeVars(),
+    '--vis-progress-bar': `${KPI_BAR_HEIGHT[id]}px`,
+    '--vis-kpi-bar-percent': `${KPI_BAR_PERCENT[id]}px`,
+  }
+}
+
 export const KPI_FEATURE_TIPS = {
   fixedTarget: '用此数当目标值，完成率 = 当前值 / 此数',
   period: '选了期限后按评估日画时间线，并在线旁标出时间进度',
-  showPercent: '显示在进度条左侧，完成比例',
-  showValue: '显示在条右侧，当前值/目标值',
+  showValue: '显示当前值/目标值',
   percentDecimals: '完成率保留几位小数；自动时最多 1 位',
 } as const
 
@@ -103,7 +96,7 @@ export interface ResolvedKpiOptions {
   separator: boolean
   prefix: string
   compact: boolean
-  size: VisProgressSize
+  size: VisKpiSize
   color?: string
   trackColor?: string
   periodMode?: VisKpiPeriodMode
@@ -163,7 +156,7 @@ export function resolveKpiOptions(visual?: VisVisualConfig): ResolvedKpiOptions 
     separator: raw.separator ?? KPI_DEFAULTS.separator,
     prefix: raw.prefix ?? KPI_DEFAULTS.prefix,
     compact: raw.compact ?? KPI_DEFAULTS.compact,
-    size: progressSizeOf(raw.size).id,
+    size: kpiWeightOf(raw.size),
     color: raw.color,
     trackColor: raw.trackColor,
     periodMode: raw.periodMode,

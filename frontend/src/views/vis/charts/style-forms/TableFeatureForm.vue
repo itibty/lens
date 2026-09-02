@@ -58,13 +58,13 @@ const mergeCell = branch.boolField('mergeCell', TABLE_STYLE_DEFAULTS.mergeCell)
       name="display"
     >
       <div class="vis-style-form__row">
-        <StyleFormLabel :tip="TABLE_FEATURE_TIPS.striped">
+        <StyleFormLabel>
           斑马纹
         </StyleFormLabel>
         <el-switch v-model="striped" size="small" />
       </div>
       <div class="vis-style-form__row">
-        <StyleFormLabel :tip="TABLE_FEATURE_TIPS.showRowNumber">
+        <StyleFormLabel>
           序号
         </StyleFormLabel>
         <el-switch v-model="showRowNumber" size="small" />

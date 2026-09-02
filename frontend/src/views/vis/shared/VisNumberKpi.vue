@@ -36,7 +36,7 @@ const style = computed(() => resolveNumberStyle(props.visual))
 const view = computed(() => resolveNumberView(props.query, props.data, props.visual))
 const valueColor = computed(() => resolveNumberValueColor(props.visual))
 const rootRef = ref<HTMLElement>()
-const { vars: cardStyle } = useNumberFit(rootRef, () => style.value.size, () => props.fill)
+const { vars: cardStyle } = useNumberFit(rootRef, () => props.fill)
 </script>
 
 <template>
@@ -84,6 +84,10 @@ const { vars: cardStyle } = useNumberFit(rootRef, () => style.value.size, () => 
         :class="[`is-${item.direction}`, item.kind === 'metric' ? 'is-metric' : '']"
         :title="item.title || undefined"
       >
+        <span
+          v-if="style.showAuxLabel"
+          class="vis-number-kpi__delta-name"
+        >{{ item.label }}</span>
         <span class="vis-number-kpi__delta-value">
           <i
             v-if="item.kind !== 'metric' && item.direction !== 'flat'"
@@ -92,10 +96,6 @@ const { vars: cardStyle } = useNumberFit(rootRef, () => style.value.size, () => 
           />
           {{ item.text }}
         </span>
-        <span
-          v-if="style.showAuxLabel"
-          class="vis-number-kpi__delta-name"
-        >{{ item.label }}</span>
       </div>
     </div>
   </div>
@@ -197,7 +197,7 @@ const { vars: cardStyle } = useNumberFit(rootRef, () => style.value.size, () => 
 
   &__deltas {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(92px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 128px), 1fr));
     gap: 6px 16px;
     padding-top: var(--vis-number-gap, 10px);
   }
@@ -205,9 +205,9 @@ const { vars: cardStyle } = useNumberFit(rootRef, () => style.value.size, () => 
   &__delta {
     min-width: 0;
     display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 2px;
+    flex-direction: row;
+    align-items: baseline;
+    gap: 6px;
 
     &[title] {
       cursor: help;
@@ -232,6 +232,7 @@ const { vars: cardStyle } = useNumberFit(rootRef, () => style.value.size, () => 
 
   &__delta-value {
     display: inline-flex;
+    flex-shrink: 0;
     align-items: center;
     gap: 3px;
     font-size: var(--vis-number-aux, 15px);
@@ -260,7 +261,9 @@ const { vars: cardStyle } = useNumberFit(rootRef, () => style.value.size, () => 
   }
 
   &__delta-name {
-    max-width: 100%;
+    flex: 0 1 auto;
+    min-width: 0;
+    max-width: 7em;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;

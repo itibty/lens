@@ -56,7 +56,7 @@ const allowDownload = computed({
 
 <template>
   <div class="vis-style-form__row">
-    <StyleFormLabel tip="显示在卡片左上角">
+    <StyleFormLabel>
       标题
     </StyleFormLabel>
     <el-switch v-model="showTitle" size="small" />
@@ -75,7 +75,7 @@ const allowDownload = computed({
   </div>
 
   <div class="vis-style-form__row">
-    <StyleFormLabel tip="显示在标题旁；不填则跟随卡片描述">
+    <StyleFormLabel>
       备注
     </StyleFormLabel>
     <el-switch v-model="showDescription" size="small" />
@@ -100,7 +100,7 @@ const allowDownload = computed({
     v-if="showDetailSwitch"
     class="vis-style-form__row"
   >
-    <StyleFormLabel tip="点数据打开菜单查看构成行；卡片图标查看全部明细">
+    <StyleFormLabel>
       查看明细
     </StyleFormLabel>
     <el-switch v-model="allowDetail" size="small" />
@@ -110,7 +110,7 @@ const allowDownload = computed({
     v-if="showDetailSwitch"
     class="vis-style-form__row"
   >
-    <StyleFormLabel tip="开启下载 Excel 按钮">
+    <StyleFormLabel>
       数据下载
     </StyleFormLabel>
     <el-switch v-model="allowDownload" size="small" />
@@ -120,7 +120,7 @@ const allowDownload = computed({
     v-if="showDetailSwitch"
     class="vis-style-form__row"
   >
-    <StyleFormLabel tip="看板预览时按间隔重新查数">
+    <StyleFormLabel>
       自动刷新
     </StyleFormLabel>
     <el-switch v-model="autoRefresh" size="small" />

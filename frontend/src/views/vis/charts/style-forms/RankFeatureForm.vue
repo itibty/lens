@@ -42,19 +42,19 @@ const compact = branch.boolField('compact', RANK_DEFAULTS.compact)
       name="display"
     >
       <div class="vis-style-form__row">
-        <StyleFormLabel :tip="RANK_FEATURE_TIPS.showRank">
+        <StyleFormLabel>
           名次
         </StyleFormLabel>
         <el-switch v-model="showRank" size="small" />
       </div>
       <div class="vis-style-form__row">
-        <StyleFormLabel :tip="RANK_FEATURE_TIPS.showValue">
+        <StyleFormLabel>
           数值
         </StyleFormLabel>
         <el-switch v-model="showValue" size="small" />
       </div>
       <div class="vis-style-form__row">
-        <StyleFormLabel :tip="RANK_FEATURE_TIPS.showPercent">
+        <StyleFormLabel>
           占比
         </StyleFormLabel>
         <el-switch v-model="showPercent" size="small" />

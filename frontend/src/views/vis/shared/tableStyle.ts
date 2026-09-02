@@ -11,16 +11,11 @@ export const TABLE_STYLE_DEFAULTS = {
 } as const satisfies Pick<Required<VisTableStyle>, 'sortable' | 'showFilter' | 'striped' | 'showRowNumber' | 'mergeCell' | 'treeDisplay' | 'sortColumn'>
 
 export const TABLE_FEATURE_TIPS = {
-  showFilter: '按取值或条件筛选当前结果',
-  striped: '隔行底色，长表更容易对行',
-  showRowNumber: '在表头左侧显示行号',
+  showFilter: '按取值或条件筛选当前结果，不是数据集筛选',
   mergeCell: '同一列相邻相同值合并为一格',
   treeDisplay: '行维收成一列，分组值显示在父行',
-  sortColumn: '开启指标列排序',
   rowSubtotal: '按行维分组汇总，需 2 个及以上行维',
-  rowTotal: '汇总全部行',
   columnSubtotal: '按列维分组汇总，需 2 个及以上列维',
-  columnTotal: '汇总全部列',
 } as const
 
 export type ResolvedTableStyle = Pick<Required<VisTableStyle>, 'sortable' | 'showFilter' | 'striped' | 'showRowNumber' | 'mergeCell' | 'treeDisplay' | 'sortColumn'>

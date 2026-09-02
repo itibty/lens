@@ -162,7 +162,7 @@ const compact = branch.boolField('compact', KPI_DEFAULTS.compact)
       name="display"
     >
       <div class="vis-style-form__row">
-        <StyleFormLabel :tip="KPI_FEATURE_TIPS.showPercent">
+        <StyleFormLabel>
           完成率
         </StyleFormLabel>
         <el-switch v-model="showPercent" size="small" />

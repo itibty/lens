@@ -515,6 +515,7 @@ watch(allowDetail, (ok) => {
           :data="data"
           :empty-text="emptyText"
           :interactive="allowDetail"
+          :fill="embedded"
           @detail-click="onPlainDetailClick"
         />
 

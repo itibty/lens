@@ -226,7 +226,7 @@ const secondaryFields = computed({
       </div>
 
       <div class="vis-style-form__row">
-        <StyleFormLabel :tip="CHART_FEATURE_TIPS.tooltip">
+        <StyleFormLabel>
           提示
         </StyleFormLabel>
         <el-switch v-model="tooltip" size="small" />
@@ -256,7 +256,7 @@ const secondaryFields = computed({
         v-if="caps.scrollbar"
         class="vis-style-form__row"
       >
-        <StyleFormLabel :tip="CHART_FEATURE_TIPS.scrollbar">
+        <StyleFormLabel>
           滚动条
         </StyleFormLabel>
         <el-switch v-model="scrollbar" size="small" />
@@ -329,9 +329,7 @@ const secondaryFields = computed({
         v-if="canDualAxis"
         class="vis-style-form__row"
       >
-        <StyleFormLabel
-          :tip="orientation === 'horizontal' ? CHART_FEATURE_TIPS.dualAxisHorizontal : CHART_FEATURE_TIPS.dualAxisVertical"
-        >
+        <StyleFormLabel>
           双轴
         </StyleFormLabel>
         <el-switch v-model="dualAxis" size="small" />
@@ -367,7 +365,7 @@ const secondaryFields = computed({
         v-if="canStack"
         class="vis-style-form__row"
       >
-        <StyleFormLabel :tip="CHART_FEATURE_TIPS.stacked">
+        <StyleFormLabel>
           堆叠
         </StyleFormLabel>
         <el-switch v-model="stacked" size="small" />
@@ -387,7 +385,7 @@ const secondaryFields = computed({
         v-if="caps.area"
         class="vis-style-form__row"
       >
-        <StyleFormLabel :tip="chartType === 'radar' ? CHART_FEATURE_TIPS.areaRadar : CHART_FEATURE_TIPS.areaLine">
+        <StyleFormLabel :tip="chartType === 'radar' ? CHART_FEATURE_TIPS.areaRadar : undefined">
           面积
         </StyleFormLabel>
         <el-switch v-model="area" size="small" />
@@ -397,7 +395,7 @@ const secondaryFields = computed({
         v-if="caps.smooth"
         class="vis-style-form__row"
       >
-        <StyleFormLabel :tip="CHART_FEATURE_TIPS.smooth">
+        <StyleFormLabel>
           平滑
         </StyleFormLabel>
         <el-switch v-model="smooth" size="small" />

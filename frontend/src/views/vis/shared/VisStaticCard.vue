@@ -158,22 +158,50 @@ function srcdocOf(html: string) {
     font: 13px / 1.55 var(--na-font-sans);
     color: var(--vis-content-color, #303133);
 
-    :deep(ul) {
-      margin: 0 0 0 1.25em;
-      padding: 0;
-      list-style: disc;
-    }
-
-    :deep(a) {
-      color: var(--el-color-primary);
-    }
-
     :deep(p) {
       margin: 0 0 0.6em;
 
       &:last-child {
         margin-bottom: 0;
       }
+    }
+
+    :deep(h2) {
+      margin: 0 0 0.45em;
+      font-size: 16px;
+      font-weight: 650;
+      line-height: 1.35;
+    }
+
+    :deep(h3) {
+      margin: 0 0 0.4em;
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 1.35;
+    }
+
+    :deep(ul),
+    :deep(ol) {
+      margin: 0 0 0.6em 1.25em;
+      padding: 0;
+    }
+
+    :deep(ul) {
+      list-style: disc;
+    }
+
+    :deep(ol) {
+      list-style: decimal;
+    }
+
+    :deep(a) {
+      color: var(--el-color-primary);
+    }
+
+    :deep(mark) {
+      padding: 0 0.12em;
+      border-radius: 2px;
+      color: inherit;
     }
   }
 

@@ -1,8 +1,13 @@
 <!--
- * @Description: 文本卡片轻量编辑器（可视 / HTML 源码，不引入富文本库）
+ * @Description: 文本卡片富文本（Tiptap：标题 / 强调 / 列表 / 颜色 / 对齐 / 链接）
 -->
 <script setup lang="ts">
-type ColorCommand = 'foreColor' | 'hiliteColor'
+import Highlight from '@tiptap/extension-highlight'
+import Placeholder from '@tiptap/extension-placeholder'
+import TextAlign from '@tiptap/extension-text-align'
+import { TextStyleKit } from '@tiptap/extension-text-style'
+import StarterKit from '@tiptap/starter-kit'
+import { EditorContent, useEditor } from '@tiptap/vue-3'
 
 const TEXT_COLORS = [
   '#F5222D',
@@ -35,113 +40,128 @@ const BG_COLORS = [
 ]
 
 const html = defineModel<string | undefined>({ default: undefined })
-
-const editorRef = ref<HTMLElement>()
-const focused = ref(false)
 const sourceMode = ref(false)
-const active = reactive({
-  bold: false,
-  italic: false,
-  list: false,
-})
-
-let savedRange: Range | null = null
+const tick = ref(0)
 
 function isEmptyHtml(raw?: string) {
   if (!raw?.trim())
     return true
-  if (/<(?:img|hr|table|video)\b/i.test(raw))
+  if (/<(?:img|hr|table|video|mark)\b/i.test(raw))
     return false
   const text = raw.replace(/<br\s*\/?>/gi, '').replace(/&nbsp;/gi, ' ').replace(/<[^>]+>/g, '').trim()
   return !text
 }
 
+function persistHtml(raw: string, empty: boolean) {
+  html.value = empty || isEmptyHtml(raw) ? undefined : raw
+}
+
 const sourceText = computed({
   get: () => html.value ?? '',
   set: (value: string) => {
-    html.value = isEmptyHtml(value) ? undefined : value
+    persistHtml(value, isEmptyHtml(value))
   },
 })
 
-function currentHtml() {
-  return editorRef.value?.innerHTML ?? ''
-}
+const editor = useEditor({
+  content: html.value ?? '',
+  extensions: [
+    StarterKit.configure({
+      heading: { levels: [2, 3] },
+      code: false,
+      codeBlock: false,
+      blockquote: false,
+      horizontalRule: false,
+      link: {
+        openOnClick: false,
+        HTMLAttributes: {
+          rel: 'noopener noreferrer',
+          target: '_blank',
+        },
+      },
+    }),
+    TextStyleKit.configure({
+      backgroundColor: false,
+      fontFamily: false,
+      fontSize: false,
+      lineHeight: false,
+    }),
+    Highlight.configure({ multicolor: true }),
+    TextAlign.configure({ types: ['heading', 'paragraph'] }),
+    Placeholder.configure({ placeholder: '输入说明文字' }),
+  ],
+  editorProps: {
+    attributes: {
+      class: 'simple-html-editor__prose',
+    },
+  },
+  onUpdate({ editor: next }) {
+    if (sourceMode.value)
+      return
+    persistHtml(next.getHTML(), next.isEmpty)
+  },
+  onSelectionUpdate: () => {
+    tick.value += 1
+  },
+  onTransaction: () => {
+    tick.value += 1
+  },
+})
 
-function writeModel() {
-  if (sourceMode.value)
-    return
-  const next = currentHtml()
-  html.value = isEmptyHtml(next) ? undefined : next
-}
-
-function paintEditor(next?: string) {
-  const el = editorRef.value
-  if (!el)
-    return
-  const value = next ?? ''
-  if (el.innerHTML === value)
-    return
-  el.innerHTML = value
-}
-
-function rememberRange() {
-  if (sourceMode.value)
-    return
-  const sel = document.getSelection()
-  if (!sel || !sel.rangeCount || !editorRef.value?.contains(sel.anchorNode)) {
-    savedRange = null
-    return
+const active = computed(() => {
+  void tick.value
+  const ed = editor.value
+  return {
+    bold: ed?.isActive('bold') ?? false,
+    italic: ed?.isActive('italic') ?? false,
+    underline: ed?.isActive('underline') ?? false,
+    strike: ed?.isActive('strike') ?? false,
+    h2: ed?.isActive('heading', { level: 2 }) ?? false,
+    h3: ed?.isActive('heading', { level: 3 }) ?? false,
+    bullet: ed?.isActive('bulletList') ?? false,
+    ordered: ed?.isActive('orderedList') ?? false,
+    alignLeft: ed?.isActive({ textAlign: 'left' }) ?? false,
+    alignCenter: ed?.isActive({ textAlign: 'center' }) ?? false,
+    alignRight: ed?.isActive({ textAlign: 'right' }) ?? false,
+    link: ed?.isActive('link') ?? false,
+    canUndo: ed?.can().undo() ?? false,
+    canRedo: ed?.can().redo() ?? false,
   }
-  savedRange = sel.getRangeAt(0)
+})
+
+function run(fn: (ed: NonNullable<typeof editor.value>) => void) {
+  const ed = editor.value
+  if (!ed || sourceMode.value)
+    return
+  fn(ed)
 }
 
-function restoreRange() {
-  const el = editorRef.value
-  if (!el)
-    return
-  el.focus()
-  const sel = document.getSelection()
-  if (!sel)
-    return
-  sel.removeAllRanges()
-  if (savedRange)
-    sel.addRange(savedRange)
+function applyColor(color?: string) {
+  run((ed) => {
+    if (!color)
+      ed.chain().focus().unsetColor().run()
+    else
+      ed.chain().focus().setColor(color).run()
+  })
 }
 
-function run(command: string, value?: string) {
-  if (sourceMode.value)
-    return
-  restoreRange()
-  document.execCommand('styleWithCSS', false, 'true')
-  document.execCommand(command, false, value)
-  syncActive()
-  writeModel()
-}
-
-function applyColor(command: ColorCommand, color?: string) {
-  if (!color) {
-    run(command, command === 'hiliteColor' ? 'transparent' : 'inherit')
-    return
-  }
-  run(command, color)
-}
-
-function syncActive() {
-  if (sourceMode.value || (!focused.value && !editorRef.value?.contains(document.activeElement))) {
-    active.bold = false
-    active.italic = false
-    active.list = false
-    return
-  }
-  active.bold = document.queryCommandState('bold')
-  active.italic = document.queryCommandState('italic')
-  active.list = document.queryCommandState('insertUnorderedList')
+function applyHighlight(color?: string) {
+  run((ed) => {
+    if (!color)
+      ed.chain().focus().unsetHighlight().run()
+    else
+      ed.chain().focus().toggleHighlight({ color }).run()
+  })
 }
 
 async function insertLink() {
-  if (sourceMode.value)
+  const ed = editor.value
+  if (!ed || sourceMode.value)
     return
-  rememberRange()
+  if (ed.isActive('link')) {
+    ed.chain().focus().unsetLink().run()
+    return
+  }
   try {
     const { value } = await ElMessageBox.prompt('链接地址', '插入链接', {
       inputPlaceholder: 'https://',
@@ -150,53 +170,38 @@ async function insertLink() {
       confirmButtonText: '确定',
       cancelButtonText: '取消',
     })
-    run('createLink', value.trim())
+    ed.chain().focus().setLink({ href: value.trim(), target: '_blank' }).run()
   }
   catch {
-    restoreRange()
+    ed.chain().focus().run()
   }
+}
+
+function clearFormat() {
+  run(ed => ed.chain().focus().unsetAllMarks().clearNodes().run())
 }
 
 function toggleSource() {
-  if (!sourceMode.value)
-    writeModel()
+  const ed = editor.value
+  if (!sourceMode.value && ed)
+    persistHtml(ed.getHTML(), ed.isEmpty)
   sourceMode.value = !sourceMode.value
-  focused.value = false
-  savedRange = null
-  if (!sourceMode.value)
-    void nextTick(() => paintEditor(html.value))
-  void nextTick(() => {
-    const el = document.activeElement
-    if (el instanceof HTMLElement)
-      el.blur()
-  })
+  if (!sourceMode.value) {
+    void nextTick(() => {
+      editor.value?.commands.setContent(html.value ?? '', { emitUpdate: false })
+    })
+  }
 }
-
-function onPaste(e: ClipboardEvent) {
-  e.preventDefault()
-  const text = e.clipboardData?.getData('text/plain') ?? ''
-  document.execCommand('insertText', false, text)
-  writeModel()
-}
-
-function onSelectionChange() {
-  rememberRange()
-  syncActive()
-}
-
-onMounted(() => {
-  paintEditor(html.value)
-  document.addEventListener('selectionchange', onSelectionChange)
-})
-
-onUnmounted(() => {
-  document.removeEventListener('selectionchange', onSelectionChange)
-})
 
 watch(html, (next) => {
-  if (focused.value || sourceMode.value)
+  const ed = editor.value
+  if (!ed || sourceMode.value || ed.isFocused)
     return
-  paintEditor(next)
+  const incoming = next ?? ''
+  const current = ed.isEmpty ? '' : ed.getHTML()
+  if (incoming === current)
+    return
+  ed.commands.setContent(incoming, { emitUpdate: false })
 })
 </script>
 
@@ -206,13 +211,32 @@ watch(html, (next) => {
       class="simple-html-editor__bar"
       @mousedown.prevent
     >
-      <template v-if="!sourceMode">
+      <template v-if="!sourceMode && editor">
+        <button
+          type="button"
+          class="simple-html-editor__tool"
+          :disabled="!active.canUndo"
+          title="撤销"
+          @click="run(ed => ed.chain().focus().undo().run())"
+        >
+          <span class="i-tabler-arrow-back-up" />
+        </button>
+        <button
+          type="button"
+          class="simple-html-editor__tool"
+          :disabled="!active.canRedo"
+          title="重做"
+          @click="run(ed => ed.chain().focus().redo().run())"
+        >
+          <span class="i-tabler-arrow-forward-up" />
+        </button>
+        <i class="simple-html-editor__split" />
         <button
           type="button"
           class="simple-html-editor__tool"
           :class="{ 'is-on': active.bold }"
           title="加粗"
-          @click="run('bold')"
+          @click="run(ed => ed.chain().focus().toggleBold().run())"
         >
           <span class="i-mingcute-bold-line" />
         </button>
@@ -221,9 +245,27 @@ watch(html, (next) => {
           class="simple-html-editor__tool"
           :class="{ 'is-on': active.italic }"
           title="斜体"
-          @click="run('italic')"
+          @click="run(ed => ed.chain().focus().toggleItalic().run())"
         >
           <span class="i-mingcute-italic-line" />
+        </button>
+        <button
+          type="button"
+          class="simple-html-editor__tool"
+          :class="{ 'is-on': active.underline }"
+          title="下划线"
+          @click="run(ed => ed.chain().focus().toggleUnderline().run())"
+        >
+          <span class="i-mingcute-underline-line" />
+        </button>
+        <button
+          type="button"
+          class="simple-html-editor__tool"
+          :class="{ 'is-on': active.strike }"
+          title="删除线"
+          @click="run(ed => ed.chain().focus().toggleStrike().run())"
+        >
+          <span class="i-mingcute-strikethrough-line" />
         </button>
         <el-popover
           placement="bottom"
@@ -251,13 +293,13 @@ watch(html, (next) => {
                 type="button"
                 class="simple-html-editor__swatch"
                 :style="{ background: color }"
-                @click="applyColor('foreColor', color)"
+                @click="applyColor(color)"
               />
             </div>
             <button
               type="button"
               class="simple-html-editor__clear"
-              @click="applyColor('foreColor')"
+              @click="applyColor()"
             >
               清空
             </button>
@@ -292,30 +334,108 @@ watch(html, (next) => {
                 type="button"
                 class="simple-html-editor__swatch"
                 :style="{ background: color }"
-                @click="applyColor('hiliteColor', color)"
+                @click="applyHighlight(color)"
               />
             </div>
             <button
               type="button"
               class="simple-html-editor__clear"
-              @click="applyColor('hiliteColor')"
+              @click="applyHighlight()"
             >
               清空
             </button>
           </div>
         </el-popover>
+        <i class="simple-html-editor__split" />
+        <button
+          type="button"
+          class="simple-html-editor__tool is-text"
+          :class="{ 'is-on': active.h2 }"
+          title="二级标题"
+          @click="run(ed => ed.chain().focus().toggleHeading({ level: 2 }).run())"
+        >
+          H2
+        </button>
+        <button
+          type="button"
+          class="simple-html-editor__tool is-text"
+          :class="{ 'is-on': active.h3 }"
+          title="三级标题"
+          @click="run(ed => ed.chain().focus().toggleHeading({ level: 3 }).run())"
+        >
+          H3
+        </button>
         <button
           type="button"
           class="simple-html-editor__tool"
-          :class="{ 'is-on': active.list }"
-          title="列表"
-          @click="run('insertUnorderedList')"
+          :class="{ 'is-on': active.bullet }"
+          title="无序列表"
+          @click="run(ed => ed.chain().focus().toggleBulletList().run())"
         >
           <span class="i-tabler-list" />
         </button>
         <button
           type="button"
           class="simple-html-editor__tool"
+          :class="{ 'is-on': active.ordered }"
+          title="有序列表"
+          @click="run(ed => ed.chain().focus().toggleOrderedList().run())"
+        >
+          <span class="i-tabler-list-numbers" />
+        </button>
+        <el-popover
+          placement="bottom"
+          :width="120"
+          trigger="hover"
+          :show-after="200"
+        >
+          <template #reference>
+            <button
+              type="button"
+              class="simple-html-editor__tool"
+              :class="{ 'is-on': active.alignCenter || active.alignRight }"
+              title="对齐"
+            >
+              <span class="i-mingcute-align-left-line" />
+            </button>
+          </template>
+          <div
+            class="simple-html-editor__aligns"
+            @mousedown.prevent
+          >
+            <button
+              type="button"
+              class="simple-html-editor__tool"
+              :class="{ 'is-on': active.alignLeft }"
+              title="左对齐"
+              @click="run(ed => ed.chain().focus().setTextAlign('left').run())"
+            >
+              <span class="i-mingcute-align-left-line" />
+            </button>
+            <button
+              type="button"
+              class="simple-html-editor__tool"
+              :class="{ 'is-on': active.alignCenter }"
+              title="居中"
+              @click="run(ed => ed.chain().focus().setTextAlign('center').run())"
+            >
+              <span class="i-mingcute-align-center-line" />
+            </button>
+            <button
+              type="button"
+              class="simple-html-editor__tool"
+              :class="{ 'is-on': active.alignRight }"
+              title="右对齐"
+              @click="run(ed => ed.chain().focus().setTextAlign('right').run())"
+            >
+              <span class="i-mingcute-align-right-line" />
+            </button>
+          </div>
+        </el-popover>
+        <button
+          type="button"
+          class="simple-html-editor__tool"
+          :class="{ 'is-on': active.link }"
           title="链接"
           @click="insertLink"
         >
@@ -325,7 +445,7 @@ watch(html, (next) => {
           type="button"
           class="simple-html-editor__tool"
           title="清除样式"
-          @click="run('removeFormat')"
+          @click="clearFormat"
         >
           <span class="i-tabler-eraser" />
         </button>
@@ -349,17 +469,14 @@ watch(html, (next) => {
       placeholder="输入 HTML"
     />
     <div
-      v-else
-      ref="editorRef"
+      v-show="!sourceMode"
       class="simple-html-editor__body"
-      :class="{ 'is-empty': isEmptyHtml(html) }"
-      contenteditable="true"
-      data-placeholder="输入说明文字"
-      @focus="focused = true"
-      @blur="focused = false; writeModel()"
-      @input="writeModel"
-      @paste="onPaste"
-    />
+    >
+      <EditorContent
+        v-if="editor"
+        :editor="editor"
+      />
+    </div>
   </div>
 </template>
 
@@ -380,9 +497,17 @@ watch(html, (next) => {
 .simple-html-editor__bar {
   display: flex;
   flex-shrink: 0;
+  flex-wrap: wrap;
   align-items: center;
   border-bottom: 1px solid var(--el-border-color-extra-light);
   background: var(--vis-muted-bar, #e8eef5);
+}
+
+.simple-html-editor__split {
+  width: 1px;
+  height: 16px;
+  margin: 0 2px;
+  background: var(--el-border-color-extra-light);
 }
 
 .simple-html-editor__tool {
@@ -397,13 +522,24 @@ watch(html, (next) => {
   font-size: 16px;
   cursor: pointer;
 
-  &:hover {
+  &:hover:not(:disabled) {
     background: var(--el-fill-color-light);
+  }
+
+  &:disabled {
+    opacity: 0.35;
+    cursor: default;
   }
 
   &.is-on {
     background: var(--el-fill-color);
     box-shadow: inset 0 0 0 1px var(--el-border-color);
+  }
+
+  &.is-text {
+    font-size: 11px;
+    font-weight: 650;
+    letter-spacing: 0.02em;
   }
 
   &.is-source {
@@ -473,6 +609,11 @@ watch(html, (next) => {
   }
 }
 
+.simple-html-editor__aligns {
+  display: flex;
+  justify-content: center;
+}
+
 .simple-html-editor__source {
   flex: 1 1 0;
   min-height: 0;
@@ -499,26 +640,68 @@ watch(html, (next) => {
 .simple-html-editor__body {
   flex: 1 1 0;
   min-height: 0;
-  padding: 10px 12px;
   overflow: auto;
-  font: 13px / 1.55 var(--na-font-sans);
-  color: var(--el-text-color-primary);
-  outline: none;
 
-  &.is-empty::before {
-    content: attr(data-placeholder);
-    color: var(--el-text-color-placeholder);
-    pointer-events: none;
-  }
+  :deep(.tiptap) {
+    min-height: 100%;
+    padding: 10px 12px;
+    outline: none;
+    font: 13px / 1.55 var(--na-font-sans);
+    color: var(--el-text-color-primary);
 
-  :deep(ul) {
-    margin: 0 0 0 1.25em;
-    padding: 0;
-    list-style: disc;
-  }
+    p.is-editor-empty:first-child::before {
+      content: attr(data-placeholder);
+      color: var(--el-text-color-placeholder);
+      float: left;
+      height: 0;
+      pointer-events: none;
+    }
 
-  :deep(a) {
-    color: var(--el-color-primary);
+    p {
+      margin: 0 0 0.6em;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+
+    h2 {
+      margin: 0 0 0.45em;
+      font-size: 16px;
+      font-weight: 650;
+      line-height: 1.35;
+    }
+
+    h3 {
+      margin: 0 0 0.4em;
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 1.35;
+    }
+
+    ul,
+    ol {
+      margin: 0 0 0.6em 1.25em;
+      padding: 0;
+    }
+
+    ul {
+      list-style: disc;
+    }
+
+    ol {
+      list-style: decimal;
+    }
+
+    a {
+      color: var(--el-color-primary);
+    }
+
+    mark {
+      padding: 0 0.12em;
+      border-radius: 2px;
+      color: inherit;
+    }
   }
 }
 </style>

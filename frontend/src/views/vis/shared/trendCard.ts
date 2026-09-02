@@ -7,11 +7,6 @@ export const TREND_DEFAULTS = {
   showChange: true,
 } as const satisfies Required<VisTrendOptions>
 
-export const TREND_FEATURE_TIPS = {
-  showSparkline: '用折线看这一维上的走势',
-  showChange: '最后一期相对上一期',
-} as const
-
 export function resolveTrendOptions(visual?: VisVisualConfig): Required<VisTrendOptions> {
   const raw = visual?.trend ?? {}
   return {

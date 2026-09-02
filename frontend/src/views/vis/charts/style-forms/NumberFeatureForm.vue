@@ -3,7 +3,7 @@
 -->
 <script setup lang="ts">
 import type { VisNumberStyle, VisVisualConfig } from '@/views/vis/shared/types'
-import { NUMBER_FEATURE_TIPS, NUMBER_STYLE_DEFAULTS } from '@/views/vis/shared/numberStyle'
+import { NUMBER_STYLE_DEFAULTS } from '@/views/vis/shared/numberStyle'
 import { useVisualBranch } from './composables/useVisualBranch'
 import NumberFormatFields from './NumberFormatFields.vue'
 import StyleFormLabel from './StyleFormLabel.vue'
@@ -40,13 +40,13 @@ const compact = branch.boolField('compact', NUMBER_STYLE_DEFAULTS.compact)
       name="display"
     >
       <div class="vis-style-form__row">
-        <StyleFormLabel :tip="NUMBER_FEATURE_TIPS.showLabel">
+        <StyleFormLabel>
           主指标名
         </StyleFormLabel>
         <el-switch v-model="showLabel" size="small" />
       </div>
       <div class="vis-style-form__row">
-        <StyleFormLabel :tip="NUMBER_FEATURE_TIPS.showAuxLabel">
+        <StyleFormLabel>
           辅指标名
         </StyleFormLabel>
         <el-switch v-model="showAuxLabel" size="small" />

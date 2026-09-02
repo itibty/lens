@@ -18,10 +18,7 @@ export const RANK_DEFAULTS = {
 } as const satisfies Required<Omit<VisRankOptions, 'color'>>
 
 export const RANK_FEATURE_TIPS = {
-  showRank: '显示名次数字',
-  showValue: '显示指标数值',
-  showPercent: '该项占合计的比例',
-  showBar: '用条长度对照最大值',
+  showBar: '条长度对照最大值，不是合计占比',
 } as const
 
 export const RANK_COLOR_PRESETS = VIS_ACCENT_PRESETS

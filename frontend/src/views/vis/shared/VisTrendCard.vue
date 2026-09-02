@@ -34,17 +34,17 @@ const view = computed(() => resolveTrendView(props.query, props.data, props.visu
 const valueColor = computed(() => resolveNumberValueColor(props.visual))
 const rootRef = ref<HTMLElement>()
 const sparkSlotRef = ref<HTMLElement>()
-const { scale, vars: cardStyle } = useNumberFit(rootRef, () => style.value.size, () => props.fill)
+const { scale, vars: cardStyle } = useNumberFit(rootRef, () => props.fill)
 const sparkUid = useId().replace(/[^\w-]/g, '')
 const sparkFillId = `vis-trend-fill-${sparkUid}`
 const sparkBox = reactive({ w: 240, h: 0 })
-const SPARK_BASE: Record<string, number> = { xs: 28, sm: 32, md: 40, lg: 48, xl: 56 }
+const SPARK_BASE = 40
 
 const sparkW = computed(() => sparkBox.w >= 8 ? Math.round(sparkBox.w) : 240)
 const sparkH = computed(() => {
   if (props.fill && sparkBox.h >= 8)
     return Math.round(sparkBox.h)
-  return Math.max(20, Math.round(scaleNumberPx(SPARK_BASE[style.value.size] ?? SPARK_BASE.md, scale.value)))
+  return Math.max(20, Math.round(scaleNumberPx(SPARK_BASE, scale.value)))
 })
 const sparkPad = computed(() => Math.max(4, Math.round(sparkH.value * 0.08)))
 const spark = computed(() => {
@@ -174,11 +174,12 @@ function onValueClick(event: MouseEvent) {
         :key="item.key"
         class="vis-trend-card__aux-item"
       >
-        <span class="vis-trend-card__aux-value">{{ item.text }}</span>
         <span
           v-if="style.showAuxLabel"
           class="vis-trend-card__aux-name"
+          :title="item.label"
         >{{ item.label }}</span>
+        <span class="vis-trend-card__aux-value">{{ item.text }}</span>
       </div>
     </div>
   </div>
@@ -356,7 +357,7 @@ function onValueClick(event: MouseEvent) {
 
   &__aux {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 128px), 1fr));
     gap: 6px 16px;
     padding-top: var(--vis-number-gap, 10px);
     border-top: 1px solid color-mix(in srgb, var(--el-border-color-lighter) 70%, transparent);
@@ -364,18 +365,24 @@ function onValueClick(event: MouseEvent) {
 
   &__aux-item {
     display: flex;
-    flex-direction: column;
-    gap: 2px;
+    flex-direction: row;
+    align-items: baseline;
+    gap: 6px;
     min-width: 0;
   }
 
   &__aux-value {
+    flex-shrink: 0;
     font-size: var(--vis-number-aux, 15px);
     font-weight: 600;
     font-variant-numeric: tabular-nums;
+    white-space: nowrap;
   }
 
   &__aux-name {
+    flex: 0 1 auto;
+    min-width: 0;
+    max-width: 7em;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;

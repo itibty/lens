@@ -1,11 +1,12 @@
 import type { VisAccentPresetId } from './accentPresets'
-import type { VisProgressOptions, VisProgressShape, VisProgressSize, VisQueryConfig, VisVisualConfig } from './types'
+import type { VisProgressOptions, VisProgressShape, VisQueryConfig, VisVisualConfig } from './types'
 import { accentPreview, findAccentPreset, resolveAccentByPaint, VIS_ACCENT_PRESETS } from './accentPresets'
+import { scaleFitPx } from './cardFit'
 import { resolveCardChrome } from './cardTheme'
 import { formatMetricNumber, toFiniteNumber } from './numberStyle'
 import { isProgressChart, metricAlias, regularMetrics } from './types'
 
-/** 默认值、配色、尺寸、解析、视图；表单只写差异，渲染侧在此填默认。 */
+/** 默认值、配色、解析、视图；表单只写差异，渲染侧在此填默认。 */
 
 export const PROGRESS_DEFAULTS = {
   shape: 'bar',
@@ -17,9 +18,8 @@ export const PROGRESS_DEFAULTS = {
   separator: true,
   prefix: '',
   compact: false,
-  size: 'md',
 } as const satisfies Required<
-  Pick<VisProgressOptions, 'shape' | 'showPercent' | 'showValue' | 'showLabel' | 'percentDecimals' | 'decimals' | 'separator' | 'prefix' | 'compact' | 'size'>
+  Pick<VisProgressOptions, 'shape' | 'showPercent' | 'showValue' | 'showLabel' | 'percentDecimals' | 'decimals' | 'separator' | 'prefix' | 'compact'>
 >
 
 /** 进度条配色（填充 / 轨道）；默认不落库 */
@@ -28,38 +28,39 @@ export type VisProgressColorPresetId = VisAccentPresetId
 
 export const PROGRESS_FEATURE_TIPS = {
   fixedTarget: '用此数当目标值，完成率 = 当前值 / 此数',
-  showLabel: '显示在进度条上方，当前指标名',
-  showPercentBar: '显示在进度条上方，完成比例',
-  showPercentRing: '显示在环形圆心，完成比例',
-  showValue: '显示在进度条下方，当前值/目标值',
+  showValue: '显示当前值/目标值',
   percentDecimals: '完成率保留几位小数；自动时最多 1 位',
 } as const
 
-export interface ProgressSizePreset {
-  id: VisProgressSize
-  name: string
-  labelSize: number
-  percent: number
-  ringPercent: number
-  values: number
-  barHeight: number
-  ring: number
-  ringStroke: number
-  gap: number
+export function isProgressArc(shape?: VisProgressShape) {
+  return shape === 'ring' || shape === 'gauge'
 }
 
-/** 完成率 / 目标值 / 指标名 / 条高 / 环径 */
-export const PROGRESS_SIZE_PRESETS: ProgressSizePreset[] = [
-  { id: 'xs', name: '极小', labelSize: 11, percent: 16, ringPercent: 14, values: 12, barHeight: 4, ring: 80, ringStroke: 6, gap: 4 },
-  { id: 'sm', name: '小', labelSize: 12, percent: 18, ringPercent: 16, values: 13, barHeight: 6, ring: 96, ringStroke: 8, gap: 5 },
-  { id: 'md', name: '中', labelSize: 13, percent: 22, ringPercent: 20, values: 14, barHeight: 10, ring: 120, ringStroke: 10, gap: 6 },
-  { id: 'lg', name: '大', labelSize: 14, percent: 26, ringPercent: 24, values: 16, barHeight: 12, ring: 136, ringStroke: 12, gap: 8 },
-  { id: 'xl', name: '极大', labelSize: 15, percent: 32, ringPercent: 28, values: 18, barHeight: 16, ring: 168, ringStroke: 14, gap: 10 },
-]
+export function resolveProgressShape(shape?: string): VisProgressShape {
+  if (shape === 'ring' || shape === 'gauge')
+    return shape
+  return PROGRESS_DEFAULTS.shape
+}
 
-const SIZE_MAP = Object.fromEntries(
-  PROGRESS_SIZE_PRESETS.map(item => [item.id, item]),
-) as Record<VisProgressSize, ProgressSizePreset>
+/** 未铺满时的参考环径；铺满时由 fit 覆盖 */
+export const PROGRESS_RING_REF = 120
+
+/** 字号只跟格子走 */
+export const PROGRESS_TYPE = {
+  labelSize: 13,
+  percent: 22,
+  ringPercent: 20,
+  values: 14,
+  gap: 6,
+} as const
+
+export const PROGRESS_RING_PERCENT_RATIO = PROGRESS_TYPE.ringPercent / PROGRESS_RING_REF
+
+/** 默认条高 / 环宽比；铺满时再乘 fit */
+export const PROGRESS_WEIGHT = {
+  barHeight: 10,
+  ringStrokeRatio: 0.083,
+} as const
 
 export interface ResolvedProgressOptions {
   shape: VisProgressShape
@@ -71,7 +72,6 @@ export interface ResolvedProgressOptions {
   separator: boolean
   prefix: string
   compact: boolean
-  size: VisProgressSize
   color?: string
   trackColor?: string
 }
@@ -87,41 +87,108 @@ export interface ProgressView {
   label: string
 }
 
-/* —— 尺寸 / 配色解析 —— */
+/* —— 默认粗细 / 配色解析 —— */
 
-export function progressSizeOf(size?: string): ProgressSizePreset {
-  if (size && size in SIZE_MAP)
-    return SIZE_MAP[size as VisProgressSize]
-  return SIZE_MAP[PROGRESS_DEFAULTS.size]
-}
-
-/** 选择条右侧：完成率 / 条高 */
-export function progressSizeSpec(item: ProgressSizePreset) {
-  return [item.percent, item.barHeight]
-}
-
-export function progressSizeVars(size?: string) {
-  const s = progressSizeOf(size)
+export function progressSizeVars(scale = 1) {
+  const px = (n: number) => `${scaleFitPx(n, scale)}px`
   return {
-    '--vis-progress-gap': `${s.gap}px`,
-    '--vis-progress-label': `${s.labelSize}px`,
-    '--vis-progress-percent': `${s.percent}px`,
-    '--vis-progress-ring-percent': `${s.ringPercent}px`,
-    '--vis-progress-values': `${s.values}px`,
-    '--vis-progress-bar': `${s.barHeight}px`,
-    '--vis-progress-ring': `${s.ring}px`,
+    '--vis-progress-gap': px(PROGRESS_TYPE.gap),
+    '--vis-progress-label': px(PROGRESS_TYPE.labelSize),
+    '--vis-progress-percent': px(PROGRESS_TYPE.percent),
+    '--vis-progress-ring-percent': px(PROGRESS_TYPE.ringPercent),
+    '--vis-progress-values': px(PROGRESS_TYPE.values),
+    '--vis-progress-bar': px(PROGRESS_WEIGHT.barHeight),
   }
 }
 
-export function progressRingGeom(size?: string) {
-  const s = progressSizeOf(size)
-  const radius = (s.ring - s.ringStroke) / 2
+/** 大半环：约 200° 上沿马蹄，缺口居中朝下；圆角端点各伸出约半个线宽 */
+export const PROGRESS_GAUGE_SWEEP = 200
+export const PROGRESS_GAUGE_START = 90 + (360 - PROGRESS_GAUGE_SWEEP) / 2
+
+export interface ProgressRingGeom {
+  size: number
+  width: number
+  height: number
+  stroke: number
+  radius: number
+  circ: number
+  arc: number
+  gap: number
+  cx: number
+  startDeg: number
+  viewBox: string
+  trackDash?: string
+  fillDash: string
+  isGauge: boolean
+  /** 圆心在 SVG 高度中的比例，大半环百分比定位用 */
+  cyRatio: number
+}
+
+function ringViewBox(box: number, height: number, padX: number, padTop: number, padBottom: number) {
+  const vbX = -padX
+  const vbY = -padTop
+  const vbW = box + padX * 2
+  const vbH = height + padTop + padBottom
   return {
-    size: s.ring,
-    stroke: s.ringStroke,
+    width: vbW,
+    height: vbH,
+    viewBox: `${vbX} ${vbY} ${vbW} ${vbH}`,
+    cyRatio: (box / 2 + padTop) / vbH,
+  }
+}
+
+export function progressRingGeom(
+  shape: VisProgressShape = 'ring',
+  renderSize?: number,
+): ProgressRingGeom {
+  const box = renderSize && renderSize > 0 ? renderSize : PROGRESS_RING_REF
+  const stroke = Math.max(2, Math.round(box * PROGRESS_WEIGHT.ringStrokeRatio * 10) / 10)
+  const radius = Math.max(4, (box - stroke) / 2)
+  const circ = 2 * Math.PI * radius
+  const cx = box / 2
+  const isGauge = shape === 'gauge'
+  // 圆角端点半径为 stroke/2，四周再多留一线宽，避免被 viewBox 裁切
+  const pad = stroke
+  if (!isGauge) {
+    const frame = ringViewBox(box, box, pad, pad, pad)
+    return {
+      size: box,
+      width: frame.width,
+      height: frame.height,
+      stroke,
+      radius,
+      circ,
+      arc: circ,
+      gap: 0,
+      cx,
+      startDeg: -90,
+      viewBox: frame.viewBox,
+      fillDash: `${circ}`,
+      isGauge: false,
+      cyRatio: 0.5,
+    }
+  }
+  const arc = circ * (PROGRESS_GAUGE_SWEEP / 360)
+  const gap = circ - arc
+  const endY = cx + radius * Math.sin((PROGRESS_GAUGE_START * Math.PI) / 180)
+  const height = Math.min(box, Math.round((endY + pad) * 10) / 10)
+  const frame = ringViewBox(box, height, pad, pad / 2, 0)
+  return {
+    size: box,
+    width: frame.width,
+    height: frame.height,
+    stroke,
     radius,
-    circ: 2 * Math.PI * radius,
-    cx: s.ring / 2,
+    circ,
+    arc,
+    gap,
+    cx,
+    startDeg: PROGRESS_GAUGE_START,
+    viewBox: frame.viewBox,
+    trackDash: `${arc} ${circ}`,
+    fillDash: `${arc} ${circ}`,
+    isGauge: true,
+    cyRatio: frame.cyRatio,
   }
 }
 
@@ -156,7 +223,7 @@ export function resolveProgressPaint(visual?: VisVisualConfig) {
 export function resolveProgressOptions(visual?: VisVisualConfig): ResolvedProgressOptions {
   const raw = visual?.progress ?? {}
   return {
-    shape: raw.shape === 'ring' ? 'ring' : PROGRESS_DEFAULTS.shape,
+    shape: resolveProgressShape(raw.shape),
     showPercent: raw.showPercent ?? PROGRESS_DEFAULTS.showPercent,
     showValue: raw.showValue ?? PROGRESS_DEFAULTS.showValue,
     showLabel: raw.showLabel ?? PROGRESS_DEFAULTS.showLabel,
@@ -165,7 +232,6 @@ export function resolveProgressOptions(visual?: VisVisualConfig): ResolvedProgre
     separator: raw.separator ?? PROGRESS_DEFAULTS.separator,
     prefix: raw.prefix ?? PROGRESS_DEFAULTS.prefix,
     compact: raw.compact ?? PROGRESS_DEFAULTS.compact,
-    size: progressSizeOf(raw.size).id,
     color: raw.color,
     trackColor: raw.trackColor,
   }
@@ -305,7 +371,15 @@ export function formatProgressPercent(
 }
 
 export function pruneProgressVisual(visual: VisVisualConfig) {
-  if (!isProgressChart(visual.chartType))
+  if (!isProgressChart(visual.chartType)) {
+    delete visual.progress
+    return visual
+  }
+  const raw = visual.progress as (VisProgressOptions & { size?: unknown }) | undefined
+  if (!raw)
+    return visual
+  delete raw.size
+  if (!Object.keys(raw).length)
     delete visual.progress
   return visual
 }

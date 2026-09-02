@@ -1,16 +1,22 @@
 <!--
- * @Description: 进度条内容（条形 / 环形：当前值 / 目标值）
+ * @Description: 进度条内容（条形 / 环形 / 大半环：当前值 / 目标值）
 -->
 <script setup lang="ts">
 import type { ProgressView } from '@/views/vis/shared/progressCard'
 import type { VisVisualConfig } from '@/views/vis/shared/types'
+import { useResizeObserver } from '@vueuse/core'
 import {
+  isProgressArc,
   progressRingGeom,
-  progressSizeVars,
   resolveProgressOptions,
   resolveProgressPaint,
   resolveProgressView,
 } from '@/views/vis/shared/progressCard'
+import {
+  fitProgressRingBox,
+  scaleProgressRingPercent,
+  useProgressFit,
+} from '@/views/vis/shared/progressFit'
 
 const props = withDefaults(defineProps<{
   visual: VisVisualConfig
@@ -20,9 +26,12 @@ const props = withDefaults(defineProps<{
   view?: ProgressView | null
   emptyText?: string
   interactive?: boolean
+  /** 铺满格子：字号、条高与环径随卡片走；设计器小预览不要开 */
+  fill?: boolean
 }>(), {
   emptyText: '暂无数据',
   interactive: false,
+  fill: false,
 })
 
 const emit = defineEmits<{
@@ -44,17 +53,67 @@ const resolved = computed(() => {
   return resolveProgressView(props.query, props.data, props.visual)
 })
 const paint = computed(() => resolveProgressPaint(props.visual))
-const ring = computed(() => progressRingGeom(options.value.size))
+const isArc = computed(() => isProgressArc(options.value.shape))
+const rootRef = ref<HTMLElement>()
+const ringSlotRef = ref<HTMLElement>()
+const ringBox = ref(0)
+const { vars: fitVars } = useProgressFit(rootRef, () => props.fill)
+
+const ring = computed(() => {
+  const render = props.fill && ringBox.value > 0
+    ? ringBox.value
+    : undefined
+  return progressRingGeom(options.value.shape, render)
+})
 const playRatio = ref(0)
-const ringOffset = computed(() => ring.value.circ * (1 - playRatio.value))
+const ringOffset = computed(() => ring.value.arc * (1 - playRatio.value))
+const ringRotate = computed(() => `rotate(${ring.value.startDeg} ${ring.value.cx} ${ring.value.cx})`)
 
 const cardStyle = computed(() => ({
-  ...progressSizeVars(options.value.size),
+  ...fitVars.value,
+  ...(props.fill && isArc.value
+    ? { '--vis-progress-ring-percent': scaleProgressRingPercent(ring.value.size) }
+    : {}),
+  ...(ring.value.isGauge
+    ? { '--vis-progress-gauge-cy': `${ring.value.cyRatio * 100}%` }
+    : {}),
   '--vis-progress-fill': paint.value.fill,
 }))
 const barStyle = computed(() => ({
   width: `${playRatio.value * 100}%`,
 }))
+const ringWrapStyle = computed(() => ({
+  width: `${ring.value.width}px`,
+  height: `${ring.value.height}px`,
+}))
+
+function applyRingBox(width: number, height: number) {
+  if (!props.fill || !isArc.value) {
+    ringBox.value = 0
+    return
+  }
+  const next = fitProgressRingBox(width, height, options.value.shape)
+  if (!next || Math.abs(next - ringBox.value) < 1)
+    return
+  ringBox.value = next
+}
+
+useResizeObserver(ringSlotRef, (entries) => {
+  const rect = entries[0]?.contentRect
+  if (!rect)
+    return
+  applyRingBox(rect.width, rect.height)
+})
+
+watch(() => [props.fill, isArc.value, options.value.shape] as const, () => {
+  const el = ringSlotRef.value
+  if (!el) {
+    if (!props.fill || !isArc.value)
+      ringBox.value = 0
+    return
+  }
+  applyRingBox(el.clientWidth, el.clientHeight)
+})
 
 watch(
   () => [options.value.shape, resolved.value?.fillRatio] as const,
@@ -78,19 +137,35 @@ watch(
 <template>
   <div
     v-if="!resolved"
+    ref="rootRef"
     class="vis-progress-card is-empty"
+    :class="{ 'is-fill': fill }"
   >
     {{ emptyText }}
   </div>
   <div
     v-else
+    ref="rootRef"
     class="vis-progress-card"
-    :class="[`is-${options.shape}`, { 'is-interactive': interactive }]"
+    :class="[`is-${options.shape}`, {
+      'is-interactive': interactive,
+      'is-fill': fill,
+      'is-arc': isArc,
+    }]"
     :style="cardStyle"
     @click="onCardClick"
   >
     <div
-      v-if="options.showLabel || (options.showPercent && options.shape === 'bar')"
+      v-if="isArc && options.showLabel"
+      class="vis-progress-card__head"
+    >
+      <div class="vis-progress-card__label">
+        {{ resolved.label }}
+      </div>
+    </div>
+
+    <div
+      v-if="!isArc && (options.showLabel || options.showPercent)"
       class="vis-progress-card__head"
       :class="{ 'is-solo': !options.showLabel }"
     >
@@ -101,7 +176,7 @@ watch(
         {{ resolved.label }}
       </div>
       <div
-        v-if="options.showPercent && options.shape === 'bar'"
+        v-if="options.showPercent"
         class="vis-progress-card__percent"
       >
         {{ resolved.percentText }}
@@ -109,44 +184,53 @@ watch(
     </div>
 
     <div
-      v-if="options.shape === 'ring'"
-      class="vis-progress-card__ring-wrap"
+      v-if="isArc"
+      ref="ringSlotRef"
+      class="vis-progress-card__ring-slot"
     >
-      <svg
-        class="vis-progress-card__ring"
-        :width="ring.size"
-        :height="ring.size"
-        :viewBox="`0 0 ${ring.size} ${ring.size}`"
-        role="img"
-        :aria-label="resolved.percentText"
-      >
-        <circle
-          :cx="ring.cx"
-          :cy="ring.cx"
-          :r="ring.radius"
-          fill="none"
-          :stroke="paint.track"
-          :stroke-width="ring.stroke"
-        />
-        <circle
-          class="vis-progress-card__ring-fill"
-          :cx="ring.cx"
-          :cy="ring.cx"
-          :r="ring.radius"
-          fill="none"
-          :stroke="paint.fill"
-          :stroke-width="ring.stroke"
-          stroke-linecap="round"
-          :stroke-dasharray="ring.circ"
-          :stroke-dashoffset="ringOffset"
-          :transform="`rotate(-90 ${ring.cx} ${ring.cx})`"
-        />
-      </svg>
       <div
-        v-if="options.showPercent"
-        class="vis-progress-card__ring-percent"
+        class="vis-progress-card__ring-wrap"
+        :style="ringWrapStyle"
       >
-        {{ resolved.percentText }}
+        <svg
+          class="vis-progress-card__ring"
+          :width="ring.width"
+          :height="ring.height"
+          :viewBox="ring.viewBox"
+          role="img"
+          :aria-label="resolved.percentText"
+        >
+          <circle
+            :cx="ring.cx"
+            :cy="ring.cx"
+            :r="ring.radius"
+            fill="none"
+            :stroke="paint.track"
+            :stroke-width="ring.stroke"
+            stroke-linecap="round"
+            :stroke-dasharray="ring.trackDash"
+            :transform="ring.isGauge ? ringRotate : undefined"
+          />
+          <circle
+            class="vis-progress-card__ring-fill"
+            :cx="ring.cx"
+            :cy="ring.cx"
+            :r="ring.radius"
+            fill="none"
+            :stroke="paint.fill"
+            :stroke-width="ring.stroke"
+            stroke-linecap="round"
+            :stroke-dasharray="ring.fillDash"
+            :stroke-dashoffset="ringOffset"
+            :transform="ringRotate"
+          />
+        </svg>
+        <div
+          v-if="options.showPercent"
+          class="vis-progress-card__ring-percent"
+        >
+          {{ resolved.percentText }}
+        </div>
       </div>
     </div>
 
@@ -195,8 +279,31 @@ watch(
     cursor: pointer;
   }
 
-  &.is-ring {
+  &.is-arc {
     align-items: center;
+  }
+
+  &.is-fill {
+    flex: 1 1 0;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  &.is-fill.is-arc {
+    .vis-progress-card__ring-slot {
+      flex: 1 1 0;
+      min-height: 0;
+      min-width: 0;
+      width: 100%;
+      height: auto;
+    }
+  }
+
+  &.is-arc &__head,
+  &.is-arc &__values {
+    justify-content: center;
+    text-align: center;
   }
 
   &__head {
@@ -205,6 +312,7 @@ watch(
     justify-content: space-between;
     gap: 10px;
     min-width: 0;
+    width: 100%;
     margin-bottom: var(--vis-progress-gap, 6px);
 
     &:last-child {
@@ -298,10 +406,10 @@ watch(
     color: var(--vis-muted-color, var(--el-text-color-secondary));
   }
 
-  &__ring-wrap {
-    position: relative;
-    width: var(--vis-progress-ring, 120px);
-    height: var(--vis-progress-ring, 120px);
+  &__ring-slot {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     margin-bottom: var(--vis-progress-gap, 6px);
 
     &:last-child {
@@ -309,8 +417,14 @@ watch(
     }
   }
 
+  &__ring-wrap {
+    position: relative;
+    flex-shrink: 0;
+  }
+
   &__ring {
     display: block;
+    overflow: visible;
   }
 
   &__ring-fill {
@@ -328,6 +442,15 @@ watch(
     letter-spacing: -0.025em;
     font-variant-numeric: tabular-nums lining-nums;
     color: var(--vis-progress-fill, var(--el-color-primary));
+  }
+
+  &.is-gauge &__ring-percent {
+    inset: unset;
+    top: var(--vis-progress-gauge-cy, 50%);
+    left: 50%;
+    width: auto;
+    height: auto;
+    transform: translate(-50%, -50%);
   }
 }
 </style>

@@ -35,6 +35,7 @@ const ALLOWED_TAGS = [
   'hr',
   'pre',
   'code',
+  'mark',
 ]
 
 const ALLOWED_STYLE_PROPERTIES = new Set([

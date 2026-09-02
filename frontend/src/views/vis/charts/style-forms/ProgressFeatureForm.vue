@@ -103,18 +103,21 @@ const compact = branch.boolField('compact', PROGRESS_DEFAULTS.compact)
           <el-radio-button value="ring">
             环形
           </el-radio-button>
+          <el-radio-button value="gauge">
+            半环
+          </el-radio-button>
         </el-radio-group>
       </div>
 
       <div class="vis-style-form__row">
-        <StyleFormLabel :tip="PROGRESS_FEATURE_TIPS.showLabel">
+        <StyleFormLabel>
           指标名
         </StyleFormLabel>
         <el-switch v-model="showLabel" size="small" />
       </div>
 
       <div class="vis-style-form__row">
-        <StyleFormLabel :tip="shape === 'ring' ? PROGRESS_FEATURE_TIPS.showPercentRing : PROGRESS_FEATURE_TIPS.showPercentBar">
+        <StyleFormLabel>
           完成率
         </StyleFormLabel>
         <el-switch v-model="showPercent" size="small" />

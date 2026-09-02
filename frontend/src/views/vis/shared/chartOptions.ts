@@ -141,21 +141,13 @@ export const COMMON_CHART_DEFAULTS: Required<ChartDefaultConfig> = {
 
 /** 功能表单问号说明；一看就懂的项不写 */
 export const CHART_FEATURE_TIPS = {
-  tooltip: '悬停查看具体数值',
-  areaLine: '折线下方填充成面积图',
   areaRadar: '填充多边形，关闭后只留轮廓',
-  smooth: '折线拐角圆滑',
-  stacked: '多系列按类别叠放',
   percent: '每类合计为 100%，看构成占比',
   dataLabelBar: '堆叠时显示在各自柱段内，过窄的段会隐藏',
   showRate: '显示相邻阶段转化',
-  dualAxisVertical: '主轴在左、副轴在右',
-  dualAxisHorizontal: '主轴在下、副轴在上',
   secondaryFields: '勾选的用副轴，可全选或全不选',
   lineFields: '勾选的画折线，其余画柱；可全选或全不选',
-  scrollbar: '类目过多时沿类目轴滚动',
-  crosshair: '悬停时对齐到坐标轴',
-  markLine: '对照目标、警戒或统计值，最多 3 条',
+  crosshair: '悬停时对齐到坐标轴，不是标记线',
   markLineField: '双轴时用来对齐对应轴',
   waterfallTotal: '在最后追加合计柱，由各项增减累加',
 } as const
