@@ -1,22 +1,12 @@
 # Lens 登录页设计稿
 
-只出图，不改代码。共 **80** 张，都在下面，按编号往下翻即可。
-
-原图：[`design-previews/login/`](design-previews/login/)
-
-三轮方向不一样：
-
-| 轮次 | 编号 | 在干什么 |
-| --- | --- | --- |
-| 一 | 01–10 | 电影、光效，容易炫 |
-| 二 | 11–60 | 克制、留白，有的不像系统 |
-| **三** | **61–80** | **现代 IT / SaaS 登录。大气、有腔调，但一眼仍是软件** |
+只出图，不改代码。现留 **48** 张（编号未重排）。原图：[`design-previews/login/`](design-previews/login/)
 
 建议先看 **61、66、71、76、79**。
 
 ---
 
-## 第三轮 · 系统登录（61–80）先看
+## 第三轮 · 系统登录
 
 #### 61 产品分屏
 
@@ -140,7 +130,7 @@
 
 ---
 
-## 第一轮 · 01–10
+## 第一轮
 
 #### 01 暗夜观测台
 
@@ -184,7 +174,7 @@
 
 ---
 
-## 第二轮 · 11–60
+## 第二轮（留下的）
 
 #### 11 静纸
 
@@ -218,62 +208,6 @@
 
 ![18 雾](design-previews/login/login-18-fog.png)
 
-#### 19 建筑师工作室
-
-![19 建筑师工作室](design-previews/login/login-19-slate-studio.png)
-
-#### 20 宣纸
-
-![20 宣纸](design-previews/login/login-20-rice-paper.png)
-
-#### 21 墨池
-
-![21 墨池](design-previews/login/login-21-inkwell.png)
-
-#### 22 普鲁士夜
-
-![22 普鲁士夜](design-previews/login/login-22-prussian.png)
-
-#### 23 石墨
-
-![23 石墨](design-previews/login/login-23-graphite.png)
-
-#### 24 海军虚空
-
-![24 海军虚空](design-previews/login/login-24-navy-void.png)
-
-#### 25 石板凹槽
-
-![25 石板凹槽](design-previews/login/login-25-slate-recess.png)
-
-#### 26 黑石
-
-![26 黑石](design-previews/login/login-26-black-marble.png)
-
-#### 27 静剧场
-
-![27 静剧场](design-previews/login/login-27-theater.png)
-
-#### 28 木炭
-
-![28 木炭](design-previews/login/login-28-charcoal.png)
-
-#### 29 不伦瑞克夜
-
-![29 不伦瑞克夜](design-previews/login/login-29-brunswick.png)
-
-#### 30 闭馆后的书房
-
-![30 闭馆后的书房](design-previews/login/login-30-library.png)
-
-#### 31 安藤混凝土
-
-![31 安藤混凝土](design-previews/login/login-31-ando.png)
-
-#### 32 空中庭
-
-![32 空中庭](design-previews/login/login-32-atrium.png)
-
 #### 33 白墙天井
 
 ![33 白墙天井](design-previews/login/login-33-courtyard.png)
@@ -282,65 +216,13 @@
 
 ![34 密斯亭](design-previews/login/login-34-mies.png)
 
-#### 35 美术馆楼梯
-
-![35 美术馆楼梯](design-previews/login/login-35-museum-stair.png)
-
-#### 36 水庭
-
-![36 水庭](design-previews/login/login-36-water.png)
-
-#### 37 黎明航站
-
-![37 黎明航站](design-previews/login/login-37-terminal.png)
-
-#### 38 会后董事厅
-
-![38 会后董事厅](design-previews/login/login-38-boardroom.png)
-
-#### 39 石阶
-
-![39 石阶](design-previews/login/login-39-steps.png)
-
-#### 40 雾中亭
-
-![40 雾中亭](design-previews/login/login-40-mist-pavilion.png)
-
 #### 41 一枚钻石
 
 ![41 一枚钻石](design-previews/login/login-41-one-diamond.png)
 
-#### 42 两色对切
-
-![42 两色对切](design-previews/login/login-42-two-tone.png)
-
-#### 43 十二栏网格
-
-![43 十二栏网格](design-previews/login/login-43-grid.png)
-
-#### 44 竖线
-
-![44 竖线](design-previews/login/login-44-vertical-rule.png)
-
 #### 45 圆印
 
 ![45 圆印](design-previews/login/login-45-circle.png)
-
-#### 46 淡钻石场
-
-![46 淡钻石场](design-previews/login/login-46-diamond-fields.png)
-
-#### 47 青绿低语
-
-![47 青绿低语](design-previews/login/login-47-teal-whisper.png)
-
-#### 48 签名
-
-![48 签名](design-previews/login/login-48-signature.png)
-
-#### 49 色域
-
-![49 色域](design-previews/login/login-49-rothko.png)
 
 #### 50 地平线
 
@@ -349,10 +231,6 @@
 #### 51 年报封面
 
 ![51 年报封面](design-previews/login/login-51-report-cover.png)
-
-#### 52 使馆铭牌
-
-![52 使馆铭牌](design-previews/login/login-52-embassy.png)
 
 #### 53 钟表工坊
 
@@ -366,25 +244,9 @@
 
 ![55 法律封面](design-previews/login/login-55-legal.png)
 
-#### 56 大学厅
-
-![56 大学厅](design-previews/login/login-56-hall.png)
-
-#### 57 黎明交易所
-
-![57 黎明交易所](design-previews/login/login-57-exchange.png)
-
 #### 58 穹顶光缝
 
 ![58 穹顶光缝](design-previews/login/login-58-dome.png)
-
-#### 59 账页
-
-![59 账页](design-previews/login/login-59-ledger.png)
-
-#### 60 产品残影
-
-![60 产品残影](design-previews/login/login-60-ghost.png)
 
 ---
 
@@ -396,6 +258,5 @@
 | 现代 SaaS，有点腔调 | **64、70、71、75、80** |
 | 深色控制台 | **63、68、73** |
 | 改动最小（现结构升级） | **76、61** |
-| 海报感强、不太像系统 | 01–10、以及 20、30、36、40 附近 |
 
 选中编号后，再改 `frontend/src/views/login/index.vue`。
