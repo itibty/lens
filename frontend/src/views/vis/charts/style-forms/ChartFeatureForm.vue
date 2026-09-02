@@ -18,6 +18,7 @@ import {
 import { MARK_LINE_MAX, sanitizeMarkLines } from '@/views/vis/shared/markLine'
 import ChartMarkLineForm from './ChartMarkLineForm.vue'
 import { useVisualBranch } from './composables/useVisualBranch'
+import FieldStyleShelf from './FieldStyleShelf.vue'
 import StyleFormLabel from './StyleFormLabel.vue'
 import StyleFormSection from './StyleFormSection.vue'
 import StyleFormShell from './StyleFormShell.vue'
@@ -96,7 +97,7 @@ const showShape = computed(() =>
   || canLineMark.value,
 )
 
-const openSections = ref(['common', 'display', 'shape', 'markLine'])
+const openSections = ref(['common', 'display', 'fieldStyle', 'shape', 'markLine'])
 const markLineFormRef = ref<{ addLine: () => void } | null>(null)
 
 const legend = optField('legend')
@@ -262,6 +263,12 @@ const secondaryFields = computed({
         <el-switch v-model="scrollbar" size="small" />
       </div>
     </StyleFormSection>
+
+    <FieldStyleShelf
+      v-model:visual="visual"
+      v-model:open-sections="openSections"
+      :query="query"
+    />
 
     <StyleFormSection
       v-if="showShape"

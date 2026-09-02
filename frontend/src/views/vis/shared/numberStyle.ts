@@ -1,5 +1,5 @@
 import type { VisAccentPresetId } from './accentPresets'
-import type { VisNumberStyle, VisVisualConfig } from './types'
+import type { VisNumberFormat, VisNumberStyle, VisVisualConfig } from './types'
 import { accentPreview, findAccentPreset, resolveAccentByColor, VIS_ACCENT_PRESETS } from './accentPresets'
 import { resolveCardChrome } from './cardTheme'
 import { isNumberStyleChart } from './types'
@@ -9,17 +9,10 @@ import { isNumberStyleChart } from './types'
 export const NUMBER_STYLE_DEFAULTS = {
   showLabel: false,
   showAuxLabel: false,
-  decimals: 'auto',
-  separator: true,
-  prefix: '',
-  compact: false,
-} as const satisfies Required<
-  Pick<VisNumberStyle, 'showLabel' | 'showAuxLabel' | 'decimals' | 'separator' | 'prefix' | 'compact'>
->
+} as const satisfies Required<Pick<VisNumberStyle, 'showLabel' | 'showAuxLabel'>>
 
-export type ResolvedNumberStyle = Required<
-  Pick<VisNumberStyle, 'showLabel' | 'showAuxLabel' | 'decimals' | 'separator' | 'prefix' | 'compact'>
-> & Pick<VisNumberStyle, 'color'>
+export type ResolvedNumberStyle = Required<Pick<VisNumberStyle, 'showLabel' | 'showAuxLabel'>>
+  & Pick<VisNumberStyle, 'color'>
 
 /** 指标卡配色（主值色）；默认不落库 */
 export const NUMBER_COLOR_PRESETS = VIS_ACCENT_PRESETS
@@ -60,10 +53,6 @@ export function resolveNumberStyle(visual: VisVisualConfig): ResolvedNumberStyle
   return {
     showLabel: raw.showLabel ?? NUMBER_STYLE_DEFAULTS.showLabel,
     showAuxLabel: raw.showAuxLabel ?? NUMBER_STYLE_DEFAULTS.showAuxLabel,
-    decimals: raw.decimals ?? NUMBER_STYLE_DEFAULTS.decimals,
-    separator: raw.separator ?? NUMBER_STYLE_DEFAULTS.separator,
-    prefix: raw.prefix ?? NUMBER_STYLE_DEFAULTS.prefix,
-    compact: raw.compact ?? NUMBER_STYLE_DEFAULTS.compact,
     color: raw.color,
   }
 }
@@ -77,6 +66,11 @@ export function pruneNumberVisual(visual: VisVisualConfig) {
   if (!raw)
     return visual
   delete raw.size
+  delete raw.decimals
+  delete raw.separator
+  delete raw.prefix
+  delete raw.suffix
+  delete raw.compact
   if (!Object.keys(raw).length)
     delete visual.number
   return visual
@@ -100,19 +94,19 @@ export function toFiniteNumber(value: unknown): number | null {
   return Number.isFinite(n) ? n : null
 }
 
-export function joinMetricNumber(parts: MetricNumberParts, prefix = '') {
+export function joinMetricNumber(parts: MetricNumberParts, prefix = '', suffix = '') {
   if (parts.empty)
     return '-'
-  return `${prefix}${parts.body}${parts.compactSuffix}`
+  return `${prefix}${parts.body}${parts.compactSuffix}${suffix}`
 }
 
 /**
- * 格式化数值部件（前缀由展示层单独渲染）
+ * 格式化数值部件（前缀 / 后缀由展示层拼）
  * 原值 → 紧凑 → 小数位 → 千分位（紧凑时不加）
  */
 export function formatMetricNumber(
   value: number | string | null | undefined,
-  style: Pick<ResolvedNumberStyle, 'decimals' | 'separator' | 'compact'>,
+  style: Pick<VisNumberFormat, 'decimals' | 'separator' | 'compact'>,
 ): MetricNumberParts {
   if (value == null || value === '')
     return { body: '-', compactSuffix: '', empty: true }
@@ -135,9 +129,9 @@ export function formatMetricNumber(
     }
   }
 
-  const useGrouping = !compactSuffix && style.separator
+  const useGrouping = !compactSuffix && (style.separator ?? true)
   return {
-    body: formatDecimal(num, style.decimals, useGrouping),
+    body: formatDecimal(num, style.decimals ?? 'auto', useGrouping),
     compactSuffix,
     empty: false,
   }

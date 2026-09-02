@@ -1,6 +1,7 @@
 import type { IHeaderTreeDefine, PivotTableConstructorOptions } from '@visactor/vtable'
 import type { VisQueryConfig, VisVisualConfig } from './types'
 import { TYPES } from '@visactor/vtable'
+import { formatMetricField } from './fieldStyle'
 import { bindMarkColumnStyle, prepareTableMarks } from './tableMark'
 import { resolvePivotPlaces, resolvePivotTreeDisplay, resolveTableStyle } from './tableStyle'
 import { dimensionAlias, metricAlias } from './types'
@@ -439,6 +440,7 @@ export function buildPivotTableOption(
       width: 120,
       showSort: sortColumn && !hideIndicatorName,
       style: bindMarkColumnStyle(marks, metric, { textAlign: 'right' }),
+      format: (value: unknown) => formatMetricField(visual, query, metric, value),
     })),
     rowTree,
     columnTree,

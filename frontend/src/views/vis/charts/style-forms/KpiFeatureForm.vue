@@ -5,7 +5,7 @@
 import type { VisKpiOptions, VisKpiPeriodMode, VisQueryConfig, VisVisualConfig } from '@/views/vis/shared/types'
 import { KPI_DEFAULTS, KPI_FEATURE_TIPS, KPI_PERIOD_OPTIONS, kpiMetricNames } from '@/views/vis/shared/kpiCard'
 import { useVisualBranch } from './composables/useVisualBranch'
-import NumberFormatFields from './NumberFormatFields.vue'
+import FieldStyleShelf from './FieldStyleShelf.vue'
 import StyleFormLabel from './StyleFormLabel.vue'
 import StyleFormSection from './StyleFormSection.vue'
 import StyleFormShell from './StyleFormShell.vue'
@@ -16,7 +16,7 @@ const props = defineProps<{
 }>()
 
 const visual = defineModel<VisVisualConfig>('visual', { required: true })
-const openSections = ref(['common', 'target', 'period', 'display', 'format'])
+const openSections = ref(['common', 'target', 'period', 'display', 'fieldStyle'])
 const branch = useVisualBranch(visual, 'kpi')
 const names = computed(() => kpiMetricNames(props.query))
 
@@ -66,13 +66,6 @@ const percentDecimals = branch.valueField<NonNullable<VisKpiOptions['percentDeci
   'percentDecimals',
   KPI_DEFAULTS.percentDecimals,
 )
-const decimals = branch.valueField<NonNullable<VisKpiOptions['decimals']>>(
-  'decimals',
-  KPI_DEFAULTS.decimals,
-)
-const separator = branch.boolField('separator', KPI_DEFAULTS.separator)
-const prefix = branch.optionalStringField('prefix')
-const compact = branch.boolField('compact', KPI_DEFAULTS.compact)
 </script>
 
 <template>
@@ -167,6 +160,32 @@ const compact = branch.boolField('compact', KPI_DEFAULTS.compact)
         </StyleFormLabel>
         <el-switch v-model="showPercent" size="small" />
       </div>
+      <div
+        v-if="showPercent"
+        class="vis-style-form__row"
+      >
+        <StyleFormLabel :tip="KPI_FEATURE_TIPS.percentDecimals">
+          完成率小数位
+        </StyleFormLabel>
+        <el-radio-group
+          v-model="percentDecimals"
+          size="small"
+          class="vis-style-form__segmented"
+        >
+          <el-radio-button value="auto">
+            自动
+          </el-radio-button>
+          <el-radio-button :value="0">
+            0
+          </el-radio-button>
+          <el-radio-button :value="1">
+            1
+          </el-radio-button>
+          <el-radio-button :value="2">
+            2
+          </el-radio-button>
+        </el-radio-group>
+      </div>
       <div class="vis-style-form__row">
         <StyleFormLabel :tip="KPI_FEATURE_TIPS.showValue">
           目标值
@@ -175,66 +194,10 @@ const compact = branch.boolField('compact', KPI_DEFAULTS.compact)
       </div>
     </StyleFormSection>
 
-    <StyleFormSection
-      v-if="showPercent || showValue"
-      title="格式"
-      name="format"
-    >
-      <div
-        v-if="showPercent"
-        class="vis-style-form__block"
-      >
-        <div
-          v-if="showValue"
-          class="vis-style-form__group-title"
-        >
-          进度
-        </div>
-        <div class="vis-style-form__row">
-          <StyleFormLabel :tip="KPI_FEATURE_TIPS.percentDecimals">
-            小数位
-          </StyleFormLabel>
-          <el-radio-group
-            v-model="percentDecimals"
-            size="small"
-            class="vis-style-form__segmented"
-          >
-            <el-radio-button value="auto">
-              自动
-            </el-radio-button>
-            <el-radio-button :value="0">
-              0
-            </el-radio-button>
-            <el-radio-button :value="1">
-              1
-            </el-radio-button>
-            <el-radio-button :value="2">
-              2
-            </el-radio-button>
-          </el-radio-group>
-        </div>
-      </div>
-      <div
-        v-if="showPercent && showValue"
-        class="vis-style-form__divider"
-      />
-      <div
-        v-if="showValue"
-        class="vis-style-form__block"
-      >
-        <div
-          v-if="showPercent"
-          class="vis-style-form__group-title"
-        >
-          目标值
-        </div>
-        <NumberFormatFields
-          v-model:decimals="decimals"
-          v-model:prefix="prefix"
-          v-model:separator="separator"
-          v-model:compact="compact"
-        />
-      </div>
-    </StyleFormSection>
+    <FieldStyleShelf
+      v-model:visual="visual"
+      v-model:open-sections="openSections"
+      :query="query"
+    />
   </StyleFormShell>
 </template>

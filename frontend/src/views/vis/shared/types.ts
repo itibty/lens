@@ -206,8 +206,20 @@ export interface VisNumberFormat {
   separator?: boolean
   /** 前缀，如 ¥；默认空 */
   prefix?: string
+  /** 后缀，如 %、元；默认空 */
+  suffix?: string
   /** 紧凑万/亿；默认 false */
   compact?: boolean
+}
+
+/** 功能设置「格式」一条；只写覆盖，没写走产品默认 */
+export interface VisFieldStyleRule {
+  /** 投放胶囊 _uid，跟着改名 */
+  sourceUid?: string
+  /** 指纹 m:field:agg[:contrast] */
+  key: string
+  kind: 'metric'
+  format?: VisNumberFormat
 }
 
 export type VisProgressSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl'
@@ -463,6 +475,8 @@ export interface VisVisualConfig {
   cardColor?: string
   /** 几何图系列色、表格 / 透视配色；默认不写 */
   chartTheme?: VisChartThemeId
+  /** 按投放指标覆盖的显示格式 */
+  fieldStyles?: VisFieldStyleRule[]
   /** 指标卡专属样式 */
   number?: VisNumberStyle
   /** 趋势卡：走势 / 较上期 */

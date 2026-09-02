@@ -5,6 +5,7 @@
 import type { DatasetField, VisPivotPlace, VisQueryConfig, VisVisualConfig } from '@/views/vis/shared/types'
 import { PIVOT_PLACE_DEFAULT, TABLE_FEATURE_TIPS, TABLE_STYLE_DEFAULTS } from '@/views/vis/shared/tableStyle'
 import { useVisualBranch } from './composables/useVisualBranch'
+import FieldStyleShelf from './FieldStyleShelf.vue'
 import StyleFormLabel from './StyleFormLabel.vue'
 import StyleFormSection from './StyleFormSection.vue'
 import StyleFormShell from './StyleFormShell.vue'
@@ -61,7 +62,7 @@ const TOTAL_OPTIONS = [
 ] as const
 
 const visual = defineModel<VisVisualConfig>('visual', { required: true })
-const openSections = ref(['common', 'interaction', 'display', 'totals', 'marks'])
+const openSections = ref(['common', 'interaction', 'display', 'fieldStyle', 'totals', 'marks'])
 const branch = useVisualBranch(visual, 'table')
 const treeDisplay = branch.boolField('treeDisplay', TABLE_STYLE_DEFAULTS.treeDisplay)
 const sortColumn = branch.boolField('sortColumn', TABLE_STYLE_DEFAULTS.sortColumn)
@@ -145,6 +146,12 @@ function setPlace(key: keyof typeof placeModel, value: string | number | boolean
         <el-switch v-model="striped" size="small" />
       </div>
     </StyleFormSection>
+
+    <FieldStyleShelf
+      v-model:visual="visual"
+      v-model:open-sections="openSections"
+      :query="query"
+    />
 
     <StyleFormSection
       title="合计"

@@ -3,7 +3,8 @@ import type { VisProgressOptions, VisProgressShape, VisQueryConfig, VisVisualCon
 import { accentPreview, findAccentPreset, resolveAccentByPaint, VIS_ACCENT_PRESETS } from './accentPresets'
 import { scaleFitPx } from './cardFit'
 import { resolveCardChrome } from './cardTheme'
-import { formatMetricNumber, toFiniteNumber } from './numberStyle'
+import { formatFieldText, resolveMetricFormat } from './fieldStyle'
+import { toFiniteNumber } from './numberStyle'
 import { isProgressChart, metricAlias, regularMetrics } from './types'
 
 /** 默认值、配色、解析、视图；表单只写差异，渲染侧在此填默认。 */
@@ -14,12 +15,8 @@ export const PROGRESS_DEFAULTS = {
   showValue: true,
   showLabel: false,
   percentDecimals: 'auto',
-  decimals: 'auto',
-  separator: true,
-  prefix: '',
-  compact: false,
 } as const satisfies Required<
-  Pick<VisProgressOptions, 'shape' | 'showPercent' | 'showValue' | 'showLabel' | 'percentDecimals' | 'decimals' | 'separator' | 'prefix' | 'compact'>
+  Pick<VisProgressOptions, 'shape' | 'showPercent' | 'showValue' | 'showLabel' | 'percentDecimals'>
 >
 
 /** 进度条配色（填充 / 轨道）；默认不落库 */
@@ -68,10 +65,6 @@ export interface ResolvedProgressOptions {
   showValue: boolean
   showLabel: boolean
   percentDecimals: NonNullable<VisProgressOptions['percentDecimals']>
-  decimals: NonNullable<VisProgressOptions['decimals']>
-  separator: boolean
-  prefix: string
-  compact: boolean
   color?: string
   trackColor?: string
 }
@@ -228,10 +221,6 @@ export function resolveProgressOptions(visual?: VisVisualConfig): ResolvedProgre
     showValue: raw.showValue ?? PROGRESS_DEFAULTS.showValue,
     showLabel: raw.showLabel ?? PROGRESS_DEFAULTS.showLabel,
     percentDecimals: raw.percentDecimals ?? PROGRESS_DEFAULTS.percentDecimals,
-    decimals: raw.decimals ?? PROGRESS_DEFAULTS.decimals,
-    separator: raw.separator ?? PROGRESS_DEFAULTS.separator,
-    prefix: raw.prefix ?? PROGRESS_DEFAULTS.prefix,
-    compact: raw.compact ?? PROGRESS_DEFAULTS.compact,
     color: raw.color,
     trackColor: raw.trackColor,
   }
@@ -298,22 +287,13 @@ function buildProgressView(
   target: number,
   label: string,
   visual?: VisVisualConfig,
+  query?: Pick<VisQueryConfig, 'metrics'>,
 ): ProgressView {
   const opt = resolveProgressOptions(visual)
-  const style = {
-    decimals: opt.decimals,
-    separator: opt.separator,
-    compact: opt.compact,
-  }
-  const prefix = opt.prefix.trim()
+  const metrics = regularMetrics(query?.metrics)
+  const currentFormat = resolveMetricFormat(visual, metrics[0])
+  const targetFormat = resolveMetricFormat(visual, metrics[1] ?? metrics[0])
   const ratio = current / target
-
-  function withPrefix(value: number) {
-    const parts = formatMetricNumber(value, style)
-    if (parts.empty)
-      return '-'
-    return `${prefix}${parts.body}${parts.compactSuffix}`
-  }
 
   return {
     current,
@@ -321,8 +301,8 @@ function buildProgressView(
     ratio,
     fillRatio: Math.min(1, Math.max(0, ratio)),
     percentText: formatProgressPercent(ratio, opt.percentDecimals),
-    currentText: withPrefix(current),
-    targetText: withPrefix(target),
+    currentText: formatFieldText(current, currentFormat),
+    targetText: formatFieldText(target, targetFormat),
     label,
   }
 }
@@ -336,7 +316,7 @@ export function resolveProgressView(
   const target = pickProgressTarget(query, data, visual)
   if (current == null || target == null)
     return null
-  return buildProgressView(current, target, pickProgressLabel(query), visual)
+  return buildProgressView(current, target, pickProgressLabel(query), visual, query)
 }
 
 /** 文本卡静态进度：直接用写死的当前值 / 目标值 */
@@ -379,6 +359,11 @@ export function pruneProgressVisual(visual: VisVisualConfig) {
   if (!raw)
     return visual
   delete raw.size
+  delete raw.decimals
+  delete raw.separator
+  delete raw.prefix
+  delete raw.suffix
+  delete raw.compact
   if (!Object.keys(raw).length)
     delete visual.progress
   return visual

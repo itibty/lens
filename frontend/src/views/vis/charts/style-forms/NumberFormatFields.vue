@@ -1,5 +1,5 @@
 <!--
- * @Description: 指标卡 / 进度条共用数值格式（小数位 / 前缀 / 千分位 / 紧凑）
+ * @Description: 数值格式（小数位 / 前缀 / 后缀 / 千分位 / 紧凑）
 -->
 <script setup lang="ts">
 import type { VisNumberDecimals } from '@/views/vis/shared/types'
@@ -7,6 +7,7 @@ import StyleFormLabel from './StyleFormLabel.vue'
 
 const decimals = defineModel<VisNumberDecimals>('decimals', { required: true })
 const prefix = defineModel<string | undefined>('prefix')
+const suffix = defineModel<string | undefined>('suffix')
 const separator = defineModel<boolean>('separator', { required: true })
 const compact = defineModel<boolean>('compact', { required: true })
 </script>
@@ -43,6 +44,18 @@ const compact = defineModel<boolean>('compact', { required: true })
       maxlength="8"
       clearable
       placeholder="如 ¥、约"
+    />
+  </div>
+
+  <div class="vis-style-form__row">
+    <StyleFormLabel>后缀</StyleFormLabel>
+    <el-input
+      v-model="suffix"
+      size="small"
+      class="vis-style-form__control"
+      maxlength="8"
+      clearable
+      placeholder="如 %、元"
     />
   </div>
 

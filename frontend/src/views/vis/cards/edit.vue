@@ -21,6 +21,7 @@ import { useAccountStore } from '@/stores/modules/account'
 import { showConfirm, showToast } from '@/utils/index'
 import { ChartDocBlock } from '@/views/vis/charts'
 import { createDragUid } from '@/views/vis/shared/dnd'
+import { pruneFieldStyles } from '@/views/vis/shared/fieldStyle'
 import { createEmptyCard, hidesQueryDimensions, isPivotChart, isStaticChart, needsDataset } from '@/views/vis/shared/types'
 import { allowContrastForChart, apiErrorMessage, collectQueryIssues, fromVisCardInfo, hasQueryModelContent, hasQueryShelves, listChartConstraints, normalizeQueryForRequest, orderSourceDimensions, reconcileQueryDependents, resetQueryForDataset, resetQueryShelves, toVisCardSaveRequest } from './cardApi'
 import AdvancedModule from './components/AdvancedModule.vue'
@@ -326,7 +327,10 @@ watch(
     states.card.query.colDimensions,
     states.card.query.metrics,
   ],
-  () => reconcileQueryDependents(states.card.query, states.card.visual.chartType),
+  () => {
+    reconcileQueryDependents(states.card.query, states.card.visual.chartType)
+    pruneFieldStyles(states.card.visual, states.card.query)
+  },
   { deep: true },
 )
 

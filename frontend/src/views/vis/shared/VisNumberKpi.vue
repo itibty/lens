@@ -71,6 +71,10 @@ const { vars: cardStyle } = useNumberFit(rootRef, () => props.fill)
           v-if="view.compactSuffix"
           class="vis-number-kpi__affix is-suffix"
         >{{ view.compactSuffix }}</span>
+        <span
+          v-if="view.suffix"
+          class="vis-number-kpi__affix is-suffix"
+        >{{ view.suffix }}</span>
       </div>
     </div>
     <div

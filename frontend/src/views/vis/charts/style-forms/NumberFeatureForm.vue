@@ -2,28 +2,25 @@
  * @Description: 指标卡功能设置（通用 / 展示 / 格式）
 -->
 <script setup lang="ts">
-import type { VisNumberStyle, VisVisualConfig } from '@/views/vis/shared/types'
+import type { VisQueryConfig, VisVisualConfig } from '@/views/vis/shared/types'
 import { NUMBER_STYLE_DEFAULTS } from '@/views/vis/shared/numberStyle'
 import { useVisualBranch } from './composables/useVisualBranch'
-import NumberFormatFields from './NumberFormatFields.vue'
+import FieldStyleShelf from './FieldStyleShelf.vue'
 import StyleFormLabel from './StyleFormLabel.vue'
 import StyleFormSection from './StyleFormSection.vue'
 import StyleFormShell from './StyleFormShell.vue'
 import TitleStyleFields from './TitleStyleFields.vue'
 
+defineProps<{
+  query?: VisQueryConfig
+}>()
+
 const visual = defineModel<VisVisualConfig>('visual', { required: true })
-const openSections = ref(['common', 'display', 'format'])
+const openSections = ref(['common', 'display', 'fieldStyle'])
 const branch = useVisualBranch(visual, 'number')
 
 const showLabel = branch.boolField('showLabel', NUMBER_STYLE_DEFAULTS.showLabel)
 const showAuxLabel = branch.boolField('showAuxLabel', NUMBER_STYLE_DEFAULTS.showAuxLabel)
-const decimals = branch.valueField<NonNullable<VisNumberStyle['decimals']>>(
-  'decimals',
-  NUMBER_STYLE_DEFAULTS.decimals,
-)
-const separator = branch.boolField('separator', NUMBER_STYLE_DEFAULTS.separator)
-const prefix = branch.optionalStringField('prefix')
-const compact = branch.boolField('compact', NUMBER_STYLE_DEFAULTS.compact)
 </script>
 
 <template>
@@ -53,16 +50,10 @@ const compact = branch.boolField('compact', NUMBER_STYLE_DEFAULTS.compact)
       </div>
     </StyleFormSection>
 
-    <StyleFormSection
-      title="格式"
-      name="format"
-    >
-      <NumberFormatFields
-        v-model:decimals="decimals"
-        v-model:prefix="prefix"
-        v-model:separator="separator"
-        v-model:compact="compact"
-      />
-    </StyleFormSection>
+    <FieldStyleShelf
+      v-model:visual="visual"
+      v-model:open-sections="openSections"
+      :query="query"
+    />
   </StyleFormShell>
 </template>

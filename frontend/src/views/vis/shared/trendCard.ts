@@ -1,5 +1,6 @@
 import type { VisTrendOptions, VisVisualConfig } from './types'
-import { formatMetricNumber, joinMetricNumber, resolveNumberStyle, toFiniteNumber } from './numberStyle'
+import { FIELD_FORMAT_DEFAULTS, formatFieldText, formatMetricField, resolveMetricFormat } from './fieldStyle'
+import { formatMetricNumber, toFiniteNumber } from './numberStyle'
 import { dimensionAlias, isTrendChart, metricAlias, regularMetrics } from './types'
 
 export const TREND_DEFAULTS = {
@@ -49,6 +50,7 @@ export interface TrendView {
   prefix: string
   body: string
   compactSuffix: string
+  suffix: string
   points: number[]
   changeText: string
   changeDirection: 'up' | 'down' | 'flat'
@@ -83,38 +85,33 @@ export function resolveTrendView(
   }
   const last = toFiniteNumber(lastRow[valueField])
   const prev = points.length > 1 ? points[points.length - 2] : null
-  const style = resolveNumberStyle(visual)
-  const parts = formatMetricNumber(last, style)
+  const format = resolveMetricFormat(visual, primary)
+  const parts = formatMetricNumber(last, format)
   const opt = resolveTrendOptions(visual)
   let changeText = ''
   let changeDirection: TrendView['changeDirection'] = 'flat'
   if (opt.showChange && prev != null && last != null) {
     const diff = last - prev
     changeDirection = diff === 0 ? 'flat' : diff > 0 ? 'up' : 'down'
-    if (prev === 0) {
-      changeText = joinMetricNumber(formatMetricNumber(diff, style), diff > 0 ? '+' : '')
-    }
-    else {
-      const rate = (diff / Math.abs(prev)) * 100
-      changeText = `${rate > 0 ? '+' : ''}${new Intl.NumberFormat('zh-CN', {
-        maximumFractionDigits: 1,
-        minimumFractionDigits: 0,
-      }).format(rate)}%`
-    }
+    if (prev === 0)
+      changeText = formatFieldText(diff, format, { signed: true })
+    else
+      changeText = formatFieldText((diff / Math.abs(prev)) * 100, { ...FIELD_FORMAT_DEFAULTS, suffix: '%' }, { signed: true })
   }
   const auxiliaries = metrics.slice(1).map((metric, index) => {
     const alias = metricAlias(metric)
     return {
       key: `${alias}-${index}`,
       label: metric.label || metric.field || alias,
-      text: joinMetricNumber(formatMetricNumber(lastRow[alias] as number | string | null, style), style.prefix.trim()),
+      text: formatMetricField(visual, query, alias, lastRow[alias]),
     }
   })
   return {
     label: primary.label || primary.field || valueField,
-    prefix: parts.empty ? '' : style.prefix.trim(),
+    prefix: parts.empty ? '' : format.prefix,
     body: parts.body,
     compactSuffix: parts.compactSuffix,
+    suffix: parts.empty ? '' : format.suffix,
     points,
     changeText,
     changeDirection,

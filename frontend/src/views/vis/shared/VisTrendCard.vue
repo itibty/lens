@@ -110,6 +110,10 @@ function onValueClick(event: MouseEvent) {
             v-if="view.compactSuffix"
             class="vis-trend-card__affix is-suffix"
           >{{ view.compactSuffix }}</span>
+          <span
+            v-if="view.suffix"
+            class="vis-trend-card__affix is-suffix"
+          >{{ view.suffix }}</span>
         </div>
         <div
           v-if="view.changeText"

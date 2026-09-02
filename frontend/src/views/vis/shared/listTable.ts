@@ -2,7 +2,8 @@ import type { ListTableConstructorOptions } from '@visactor/vtable'
 import type { VisVisualConfig } from './types'
 import { TYPES } from '@visactor/vtable'
 import { FilterPlugin } from '@visactor/vtable-plugins'
-import { contrastPeriodDescription, findContrastInfo, formatContrastValue, isDiffRateField } from './contrastExp'
+import { contrastPeriodDescription, findContrastInfo } from './contrastExp'
+import { formatMetricField } from './fieldStyle'
 import { bindMarkColumnStyle, prepareTableMarks } from './tableMark'
 import { resolveTableStyle } from './tableStyle'
 import { dimensionAlias, metricAlias } from './types'
@@ -62,7 +63,6 @@ export function listTableColumns(
 
   return listTableFields(query, data).map((field) => {
     const isMetric = metricKeys.has(field)
-    const diffRate = isDiffRateField(query, field, data)
     const periodTip = contrastPeriodDescription(findContrastInfo(data, field))
     return {
       field,
@@ -73,10 +73,10 @@ export function listTableColumns(
       description: periodTip || undefined,
       headerIcon: periodTip ? contrastPeriodHeaderIcon(periodTip, visual, dark) : undefined,
       style: bindMarkColumnStyle(marks, field, {
-        textAlign: isMetric || diffRate ? 'right' : dimensionKeys.has(field) ? 'left' : undefined,
+        textAlign: isMetric ? 'right' : dimensionKeys.has(field) ? 'left' : undefined,
       }),
-      fieldFormat: diffRate
-        ? (record: Record<string, unknown>) => formatContrastValue(record?.[field], 'diffRate')
+      fieldFormat: isMetric
+        ? (record: Record<string, unknown>) => formatMetricField(visual, query, field, record?.[field])
         : undefined,
     }
   })

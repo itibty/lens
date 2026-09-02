@@ -5,6 +5,7 @@
 import type { DatasetField, VisQueryConfig, VisVisualConfig } from '@/views/vis/shared/types'
 import { TABLE_FEATURE_TIPS, TABLE_STYLE_DEFAULTS } from '@/views/vis/shared/tableStyle'
 import { useVisualBranch } from './composables/useVisualBranch'
+import FieldStyleShelf from './FieldStyleShelf.vue'
 import StyleFormLabel from './StyleFormLabel.vue'
 import StyleFormSection from './StyleFormSection.vue'
 import StyleFormShell from './StyleFormShell.vue'
@@ -17,7 +18,7 @@ defineProps<{
 }>()
 
 const visual = defineModel<VisVisualConfig>('visual', { required: true })
-const openSections = ref(['common', 'interaction', 'display', 'marks'])
+const openSections = ref(['common', 'interaction', 'display', 'fieldStyle', 'marks'])
 const branch = useVisualBranch(visual, 'table')
 
 const sortable = branch.boolField('sortable', TABLE_STYLE_DEFAULTS.sortable)
@@ -76,6 +77,12 @@ const mergeCell = branch.boolField('mergeCell', TABLE_STYLE_DEFAULTS.mergeCell)
         <el-switch v-model="mergeCell" size="small" />
       </div>
     </StyleFormSection>
+
+    <FieldStyleShelf
+      v-model:visual="visual"
+      v-model:open-sections="openSections"
+      :query="query"
+    />
 
     <TableMarkSection
       v-model:visual="visual"

@@ -1,7 +1,8 @@
 import type { VisKpiOptions, VisKpiPeriodMode, VisQueryConfig, VisVisualConfig } from './types'
 import { resolveAccentByPaint } from './accentPresets'
 import { resolveCardChrome } from './cardTheme'
-import { formatMetricNumber, toFiniteNumber } from './numberStyle'
+import { formatFieldText, resolveMetricFormat } from './fieldStyle'
+import { toFiniteNumber } from './numberStyle'
 import {
   formatProgressPercent,
   isValidProgressTarget,
@@ -31,13 +32,9 @@ export const KPI_DEFAULTS = {
   showPercent: true,
   showValue: true,
   percentDecimals: 'auto',
-  decimals: 'auto',
-  separator: true,
-  prefix: '',
-  compact: false,
   size: 'md',
 } as const satisfies Required<
-  Pick<VisKpiOptions, 'showPercent' | 'showValue' | 'percentDecimals' | 'decimals' | 'separator' | 'prefix' | 'compact' | 'size'>
+  Pick<VisKpiOptions, 'showPercent' | 'showValue' | 'percentDecimals' | 'size'>
 >
 
 export const KPI_SIZE_PRESETS: Array<{ id: VisKpiSize, name: string }> = [
@@ -92,10 +89,6 @@ export interface ResolvedKpiOptions {
   showPercent: boolean
   showValue: boolean
   percentDecimals: NonNullable<VisKpiOptions['percentDecimals']>
-  decimals: NonNullable<VisKpiOptions['decimals']>
-  separator: boolean
-  prefix: string
-  compact: boolean
   size: VisKpiSize
   color?: string
   trackColor?: string
@@ -152,10 +145,6 @@ export function resolveKpiOptions(visual?: VisVisualConfig): ResolvedKpiOptions 
     showPercent: raw.showPercent ?? KPI_DEFAULTS.showPercent,
     showValue: raw.showValue ?? KPI_DEFAULTS.showValue,
     percentDecimals: raw.percentDecimals ?? KPI_DEFAULTS.percentDecimals,
-    decimals: raw.decimals ?? KPI_DEFAULTS.decimals,
-    separator: raw.separator ?? KPI_DEFAULTS.separator,
-    prefix: raw.prefix ?? KPI_DEFAULTS.prefix,
-    compact: raw.compact ?? KPI_DEFAULTS.compact,
     size: kpiWeightOf(raw.size),
     color: raw.color,
     trackColor: raw.trackColor,
@@ -265,22 +254,12 @@ export function resolveKpiView(
     return null
 
   const opt = resolveKpiOptions(visual)
-  const style = {
-    decimals: opt.decimals,
-    separator: opt.separator,
-    compact: opt.compact,
-  }
-  const prefix = opt.prefix.trim()
+  const targetMetric = regularMetrics(query.metrics)[1]
+  const currentFormat = resolveMetricFormat(visual, currentMetric)
+  const targetFormat = resolveMetricFormat(visual, targetMetric ?? currentMetric)
   const currentKey = metricAlias(currentMetric)
   const dimKey = dimensionAlias(dim)
   const paceRaw = resolveKpiPace(opt, query.asOfDate)
-
-  function withPrefix(value: number) {
-    const parts = formatMetricNumber(value, style)
-    if (parts.empty)
-      return '-'
-    return `${prefix}${parts.body}${parts.compactSuffix}`
-  }
 
   const parsed: Array<{
     record: Record<string, unknown>
@@ -331,14 +310,26 @@ export function resolveKpiView(
       ratio: item.ratio,
       fillRatio: item.ratio / scale,
       percentText: formatProgressPercent(item.ratio, opt.percentDecimals),
-      currentText: withPrefix(item.current),
-      targetText: withPrefix(item.target),
+      currentText: formatFieldText(item.current, currentFormat),
+      targetText: formatFieldText(item.target, targetFormat),
     })),
   }
 }
 
 export function pruneKpiVisual(visual: VisVisualConfig) {
-  if (!isKpiChart(visual.chartType))
+  if (!isKpiChart(visual.chartType)) {
+    delete visual.kpi
+    return visual
+  }
+  const raw = visual.kpi
+  if (!raw)
+    return visual
+  delete raw.decimals
+  delete raw.separator
+  delete raw.prefix
+  delete raw.suffix
+  delete raw.compact
+  if (!Object.keys(raw).length)
     delete visual.kpi
   return visual
 }

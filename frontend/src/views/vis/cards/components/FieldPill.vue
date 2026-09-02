@@ -43,6 +43,8 @@ const triggerRef = ref<HTMLElement | null>(null)
 const panelRef = ref<HTMLElement | null>(null)
 /** 不超过视口剩余空间；内容更矮时 scrollbar 随内容收缩 */
 const scrollMaxHeight = ref(360)
+/** 打开过程中若再次 toggle，作废未完成的 nextTick */
+let openSeq = 0
 
 const POPOVER_EDGE = 16
 const POPOVER_CHROME = 8
@@ -60,24 +62,29 @@ function updateScrollMaxHeight() {
   scrollMaxHeight.value = Math.max(Math.max(below, above) - POPOVER_CHROME, 200)
 }
 
-function openPopover() {
+async function openPopover() {
+  const seq = ++openSeq
   emit('open')
   updateScrollMaxHeight()
+  await nextTick()
+  if (seq !== openSeq)
+    return
   popoverVisible.value = true
 }
 
 function closeAndConfirm() {
+  openSeq++
   if (!popoverVisible.value)
     return
-  emit('confirm')
   popoverVisible.value = false
+  emit('confirm')
 }
 
 function togglePopover() {
   if (popoverVisible.value)
     closeAndConfirm()
   else
-    openPopover()
+    void openPopover()
 }
 
 onClickOutside(

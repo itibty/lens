@@ -2,7 +2,8 @@ import type { VisAccentPresetId } from './accentPresets'
 import type { VisProgressSize, VisRankOptions, VisVisualConfig } from './types'
 import { accentPreview, findAccentPreset, resolveAccentByColor, VIS_ACCENT_PRESETS } from './accentPresets'
 import { resolveCardChrome } from './cardTheme'
-import { formatMetricNumber, joinMetricNumber, toFiniteNumber } from './numberStyle'
+import { formatFieldText, resolveMetricFormat } from './fieldStyle'
+import { toFiniteNumber } from './numberStyle'
 import { dimensionAlias, isRankChart, metricAlias, regularMetrics } from './types'
 
 export const RANK_DEFAULTS = {
@@ -10,12 +11,8 @@ export const RANK_DEFAULTS = {
   showValue: true,
   showPercent: false,
   showBar: true,
-  decimals: 'auto',
-  separator: true,
-  prefix: '',
-  compact: false,
   size: 'md',
-} as const satisfies Required<Omit<VisRankOptions, 'color'>>
+} as const satisfies Required<Omit<VisRankOptions, 'color' | 'decimals' | 'separator' | 'prefix' | 'suffix' | 'compact'>>
 
 export const RANK_FEATURE_TIPS = {
   showBar: '条长度对照最大值，不是合计占比',
@@ -74,10 +71,6 @@ export interface ResolvedRankOptions {
   showValue: boolean
   showPercent: boolean
   showBar: boolean
-  decimals: NonNullable<VisRankOptions['decimals']>
-  separator: boolean
-  prefix: string
-  compact: boolean
   size: VisProgressSize
   color?: string
 }
@@ -89,10 +82,6 @@ export function resolveRankOptions(visual?: VisVisualConfig): ResolvedRankOption
     showValue: raw.showValue ?? RANK_DEFAULTS.showValue,
     showPercent: raw.showPercent ?? RANK_DEFAULTS.showPercent,
     showBar: raw.showBar ?? RANK_DEFAULTS.showBar,
-    decimals: raw.decimals ?? RANK_DEFAULTS.decimals,
-    separator: raw.separator ?? RANK_DEFAULTS.separator,
-    prefix: raw.prefix ?? RANK_DEFAULTS.prefix,
-    compact: raw.compact ?? RANK_DEFAULTS.compact,
     size: rankSizeOf(raw.size).id,
     color: raw.color,
   }
@@ -133,16 +122,11 @@ export function pruneRankVisual(visual: VisVisualConfig) {
     delete raw.showPercent
   if (raw.showBar !== false)
     delete raw.showBar
-  if (raw.decimals === RANK_DEFAULTS.decimals)
-    delete raw.decimals
-  if (raw.separator !== false)
-    delete raw.separator
-  if (!raw.prefix?.trim())
-    delete raw.prefix
-  else
-    raw.prefix = raw.prefix.trim()
-  if (!raw.compact)
-    delete raw.compact
+  delete raw.decimals
+  delete raw.separator
+  delete raw.prefix
+  delete raw.suffix
+  delete raw.compact
   if (raw.size === RANK_DEFAULTS.size)
     delete raw.size
   if (!raw.color)
@@ -172,7 +156,6 @@ export function resolveRankItems(
     return []
   const dimField = dimensionAlias(dim)
   const valueField = metricAlias(metric)
-  const opt = resolveRankOptions(visual)
   const rows = (data.rows ?? [])
     .map((row) => {
       const value = toFiniteNumber(row?.[valueField])
@@ -189,7 +172,7 @@ export function resolveRankItems(
   return rows.map((item, index) => ({
     rank: index + 1,
     name: item.name,
-    valueText: joinMetricNumber(formatMetricNumber(item.value, opt), opt.prefix.trim()),
+    valueText: formatFieldText(item.value, resolveMetricFormat(visual, metric)),
     percentText: total > 0
       ? `${new Intl.NumberFormat('zh-CN', { maximumFractionDigits: 1, minimumFractionDigits: 0 }).format((Math.abs(item.value) / total) * 100)}%`
       : '0%',

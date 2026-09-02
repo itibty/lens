@@ -6,6 +6,7 @@ import { pruneChartVisual } from '@/views/vis/shared/chartOptions'
 import { allowsChartTheme, DEFAULT_CHART_THEME, resolveChartThemeId } from '@/views/vis/shared/chartPalette'
 import { dateValueExpCount, normalizeDateExpValue } from '@/views/vis/shared/dateExp'
 import { normalizeMetricForSave, stripPillUid } from '@/views/vis/shared/dnd'
+import { pruneFieldStyles } from '@/views/vis/shared/fieldStyle'
 import { normalizeFilterItemForSave, normalizeHavingItemForSave } from '@/views/vis/shared/filterValue'
 import { pruneKpiVisual } from '@/views/vis/shared/kpiCard'
 import { pruneNumberVisual } from '@/views/vis/shared/numberStyle'
@@ -106,6 +107,7 @@ function normalizeVisualForSave(visual: VisVisualConfig, query?: VisQueryConfig)
   pruneRankVisual(next)
   pruneProgressVisual(next)
   pruneKpiVisual(next)
+  pruneFieldStyles(next, query)
   applyChartTheme(next)
   const title = next.title?.trim()
   if (title)

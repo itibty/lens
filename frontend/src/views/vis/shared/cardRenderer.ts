@@ -18,6 +18,7 @@ import {
   resolveSecondaryFields,
 } from './chartOptions'
 import { isValueGradientTheme, pieGradientOrdinal, resolveChartSeriesColors, resolveChartThemeId, resolveHeatmapColorRange } from './chartPalette'
+import { formatMetricField } from './fieldStyle'
 import {
   defaultMarkLineField,
   markLineLabel,
@@ -79,6 +80,101 @@ function formatPct(value: number, digits: number) {
     maximumFractionDigits: digits,
     minimumFractionDigits: 0,
   }).format(value)}%`
+}
+
+function datumMetricAlias(datum: Record<string, unknown> | undefined, valueField: string) {
+  const series = datum?.[SERIES_KEY]
+  if (typeof series === 'string' && series)
+    return series
+  return valueField === SERIES_VALUE ? '' : valueField
+}
+
+function formatChartNumber(
+  visual: VisVisualConfig | undefined,
+  query: VIS.QueryConfig | undefined,
+  alias: string | undefined,
+  value: unknown,
+) {
+  if (!alias)
+    return value == null || value === '' ? '-' : String(value)
+  return formatMetricField(visual, query, alias, value)
+}
+
+function formatAxisTick(
+  visual: VisVisualConfig | undefined,
+  query: VIS.QueryConfig | undefined,
+  alias: string,
+  text: string | string[],
+) {
+  const raw = Array.isArray(text) ? text[0] : text
+  const n = Number(raw)
+  if (!Number.isFinite(n))
+    return text
+  return formatChartNumber(visual, query, alias, n)
+}
+
+function applyAxisTickFormat(
+  spec: Record<string, unknown>,
+  visual: VisVisualConfig | undefined,
+  query: VIS.QueryConfig | undefined,
+  patches: Array<{ orient: string, alias: string }>,
+) {
+  const axes = spec.axes
+  if (!Array.isArray(axes))
+    return
+  const byOrient = new Map(patches.filter(item => item.alias).map(item => [item.orient, item.alias]))
+  spec.axes = axes.map((item) => {
+    const axis = plainRecord(item)
+    if (!axis)
+      return item
+    const alias = typeof axis.orient === 'string' ? byOrient.get(axis.orient) : undefined
+    if (!alias || plainRecord(axis.label)?.formatMethod)
+      return item
+    return {
+      ...axis,
+      label: {
+        ...plainRecord(axis.label),
+        formatMethod: (text: string | string[]) => formatAxisTick(visual, query, alias, text),
+      },
+    }
+  })
+}
+
+const SKIP_METRIC_LABEL = new Set(['wordCloud', 'treemap', 'funnel', 'tornado'])
+
+function inferSpecValueField(spec: Record<string, unknown>) {
+  if (typeof spec.valueField === 'string')
+    return spec.valueField
+  if (spec.direction === 'horizontal' && typeof spec.xField === 'string')
+    return spec.xField
+  if (typeof spec.yField === 'string')
+    return spec.yField
+  const series = Array.isArray(spec.series) ? plainRecord(spec.series[0]) : undefined
+  if (!series)
+    return undefined
+  if (typeof series.valueField === 'string')
+    return series.valueField
+  if (series.direction === 'horizontal' && typeof series.xField === 'string')
+    return series.xField
+  if (typeof series.yField === 'string')
+    return series.yField
+  return undefined
+}
+
+function applyDefaultMetricLabel(
+  spec: Record<string, unknown>,
+  visual: VisVisualConfig | undefined,
+  query: VIS.QueryConfig,
+  valueField: string,
+) {
+  const label = plainRecord(spec.label) ?? {}
+  spec.label = {
+    ...label,
+    formatMethod: (_text: unknown, datum?: Record<string, unknown>) => {
+      const alias = datumMetricAlias(datum, valueField)
+      return formatChartNumber(visual, query, alias, datum?.[valueField])
+    },
+  }
 }
 
 function dimValuePresent(value: unknown) {
@@ -148,6 +244,8 @@ function cartesianSeriesTooltipSpec(
   categoryField: string,
   seriesKey: string,
   valueField: string,
+  visual?: VisVisualConfig,
+  query?: VIS.QueryConfig,
   formatValue?: (datum: Record<string, unknown>) => unknown,
 ) {
   const title = {
@@ -157,7 +255,7 @@ function cartesianSeriesTooltipSpec(
     key: (datum: Record<string, unknown>) => String(datum?.[seriesKey] ?? ''),
     value: (datum: Record<string, unknown>) => formatValue
       ? formatValue(datum)
-      : datum?.[valueField],
+      : formatChartNumber(visual, query, datumMetricAlias(datum, valueField), datum?.[valueField]),
   }]
   return {
     mark: { title, content },
@@ -166,11 +264,18 @@ function cartesianSeriesTooltipSpec(
   }
 }
 
-function percentTooltipSpec(categoryField: string, seriesKey: string, valueField: string) {
-  return cartesianSeriesTooltipSpec(categoryField, seriesKey, valueField, (datum) => {
+function percentTooltipSpec(
+  categoryField: string,
+  seriesKey: string,
+  valueField: string,
+  visual?: VisVisualConfig,
+  query?: VIS.QueryConfig,
+) {
+  return cartesianSeriesTooltipSpec(categoryField, seriesKey, valueField, visual, query, (datum) => {
     const raw = datum?.[valueField]
     const pct = formatPercentShare(datum)
-    return raw == null || raw === '' ? pct : `${raw} (${pct})`
+    const text = formatChartNumber(visual, query, datumMetricAlias(datum, valueField), raw)
+    return raw == null || raw === '' ? pct : `${text} (${pct})`
   })
 }
 
@@ -180,12 +285,14 @@ function applyBarPercent(
   categoryField: string,
   seriesKey: string,
   valueField: string,
+  visual?: VisVisualConfig,
+  query?: VIS.QueryConfig,
 ) {
   spec.percent = true
   spec.label = {
     formatMethod: (_text: unknown, datum?: Record<string, unknown>) => formatPercentShare(datum),
   }
-  spec.tooltip = percentTooltipSpec(categoryField, seriesKey, valueField)
+  spec.tooltip = percentTooltipSpec(categoryField, seriesKey, valueField, visual, query)
   applyPercentValueAxis(spec, isHorizontalBar('bar', opt.orientation))
 }
 
@@ -232,7 +339,13 @@ function chartTooltipSpec(on: boolean, extra?: Record<string, unknown>) {
   return extra ? { visible: true, ...extra } : { visible: true }
 }
 
-function heatmapTooltipSpec(xField: string, yField: string, valueField: string) {
+function heatmapTooltipSpec(
+  xField: string,
+  yField: string,
+  valueField: string,
+  visual?: VisVisualConfig,
+  query?: VIS.QueryConfig,
+) {
   return {
     mark: {
       title: {
@@ -240,19 +353,24 @@ function heatmapTooltipSpec(xField: string, yField: string, valueField: string) 
       },
       content: [{
         key: valueField,
-        value: (datum: Record<string, unknown>) => datum?.[valueField],
+        value: (datum: Record<string, unknown>) => formatChartNumber(visual, query, valueField, datum?.[valueField]),
       }],
     },
   }
 }
 
-function metricTooltipSpec(categoryField: string, metricField: string) {
+function metricTooltipSpec(
+  categoryField: string,
+  metricField: string,
+  visual?: VisVisualConfig,
+  query?: VIS.QueryConfig,
+) {
   const title = {
     value: (datum: Record<string, unknown>) => datum?.[categoryField],
   }
   const content = [{
     key: metricField,
-    value: (datum: Record<string, unknown>) => datum?.[metricField],
+    value: (datum: Record<string, unknown>) => formatChartNumber(visual, query, metricField, datum?.[metricField]),
   }]
   return {
     mark: { title, content },
@@ -276,11 +394,17 @@ function pieShareOfRows(rows: Record<string, any>[], valueField: string) {
   return rows.reduce((sum, row) => sum + (Number(row[valueField]) || 0), 0)
 }
 
-function pieLabelSpec(categoryField: string, valueField: string, total: number) {
+function pieLabelSpec(
+  categoryField: string,
+  valueField: string,
+  total: number,
+  visual?: VisVisualConfig,
+  query?: VIS.QueryConfig,
+) {
   return {
     formatMethod: (text: string | string[], datum?: Record<string, unknown>) => {
       const name = datum?.[categoryField] ?? (Array.isArray(text) ? text[0] : text)
-      const value = datum?.[valueField] ?? ''
+      const value = formatChartNumber(visual, query, valueField, datum?.[valueField])
       return [`${name ?? ''}`, `${value} (${formatPieShare(datum, valueField, total)})`]
     },
   }
@@ -323,7 +447,13 @@ function pieMarkSpec() {
   }
 }
 
-function pieIndicatorSpec(categoryField: string, valueField: string, total: number) {
+function pieIndicatorSpec(
+  categoryField: string,
+  valueField: string,
+  total: number,
+  visual?: VisVisualConfig,
+  query?: VIS.QueryConfig,
+) {
   return {
     visible: true,
     trigger: 'hover' as const,
@@ -347,8 +477,8 @@ function pieIndicatorSpec(categoryField: string, valueField: string, total: numb
     content: [
       pieIndicatorItem(datum =>
         isPieIndicatorSlice(datum, categoryField)
-          ? `${datum![valueField] ?? ''}`
-          : `${total}`,
+          ? formatChartNumber(visual, query, valueField, datum![valueField])
+          : formatChartNumber(visual, query, valueField, total),
       ),
       pieIndicatorItem(datum =>
         isPieIndicatorSlice(datum, categoryField)
@@ -359,7 +489,13 @@ function pieIndicatorSpec(categoryField: string, valueField: string, total: numb
   }
 }
 
-function pieTooltipSpec(categoryField: string, valueField: string, total: number) {
+function pieTooltipSpec(
+  categoryField: string,
+  valueField: string,
+  total: number,
+  visual?: VisVisualConfig,
+  query?: VIS.QueryConfig,
+) {
   return {
     mark: {
       title: { value: (datum: Record<string, unknown>) => datum?.[categoryField] },
@@ -367,7 +503,7 @@ function pieTooltipSpec(categoryField: string, valueField: string, total: number
         {
           key: valueField,
           value: (datum: Record<string, unknown>) =>
-            `${datum?.[valueField] ?? ''} (${formatPieShare(datum, valueField, total)})`,
+            `${formatChartNumber(visual, query, valueField, datum?.[valueField])} (${formatPieShare(datum, valueField, total)})`,
         },
       ],
     },
@@ -654,7 +790,11 @@ function applyMarkLines(
     items.push(toMarkLineSpec({
       axis: horizontal || field === xMetric ? 'x' : 'y',
       value,
-      text: markLineLabel(line, value),
+      text: line.label
+        ? line.label
+        : line.kind === 'fixed'
+          ? formatChartNumber(visual, query, field, value)
+          : markLineLabel(line, value),
       relativeSeriesId: findRelativeSeriesId(spec, field),
     }))
   }
@@ -700,6 +840,25 @@ function applyChartLook(
 
   applyCartesianChrome(spec, chartType, opt, caps)
   applyMarkLines(spec, visual, chartType, query, opt)
+
+  if (!spec.percent && !SKIP_METRIC_LABEL.has(chartType)) {
+    const valueField = inferSpecValueField(spec)
+    if (caps.dataLabel && opt.dataLabel && valueField && !plainRecord(spec.label)?.formatMethod)
+      applyDefaultMetricLabel(spec, visual, query, valueField)
+    const aliases = chartMetricAliases(query)
+    const horizontal = isHorizontalBar(chartType, opt.orientation)
+    if (chartType === 'scatter' && aliases[0] && aliases[1]) {
+      applyAxisTickFormat(spec, visual, query, [
+        { orient: 'bottom', alias: aliases[0] },
+        { orient: 'left', alias: aliases[1] },
+      ])
+    }
+    else if (aliases[0]) {
+      applyAxisTickFormat(spec, visual, query, [
+        { orient: horizontal ? 'bottom' : 'left', alias: aliases[0] },
+      ])
+    }
+  }
 
   return spec
 }
@@ -815,13 +974,19 @@ function buildDualAxisSpec(
     })
   }
 
-  return asSpec(applyChartLook({
+  const looked = applyChartLook({
     type: 'common',
     background: 'transparent',
     data,
     series,
     axes,
-  }, visual, type, query))
+    tooltip: cartesianSeriesTooltipSpec(xField, SERIES_KEY, SERIES_VALUE, visual, query),
+  }, visual, type, query) as Record<string, unknown>
+  applyAxisTickFormat(looked, visual, query, [
+    ...(left && primary[0] ? [{ orient: primaryOrient, alias: primary[0] }] : []),
+    ...(right && secondary[0] ? [{ orient: secondaryOrient, alias: secondary[0] }] : []),
+  ])
+  return asSpec(looked)
 }
 
 function buildCartesianSpec(
@@ -854,7 +1019,7 @@ function buildCartesianSpec(
     background: 'transparent',
     data: chartData(values),
     axes: cartesianAxes(true, horizontal),
-    ...(series ? { seriesField: series } : { name: y, tooltip: metricTooltipSpec(xField, y) }),
+    ...(series ? { seriesField: series } : { name: y, tooltip: metricTooltipSpec(xField, y, visual, query) }),
   }
 
   if (type === 'bar') {
@@ -870,9 +1035,9 @@ function buildCartesianSpec(
     )
     if (series) {
       spec.stack = !!opt.stacked
-      spec.tooltip = cartesianSeriesTooltipSpec(xField, series, y)
+      spec.tooltip = cartesianSeriesTooltipSpec(xField, series, y, visual, query)
       if (opt.stacked && opt.percent)
-        applyBarPercent(spec, opt, xField, series, y)
+        applyBarPercent(spec, opt, xField, series, y, visual, query)
     }
     return asSpec(applyChartLook(spec, visual, type, query))
   }
@@ -882,7 +1047,7 @@ function buildCartesianSpec(
   spec.yField = y
   if (series) {
     spec.stack = !!opt.stacked
-    spec.tooltip = cartesianSeriesTooltipSpec(xField, series, y)
+    spec.tooltip = cartesianSeriesTooltipSpec(xField, series, y, visual, query)
   }
   const looked = applyChartLook(spec, visual, type, query) as Record<string, unknown>
   applyLineShapeToChart(looked, opt.area, opt.smooth)
@@ -970,13 +1135,19 @@ function buildComboSpec(
     })
   }
 
-  return asSpec(applyChartLook({
+  const looked = applyChartLook({
     type: 'common',
     background: 'transparent',
     data,
     series,
     axes,
-  }, visual, 'combo', query))
+    tooltip: cartesianSeriesTooltipSpec(xField, SERIES_KEY, SERIES_VALUE, visual, query),
+  }, visual, 'combo', query) as Record<string, unknown>
+  applyAxisTickFormat(looked, visual, query, [
+    ...(primary[0] ? [{ orient: 'left', alias: primary[0] }] : []),
+    ...(secondary[0] ? [{ orient: 'right', alias: secondary[0] }] : []),
+  ])
+  return asSpec(looked)
 }
 
 function dimText(value: unknown) {
@@ -1043,7 +1214,12 @@ function collectTreemapLeaves(nodes: Record<string, any>[]): Record<string, any>
   return out
 }
 
-function treemapTooltipSpec(valueField: string, total: number) {
+function treemapTooltipSpec(
+  valueField: string,
+  total: number,
+  visual?: VisVisualConfig,
+  query?: VIS.QueryConfig,
+) {
   return {
     mark: {
       title: {
@@ -1053,7 +1229,7 @@ function treemapTooltipSpec(valueField: string, total: number) {
         key: valueField,
         value: (datum: Record<string, unknown>) => {
           const raw = datum?.[TREE_VALUE] ?? datum?.[valueField]
-          return `${raw ?? ''} (${formatPieShare({ [valueField]: raw }, valueField, total)})`
+          return `${formatChartNumber(visual, query, valueField, raw)} (${formatPieShare({ [valueField]: raw }, valueField, total)})`
         },
       }],
     },
@@ -1099,7 +1275,7 @@ function buildTreemapSpec(
         formatMethod: (_text: unknown, datum?: Record<string, unknown>) =>
           datum?.[TREE_LABEL] || datum?.[TREE_NAME] || '',
       },
-      tooltip: treemapTooltipSpec(valueField, total),
+      tooltip: treemapTooltipSpec(valueField, total, visual, query),
     }, visual, 'treemap', query),
     visual,
     'treemap',
@@ -1171,7 +1347,7 @@ function buildHeatmapSpec(
       },
       axes: [heatmapBandAxis('bottom'), heatmapBandAxis('left')],
       label: { smartInvert: true },
-      tooltip: heatmapTooltipSpec(xField, yField, valueField),
+      tooltip: heatmapTooltipSpec(xField, yField, valueField, visual, query),
     }, visual, 'heatmap', query),
     visual,
     valueField,
@@ -1222,7 +1398,7 @@ function buildWaterfallSpec(
       ? { type: 'field', tagField: '__vis_waterfall_total' }
       : { type: 'end', text: '合计' },
     stackLabel: { visible: false },
-    tooltip: metricTooltipSpec(xField, yField),
+    tooltip: metricTooltipSpec(xField, yField, visual, query),
     axes: cartesianAxes(true, horizontal),
   }
   if (horizontal)
@@ -1262,7 +1438,12 @@ function buildTornadoSpec(
   function valueLabel(field: string) {
     return {
       visible: opt.dataLabel,
-      formatMethod: (_text: unknown, datum?: Record<string, unknown>) => absTick(datum?.[field]),
+      formatMethod: (_text: unknown, datum?: Record<string, unknown>) => {
+        const n = Number(datum?.[field])
+        return Number.isFinite(n)
+          ? formatChartNumber(visual, query, field, Math.abs(n))
+          : absTick(datum?.[field])
+      },
     }
   }
   return asSpec(applyChartLook({
@@ -1295,8 +1476,24 @@ function buildTornadoSpec(
       mark: {
         title: { value: (datum: Record<string, unknown>) => datum?.[xField] },
         content: [
-          { key: leftField, value: (datum: Record<string, unknown>) => absTick(datum?.[leftField]) },
-          { key: rightField, value: (datum: Record<string, unknown>) => absTick(datum?.[rightField]) },
+          {
+            key: leftField,
+            value: (datum: Record<string, unknown>) => {
+              const n = Number(datum?.[leftField])
+              return Number.isFinite(n)
+                ? formatChartNumber(visual, query, leftField, Math.abs(n))
+                : absTick(datum?.[leftField])
+            },
+          },
+          {
+            key: rightField,
+            value: (datum: Record<string, unknown>) => {
+              const n = Number(datum?.[rightField])
+              return Number.isFinite(n)
+                ? formatChartNumber(visual, query, rightField, Math.abs(n))
+                : absTick(datum?.[rightField])
+            },
+          },
         ],
       },
     },
@@ -1308,7 +1505,15 @@ function buildTornadoSpec(
         min: -max,
         max,
         title: { visible: false },
-        label: { formatMethod: absTick },
+        label: {
+          formatMethod: (text: string | string[]) => {
+            const raw = Array.isArray(text) ? text[0] : text
+            const n = Number(raw)
+            if (!Number.isFinite(n))
+              return text
+            return formatChartNumber(visual, query, leftField, Math.abs(n))
+          },
+        },
       },
     ],
   }, visual, 'tornado', query))
@@ -1377,9 +1582,9 @@ export function buildVChartSpec(
         outerRadius: 0.8,
         pie: pieMarkSpec(),
         ...(opt.donut ? { innerRadius: 0.5, padAngle: 0.6 } : {}),
-        ...(opt.donut && opt.centerText ? { indicator: pieIndicatorSpec(xField, yField, total) } : {}),
-        label: pieLabelSpec(xField, yField, total),
-        tooltip: pieTooltipSpec(xField, yField, total),
+        ...(opt.donut && opt.centerText ? { indicator: pieIndicatorSpec(xField, yField, total, visual, query) } : {}),
+        label: pieLabelSpec(xField, yField, total, visual, query),
+        tooltip: pieTooltipSpec(xField, yField, total, visual, query),
       }, visual, type, query),
       visual,
       type,
@@ -1422,7 +1627,9 @@ export function buildVChartSpec(
       data: chartData(multiMetric ? foldMetricRows(rows, xField, yFields) : rows),
       categoryField: xField,
       valueField: y,
-      ...(series ? { seriesField: series } : { name: y, tooltip: metricTooltipSpec(xField, y) }),
+      ...(series
+        ? { seriesField: series, tooltip: cartesianSeriesTooltipSpec(xField, series, y, visual, query) }
+        : { name: y, tooltip: metricTooltipSpec(xField, y, visual, query) }),
       area: { visible: opt.area },
     }, visual, type, query))
   }
@@ -1459,7 +1666,7 @@ export function buildVChartSpec(
             },
             content: [{
               key: yField,
-              value: (datum: Record<string, unknown>) => datum?.[yField],
+              value: (datum: Record<string, unknown>) => formatChartNumber(visual, query, yField, datum?.[yField]),
             }],
           },
         },
@@ -1497,6 +1704,7 @@ export function buildVChartSpec(
       data: chartData(rows),
       categoryField: xField,
       valueField: yField,
+      tooltip: metricTooltipSpec(xField, yField, visual, query),
       ...(opt.showRate
         ? {
             isTransform: true,

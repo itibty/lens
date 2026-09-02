@@ -196,7 +196,7 @@ public final class ContrastSqlAssembler {
         if (calcType == ContrastCalcTypeEnum.DIFF) {
             return cur + " - " + base;
         }
-        return "(" + cur + " - " + base + ") * 1.0 / NULLIF(" + base + ", 0)";
+        return "(" + cur + " - " + base + ") * 100.0 / NULLIF(" + base + ", 0)";
     }
 
     private static void appendJoins(StringBuilder sql, List<DimensionItem> dims, int contrastCount,

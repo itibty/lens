@@ -1,6 +1,7 @@
 import type { VisVisualConfig } from './types'
-import { contrastPeriodDescription, formatContrastRange, formatContrastValue } from './contrastExp'
-import { formatMetricNumber, joinMetricNumber, resolveNumberStyle, toFiniteNumber } from './numberStyle'
+import { contrastPeriodDescription, formatContrastRange } from './contrastExp'
+import { formatMetricField, resolveMetricFormat } from './fieldStyle'
+import { formatMetricNumber, toFiniteNumber } from './numberStyle'
 import { metricAlias, regularMetrics } from './types'
 
 export type NumberContrastDirection = 'up' | 'down' | 'flat'
@@ -79,7 +80,6 @@ export function pickNumberAuxiliaries(
 
     const label = metric.label || metricAlias(metric)
     const info = infos.find(item => item.label === label)
-    const calcType = info?.calcType ?? metric.contrast?.calcType ?? 'diff'
     const value = toFiniteNumber(row[label])
     const direction: NumberContrastDirection = value == null || value === 0
       ? 'flat'
@@ -87,7 +87,7 @@ export function pickNumberAuxiliaries(
     items.push({
       key: `contrast-${label}-${index}`,
       label,
-      text: value == null ? '-' : formatContrastValue(value, calcType),
+      text: value == null ? '-' : String(value),
       direction,
       title: contrastPeriodDescription(info),
       kind: 'contrast',
@@ -102,6 +102,7 @@ export interface NumberView {
   prefix: string
   body: string
   compactSuffix: string
+  suffix: string
   periodTitle: string
   auxiliaries: NumberContrastView[]
 }
@@ -111,22 +112,21 @@ export function resolveNumberView(
   data: VIS.QueryDataResponse,
   visual: VisVisualConfig,
 ): NumberView {
-  const style = resolveNumberStyle(visual)
-  const parts = formatMetricNumber(pickNumberValue(query, data), style)
-  const prefix = parts.empty ? '' : style.prefix.trim()
-  const auxiliaries = pickNumberAuxiliaries(query, data).map((item) => {
-    if (item.kind === 'contrast')
-      return item
-    return {
-      ...item,
-      text: joinMetricNumber(formatMetricNumber(item.value, style)),
-    }
-  })
+  const primary = pickPrimaryMetric(query)
+  const format = resolveMetricFormat(visual, primary)
+  const parts = formatMetricNumber(pickNumberValue(query, data), format)
+  const auxiliaries = pickNumberAuxiliaries(query, data).map(item => ({
+    ...item,
+    text: formatMetricField(visual, query, item.label, item.value, {
+      signed: item.kind === 'contrast',
+    }),
+  }))
   return {
     label: pickNumberMetricLabel(query),
-    prefix,
+    prefix: parts.empty ? '' : format.prefix,
     body: parts.body,
     compactSuffix: parts.compactSuffix,
+    suffix: parts.empty ? '' : format.suffix,
     periodTitle: pickNumberPeriodTitle(data),
     auxiliaries,
   }

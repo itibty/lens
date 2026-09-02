@@ -161,7 +161,20 @@ const sqlDragging = ref(false)
 const stageRef = ref<HTMLElement>()
 const tileKind = computed(() => previewTileKind(appliedVisual.value?.chartType))
 const resizablePreview = computed(() => tileKind.value != null)
-const { tileDragging, tileStyle, onTileDragStart } = usePreviewTile(tileKind, stageRef)
+const { tileDragging, tileMoving, tileStyle, onTileDragStart, onTileMoveStart } = usePreviewTile(tileKind, stageRef)
+
+function onTileHostPointerDown(event: PointerEvent) {
+  if (!resizablePreview.value)
+    return
+  const target = event.target
+  if (!(target instanceof Element))
+    return
+  if (target.closest('.preview__tile-grip, .preview__tile-handle'))
+    return
+  if (target.closest('button, a, input, textarea, select, canvas, .el-dropdown, .el-switch, .vis-card-view__actions, [role="button"]'))
+    return
+  onTileMoveStart(event)
+}
 
 function formatExecParams(params: VIS.ExecSqlInfo['params']) {
   if (!params || !(params as unknown[]).length)
@@ -326,7 +339,7 @@ defineExpose({
   <div
     :id="previewHostId"
     class="preview h-full flex flex-col"
-    :class="{ 'is-resizing': sqlDragging || tileDragging }"
+    :class="{ 'is-resizing': sqlDragging || tileDragging || tileMoving }"
   >
     <div class="preview__main min-h-0">
       <div class="preview__main-head shrink-0">
@@ -362,8 +375,13 @@ defineExpose({
         <div
           v-else-if="appliedVisual && appliedQuery"
           class="preview__card-host"
-          :class="{ 'preview__tile': resizablePreview, 'is-resizing': tileDragging }"
+          :class="{
+            'preview__tile': resizablePreview,
+            'is-resizing': tileDragging,
+            'is-moving': tileMoving,
+          }"
           :style="resizablePreview ? tileStyle : undefined"
+          @pointerdown="onTileHostPointerDown"
         >
           <VisCardView
             class="preview__card"
@@ -381,6 +399,14 @@ defineExpose({
             @open-detail="openDetail"
             @refresh="runPreview"
           />
+          <div
+            v-if="resizablePreview"
+            class="preview__tile-handle"
+            title="拖动"
+            @pointerdown="onTileMoveStart"
+          >
+            <span class="preview__tile-handle-icon i-mingcute-dots-vertical-line" />
+          </div>
           <i
             v-if="resizablePreview"
             class="preview__tile-grip"
@@ -506,6 +532,10 @@ defineExpose({
   overflow: hidden;
   background: var(--vis-preview-bg);
 
+  &.is-resizing {
+    user-select: none;
+  }
+
   &__main {
     flex: 1 1 0;
     min-height: 0;
@@ -544,13 +574,15 @@ defineExpose({
     background: var(--vis-preview-bg);
 
     &.is-tile-stage {
-      align-items: center;
-      justify-content: center;
+      position: relative;
+      align-items: stretch;
+      justify-content: stretch;
     }
   }
 
   &__tile {
-    position: relative;
+    position: absolute;
+    box-sizing: border-box;
     flex: 0 0 auto;
     min-width: 0;
     min-height: 0;
@@ -560,10 +592,60 @@ defineExpose({
     box-shadow: 0 1px 2px rgb(15 23 42 / 5%);
     overflow: hidden;
 
-    &.is-resizing {
+    &.is-resizing,
+    &.is-moving {
       outline: 2px solid var(--el-color-primary);
       outline-offset: -1px;
     }
+
+    &.is-moving {
+      box-shadow: 0 10px 28px rgb(15 23 42 / 12%);
+    }
+
+    .preview__tile-handle {
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.12s ease;
+    }
+
+    &:hover,
+    &.is-moving,
+    &.is-resizing {
+      .preview__tile-handle {
+        opacity: 1;
+        pointer-events: auto;
+      }
+    }
+  }
+
+  &__tile-handle {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    z-index: 6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 50px;
+    height: 26px;
+    padding: 0;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    transform: translateX(-50%);
+    cursor: grab;
+    touch-action: none;
+
+    &:active {
+      cursor: grabbing;
+    }
+  }
+
+  &__tile-handle-icon {
+    width: 34px;
+    height: 24px;
+    color: var(--dash-content-muted, #646a73);
   }
 
   &__tile-grip {
