@@ -166,18 +166,38 @@ function srcdocOf(html: string) {
       }
     }
 
-    :deep(h2) {
+    :deep(h1),
+    :deep(h2),
+    :deep(h3),
+    :deep(h4),
+    :deep(h5) {
       margin: 0 0 0.45em;
-      font-size: 16px;
-      font-weight: 650;
       line-height: 1.35;
     }
 
+    :deep(h1) {
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    :deep(h2) {
+      font-size: 17px;
+      font-weight: 650;
+    }
+
     :deep(h3) {
-      margin: 0 0 0.4em;
-      font-size: 14px;
+      font-size: 15px;
       font-weight: 600;
-      line-height: 1.35;
+    }
+
+    :deep(h4) {
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    :deep(h5) {
+      font-size: 12px;
+      font-weight: 600;
     }
 
     :deep(ul),
@@ -192,6 +212,19 @@ function srcdocOf(html: string) {
 
     :deep(ol) {
       list-style: decimal;
+    }
+
+    :deep(blockquote) {
+      margin: 0 0 0.6em;
+      padding: 0 0 0 0.8em;
+      border-left: 3px solid var(--el-border-color);
+      color: var(--el-text-color-regular);
+    }
+
+    :deep(hr) {
+      margin: 0.8em 0;
+      border: none;
+      border-top: 1px solid var(--el-border-color);
     }
 
     :deep(a) {

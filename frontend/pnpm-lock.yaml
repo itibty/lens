@@ -42,9 +42,15 @@ importers:
       '@element-plus/icons-vue':
         specifier: ^2.3.2
         version: 2.3.2(vue@3.5.41(typescript@6.0.3))
+      '@floating-ui/dom':
+        specifier: ^1.6.0
+        version: 1.8.0
       '@lezer/highlight':
         specifier: ^1.2.3
         version: 1.2.3
+      '@tiptap/extension-bubble-menu':
+        specifier: ^3.31.0
+        version: 3.31.0(@tiptap/core@3.31.0(@tiptap/pm@3.31.0))(@tiptap/pm@3.31.0)
       '@tiptap/extension-highlight':
         specifier: ^3.31.0
         version: 3.31.0(@tiptap/core@3.31.0(@tiptap/pm@3.31.0))
@@ -63,6 +69,9 @@ importers:
       '@tiptap/starter-kit':
         specifier: ^3.31.0
         version: 3.31.0
+      '@tiptap/suggestion':
+        specifier: ^3.31.0
+        version: 3.31.0(@floating-ui/dom@1.8.0)(@tiptap/core@3.31.0(@tiptap/pm@3.31.0))(@tiptap/pm@3.31.0)
       '@tiptap/vue-3':
         specifier: ^3.31.0
         version: 3.31.0(@floating-ui/dom@1.8.0)(@tiptap/core@3.31.0(@tiptap/pm@3.31.0))(@tiptap/pm@3.31.0)(vue@3.5.41(typescript@6.0.3))
@@ -2349,6 +2358,13 @@ packages:
 
   '@tiptap/starter-kit@3.31.0':
     resolution: {integrity: sha512-P80nhDEsBf6EMTaRb/ld3BaQW7iqITPR6BiIjOjbO3QDivCz/rGDKSS6q4ngsXfXOpSBc/clo/g0OyAdA8+Q4Q==}
+
+  '@tiptap/suggestion@3.31.0':
+    resolution: {integrity: sha512-p/m8K4jmF+b5JdRcZ5onOKxJf3dsTcXhnV6qAjDu1xrvpY8lXZe4DXgtuAUvh5Q4Msmq6IYuMAvleR4WAkIXIQ==}
+    peerDependencies:
+      '@floating-ui/dom': ^1.0.0
+      '@tiptap/core': 3.31.0
+      '@tiptap/pm': 3.31.0
 
   '@tiptap/vue-3@3.31.0':
     resolution: {integrity: sha512-v/oIp43nvANe2upFMc/1JGPvMD6C7mY0JdiB7kUjFxjAnTmjVRxJY+4hJiJgoVXTiCyDaEJeEhPKLueDJfKYwg==}
@@ -9778,7 +9794,6 @@ snapshots:
       '@floating-ui/dom': 1.8.0
       '@tiptap/core': 3.31.0(@tiptap/pm@3.31.0)
       '@tiptap/pm': 3.31.0
-    optional: true
 
   '@tiptap/extension-bullet-list@3.31.0(@tiptap/extension-list@3.31.0(@tiptap/core@3.31.0(@tiptap/pm@3.31.0))(@tiptap/pm@3.31.0))':
     dependencies:
@@ -9930,6 +9945,12 @@ snapshots:
       '@tiptap/extension-text': 3.31.0(@tiptap/core@3.31.0(@tiptap/pm@3.31.0))
       '@tiptap/extension-underline': 3.31.0(@tiptap/core@3.31.0(@tiptap/pm@3.31.0))
       '@tiptap/extensions': 3.31.0(@tiptap/core@3.31.0(@tiptap/pm@3.31.0))(@tiptap/pm@3.31.0)
+      '@tiptap/pm': 3.31.0
+
+  '@tiptap/suggestion@3.31.0(@floating-ui/dom@1.8.0)(@tiptap/core@3.31.0(@tiptap/pm@3.31.0))(@tiptap/pm@3.31.0)':
+    dependencies:
+      '@floating-ui/dom': 1.8.0
+      '@tiptap/core': 3.31.0(@tiptap/pm@3.31.0)
       '@tiptap/pm': 3.31.0
 
   '@tiptap/vue-3@3.31.0(@floating-ui/dom@1.8.0)(@tiptap/core@3.31.0(@tiptap/pm@3.31.0))(@tiptap/pm@3.31.0)(vue@3.5.41(typescript@6.0.3))':
@@ -10773,7 +10794,7 @@ snapshots:
 
   '@vexip-ui/hooks@2.9.4(vue@3.5.41(typescript@6.0.3))':
     dependencies:
-      '@floating-ui/dom': 1.7.6
+      '@floating-ui/dom': 1.8.0
       '@juggle/resize-observer': 3.4.0
       '@vexip-ui/utils': 2.16.4
       vue: 3.5.41(typescript@6.0.3)

@@ -1,13 +1,16 @@
 <!--
- * @Description: 文本卡片富文本（Tiptap：标题 / 强调 / 列表 / 颜色 / 对齐 / 链接）
+ * @Description: 文本卡片富文本（Notion 风格：选中浮动条，/ 插块）
 -->
 <script setup lang="ts">
+import type { HeadingLevel } from './slashCommand'
 import Highlight from '@tiptap/extension-highlight'
 import Placeholder from '@tiptap/extension-placeholder'
 import TextAlign from '@tiptap/extension-text-align'
 import { TextStyleKit } from '@tiptap/extension-text-style'
 import StarterKit from '@tiptap/starter-kit'
 import { EditorContent, useEditor } from '@tiptap/vue-3'
+import { BubbleMenu } from '@tiptap/vue-3/menus'
+import { SlashCommand } from './slashCommand'
 
 const TEXT_COLORS = [
   '#F5222D',
@@ -39,9 +42,10 @@ const BG_COLORS = [
   '#BFBFBF',
 ]
 
+const HEADING_LEVELS: HeadingLevel[] = [1, 2, 3, 4, 5]
+
 const html = defineModel<string | undefined>({ default: undefined })
-const sourceMode = ref(false)
-const tick = ref(0)
+const openPanel = ref<'heading' | 'color' | 'bg' | null>(null)
 
 function isEmptyHtml(raw?: string) {
   if (!raw?.trim())
@@ -56,22 +60,13 @@ function persistHtml(raw: string, empty: boolean) {
   html.value = empty || isEmptyHtml(raw) ? undefined : raw
 }
 
-const sourceText = computed({
-  get: () => html.value ?? '',
-  set: (value: string) => {
-    persistHtml(value, isEmptyHtml(value))
-  },
-})
-
 const editor = useEditor({
   content: html.value ?? '',
   extensions: [
     StarterKit.configure({
-      heading: { levels: [2, 3] },
+      heading: { levels: HEADING_LEVELS },
       code: false,
       codeBlock: false,
-      blockquote: false,
-      horizontalRule: false,
       link: {
         openOnClick: false,
         HTMLAttributes: {
@@ -88,7 +83,8 @@ const editor = useEditor({
     }),
     Highlight.configure({ multicolor: true }),
     TextAlign.configure({ types: ['heading', 'paragraph'] }),
-    Placeholder.configure({ placeholder: '输入说明文字' }),
+    Placeholder.configure({ placeholder: '输入说明文字，或输入 /' }),
+    SlashCommand,
   ],
   editorProps: {
     attributes: {
@@ -96,68 +92,79 @@ const editor = useEditor({
     },
   },
   onUpdate({ editor: next }) {
-    if (sourceMode.value)
-      return
     persistHtml(next.getHTML(), next.isEmpty)
   },
-  onSelectionUpdate: () => {
-    tick.value += 1
-  },
-  onTransaction: () => {
-    tick.value += 1
-  },
 })
 
-const active = computed(() => {
-  void tick.value
+const appendBody = () => document.body
+const bubbleOptions = {
+  placement: 'top' as const,
+  offset: 8,
+  strategy: 'fixed' as const,
+  onHide: () => {
+    openPanel.value = null
+  },
+}
+
+function shouldShowBubble({ editor: ed, from, to }: { editor: { isEditable: boolean, view: { dom: Element } }, from: number, to: number }) {
+  if (!ed.isEditable || from === to)
+    return false
+  return !ed.view.dom.querySelector('.suggestion')
+}
+
+function headingLabel() {
   const ed = editor.value
-  return {
-    bold: ed?.isActive('bold') ?? false,
-    italic: ed?.isActive('italic') ?? false,
-    underline: ed?.isActive('underline') ?? false,
-    strike: ed?.isActive('strike') ?? false,
-    h2: ed?.isActive('heading', { level: 2 }) ?? false,
-    h3: ed?.isActive('heading', { level: 3 }) ?? false,
-    bullet: ed?.isActive('bulletList') ?? false,
-    ordered: ed?.isActive('orderedList') ?? false,
-    alignLeft: ed?.isActive({ textAlign: 'left' }) ?? false,
-    alignCenter: ed?.isActive({ textAlign: 'center' }) ?? false,
-    alignRight: ed?.isActive({ textAlign: 'right' }) ?? false,
-    link: ed?.isActive('link') ?? false,
-    canUndo: ed?.can().undo() ?? false,
-    canRedo: ed?.can().redo() ?? false,
+  if (!ed)
+    return '正文'
+  for (const level of HEADING_LEVELS) {
+    if (ed.isActive('heading', { level }))
+      return `H${level}`
   }
-})
+  return '正文'
+}
 
-function run(fn: (ed: NonNullable<typeof editor.value>) => void) {
+function togglePanel(name: 'heading' | 'color' | 'bg') {
+  openPanel.value = openPanel.value === name ? null : name
+}
+
+function setHeading(level?: HeadingLevel) {
   const ed = editor.value
-  if (!ed || sourceMode.value)
+  if (!ed)
     return
-  fn(ed)
+  if (!level)
+    ed.chain().focus().setParagraph().run()
+  else
+    ed.chain().focus().toggleHeading({ level }).run()
+  openPanel.value = null
 }
 
 function applyColor(color?: string) {
-  run((ed) => {
-    if (!color)
-      ed.chain().focus().unsetColor().run()
-    else
-      ed.chain().focus().setColor(color).run()
-  })
+  const ed = editor.value
+  if (!ed)
+    return
+  if (!color)
+    ed.chain().focus().unsetColor().run()
+  else
+    ed.chain().focus().setColor(color).run()
+  openPanel.value = null
 }
 
 function applyHighlight(color?: string) {
-  run((ed) => {
-    if (!color)
-      ed.chain().focus().unsetHighlight().run()
-    else
-      ed.chain().focus().toggleHighlight({ color }).run()
-  })
+  const ed = editor.value
+  if (!ed)
+    return
+  if (!color)
+    ed.chain().focus().unsetHighlight().run()
+  else
+    ed.chain().focus().toggleHighlight({ color }).run()
+  openPanel.value = null
 }
 
 async function insertLink() {
   const ed = editor.value
-  if (!ed || sourceMode.value)
+  if (!ed)
     return
+  openPanel.value = null
   if (ed.isActive('link')) {
     ed.chain().focus().unsetLink().run()
     return
@@ -177,25 +184,9 @@ async function insertLink() {
   }
 }
 
-function clearFormat() {
-  run(ed => ed.chain().focus().unsetAllMarks().clearNodes().run())
-}
-
-function toggleSource() {
-  const ed = editor.value
-  if (!sourceMode.value && ed)
-    persistHtml(ed.getHTML(), ed.isEmpty)
-  sourceMode.value = !sourceMode.value
-  if (!sourceMode.value) {
-    void nextTick(() => {
-      editor.value?.commands.setContent(html.value ?? '', { emitUpdate: false })
-    })
-  }
-}
-
 watch(html, (next) => {
   const ed = editor.value
-  if (!ed || sourceMode.value || ed.isFocused)
+  if (!ed || ed.isFocused)
     return
   const incoming = next ?? ''
   const current = ed.isEmpty ? '' : ed.getHTML()
@@ -207,84 +198,100 @@ watch(html, (next) => {
 
 <template>
   <div class="simple-html-editor">
-    <div
-      class="simple-html-editor__bar"
-      @mousedown.prevent
+    <EditorContent
+      v-if="editor"
+      :editor="editor"
+    />
+    <BubbleMenu
+      v-if="editor"
+      :editor="editor"
+      plugin-key="simpleHtmlBubble"
+      :append-to="appendBody"
+      :update-delay="0"
+      :options="bubbleOptions"
+      :should-show="shouldShowBubble"
     >
-      <template v-if="!sourceMode && editor">
+      <div
+        class="simple-html-editor__bubble"
+        @mousedown.prevent
+      >
+        <div class="simple-html-editor__group">
+          <button
+            type="button"
+            class="is-wide"
+            title="标题"
+            :class="{ 'is-active': editor.isActive('heading') || openPanel === 'heading' }"
+            @click="togglePanel('heading')"
+          >
+            {{ headingLabel() }}
+          </button>
+          <div
+            v-if="openPanel === 'heading'"
+            class="simple-html-editor__menu"
+          >
+            <button
+              type="button"
+              :class="{ 'is-active': !editor.isActive('heading') }"
+              @click="setHeading()"
+            >
+              正文
+            </button>
+            <button
+              v-for="level in HEADING_LEVELS"
+              :key="level"
+              type="button"
+              :class="{ 'is-active': editor.isActive('heading', { level }) }"
+              @click="setHeading(level)"
+            >
+              标题 {{ level }}
+            </button>
+          </div>
+        </div>
+        <i />
         <button
           type="button"
-          class="simple-html-editor__tool"
-          :disabled="!active.canUndo"
-          title="撤销"
-          @click="run(ed => ed.chain().focus().undo().run())"
-        >
-          <span class="i-tabler-arrow-back-up" />
-        </button>
-        <button
-          type="button"
-          class="simple-html-editor__tool"
-          :disabled="!active.canRedo"
-          title="重做"
-          @click="run(ed => ed.chain().focus().redo().run())"
-        >
-          <span class="i-tabler-arrow-forward-up" />
-        </button>
-        <i class="simple-html-editor__split" />
-        <button
-          type="button"
-          class="simple-html-editor__tool"
-          :class="{ 'is-on': active.bold }"
           title="加粗"
-          @click="run(ed => ed.chain().focus().toggleBold().run())"
+          :class="{ 'is-active': editor.isActive('bold') }"
+          @click="editor.chain().focus().toggleBold().run()"
         >
           <span class="i-mingcute-bold-line" />
         </button>
         <button
           type="button"
-          class="simple-html-editor__tool"
-          :class="{ 'is-on': active.italic }"
           title="斜体"
-          @click="run(ed => ed.chain().focus().toggleItalic().run())"
+          :class="{ 'is-active': editor.isActive('italic') }"
+          @click="editor.chain().focus().toggleItalic().run()"
         >
           <span class="i-mingcute-italic-line" />
         </button>
         <button
           type="button"
-          class="simple-html-editor__tool"
-          :class="{ 'is-on': active.underline }"
           title="下划线"
-          @click="run(ed => ed.chain().focus().toggleUnderline().run())"
+          :class="{ 'is-active': editor.isActive('underline') }"
+          @click="editor.chain().focus().toggleUnderline().run()"
         >
           <span class="i-mingcute-underline-line" />
         </button>
         <button
           type="button"
-          class="simple-html-editor__tool"
-          :class="{ 'is-on': active.strike }"
           title="删除线"
-          @click="run(ed => ed.chain().focus().toggleStrike().run())"
+          :class="{ 'is-active': editor.isActive('strike') }"
+          @click="editor.chain().focus().toggleStrike().run()"
         >
           <span class="i-mingcute-strikethrough-line" />
         </button>
-        <el-popover
-          placement="bottom"
-          :width="196"
-          trigger="hover"
-          :show-after="200"
-        >
-          <template #reference>
-            <button
-              type="button"
-              class="simple-html-editor__tool"
-              title="文字颜色"
-            >
-              <span class="i-mingcute-text-color-line" />
-            </button>
-          </template>
+        <div class="simple-html-editor__group">
+          <button
+            type="button"
+            title="文字颜色"
+            :class="{ 'is-active': openPanel === 'color' || !!editor.getAttributes('textStyle').color }"
+            @click="togglePanel('color')"
+          >
+            <span class="i-mingcute-text-color-line" />
+          </button>
           <div
+            v-if="openPanel === 'color'"
             class="simple-html-editor__palette"
-            @mousedown.prevent
           >
             <div class="simple-html-editor__swatches">
               <button
@@ -304,28 +311,22 @@ watch(html, (next) => {
               清空
             </button>
           </div>
-        </el-popover>
-        <el-popover
-          placement="bottom"
-          :width="196"
-          trigger="hover"
-          :show-after="200"
-        >
-          <template #reference>
-            <button
-              type="button"
-              class="simple-html-editor__tool"
-              title="背景色"
-            >
-              <span class="simple-html-editor__bg">
-                <span class="simple-html-editor__bg-letter">A</span>
-                <i class="simple-html-editor__bg-bar" />
-              </span>
-            </button>
-          </template>
+        </div>
+        <div class="simple-html-editor__group">
+          <button
+            type="button"
+            title="背景色"
+            :class="{ 'is-active': openPanel === 'bg' || editor.isActive('highlight') }"
+            @click="togglePanel('bg')"
+          >
+            <span class="simple-html-editor__bg">
+              <span>A</span>
+              <i />
+            </span>
+          </button>
           <div
+            v-if="openPanel === 'bg'"
             class="simple-html-editor__palette"
-            @mousedown.prevent
           >
             <div class="simple-html-editor__swatches">
               <button
@@ -345,308 +346,54 @@ watch(html, (next) => {
               清空
             </button>
           </div>
-        </el-popover>
-        <i class="simple-html-editor__split" />
+        </div>
+        <i />
         <button
           type="button"
-          class="simple-html-editor__tool is-text"
-          :class="{ 'is-on': active.h2 }"
-          title="二级标题"
-          @click="run(ed => ed.chain().focus().toggleHeading({ level: 2 }).run())"
-        >
-          H2
-        </button>
-        <button
-          type="button"
-          class="simple-html-editor__tool is-text"
-          :class="{ 'is-on': active.h3 }"
-          title="三级标题"
-          @click="run(ed => ed.chain().focus().toggleHeading({ level: 3 }).run())"
-        >
-          H3
-        </button>
-        <button
-          type="button"
-          class="simple-html-editor__tool"
-          :class="{ 'is-on': active.bullet }"
           title="无序列表"
-          @click="run(ed => ed.chain().focus().toggleBulletList().run())"
+          :class="{ 'is-active': editor.isActive('bulletList') }"
+          @click="editor.chain().focus().toggleBulletList().run()"
         >
           <span class="i-tabler-list" />
         </button>
         <button
           type="button"
-          class="simple-html-editor__tool"
-          :class="{ 'is-on': active.ordered }"
           title="有序列表"
-          @click="run(ed => ed.chain().focus().toggleOrderedList().run())"
+          :class="{ 'is-active': editor.isActive('orderedList') }"
+          @click="editor.chain().focus().toggleOrderedList().run()"
         >
           <span class="i-tabler-list-numbers" />
         </button>
-        <el-popover
-          placement="bottom"
-          :width="120"
-          trigger="hover"
-          :show-after="200"
-        >
-          <template #reference>
-            <button
-              type="button"
-              class="simple-html-editor__tool"
-              :class="{ 'is-on': active.alignCenter || active.alignRight }"
-              title="对齐"
-            >
-              <span class="i-mingcute-align-left-line" />
-            </button>
-          </template>
-          <div
-            class="simple-html-editor__aligns"
-            @mousedown.prevent
-          >
-            <button
-              type="button"
-              class="simple-html-editor__tool"
-              :class="{ 'is-on': active.alignLeft }"
-              title="左对齐"
-              @click="run(ed => ed.chain().focus().setTextAlign('left').run())"
-            >
-              <span class="i-mingcute-align-left-line" />
-            </button>
-            <button
-              type="button"
-              class="simple-html-editor__tool"
-              :class="{ 'is-on': active.alignCenter }"
-              title="居中"
-              @click="run(ed => ed.chain().focus().setTextAlign('center').run())"
-            >
-              <span class="i-mingcute-align-center-line" />
-            </button>
-            <button
-              type="button"
-              class="simple-html-editor__tool"
-              :class="{ 'is-on': active.alignRight }"
-              title="右对齐"
-              @click="run(ed => ed.chain().focus().setTextAlign('right').run())"
-            >
-              <span class="i-mingcute-align-right-line" />
-            </button>
-          </div>
-        </el-popover>
+        <i />
         <button
           type="button"
-          class="simple-html-editor__tool"
-          :class="{ 'is-on': active.link }"
           title="链接"
+          :class="{ 'is-active': editor.isActive('link') }"
           @click="insertLink"
         >
           <span class="i-tabler-link" />
         </button>
-        <button
-          type="button"
-          class="simple-html-editor__tool"
-          title="清除样式"
-          @click="clearFormat"
-        >
-          <span class="i-tabler-eraser" />
-        </button>
-      </template>
-      <button
-        type="button"
-        class="simple-html-editor__tool is-source"
-        :class="{ 'is-on': sourceMode }"
-        title="HTML 源码"
-        @click="toggleSource"
-      >
-        <span class="i-tabler-code" />
-      </button>
-    </div>
-    <el-input
-      v-if="sourceMode"
-      v-model="sourceText"
-      class="simple-html-editor__source"
-      type="textarea"
-      resize="none"
-      placeholder="输入 HTML"
-    />
-    <div
-      v-show="!sourceMode"
-      class="simple-html-editor__body"
-    >
-      <EditorContent
-        v-if="editor"
-        :editor="editor"
-      />
-    </div>
+      </div>
+    </BubbleMenu>
   </div>
 </template>
 
 <style scoped lang="scss">
 .simple-html-editor {
-  display: flex;
-  flex-direction: column;
   height: 212px;
   min-height: 140px;
   max-height: 70vh;
   border: 1px solid var(--el-border-color-lighter);
   border-radius: 8px;
   background: var(--el-bg-color);
-  overflow: hidden;
-  resize: vertical;
-}
-
-.simple-html-editor__bar {
-  display: flex;
-  flex-shrink: 0;
-  flex-wrap: wrap;
-  align-items: center;
-  border-bottom: 1px solid var(--el-border-color-extra-light);
-  background: var(--vis-muted-bar, #e8eef5);
-}
-
-.simple-html-editor__split {
-  width: 1px;
-  height: 16px;
-  margin: 0 2px;
-  background: var(--el-border-color-extra-light);
-}
-
-.simple-html-editor__tool {
-  width: 32px;
-  height: 32px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  background: transparent;
-  color: var(--el-text-color-regular);
-  font-size: 16px;
-  cursor: pointer;
-
-  &:hover:not(:disabled) {
-    background: var(--el-fill-color-light);
-  }
-
-  &:disabled {
-    opacity: 0.35;
-    cursor: default;
-  }
-
-  &.is-on {
-    background: var(--el-fill-color);
-    box-shadow: inset 0 0 0 1px var(--el-border-color);
-  }
-
-  &.is-text {
-    font-size: 11px;
-    font-weight: 650;
-    letter-spacing: 0.02em;
-  }
-
-  &.is-source {
-    margin-left: auto;
-  }
-}
-
-.simple-html-editor__bg {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 16px;
-  height: 16px;
-}
-
-.simple-html-editor__bg-letter {
-  font-family: Georgia, 'Times New Roman', serif;
-  font-size: 13px;
-  font-weight: 700;
-  line-height: 1;
-}
-
-.simple-html-editor__bg-bar {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 3px;
-  border-radius: 1px;
-  background: currentColor;
-}
-
-.simple-html-editor__palette {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.simple-html-editor__swatches {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 6px;
-}
-
-.simple-html-editor__swatch {
-  width: 22px;
-  height: 22px;
-  padding: 0;
-  border: 1px solid rgb(0 0 0 / 8%);
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.simple-html-editor__clear {
-  align-self: flex-end;
-  padding: 0;
-  border: none;
-  background: transparent;
-  font-size: 12px;
-  line-height: 1;
-  color: var(--el-color-primary);
-  cursor: pointer;
-
-  &:hover {
-    color: var(--el-color-primary-light-3);
-  }
-}
-
-.simple-html-editor__aligns {
-  display: flex;
-  justify-content: center;
-}
-
-.simple-html-editor__source {
-  flex: 1 1 0;
-  min-height: 0;
-  height: 100%;
-
-  :deep(.el-textarea) {
-    height: 100%;
-  }
-
-  :deep(.el-textarea__inner) {
-    height: 100% !important;
-    min-height: 0;
-    padding: 10px 12px;
-    border: none;
-    border-radius: 0;
-    box-shadow: none;
-    font-family: var(--na-font-mono);
-    font-size: 12px;
-    line-height: 1.55;
-    resize: none;
-  }
-}
-
-.simple-html-editor__body {
-  flex: 1 1 0;
-  min-height: 0;
   overflow: auto;
+  resize: vertical;
 
   :deep(.tiptap) {
     min-height: 100%;
-    padding: 10px 12px;
+    padding: 12px 14px;
     outline: none;
-    font: 13px / 1.55 var(--na-font-sans);
+    font: 13px / 1.65 var(--na-font-sans);
     color: var(--el-text-color-primary);
 
     p.is-editor-empty:first-child::before {
@@ -665,18 +412,38 @@ watch(html, (next) => {
       }
     }
 
-    h2 {
+    h1,
+    h2,
+    h3,
+    h4,
+    h5 {
       margin: 0 0 0.45em;
-      font-size: 16px;
-      font-weight: 650;
       line-height: 1.35;
     }
 
+    h1 {
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    h2 {
+      font-size: 17px;
+      font-weight: 650;
+    }
+
     h3 {
-      margin: 0 0 0.4em;
-      font-size: 14px;
+      font-size: 15px;
       font-weight: 600;
-      line-height: 1.35;
+    }
+
+    h4 {
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    h5 {
+      font-size: 12px;
+      font-weight: 600;
     }
 
     ul,
@@ -693,6 +460,19 @@ watch(html, (next) => {
       list-style: decimal;
     }
 
+    blockquote {
+      margin: 0 0 0.6em;
+      padding: 0 0 0 0.8em;
+      border-left: 3px solid var(--el-border-color);
+      color: var(--el-text-color-regular);
+    }
+
+    hr {
+      margin: 0.8em 0;
+      border: none;
+      border-top: 1px solid var(--el-border-color);
+    }
+
     a {
       color: var(--el-color-primary);
     }
@@ -702,6 +482,141 @@ watch(html, (next) => {
       border-radius: 2px;
       color: inherit;
     }
+  }
+}
+
+.simple-html-editor__bubble {
+  z-index: 3200;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
+  border: 1px solid var(--el-border-color-extra-light);
+  border-radius: 10px;
+  background: var(--el-bg-color);
+  box-shadow: 0 10px 28px rgb(15 23 42 / 12%);
+
+  > i {
+    width: 1px;
+    height: 16px;
+    margin: 0 2px;
+    background: var(--el-border-color-extra-light);
+  }
+
+  button {
+    width: 28px;
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--el-text-color-regular);
+    font-size: 15px;
+    cursor: pointer;
+
+    &:hover {
+      background: var(--el-fill-color);
+    }
+
+    &.is-active {
+      background: var(--el-fill-color);
+      color: var(--el-color-primary);
+    }
+
+    &.is-wide {
+      width: auto;
+      min-width: 36px;
+      padding: 0 7px;
+      font-size: 12px;
+      font-weight: 650;
+    }
+  }
+}
+
+.simple-html-editor__group {
+  position: relative;
+}
+
+.simple-html-editor__menu,
+.simple-html-editor__palette {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 1;
+  padding: 6px;
+  border: 1px solid var(--el-border-color-extra-light);
+  border-radius: 8px;
+  background: var(--el-bg-color);
+  box-shadow: 0 8px 20px rgb(15 23 42 / 12%);
+}
+
+.simple-html-editor__menu {
+  min-width: 108px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  button {
+    width: 100%;
+    height: 28px;
+    justify-content: flex-start;
+    padding: 0 8px;
+    font-size: 12px;
+  }
+}
+
+.simple-html-editor__palette {
+  width: 168px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.simple-html-editor__swatches {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
+}
+
+.simple-html-editor__swatch {
+  width: 20px !important;
+  height: 20px !important;
+  padding: 0;
+  border: 1px solid rgb(0 0 0 / 8%) !important;
+  border-radius: 4px !important;
+}
+
+.simple-html-editor__clear {
+  align-self: flex-end;
+  width: auto !important;
+  height: auto !important;
+  padding: 0 2px !important;
+  font-size: 12px !important;
+  color: var(--el-color-primary) !important;
+}
+
+.simple-html-editor__bg {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+
+  > i {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 3px;
+    border-radius: 1px;
+    background: currentColor;
   }
 }
 </style>

@@ -360,19 +360,24 @@ function onValueClick(event: MouseEvent) {
   }
 
   &__aux {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 128px), 1fr));
-    gap: 6px 16px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 20px;
+    /* 抵掉根 gap，只留和指标卡一样的一层顶距 */
+    margin-top: calc(-1 * var(--vis-number-gap, 14px));
     padding-top: var(--vis-number-gap, 10px);
     border-top: 1px solid color-mix(in srgb, var(--el-border-color-lighter) 70%, transparent);
   }
 
   &__aux-item {
+    flex: 0 1 auto;
     display: flex;
     flex-direction: row;
     align-items: baseline;
     gap: 6px;
     min-width: 0;
+    max-width: 100%;
   }
 
   &__aux-value {
@@ -386,7 +391,6 @@ function onValueClick(event: MouseEvent) {
   &__aux-name {
     flex: 0 1 auto;
     min-width: 0;
-    max-width: 7em;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;

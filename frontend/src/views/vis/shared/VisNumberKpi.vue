@@ -200,14 +200,17 @@ const { vars: cardStyle } = useNumberFit(rootRef, () => props.fill)
   }
 
   &__deltas {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 128px), 1fr));
-    gap: 6px 16px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 20px;
     padding-top: var(--vis-number-gap, 10px);
   }
 
   &__delta {
+    flex: 0 1 auto;
     min-width: 0;
+    max-width: 100%;
     display: flex;
     flex-direction: row;
     align-items: baseline;
@@ -267,7 +270,6 @@ const { vars: cardStyle } = useNumberFit(rootRef, () => props.fill)
   &__delta-name {
     flex: 0 1 auto;
     min-width: 0;
-    max-width: 7em;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;

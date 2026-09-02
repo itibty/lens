@@ -8,8 +8,8 @@ export function scaleNumberSizeVars(scale = 1) {
   return {
     '--vis-number-gap': `${scaleFitPx(NUMBER_TYPE.gap, scale)}px`,
     '--vis-number-value': `${scaleFitPx(NUMBER_TYPE.value, scale)}px`,
-    '--vis-number-aux': `${scaleFitPx(NUMBER_TYPE.aux, scale)}px`,
-    '--vis-number-aux-label': `${scaleFitPx(NUMBER_TYPE.auxLabel, scale)}px`,
+    '--vis-number-aux': `${NUMBER_TYPE.aux}px`,
+    '--vis-number-aux-label': `${NUMBER_TYPE.auxLabel}px`,
     '--vis-number-name': `${scaleFitPx(NUMBER_TYPE.labelSize, scale)}px`,
   }
 }
