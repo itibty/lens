@@ -1,0 +1,29 @@
+backend/src/test/java/com/codet/lens/common/auth/AuthInterceptorTest.java
+  s_97f35634faf006::t_48fe8c0d5fb806 1-70
+backend/src/test/java/com/codet/lens/sys/dto/PasswordRequestValidationTest.java
+  s_97f35634faf006::t_2e882a8f7051b4 1-52
+backend/src/test/java/com/codet/lens/sys/service/MenuAdminServiceTest.java
+  s_97f35634faf006::t_fbad4665b50ec6 3,9,13-14,28-32,51-79,105-113
+backend/src/test/java/com/codet/lens/sys/service/UserAdminServiceTest.java
+  s_97f35634faf006::t_5f2d476cb86f95 4,6,8-9,11,15,18,20,23,30-31,35-36,58-96
+backend/src/test/java/com/codet/lens/vis/core/query/RdsUtilTest.java
+  s_97f35634faf006::t_a8289fad27dca5 3-6,8,10-11,16-21,38-104
+backend/src/test/java/com/codet/lens/vis/service/VisDashGroupServiceTest.java
+  s_97f35634faf006::t_d790172cd5ba95 14,57-73
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "3c96cd9db2b1b351a7d55a9db0821630bb479b36",
+  "prompts": {},
+  "sessions": {
+    "s_97f35634faf006": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a06521-e2f0-7fd1-8445-627dbe4169d4",
+        "model": "unknown"
+      },
+      "human_author": "Chuang <chuang.zhang1@atrenew.com>"
+    }
+  }
+}
