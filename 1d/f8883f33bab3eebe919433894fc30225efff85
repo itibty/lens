@@ -1,0 +1,19 @@
+docs/superpowers/plans/2026-09-03-maintainability-improvements.md
+  s_1ace138bb8957f::t_83fa021edf7abe 1-515
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "1df8883f33bab3eebe919433894fc30225efff85",
+  "prompts": {},
+  "sessions": {
+    "s_1ace138bb8957f": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a065cd-f046-7420-9929-b4e604b69a58",
+        "model": "unknown"
+      },
+      "human_author": "Chuang <chuang.zhang1@atrenew.com>"
+    }
+  }
+}
