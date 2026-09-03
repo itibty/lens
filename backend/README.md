@@ -28,11 +28,25 @@ mvn -DskipTests spring-boot:run
 
 # 打包
 mvn -DskipTests package
+
+# 测试
+mvn test
 ```
 
 - Swagger：`http://127.0.0.1:8080/swagger-ui.html`
 - 库：本机 MySQL `lens`，默认 `root` / `Aa123456`
 - Redis：`127.0.0.1:6379`，密码 `Aa123456`（禁用/改密/改角色后旧 token 立刻失效）
+
+以上为本地开发默认值。部署时可通过环境变量覆盖：
+
+| 环境变量 | 用途 |
+|----------|------|
+| `LENS_DB_URL` | JDBC 地址 |
+| `LENS_DB_USERNAME` / `LENS_DB_PASSWORD` | 数据库账号密码 |
+| `LENS_REDIS_HOST` / `LENS_REDIS_PORT` / `LENS_REDIS_PASSWORD` | Redis 连接 |
+| `LENS_JWT_SECRET` / `LENS_JWT_TTL_MS` | JWT 签名密钥与有效期（毫秒） |
+
+也可以在仓库根目录运行 `./verify.sh`，一次完成后端测试和全部前端检查。
 
 ## 参考
 

@@ -44,7 +44,11 @@ pnpm build            # 类型检查 + 构建
 pnpm type-check
 pnpm lint
 pnpm lint-fix
+pnpm test             # 单次运行测试
+pnpm test:watch       # 监听模式
 ```
+
+在仓库根目录运行 `./verify.sh` 可一次完成后端测试、前端 lint、类型检查和前端测试。
 
 生成 API（需后端已启动）：
 

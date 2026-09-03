@@ -23,8 +23,8 @@ Product walkthrough: [docs/product.md](docs/product.md).
 
 ## Prerequisites
 
-- JDK 21 and Maven
-- Node.js >= 20.12.1 and **pnpm** (`preinstall` blocks npm/yarn)
+- JDK 21 and Maven >= 3.6.3
+- Node.js >= 20.12.1 and **pnpm 10.5.0** (`preinstall` blocks npm/yarn)
 - MySQL database named `lens`
 - Redis (default `127.0.0.1:6379`, password `Aa123456`; used to invalidate login sessions)
 
@@ -39,6 +39,15 @@ cd frontend && pnpm i && pnpm dev
 
 MySQL default: `root` / `Aa123456`.  
 Redis default: `127.0.0.1:6379`, password `Aa123456`.
+
+These defaults are for local development. Deployments can override them without editing the checked-in file:
+
+| Variable | Purpose |
+|----------|---------|
+| `LENS_DB_URL` | JDBC URL |
+| `LENS_DB_USERNAME` / `LENS_DB_PASSWORD` | Database credentials |
+| `LENS_REDIS_HOST` / `LENS_REDIS_PORT` / `LENS_REDIS_PASSWORD` | Redis connection |
+| `LENS_JWT_SECRET` / `LENS_JWT_TTL_MS` | JWT signing secret and lifetime |
 
 Dev UI: `http://127.0.0.1:5173`  
 API / Swagger: `http://127.0.0.1:8080/swagger-ui.html`
@@ -63,6 +72,16 @@ API / Swagger: `http://127.0.0.1:8080/swagger-ui.html`
 ```
 
 After start, open `http://127.0.0.1:8080`. Logs are at `app/server/lens-server.log`.
+
+## Verify changes
+
+Run all backend tests and frontend lint, type checks, and tests from the repository root:
+
+```shell
+./verify.sh
+```
+
+The command expects dependencies to be installed and does not modify generated API clients.
 
 ## License
 
