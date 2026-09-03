@@ -125,7 +125,7 @@ export interface DashCardRadiusPreset {
   value: number
 }
 
-export const DEFAULT_DASH_CARD_RADIUS: DashCardRadiusId = 'lg'
+export const DEFAULT_DASH_CARD_RADIUS: DashCardRadiusId = 'md'
 
 export const DASH_CARD_RADIUS_PRESETS: DashCardRadiusPreset[] = [
   { id: 'none', name: '直角', value: 0 },

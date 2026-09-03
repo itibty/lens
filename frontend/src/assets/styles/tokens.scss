@@ -15,6 +15,18 @@
   // -- project tokens --
   --na-color-primary: #{$cfe-color-primary};
   --na-content-bg: #{$cfe-content-bg};
+  --na-surface-bg: #fff;
+  --na-text-strong: #1f2329;
+  --na-text-regular: #4e5969;
+  --na-text-muted: #86909c;
+  --na-border-color: #dce1e8;
+  --na-border-color-light: #e6eaf0;
+  --na-border-color-lighter: #edf0f4;
+  --na-radius-control: 6px;
+  --na-radius-panel: 8px;
+  --na-radius-card: 12px;
+  --na-shadow-surface: 0 1px 2px rgb(15 23 42 / 4%), 0 6px 16px rgb(15 23 42 / 3%);
+  --na-shadow-floating: 0 10px 30px rgb(15 23 42 / 10%);
   --na-navbar-height: #{$navbar-height};
   --na-navbar-bg: #20242a;
   --na-navbar-border-color: rgba(255, 255, 255, 0.08);
@@ -29,7 +41,21 @@
   --na-resizer-color: color-mix(in srgb, var(--el-color-primary) 35%, transparent);
 
   // -- element tokens --
-  --el-border-radius-base: 4px; // 3px
+  --el-text-color-primary: var(--na-text-strong);
+  --el-text-color-regular: var(--na-text-regular);
+  --el-text-color-secondary: var(--na-text-muted);
+  --el-border-color: var(--na-border-color);
+  --el-border-color-light: var(--na-border-color-light);
+  --el-border-color-lighter: var(--na-border-color-lighter);
+  --el-border-color-extra-light: #f3f5f7;
+  --el-fill-color: #eef1f4;
+  --el-fill-color-light: #f4f6f8;
+  --el-fill-color-lighter: #f8f9fb;
+  --el-fill-color-extra-light: #fbfcfd;
+  --el-bg-color-page: var(--na-content-bg);
+  --el-border-radius-base: var(--na-radius-control);
+  --el-border-radius-small: 4px;
+  --el-box-shadow-light: var(--na-shadow-floating);
   --el-loading-spinner-size: 20px;
   --el-menu-item-height: 36px;
   --el-menu-sub-item-height: 36px;

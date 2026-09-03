@@ -102,7 +102,7 @@ export const CHART_SERIES_PALETTES: ChartPalettePreset[] = [
   {
     id: 'DEFAULT',
     label: '默认',
-    palette: ['#0052D9', '#1AC6FF', '#FF8A00', '#3CC780', '#7442D4', '#FFC400', '#304D77', '#B48DEB'],
+    palette: ['#0052D9', '#319CC5', '#E98A18', '#36A36E', '#725BC2', '#C79B18', '#496A8F', '#9A7BC6'],
   },
   {
     id: 'GRADIENT',

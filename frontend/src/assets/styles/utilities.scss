@@ -20,23 +20,23 @@ $DIRECTIONS: (left, right, top, bottom);
   }
 }
 .base-shadow {
-  box-shadow: 0 2px 4px 0 var(--el-border-color);
+  box-shadow: var(--na-shadow-surface);
 }
 .base-shadow-top {
-  box-shadow: 0px -2px 4px -2px var(--el-border-color);
+  box-shadow: 0 -1px 2px rgb(15 23 42 / 5%);
 }
 .base-shadow-right {
-  box-shadow: 2px 0 4px -2px var(--el-border-color);
+  box-shadow: 1px 0 2px rgb(15 23 42 / 5%);
 }
 .base-shadow-bottom {
-  box-shadow: 0 2px 4px -2px var(--el-border-color);
+  box-shadow: 0 1px 2px rgb(15 23 42 / 5%);
 }
 .base-shadow-left {
-  box-shadow: -2px 0 4px -2px var(--el-border-color);
+  box-shadow: -1px 0 2px rgb(15 23 42 / 5%);
 }
 .base-hover-shadow {
   &:hover {
-    box-shadow: 0 2px 4px 0 var(--el-border-color);
+    box-shadow: var(--na-shadow-surface);
   }
 }
 .base-transition {
@@ -48,7 +48,7 @@ $DIRECTIONS: (left, right, top, bottom);
     font-size 0s;
 }
 .base-content-bg {
-  background-color: var(--el-bg-color-page) !important;
+  background-color: var(--na-content-bg) !important;
 }
 
 .clickable {

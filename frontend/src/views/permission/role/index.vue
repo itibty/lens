@@ -137,7 +137,7 @@ onMounted(() => {
     </template>
     <template #default="scope">
       <el-form :model="states.query" @submit.prevent>
-        <el-row :gutter="15">
+        <el-row :gutter="16">
           <el-col :span="4">
             <el-input
               v-model="states.query.roleName"
@@ -256,7 +256,7 @@ onMounted(() => {
 
     <template #footer>
       <el-pagination
-        class="justify-end mtb-6px"
+        class="justify-end mtb-8px"
         :current-page="states.pageNumber"
         layout="total, prev, pager, next"
         :page-size="states.pageSize"

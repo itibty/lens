@@ -42,7 +42,7 @@ describe('dashboard config codec', () => {
       filters: [],
       widgets: [],
       theme: 't1',
-      cardRadius: 'lg',
+      cardRadius: 'md',
       autoRefreshSec: undefined,
       extra: {},
     })
@@ -59,7 +59,7 @@ describe('dashboard config codec', () => {
       filters: [],
       widgets: [],
       theme: 't1',
-      cardRadius: 'lg',
+      cardRadius: 'md',
       autoRefreshSec: undefined,
       extra: {},
     })

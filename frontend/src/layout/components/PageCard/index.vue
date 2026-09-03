@@ -225,7 +225,7 @@ $borderColor: var(--el-border-color-lighter);
 
   .sub-title {
     margin-left: 10px;
-    color: var(--el-text-color-regular);
+    color: var(--el-text-color-secondary);
     font-size: 12px;
     line-height: $title-font-size;
   }

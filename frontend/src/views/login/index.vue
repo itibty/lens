@@ -201,7 +201,7 @@ onMounted(initLoginForm)
 .login-page {
   --login-ink: #1d211e;
   --login-muted: #747a74;
-  --login-accent: #4f8c7d;
+  --login-accent: #496d9b;
 
   display: grid;
   grid-template-columns: minmax(0, 1.5fr) minmax(420px, 0.82fr);
@@ -222,7 +222,7 @@ onMounted(initLoginForm)
   overflow: hidden;
   padding: clamp(112px, 14vh, 154px) clamp(48px, 6vw, 92px) clamp(58px, 8vh, 86px);
   background:
-    radial-gradient(circle at 76% 28%, rgb(55 121 107 / 9%) 0%, transparent 27%),
+    radial-gradient(circle at 76% 28%, color-mix(in srgb, var(--login-accent) 9%, transparent) 0%, transparent 27%),
     radial-gradient(circle at 84% 76%, rgb(104 91 141 / 6%) 0%, transparent 25%),
     linear-gradient(135deg, #f3f1eb 0%, #e9ece8 100%);
 }
@@ -303,7 +303,7 @@ onMounted(initLoginForm)
 
 .brand-orbit::after {
   inset: 38%;
-  background: rgb(62 125 111 / 4%);
+  background: color-mix(in srgb, var(--login-accent) 4%, transparent);
 }
 
 .brand-orbit__dot {
@@ -315,7 +315,7 @@ onMounted(initLoginForm)
   border: 2px solid #ebede8;
   border-radius: 50%;
   background: var(--login-accent);
-  box-shadow: 0 0 0 7px rgb(79 140 125 / 11%);
+  box-shadow: 0 0 0 7px color-mix(in srgb, var(--login-accent) 11%, transparent);
 }
 
 .slogan-block {
@@ -481,7 +481,7 @@ onMounted(initLoginForm)
 
 .forgot-button:focus-visible {
   border-radius: 2px;
-  outline: 2px solid rgb(79 140 125 / 32%);
+  outline: 2px solid color-mix(in srgb, var(--login-accent) 32%, transparent);
   outline-offset: 4px;
 }
 

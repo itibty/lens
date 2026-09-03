@@ -889,12 +889,12 @@ onBeforeRouteUpdate((to) => {
 
 .designer {
   /* 设计器自定义色（非字段条）；字段条走 EP primary/success/warning */
-  --vis-shelf-well: #eef3f8;
-  --vis-muted-bar: #e8eef5;
-  --vis-select-bg: #e6f0fa;
-  --vis-select-border: #1f6fad;
-  --vis-select-fg: #124a78;
-  --vis-panel-bg: #f7fafc;
+  --vis-shelf-well: #eef2f6;
+  --vis-muted-bar: #e6eaf0;
+  --vis-select-bg: var(--el-color-primary-light-9);
+  --vis-select-border: var(--el-color-primary-light-5);
+  --vis-select-fg: var(--el-color-primary);
+  --vis-panel-bg: var(--na-content-bg);
 
   min-height: 0;
   min-width: 0;
