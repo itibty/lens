@@ -1,0 +1,19 @@
+docs/superpowers/specs/2026-09-03-maintainability-improvements-design.md
+  s_1ace138bb8957f::t_269c1df0675d42 1-200
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "c727c41bd95a87864c6537e8195afb141e27533c",
+  "prompts": {},
+  "sessions": {
+    "s_1ace138bb8957f": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a065cd-f046-7420-9929-b4e604b69a58",
+        "model": "unknown"
+      },
+      "human_author": "Chuang <chuang.zhang1@atrenew.com>"
+    }
+  }
+}
