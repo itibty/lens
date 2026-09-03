@@ -1,0 +1,31 @@
+backend/src/test/java/com/codet/lens/vis/core/query/VisQueryPrepTest.java
+  s_1ace138bb8957f::t_2cbede63aae66a 7-8,42-51,102-122,169-190,202-214,216-219,223
+frontend/src/views/vis/cards/cardApi.ts
+  s_1ace138bb8957f::t_0d3eada0f35f62 9,260,262
+frontend/src/views/vis/charts/catalog.test.ts
+  s_1ace138bb8957f::t_6ea96e2a691469 1-2,4,41-74,127-227
+frontend/src/views/vis/dashboards/dashApi.test.ts
+  s_1ace138bb8957f::t_16bd9785ba4837 2-6,16,19-20,51-67,110-157
+frontend/src/views/vis/dashboards/dashConfigCodec.ts
+  s_1ace138bb8957f::t_ff20073b001aba 50-55
+frontend/src/views/vis/dashboards/dashFilterModel.ts
+  s_1ace138bb8957f::t_70d88411fb234c 5
+frontend/src/views/vis/shared/filterValue.ts
+  s_1ace138bb8957f::t_d35088019b4a0b 170-193
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "b3c0a65522dbdc654f7dbb6c8f8971aca31ec0df",
+  "prompts": {},
+  "sessions": {
+    "s_1ace138bb8957f": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a065cd-f046-7420-9929-b4e604b69a58",
+        "model": "unknown"
+      },
+      "human_author": "Chuang <chuang.zhang1@atrenew.com>"
+    }
+  }
+}
