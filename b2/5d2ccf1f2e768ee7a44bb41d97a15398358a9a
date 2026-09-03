@@ -1,0 +1,27 @@
+docs/superpowers/plans/2026-09-03-maintainability-improvements.md
+  s_1ace138bb8957f::t_7a169f4bcd7487 88,134,155-159,165,199,202,210
+frontend/package.json
+  s_1ace138bb8957f::t_c163f415a9667c 15-16,118
+frontend/pnpm-lock.yaml
+  s_1ace138bb8957f::t_5c16e922ae349c 153,292-294,2411-2413,2474-2476,3002-3030,3350-3353,3577-3580,4694-4697,7183-7185,7304-7306,7318-7320,7487-7489,7502-7505,8055-8095,8220-8224,8389,8399,10103-10107,10160-10161,11103,11111,11115-11155,11629-11630,11885-11886,13436-13437,16283-16284,16401-16402,16412-16413,16618-16619,16629-16630,17518-17544,17786-17790
+frontend/src/views/vis/dashboards/dashApi.test.ts
+  s_1ace138bb8957f::t_ce3728fb6995b9 1-135
+frontend/vitest.config.ts
+  s_1ace138bb8957f::t_b23517fe3201c3 1-13
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "b25d2ccf1f2e768ee7a44bb41d97a15398358a9a",
+  "prompts": {},
+  "sessions": {
+    "s_1ace138bb8957f": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a065cd-f046-7420-9929-b4e604b69a58",
+        "model": "unknown"
+      },
+      "human_author": "Chuang <chuang.zhang1@atrenew.com>"
+    }
+  }
+}
