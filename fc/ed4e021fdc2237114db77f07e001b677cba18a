@@ -1,0 +1,89 @@
+backend/src/main/java/com/codet/lens/vis/core/card/RichTextSanitizer.java
+  s_cf404714212754::t_53529dbf9bf041 27-31,63
+backend/src/main/java/com/codet/lens/vis/core/dash/VisDashWidgets.java
+  s_cf404714212754::t_9e5350c24017a0 6,10,15,25-31,41-45,73-77,102-105,109-165,231-233
+backend/src/main/java/com/codet/lens/vis/service/VisDashboardService.java
+  s_cf404714212754::t_af7086cd8c2b5a 80-81,88
+backend/src/test/java/com/codet/lens/vis/core/dash/VisDashWidgetsTest.java
+  s_cf404714212754::t_07578add0dc65b 1-70
+docs/design-previews/lens-logo-concept-v2.svg
+  s_cf404714212754::t_ecf1f266b41eb2 1-30
+docs/design-previews/lens-logo-concept-v3.svg
+  s_cf404714212754::t_56d4a3a2959821 1-19
+docs/design-previews/login-product-concept.html
+  s_cf404714212754::t_4011af0569df70 1-631
+frontend/src/components/LensLogo.vue
+  s_cf404714212754::t_e445b112f20696 1-58
+frontend/src/layout/components/Navbar/index.vue
+  s_cf404714212754::t_2be6f9fa8f07b1 11,83,253-258
+frontend/src/views/login/index.vue
+  s_cf404714212754::t_399378eaf7cb2d 4-5,10,18-24,26-30,40,48,52-53,56,62,64,83,87,109-110,114-122,124-141,143-174,176-180,182-197,201-204,206-213,216-258,260-263,266-272,274-539,542-659
+frontend/src/views/login/legacy.vue
+  s_cf404714212754::t_7d36401fd0234a 1-271
+frontend/src/views/vis/cards/components/SimpleHtmlEditor.vue
+  s_cf404714212754::t_814c3a6ab1d733 15-20,206,492-524
+frontend/src/views/vis/charts/style-forms/FieldStyleShelf.vue
+  s_cf404714212754::t_05bc3fbf174d90 2,6,11,16,18,21,23-32,38-39,71,100-106,112,114-115,126-133,141,151-157,160,163,166,168-172,193,251-267
+frontend/src/views/vis/charts/style-forms/MetricProgressColorPicker.vue
+  s_cf404714212754::t_0eb50a0f514e32 1-36
+frontend/src/views/vis/charts/style-forms/PivotFeatureForm.vue
+  s_cf404714212754::t_c144d165aee18c 154
+frontend/src/views/vis/charts/style-forms/TableFeatureForm.vue
+  s_cf404714212754::t_069f2d36879792 85
+frontend/src/views/vis/charts/style-forms/TableMarkForm.vue
+  s_cf404714212754::t_9b80a9c26a3c41 276,290,310,312,314,319-321,333-335,346-347,349-351,359-360,416,435-436,486-488,503,506,519,539-542,544-545,548-549,554-555,560,570-572,577-578,587-588,594,617,621-622,670-680
+frontend/src/views/vis/charts/style-forms/TableMarkSection.vue
+  s_cf404714212754::t_2926a04138dbcb 34-35
+frontend/src/views/vis/dashboards/components/DashFilterBar.vue
+  s_cf404714212754::t_57bf18916bbe51 46,83-94,221-226,230-231,233,235-251,266,456-459,516-525
+frontend/src/views/vis/dashboards/components/DashTextSettings.vue
+  s_cf404714212754::t_22bc384a8463a7 1-158
+frontend/src/views/vis/dashboards/components/DashTextTile.vue
+  s_cf404714212754::t_cf53b3a0b99d57 1-401
+frontend/src/views/vis/dashboards/config.ts
+  s_cf404714212754::t_4fe392d5378b2b 15-21
+frontend/src/views/vis/dashboards/dashLayout.test.ts
+  s_cf404714212754::t_80f4ee06a9b34f 1-72
+frontend/src/views/vis/dashboards/dashLayout.ts
+  s_cf404714212754::t_38697e1fbb5f5a 2,15-19,36-60,87,94-96,102-103,134-191,426-427,448-449,518-519,679-696,711-729,733,735,757,759
+frontend/src/views/vis/dashboards/dashScreenshot.ts
+  s_cf404714212754::t_e4e07236adf546 16
+frontend/src/views/vis/shared/VisPivotTable.vue
+  s_cf404714212754::t_ca832404ca597f 65,70-72
+frontend/src/views/vis/shared/contrastExp.ts
+  s_cf404714212754::t_149fabf5a4d985 173,189
+frontend/src/views/vis/shared/fieldStyle.test.ts
+  s_cf404714212754::t_33c969098b1d0a 1-53
+frontend/src/views/vis/shared/fieldStyle.ts
+  s_cf404714212754::t_7a3703f240dd79 2-3,5,52-58,92,118,127-136,166-170,176,180-192,209
+frontend/src/views/vis/shared/listTable.ts
+  s_cf404714212754::t_407db832c9134b 7,68-71,83-97
+frontend/src/views/vis/shared/metricCell.test.ts
+  s_cf404714212754::t_95de76c520060f 1-144
+frontend/src/views/vis/shared/metricCell.ts
+  s_cf404714212754::t_65c8955973135e 1-70
+frontend/src/views/vis/shared/pivotTable.ts
+  s_cf404714212754::t_6064de827c9435 5,438-461
+frontend/src/views/vis/shared/trendCard.ts
+  s_cf404714212754::t_4d35914ba4d004 99
+frontend/src/views/vis/shared/types.ts
+  s_cf404714212754::t_e39ac159cc9a74 241-250,259-260,371
+frontend/src/views/vis/shared/vtableTheme.ts
+  s_cf404714212754::t_6d2d612ef4226f 174-178
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "fced4e021fdc2237114db77f07e001b677cba18a",
+  "prompts": {},
+  "sessions": {
+    "s_cf404714212754": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a06616-62e6-7381-a2dc-75c662d494a7",
+        "model": "unknown"
+      },
+      "human_author": "Chuang <chuang.zhang1@atrenew.com>"
+    }
+  }
+}
