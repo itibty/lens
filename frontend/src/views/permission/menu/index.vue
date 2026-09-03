@@ -302,6 +302,15 @@ onMounted(() => fetchData())
   background: var(--el-bg-color);
 }
 
+.menu-admin > .resize-handle::before {
+  opacity: 0;
+}
+
+.menu-admin > .resize-handle:hover::before,
+.menu-admin.is-resizing > .resize-handle::before {
+  opacity: 1;
+}
+
 .menu-admin__head {
   display: flex;
   align-items: center;

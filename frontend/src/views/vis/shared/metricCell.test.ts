@@ -1,11 +1,13 @@
 import type { VisQueryConfig, VisVisualConfig } from './types'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { buildFieldStyleCandidates, fieldStyleKey, syncFieldStyles } from './fieldStyle'
 import { listTableColumns } from './listTable'
 import {
+  animateMetricProgressBars,
   METRIC_PROGRESS_DEFAULT_COLOR,
   METRIC_PROGRESS_MAX,
   METRIC_PROGRESS_MIN,
+  METRIC_PROGRESS_VERTICAL_GAP,
   metricProgressVTableConfig,
 } from './metricCell'
 import { buildPivotTableOption } from './pivotTable'
@@ -42,7 +44,7 @@ function progressVisual(patch: Partial<NonNullable<VisVisualConfig['fieldStyles'
 }
 
 describe('metric cell progress', () => {
-  it('uses a fixed zero-to-one-hundred domain and full-cell paint', () => {
+  it('uses a fixed zero-to-one-hundred domain with a small vertical inset', () => {
     const config = metricProgressVTableConfig(progressVisual({
       color: '#123456',
     }), query(), '完成率')
@@ -56,7 +58,7 @@ describe('metric cell progress', () => {
     expect(config?.style).toMatchObject({
       barHeight: '100%',
       barBottom: 0,
-      barPadding: [0],
+      barPadding: [METRIC_PROGRESS_VERTICAL_GAP, 0],
       barColor: '#123456',
       barBgColor: 'rgba(0, 0, 0, 0.025)',
     })
@@ -92,7 +94,11 @@ describe('metric cell progress', () => {
 
     expect(column.cellType).toBe('progressbar')
     expect([column.min, column.max]).toEqual([0, 100])
-    expect(column.style).toMatchObject({ barHeight: '100%', textAlign: 'right' })
+    expect(column.style).toMatchObject({
+      barHeight: '100%',
+      barPadding: [METRIC_PROGRESS_VERTICAL_GAP, 0],
+      textAlign: 'right',
+    })
     expect(column.fieldFormat?.({ 完成率: 42.5 })).toBe('42.5%')
   })
 
@@ -117,7 +123,11 @@ describe('metric cell progress', () => {
 
     expect(indicator.cellType).toBe('progressbar')
     expect([indicator.min, indicator.max]).toEqual([0, 100])
-    expect(indicator.style).toMatchObject({ barHeight: '100%', textAlign: 'right' })
+    expect(indicator.style).toMatchObject({
+      barHeight: '100%',
+      barPadding: [METRIC_PROGRESS_VERTICAL_GAP, 0],
+      textAlign: 'right',
+    })
     expect(indicator.format?.(88)).toBe('88%')
   })
 
@@ -140,5 +150,46 @@ describe('metric cell progress', () => {
       format: undefined,
       cellVisual: { type: 'progress', color: '#123456' },
     }])
+  })
+
+  it('animates only the progress fill from zero width', () => {
+    const from = vi.fn()
+    const wait = vi.fn(() => ({ from }))
+    const animate = vi.fn(() => ({ wait }))
+    const fill = { attribute: { width: 72 }, animate }
+    const getCellType = vi.fn((col: number) => col === 1 ? 'progressbar' : 'text')
+    const table = {
+      getCellType,
+      scenegraph: {
+        bodyColStart: 0,
+        bodyColEnd: 1,
+        bodyRowStart: 2,
+        bodyRowEnd: 2,
+        highPerformanceGetCell: () => ({
+          getChildByName: () => ({ getChildren: () => [{ attribute: { width: 120 } }, fill] }),
+        }),
+      },
+    }
+
+    expect(animateMetricProgressBars(table, false)).toBe(1)
+    expect(animate).toHaveBeenCalledWith({ id: 'lens-metric-progress-appear' })
+    expect(wait).toHaveBeenCalledWith(0)
+    expect(from).toHaveBeenCalledWith({ width: 0 }, 420, 'cubicOut')
+  })
+
+  it('skips progress animation when reduced motion is requested', () => {
+    const table = {
+      getCellType: () => 'progressbar',
+      scenegraph: {
+        bodyColStart: 0,
+        bodyColEnd: 0,
+        bodyRowStart: 0,
+        bodyRowEnd: 0,
+        highPerformanceGetCell: vi.fn(),
+      },
+    }
+
+    expect(animateMetricProgressBars(table, true)).toBe(0)
+    expect(table.scenegraph.highPerformanceGetCell).not.toHaveBeenCalled()
   })
 })

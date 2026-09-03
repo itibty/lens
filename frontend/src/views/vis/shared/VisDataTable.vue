@@ -6,6 +6,7 @@ import type { MousePointerCellEvent } from '@visactor/vtable'
 import type { VisVisualConfig } from '@/views/vis/shared/types'
 import { ListTable, TABLE_EVENT_TYPE } from '@visactor/vtable'
 import { buildListTableOption, listTableColumns } from '@/views/vis/shared/listTable'
+import { animateMetricProgressBars } from '@/views/vis/shared/metricCell'
 import { asVTableHost } from '@/views/vis/shared/useVTableMount'
 import VisVTableHost from '@/views/vis/shared/VisVTableHost.vue'
 
@@ -37,6 +38,7 @@ function createTable(el: HTMLElement, width: number, height: number) {
     canvasWidth: width,
     canvasHeight: height,
   })
+  animateMetricProgressBars(table)
   if (props.interactive) {
     table.on(TABLE_EVENT_TYPE.CLICK_CELL, (args: MousePointerCellEvent) => {
       if (args.cellLocation !== 'body')

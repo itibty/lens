@@ -8,6 +8,7 @@ import type { PivotHeaderSortState } from '@/views/vis/shared/pivotTable'
 import type { VisQueryConfig, VisVisualConfig } from '@/views/vis/shared/types'
 import { PIVOT_TABLE_EVENT_TYPE, PivotTable, TABLE_EVENT_TYPE } from '@visactor/vtable'
 import { TableExportPlugin } from '@visactor/vtable-plugins'
+import { animateMetricProgressBars } from '@/views/vis/shared/metricCell'
 import { buildPivotTableOption, nextPivotSortOrder, PIVOT_SUBTOTAL_TOKEN, PIVOT_TOTAL_TOKEN, resolveIndicatorSortKey, resolvePivotSchema } from '@/views/vis/shared/pivotTable'
 import { resolveTableStyle } from '@/views/vis/shared/tableStyle'
 import { asVTableHost } from '@/views/vis/shared/useVTableMount'
@@ -79,6 +80,7 @@ function createTable(el: HTMLElement, width: number, height: number) {
     canvasWidth: width,
     canvasHeight: height,
   })
+  animateMetricProgressBars(table)
   table.on(PIVOT_TABLE_EVENT_TYPE.PIVOT_SORT_CLICK, (args: {
     order?: string
     dimensionInfo?: PivotHeaderSortState['paths']
