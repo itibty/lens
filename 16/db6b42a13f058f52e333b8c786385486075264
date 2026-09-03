@@ -1,0 +1,21 @@
+backend/src/main/java/com/codet/lens/vis/core/query/VisQueryPrep.java
+  s_1ace138bb8957f::t_2e894db9c95994 245-257,259-268,270-279,281-291,293-299,301-312,314-320,322-328,330-336,338-344,346-352,354-360,362-368,370-376,378-379,384-399
+backend/src/test/java/com/codet/lens/vis/core/query/VisQueryPrepTest.java
+  s_1ace138bb8957f::t_4b217bc8cb56f9 1-181
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "16db6b42a13f058f52e333b8c786385486075264",
+  "prompts": {},
+  "sessions": {
+    "s_1ace138bb8957f": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a065cd-f046-7420-9929-b4e604b69a58",
+        "model": "unknown"
+      },
+      "human_author": "Chuang <chuang.zhang1@atrenew.com>"
+    }
+  }
+}
