@@ -17,7 +17,7 @@ This change includes:
 - a dependency-light frontend chart catalog and chart-shape contract tests;
 - backend chart-shape parity tests and missing server-side validation;
 - environment-overridable runtime configuration with unchanged local defaults;
-- pinned pnpm and Maven wrapper versions;
+- pinned pnpm and documented Maven prerequisites;
 - documentation cleanup.
 
 This change explicitly excludes:
@@ -49,7 +49,7 @@ The Mockito version continues to come from Spring Boot dependency management. No
 
 Add `verify.sh` at the repository root. It runs, in order:
 
-1. `./mvnw test` in `backend/`;
+1. `mvn test` in `backend/`;
 2. `pnpm lint` in `frontend/`;
 3. `pnpm type-check` in `frontend/`;
 4. `pnpm test` in `frontend/`.
@@ -142,12 +142,11 @@ Add documentation explaining that the checked-in defaults are development-only. 
 
 ## 7. Toolchain and Documentation
 
-- Add Maven Wrapper pinned to Maven 3.9.9 and use it in documented repository commands.
 - Add `packageManager` pinned to pnpm 10.5.0 while retaining the existing Node engine range.
 - Add the missing root Chinese README referenced by `README.md`.
 - Document `./verify.sh` in the root and package READMEs.
 
-Update `build.sh` to invoke `backend/mvnw` for backend builds. Its Java/Javac checks remain; the system Maven requirement is removed because the wrapper owns the Maven version. Developers may still use a compatible system Maven directly for ad-hoc commands.
+Keep the existing system Maven prerequisite and `build.sh` behavior. A Maven Wrapper is intentionally excluded to avoid adding another checked-in tool bootstrap layer.
 
 ## Dependency Direction
 
@@ -176,7 +175,7 @@ Pure model and catalog modules cannot import Vue components, Pinia stores, route
 
 The change is complete when:
 
-1. plain `./mvnw test` passes on Java 21 without a Mockito self-attach warning;
+1. plain `mvn test` passes on Java 21 without a Mockito self-attach warning;
 2. `pnpm lint`, `pnpm type-check`, and `pnpm test` pass;
 3. `./verify.sh` runs the complete validation suite successfully;
 4. dashboard config/filter characterization tests pass before and after module extraction;
@@ -189,7 +188,7 @@ The change is complete when:
 
 ## Rollout Order
 
-1. Fix the backend test agent and add Maven Wrapper.
+1. Fix the backend test agent.
 2. Add Vitest and characterization tests.
 3. Extract dashboard pure modules behind the existing facade.
 4. Add the chart catalog, migrate helpers, and add frontend contract tests.

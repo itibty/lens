@@ -6,7 +6,7 @@
 
 **Architecture:** Preserve all current public imports and persisted formats while moving pure domain behavior behind compatibility facades. Keep frontend chart metadata dependency-light, let the UI registry retain rendering concerns, and treat backend request validation as the final authority. Do not add database migration tooling or edit generated API clients.
 
-**Tech Stack:** JDK 21, Maven 3.9.9 Wrapper, Spring Boot 4.1, JUnit 5, Mockito 5, Vue 3.5, TypeScript 6, Vite 8, Vitest, pnpm 10.5.0.
+**Tech Stack:** JDK 21, Maven, Spring Boot 4.1, JUnit 5, Mockito 5, Vue 3.5, TypeScript 6, Vite 8, Vitest, pnpm 10.5.0.
 
 ---
 
@@ -18,14 +18,11 @@
 - Keep dashboard imports from `dashApi.ts` working throughout the extraction.
 - Use tests before implementation changes and commit each completed task independently.
 
-### Task 1: Stabilize backend tests and pin Maven
+### Task 1: Stabilize backend tests
 
 **Files:**
 
 - Modify: `backend/pom.xml`
-- Create: `backend/mvnw`
-- Create: `backend/mvnw.cmd`
-- Create: `backend/.mvn/wrapper/maven-wrapper.properties`
 
 **Step 1: Reproduce the current Java 21 failure**
 
@@ -68,22 +65,16 @@ Add the dependency property resolver and Surefire configuration under `<build><p
 
 Keep plugin versions supplied by Spring Boot dependency management.
 
-**Step 3: Generate the Maven Wrapper**
+**Step 3: Verify with the project Maven command**
 
-Run: `cd backend && mvn wrapper:wrapper -Dmaven=3.9.9`
-
-Expected: wrapper scripts and `maven-wrapper.properties` are created with Maven 3.9.9.
-
-**Step 4: Verify from the wrapper**
-
-Run: `cd backend && ./mvnw test`
+Run: `cd backend && mvn test`
 
 Expected: all backend tests pass and output contains no Mockito dynamic/self-attach warning.
 
-**Step 5: Commit**
+**Step 4: Commit**
 
 ```shell
-git add backend/pom.xml backend/mvnw backend/mvnw.cmd backend/.mvn/wrapper/maven-wrapper.properties
+git add backend/pom.xml
 git commit -m "build: stabilize Java 21 backend tests"
 ```
 
@@ -325,7 +316,7 @@ tornado, rank
 
 Parameterize invalid lower/upper bound cases and assert `ResultException` plus the existing chart-specific message. Add explicit cases for bar/line with multiple metrics and too many dimensions, and for static/pivot endpoint distinction.
 
-Run: `cd backend && ./mvnw -Dtest=VisQueryPrepTest test`
+Run: `cd backend && mvn -Dtest=VisQueryPrepTest test`
 
 Expected: new missing-rule cases fail.
 
@@ -339,8 +330,8 @@ Run:
 
 ```shell
 cd backend
-./mvnw -Dtest=VisQueryPrepTest test
-./mvnw test
+mvn -Dtest=VisQueryPrepTest test
+mvn test
 ```
 
 Expected: all tests pass without Mockito attachment warnings.
@@ -363,7 +354,7 @@ git commit -m "test: enforce backend chart shape contracts"
 
 Use `YamlPropertySourceLoader` plus a property resolver to verify the YAML exposes the local defaults and accepts system-property overrides for database, Redis, and JWT settings. Keep this test independent from live MySQL and Redis.
 
-Run: `cd backend && ./mvnw -Dtest=ApplicationConfigurationTest test`
+Run: `cd backend && mvn -Dtest=ApplicationConfigurationTest test`
 
 Expected: the override/default assertions fail before placeholders are added.
 
@@ -390,8 +381,8 @@ Run:
 
 ```shell
 cd backend
-./mvnw -Dtest=ApplicationConfigurationTest test
-./mvnw test
+mvn -Dtest=ApplicationConfigurationTest test
+mvn test
 ```
 
 Expected: both commands pass without external services.
@@ -408,7 +399,6 @@ git commit -m "config: support environment overrides"
 **Files:**
 
 - Create: `verify.sh`
-- Modify: `build.sh`
 - Modify: `frontend/package.json`
 - Modify: `README.md`
 - Create: `README.zh-CN.md`
@@ -431,44 +421,34 @@ set -euo pipefail
 
 repo_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-(cd "$repo_dir/backend" && ./mvnw test)
+(cd "$repo_dir/backend" && mvn test)
 (cd "$repo_dir/frontend" && pnpm lint)
 (cd "$repo_dir/frontend" && pnpm type-check)
 (cd "$repo_dir/frontend" && pnpm test)
 ```
 
-**Step 2: Make packaging use the wrapper**
-
-Update `build.sh` to:
-
-- keep Java and Javac availability/version checks;
-- remove the system `mvn` prerequisite and Maven version parsing;
-- execute `./mvnw -DskipTests clean package` from `backend/`.
-
-**Step 3: Add and update documentation**
+**Step 2: Add and update documentation**
 
 - Add the missing Chinese root README linked by `README.md`.
-- Document prerequisites, schema setup, default credentials as local-development defaults, environment overrides, wrapper commands, `pnpm test`, and `./verify.sh`.
+- Document prerequisites, schema setup, default credentials as local-development defaults, Maven commands, `pnpm test`, and `./verify.sh`.
 - Keep package-specific READMEs concise and consistent with the root documentation.
 
-**Step 4: Check scripts and docs**
+**Step 3: Check scripts and docs**
 
 Run:
 
 ```shell
 bash -n verify.sh
-bash -n build.sh
 test -x verify.sh
-test -x backend/mvnw
-rg "(^| )mvn " README.md README.zh-CN.md backend/README.md build.sh
+rg "mvn test|pnpm test|verify.sh" README.md README.zh-CN.md backend/README.md frontend/README.md
 ```
 
 Expected: syntax/executable checks pass; any remaining direct Maven examples are intentional explanatory text, not required commands.
 
-**Step 5: Commit**
+**Step 4: Commit**
 
 ```shell
-git add verify.sh build.sh frontend/package.json README.md README.zh-CN.md backend/README.md frontend/README.md
+git add verify.sh frontend/package.json README.md README.zh-CN.md backend/README.md frontend/README.md
 git commit -m "docs: add reproducible project verification"
 ```
 
