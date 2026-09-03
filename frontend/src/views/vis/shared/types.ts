@@ -1,3 +1,29 @@
+import type { ChartType } from '@/views/vis/charts/catalog'
+import { isPivotChart, resolveChartTypeCode } from '@/views/vis/charts/catalog'
+
+export type { ChartType, VisStageMode } from '@/views/vis/charts/catalog'
+export {
+  allowsFullscreen,
+  API_CHART_TYPES,
+  hidesQueryDimensions,
+  isHeatmapChart,
+  isKpiChart,
+  isNumberChart,
+  isNumberStyleChart,
+  isPivotChart,
+  isProgressChart,
+  isRankChart,
+  isStaticChart,
+  isTrendChart,
+  isVChartType,
+  needsDataset,
+  NO_FULLSCREEN_CHART_TYPES,
+  resolveChartTypeCode,
+  resolveVisStage,
+  STATIC_CHART_TYPES,
+  usesChartTheme,
+} from '@/views/vis/charts/catalog'
+
 /** 几何图系列色 / 热力连续色带 / 表格配色；不写 = 官方默认 */
 export type VisChartThemeId
   = | 'DEFAULT'
@@ -304,151 +330,6 @@ export interface VisNumberStyle extends VisNumberFormat {
   color?: string
 }
 
-export type ChartType
-  = | 'bar'
-    | 'line'
-    | 'combo'
-    | 'pie'
-    | 'scatter'
-    | 'table'
-    | 'number'
-    | 'progress'
-    | 'kpi'
-    | 'radar'
-    | 'funnel'
-    | 'wordcloud'
-    | 'heatmap'
-    | 'treemap'
-    | 'waterfall'
-    | 'trend'
-    | 'tornado'
-    | 'rank'
-    | 'richtext'
-    | 'url'
-  /** 透视表：行/列维交叉，走 /pivot */
-    | 'pivot'
-
-/** 后端 ChartTypeEnum.code，接口与落库统一用小写 */
-export const API_CHART_TYPES = new Set<string>([
-  'bar',
-  'line',
-  'combo',
-  'pie',
-  'scatter',
-  'table',
-  'number',
-  'progress',
-  'kpi',
-  'radar',
-  'funnel',
-  'wordcloud',
-  'heatmap',
-  'treemap',
-  'waterfall',
-  'trend',
-  'tornado',
-  'rank',
-  'richtext',
-  'url',
-  'pivot',
-])
-
-/** 无需数据集：正文写在 visualJson，预览不走查询 */
-export const STATIC_CHART_TYPES = new Set(['richtext', 'url'])
-
-/** 查看看板时不提供全屏 */
-export const NO_FULLSCREEN_CHART_TYPES = new Set(['number', 'progress', 'trend'])
-
-export function allowsFullscreen(chartType?: string) {
-  return !NO_FULLSCREEN_CHART_TYPES.has(String(chartType || '').toLowerCase())
-}
-
-export function isPivotChart(chartType?: string) {
-  return String(chartType || '').toLowerCase() === 'pivot'
-}
-
-export function isStaticChart(chartType?: string) {
-  return STATIC_CHART_TYPES.has(String(chartType || '').toLowerCase())
-}
-
-/** 查询类才需要数据集：回填选中、拉字段、校验、查数。富文本 / 网页都不做。 */
-export function needsDataset(chartType?: string) {
-  return !isStaticChart(chartType)
-}
-
-export function isProgressChart(chartType?: string) {
-  return String(chartType || '').toLowerCase() === 'progress'
-}
-
-export function isKpiChart(chartType?: string) {
-  return String(chartType || '').toLowerCase() === 'kpi'
-}
-
-export function isHeatmapChart(chartType?: string) {
-  return String(chartType || '').toLowerCase() === 'heatmap'
-}
-
-export function isNumberChart(chartType?: string) {
-  return String(chartType || '').toLowerCase() === 'number'
-}
-
-export function isTrendChart(chartType?: string) {
-  return String(chartType || '').toLowerCase() === 'trend'
-}
-
-export function isRankChart(chartType?: string) {
-  return String(chartType || '').toLowerCase() === 'rank'
-}
-
-/** 指标卡 / 趋势卡共用 visual.number 的数字格式与配色 */
-export function isNumberStyleChart(chartType?: string) {
-  return isNumberChart(chartType) || isTrendChart(chartType)
-}
-
-/** 卡片舞台：决定 VisCardView 渲染哪一支 */
-export type VisStageMode = 'number' | 'progress' | 'kpi' | 'trend' | 'rank' | 'table' | 'pivot' | 'chart' | 'static' | 'unknown'
-
-const VCHART_TYPES = new Set(['bar', 'line', 'combo', 'pie', 'scatter', 'radar', 'funnel', 'wordcloud', 'heatmap', 'treemap', 'waterfall', 'tornado'])
-
-export function isVChartType(chartType?: string) {
-  return VCHART_TYPES.has(String(chartType || '').toLowerCase())
-}
-
-/** 几何图 / 表格 / 透视才落 chartTheme */
-export function usesChartTheme(chartType?: string) {
-  const type = String(chartType || '').toLowerCase()
-  return isVChartType(type) || type === 'table' || type === 'pivot'
-}
-
-export function resolveVisStage(chartType?: string): VisStageMode {
-  const type = String(chartType || '').trim().toLowerCase()
-  if (type === 'number')
-    return 'number'
-  if (type === 'progress')
-    return 'progress'
-  if (type === 'kpi')
-    return 'kpi'
-  if (type === 'trend')
-    return 'trend'
-  if (type === 'rank')
-    return 'rank'
-  if (type === 'table')
-    return 'table'
-  if (type === 'pivot')
-    return 'pivot'
-  if (STATIC_CHART_TYPES.has(type))
-    return 'static'
-  if (VCHART_TYPES.has(type))
-    return 'chart'
-  return 'unknown'
-}
-
-/** 指标卡 / 进度条不投放维度 */
-export function hidesQueryDimensions(chartType?: string) {
-  const stage = resolveVisStage(chartType)
-  return stage === 'number' || stage === 'progress'
-}
-
 /**
  * 本地视觉配置。
  * 普通查询 body.visual 只读 chartType；透视另带合计开关。完整样式写入 visualJson。
@@ -509,12 +390,6 @@ export interface VisVisualConfig {
 export type VisQueryConfig = VIS.QueryConfig & {
   rowDimensions?: VIS.DimensionItem[]
   colDimensions?: VIS.DimensionItem[]
-}
-
-/** 只认 ChartTypeEnum.code；不认识则 undefined */
-export function resolveChartTypeCode(raw?: string): ChartType | undefined {
-  const key = String(raw || '').trim().toLowerCase()
-  return API_CHART_TYPES.has(key) ? key as ChartType : undefined
 }
 
 export function toApiChartType(chartType?: string): string {

@@ -1,5 +1,5 @@
+import type { ChartType } from './catalog'
 import type { ChartDefinition, ChartPickerGroup } from './types'
-import type { ChartType } from '@/views/vis/shared/types'
 import { barChart } from './definitions/bar'
 import { comboChart } from './definitions/combo'
 import { funnelChart } from './definitions/funnel'

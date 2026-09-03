@@ -1,6 +1,7 @@
 import type { Component } from 'vue'
+import type { ChartType } from './catalog'
 import type { ChartCaps, ChartDefaultConfig } from '@/views/vis/shared/chartOptions'
-import type { ChartType, VisVisualConfig } from '@/views/vis/shared/types'
+import type { VisVisualConfig } from '@/views/vis/shared/types'
 
 /** 选择器按用途分组 */
 export type ChartPickerGroup
