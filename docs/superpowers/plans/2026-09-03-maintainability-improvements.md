@@ -85,7 +85,7 @@ git commit -m "build: stabilize Java 21 backend tests"
 - Modify: `frontend/package.json`
 - Modify: `frontend/pnpm-lock.yaml`
 - Create: `frontend/vitest.config.ts`
-- Create: `frontend/src/views/vis/dash/dashApi.test.ts`
+- Create: `frontend/src/views/vis/dashboards/dashApi.test.ts`
 
 **Step 1: Add Vitest and scripts**
 
@@ -131,7 +131,7 @@ Use deterministic values and assert objects directly rather than snapshots.
 
 **Step 3: Run the focused test**
 
-Run: `cd frontend && pnpm test -- src/views/vis/dash/dashApi.test.ts`
+Run: `cd frontend && pnpm test -- src/views/vis/dashboards/dashApi.test.ts`
 
 Expected: tests pass against the current module and establish the refactor contract.
 
@@ -152,17 +152,17 @@ git commit -m "test: add frontend domain test foundation"
 
 **Files:**
 
-- Create: `frontend/src/views/vis/dash/dashConfigCodec.ts`
-- Create: `frontend/src/views/vis/dash/dashFilterModel.ts`
-- Create: `frontend/src/views/vis/dash/dashboardRepository.ts`
-- Modify: `frontend/src/views/vis/dash/dashApi.ts`
-- Modify: `frontend/src/views/vis/dash/dashApi.test.ts`
+- Create: `frontend/src/views/vis/dashboards/dashConfigCodec.ts`
+- Create: `frontend/src/views/vis/dashboards/dashFilterModel.ts`
+- Create: `frontend/src/views/vis/dashboards/dashboardRepository.ts`
+- Modify: `frontend/src/views/vis/dashboards/dashApi.ts`
+- Modify: `frontend/src/views/vis/dashboards/dashApi.test.ts`
 
 **Step 1: Strengthen the dependency contract test**
 
 Add direct imports from the future pure modules to the characterization test while retaining selected imports from `dashApi.ts`. This test must fail because the extracted modules do not exist yet.
 
-Run: `cd frontend && pnpm test -- src/views/vis/dash/dashApi.test.ts`
+Run: `cd frontend && pnpm test -- src/views/vis/dashboards/dashApi.test.ts`
 
 Expected: failure resolving `dashConfigCodec` or `dashFilterModel`.
 
@@ -196,10 +196,10 @@ Run:
 
 ```shell
 cd frontend
-pnpm test -- src/views/vis/dash/dashApi.test.ts
+pnpm test -- src/views/vis/dashboards/dashApi.test.ts
 pnpm lint
 pnpm type-check
-rg "@/apis|dashboardRepository" src/views/vis/dash/dashConfigCodec.ts src/views/vis/dash/dashFilterModel.ts
+rg "@/apis|dashboardRepository" src/views/vis/dashboards/dashConfigCodec.ts src/views/vis/dashboards/dashFilterModel.ts
 ```
 
 Expected: tests and checks pass; the final search returns no matches.
@@ -207,7 +207,7 @@ Expected: tests and checks pass; the final search returns no matches.
 **Step 7: Commit**
 
 ```shell
-git add frontend/src/views/vis/dash/dashApi.ts frontend/src/views/vis/dash/dashApi.test.ts frontend/src/views/vis/dash/dashConfigCodec.ts frontend/src/views/vis/dash/dashFilterModel.ts frontend/src/views/vis/dash/dashboardRepository.ts
+git add frontend/src/views/vis/dashboards/dashApi.ts frontend/src/views/vis/dashboards/dashApi.test.ts frontend/src/views/vis/dashboards/dashConfigCodec.ts frontend/src/views/vis/dashboards/dashFilterModel.ts frontend/src/views/vis/dashboards/dashboardRepository.ts
 git commit -m "refactor: separate dashboard domain concerns"
 ```
 

@@ -12,6 +12,8 @@
     "build": "run-p type-check build-only",
     "build-only": "vite build --mode prd",
     "type-check": "vue-tsc --noEmit -p tsconfig.app.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "lint": "eslint .",
     "lint-fix": "eslint . --fix",
     "generate-api": "node ./build/generate/openapi.config.cjs --service=admin,vis",
@@ -113,6 +115,7 @@
     "vite-plugin-svg-icons": "^2.0.1",
     "vite-plugin-vue-devtools": "^8.2.1",
     "vite-plugin-vue-setup-extend": "^0.4.0",
+    "vitest": "^4.1.11",
     "vue-tsc": "^3.3.11"
   },
   "pnpm": {
