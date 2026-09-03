@@ -1,0 +1,25 @@
+frontend/index.html
+  s_73a2ddbd1fcc21::t_486930b98595ed 5
+frontend/public/favicon.svg
+  s_73a2ddbd1fcc21::t_8ccd5183a2644f 1-6
+frontend/src/assets/icons/logo.svg
+  s_73a2ddbd1fcc21::t_5af00065aa9a45 1-6
+frontend/src/components/LensLogo.vue
+  s_73a2ddbd1fcc21::t_a455cd98b9f981 21-24,31-33,40-66,69-70
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "17ee1ec37dd97dde54ba3df5184bb4aa9a47b06e",
+  "prompts": {},
+  "sessions": {
+    "s_73a2ddbd1fcc21": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a06701-9a63-7c02-b974-8a31f15cb02a",
+        "model": "unknown"
+      },
+      "human_author": "Chuang <chuang.zhang1@atrenew.com>"
+    }
+  }
+}
