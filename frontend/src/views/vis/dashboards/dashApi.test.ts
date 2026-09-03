@@ -1,5 +1,9 @@
 import type { VisDashFilterDef } from './dashFilterModel'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
+import {
+  applyFilterDefaults as facadeApplyFilterDefaults,
+  parseDashConfig as facadeParseDashConfig,
+} from './dashApi'
 import {
   parseDashConfig,
   stringifyDashConfig,
@@ -9,7 +13,10 @@ import {
   dashFilterChipText,
   filterValueReady,
   globalsForCard,
+  normalizeFilterDef,
 } from './dashFilterModel'
+
+vi.mock('./dashboardRepository', () => ({}))
 
 const selectFilter: VisDashFilterDef = {
   uid: 'region-filter',
@@ -32,6 +39,23 @@ const selectFilter: VisDashFilterDef = {
 describe('dashboard config codec', () => {
   it('falls back to safe defaults for malformed JSON', () => {
     expect(parseDashConfig('{invalid')).toEqual({
+      filters: [],
+      widgets: [],
+      theme: 't1',
+      cardRadius: 'lg',
+      autoRefreshSec: undefined,
+      extra: {},
+    })
+  })
+
+  it.each([
+    ['empty input', undefined],
+    ['JSON null', 'null'],
+    ['JSON array', '[]'],
+    ['JSON string', '"legacy"'],
+    ['JSON number', '42'],
+  ])('falls back to safe defaults for %s', (_label, raw) => {
+    expect(parseDashConfig(raw)).toEqual({
       filters: [],
       widgets: [],
       theme: 't1',
@@ -83,6 +107,54 @@ describe('dashboard config codec', () => {
 })
 
 describe('dashboard filter model', () => {
+  it('keeps the dashApi compatibility facade wired to the extracted modules', () => {
+    expect(facadeParseDashConfig).toBe(parseDashConfig)
+    expect(facadeApplyFilterDefaults).toBe(applyFilterDefaults)
+  })
+
+  it('normalizes text, number, date, and select filter definitions', () => {
+    const base = {
+      uid: 'filter-1',
+      datasetId: ' dataset-1 ',
+      field: ' amount ',
+      label: '',
+      applyAs: 'filter' as const,
+    }
+
+    expect(normalizeFilterDef({ ...base, formType: 'input', op: 'between' })).toMatchObject({
+      datasetId: 'dataset-1',
+      field: 'amount',
+      label: 'amount',
+      formType: 'input',
+      op: 'eq',
+    })
+    expect(normalizeFilterDef({
+      ...base,
+      formType: 'number',
+      op: 'between',
+      defaultValue: { value: [10, 20] },
+    })).toMatchObject({
+      formType: 'numberRange',
+      op: 'between',
+      defaultValue: { value: [10, 20] },
+    })
+    expect(normalizeFilterDef({
+      ...base,
+      formType: 'date',
+      op: 'between',
+      defaultValue: { value: ['2026-09-01', '2026-09-03'] },
+    })).toMatchObject({
+      formType: 'dateRange',
+      op: 'between',
+      defaultValue: { value: ['2026-09-01', '2026-09-03'] },
+    })
+    expect(normalizeFilterDef({ ...base, formType: 'select' })).toMatchObject({
+      formType: 'select',
+      op: 'eq',
+      options: { source: 'manual', items: [] },
+    })
+  })
+
   it('applies a ready default only when the user has not supplied a value', () => {
     expect(applyFilterDefaults([selectFilter], {})).toEqual({
       'region-filter': { value: ['east'], valueExp: undefined },

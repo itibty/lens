@@ -47,7 +47,12 @@ function readFilterList(raw: unknown): VisDashFilterDef[] {
 }
 
 export function parseDashConfig(raw?: string): VisDashConfig {
-  const parsed = parseJson<Record<string, unknown>>(raw, {})
+  const decoded = parseJson<unknown>(raw, {})
+  const parsed: Record<string, unknown> = decoded != null
+    && typeof decoded === 'object'
+    && !Array.isArray(decoded)
+    ? decoded as Record<string, unknown>
+    : {}
   const extra = { ...parsed }
   delete extra.filters
   delete extra.theme

@@ -167,6 +167,30 @@ export function normalizeFilterItemForSave(item: VIS.FilterItem): VIS.FilterItem
   return next
 }
 
+/** 保存前规范化参数；参数只保留字段、标签和值，不携带筛选操作符。 */
+export function normalizeParamItemForSave(item: VIS.FilterItem): VIS.FilterItem | null {
+  const field = item.field?.trim()
+  if (!field)
+    return null
+  const next: VIS.FilterItem = { field }
+  if (item.label?.trim())
+    next.label = item.label.trim()
+  if (item.valueExp) {
+    next.valueExp = item.valueExp
+    const value = normalizeDateExpValue(item.valueExp, item.value as unknown[])
+    if (dateValueExpCount(item.valueExp) > 0)
+      next.value = value as VIS.FilterItem['value']
+    return next
+  }
+  const raw = Array.isArray(item.value)
+    ? item.value.filter(v => v != null && String(v) !== '')
+    : []
+  if (!raw.length)
+    return null
+  next.value = raw as unknown as VIS.FilterItem['value']
+  return next
+}
+
 export function normalizeHavingItemForSave(item: VIS.HavingFilterItem): VIS.HavingFilterItem {
   const op = item.op ?? 'eq'
   const next: VIS.HavingFilterItem = { field: item.field, agg: item.agg, op }

@@ -4,6 +4,8 @@ import com.codet.lens.common.base.ResultException;
 import com.codet.lens.vis.dto.item.ContrastConfig;
 import com.codet.lens.vis.dto.item.DimensionItem;
 import com.codet.lens.vis.dto.item.MetricItem;
+import com.codet.lens.vis.dto.pivot.PivotQueryConfig;
+import com.codet.lens.vis.dto.pivot.PivotQueryRequest;
 import com.codet.lens.vis.dto.query.QueryConfig;
 import com.codet.lens.vis.dto.query.QueryRequest;
 import java.util.ArrayList;
@@ -31,6 +33,16 @@ class VisQueryPrepTest {
     @MethodSource("invalidChartShapes")
     void rejectsInvalidShapeForEveryQueryBackedChart(String chartType, int dimensions, int metrics,
                                                      String message) {
+        ResultException error = assertThrows(ResultException.class,
+                () -> VisQueryPrep.prepare(request(chartType, dimensions, metrics)));
+
+        assertEquals(message, error.getMsg());
+    }
+
+    @ParameterizedTest(name = "{0}: rejects additional boundary {1} dimensions, {2} metrics")
+    @MethodSource("additionalInvalidBoundaries")
+    void rejectsAdditionalCardinalityBoundaries(String chartType, int dimensions, int metrics,
+                                                 String message) {
         ResultException error = assertThrows(ResultException.class,
                 () -> VisQueryPrep.prepare(request(chartType, dimensions, metrics)));
 
@@ -87,6 +99,27 @@ class VisQueryPrepTest {
         assertEquals("chartType=pivot 请使用透视查询", error.getMsg());
     }
 
+    @Test
+    void pivotEndpointAcceptsAValidPivotQuery() {
+        assertDoesNotThrow(() -> VisQueryPrep.preparePivot(pivotRequest("pivot", 1, 1, 1)));
+    }
+
+    @Test
+    void pivotEndpointRejectsANonPivotChartType() {
+        ResultException error = assertThrows(ResultException.class,
+                () -> VisQueryPrep.preparePivot(pivotRequest("table", 1, 1, 1)));
+
+        assertEquals("透视查询 chartType 必须是 pivot", error.getMsg());
+    }
+
+    @Test
+    void pivotEndpointRequiresAtLeastOneMetric() {
+        ResultException error = assertThrows(ResultException.class,
+                () -> VisQueryPrep.preparePivot(pivotRequest("pivot", 1, 1, 0)));
+
+        assertEquals("metrics 不能为空", error.getMsg());
+    }
+
     private static Stream<Arguments> validChartShapes() {
         return Stream.of(
                 Arguments.of("table", 1, 0),
@@ -133,6 +166,28 @@ class VisQueryPrepTest {
         );
     }
 
+    private static Stream<Arguments> additionalInvalidBoundaries() {
+        return Stream.of(
+                Arguments.of("bar", 1, 0, "柱状图至少需要 1 个指标"),
+                Arguments.of("line", 0, 1, "折线图至少需要 1 个维度"),
+                Arguments.of("progress", 0, 3, "进度条最多 2 个指标"),
+                Arguments.of("kpi", 2, 1, "KPI图需要恰好 1 个维度"),
+                Arguments.of("kpi", 1, 3, "KPI图最多 2 个指标"),
+                Arguments.of("combo", 2, 2, "组合图需要恰好 1 个维度"),
+                Arguments.of("pie", 0, 1, "饼图需要恰好 1 个维度"),
+                Arguments.of("funnel", 1, 2, "漏斗图需要恰好 1 个指标"),
+                Arguments.of("wordcloud", 0, 1, "词云需要恰好 1 个维度"),
+                Arguments.of("treemap", 1, 2, "矩形树图需要恰好 1 个指标"),
+                Arguments.of("heatmap", 2, 2, "热力图需要恰好 1 个指标"),
+                Arguments.of("scatter", 0, 3, "散点图需要恰好 2 个指标"),
+                Arguments.of("radar", 2, 1, "雷达图需要恰好 1 个维度"),
+                Arguments.of("waterfall", 0, 1, "瀑布图需要恰好 1 个维度"),
+                Arguments.of("trend", 1, 0, "趋势指标卡至少需要 1 个指标"),
+                Arguments.of("tornado", 0, 2, "对比条需要恰好 1 个维度"),
+                Arguments.of("rank", 1, 2, "排行榜需要恰好 1 个指标")
+        );
+    }
+
     private static QueryRequest request(String chartType, int dimensionCount, int metricCount) {
         QueryConfig config = new QueryConfig();
         config.setDatasetId(1L);
@@ -144,11 +199,28 @@ class VisQueryPrepTest {
         return request;
     }
 
+    private static PivotQueryRequest pivotRequest(String chartType, int rowDimensionCount,
+                                                  int colDimensionCount, int metricCount) {
+        PivotQueryConfig config = new PivotQueryConfig();
+        config.setDatasetId(1L);
+        config.setRowDimensions(dimensions(rowDimensionCount, "row_dimension_"));
+        config.setColDimensions(dimensions(colDimensionCount, "col_dimension_"));
+        config.setMetrics(metrics(metricCount));
+        PivotQueryRequest request = new PivotQueryRequest();
+        request.setQuery(config);
+        request.setVisual(Map.of("chartType", chartType));
+        return request;
+    }
+
     private static List<DimensionItem> dimensions(int count) {
+        return dimensions(count, "dimension_");
+    }
+
+    private static List<DimensionItem> dimensions(int count, String prefix) {
         List<DimensionItem> dimensions = new ArrayList<>();
         for (int i = 0; i < count; i++) {
             DimensionItem item = new DimensionItem();
-            item.setField("dimension_" + i);
+            item.setField(prefix + i);
             dimensions.add(item);
         }
         return dimensions;

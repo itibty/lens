@@ -4,10 +4,9 @@ import { pruneAutoRefresh } from '@/views/vis/shared/cardRefresh'
 import { pruneCardChrome } from '@/views/vis/shared/cardTheme'
 import { pruneChartVisual } from '@/views/vis/shared/chartOptions'
 import { allowsChartTheme, DEFAULT_CHART_THEME, resolveChartThemeId } from '@/views/vis/shared/chartPalette'
-import { dateValueExpCount, normalizeDateExpValue } from '@/views/vis/shared/dateExp'
 import { normalizeMetricForSave, stripPillUid } from '@/views/vis/shared/dnd'
 import { pruneFieldStyles } from '@/views/vis/shared/fieldStyle'
-import { normalizeFilterItemForSave, normalizeHavingItemForSave } from '@/views/vis/shared/filterValue'
+import { normalizeFilterItemForSave, normalizeHavingItemForSave, normalizeParamItemForSave } from '@/views/vis/shared/filterValue'
 import { pruneKpiVisual } from '@/views/vis/shared/kpiCard'
 import { pruneNumberVisual } from '@/views/vis/shared/numberStyle'
 import { pruneProgressVisual } from '@/views/vis/shared/progressCard'
@@ -258,30 +257,9 @@ export {
 
 export { orderSourceDimensions, reconcileQueryDependents } from './queryDependents'
 
-export { isStaticChart, needsDataset } from '@/views/vis/shared/types'
+export { normalizeParamItemForSave } from '@/views/vis/shared/filterValue'
 
-export function normalizeParamItemForSave(item: VIS.FilterItem): VIS.FilterItem | null {
-  const field = item.field?.trim()
-  if (!field)
-    return null
-  const next: VIS.FilterItem = { field }
-  if (item.label?.trim())
-    next.label = item.label.trim()
-  if (item.valueExp) {
-    next.valueExp = item.valueExp
-    const value = normalizeDateExpValue(item.valueExp, item.value as unknown[])
-    if (dateValueExpCount(item.valueExp) > 0)
-      next.value = value as VIS.FilterItem['value']
-    return next
-  }
-  const raw = Array.isArray(item.value)
-    ? item.value.filter(v => v != null && String(v) !== '')
-    : []
-  if (!raw.length)
-    return null
-  next.value = raw as unknown as VIS.FilterItem['value']
-  return next
-}
+export { isStaticChart, needsDataset } from '@/views/vis/shared/types'
 
 export {
   apiErrorMessage,

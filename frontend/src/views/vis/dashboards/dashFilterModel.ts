@@ -1,9 +1,8 @@
 import type { FilterOp } from '@/views/vis/shared/filterValue'
 import type { DatasetFieldDataType, VisCard } from '@/views/vis/shared/types'
 import dayjs from 'dayjs'
-import { normalizeParamItemForSave } from '@/views/vis/cards/cardApi'
 import { dateValueExpCount, formatDateValueExpLabel, isDateExpReady, normalizeDateExpValue } from '@/views/vis/shared/dateExp'
-import { filterOpLabel, formatFilterValueSummary, incompleteFilterMessage, normalizeFilterItemForSave } from '@/views/vis/shared/filterValue'
+import { filterOpLabel, formatFilterValueSummary, incompleteFilterMessage, normalizeFilterItemForSave, normalizeParamItemForSave } from '@/views/vis/shared/filterValue'
 import { isDateField } from '@/views/vis/shared/types'
 
 export type DashFilterFormType
