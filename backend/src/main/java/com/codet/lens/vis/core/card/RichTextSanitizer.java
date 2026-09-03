@@ -24,6 +24,11 @@ public final class RichTextSanitizer {
     private RichTextSanitizer() {
     }
 
+    /** 富文本白名单清洗；看板原生文本和富文本卡片共用。 */
+    public static String sanitizeHtml(String html) {
+        return POLICY.sanitize(StrUtil.nullToEmpty(html));
+    }
+
     public static String sanitizeVisualJson(String visualJson) {
         if (StrUtil.isBlank(visualJson)) {
             return visualJson;
@@ -55,7 +60,7 @@ public final class RichTextSanitizer {
         }
         JsonNode html = object.get("html");
         if (html != null && html.isTextual()) {
-            object.put("html", POLICY.sanitize(html.asText()));
+            object.put("html", sanitizeHtml(html.asText()));
         }
     }
 }

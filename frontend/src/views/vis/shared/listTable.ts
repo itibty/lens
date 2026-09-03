@@ -4,6 +4,7 @@ import { TYPES } from '@visactor/vtable'
 import { FilterPlugin } from '@visactor/vtable-plugins'
 import { contrastPeriodDescription, findContrastInfo } from './contrastExp'
 import { formatMetricField } from './fieldStyle'
+import { metricProgressVTableConfig } from './metricCell'
 import { bindMarkColumnStyle, prepareTableMarks } from './tableMark'
 import { resolveTableStyle } from './tableStyle'
 import { dimensionAlias, metricAlias } from './types'
@@ -64,7 +65,10 @@ export function listTableColumns(
   return listTableFields(query, data).map((field) => {
     const isMetric = metricKeys.has(field)
     const periodTip = contrastPeriodDescription(findContrastInfo(data, field))
-    return {
+    const progress = isMetric
+      ? metricProgressVTableConfig(visual, query, field, dark)
+      : null
+    const common = {
       field,
       title: field,
       width: 'auto',
@@ -72,12 +76,24 @@ export function listTableColumns(
       mergeCell,
       description: periodTip || undefined,
       headerIcon: periodTip ? contrastPeriodHeaderIcon(periodTip, visual, dark) : undefined,
-      style: bindMarkColumnStyle(marks, field, {
-        textAlign: isMetric ? 'right' : dimensionKeys.has(field) ? 'left' : undefined,
-      }),
       fieldFormat: isMetric
         ? (record: Record<string, unknown>) => formatMetricField(visual, query, field, record?.[field])
         : undefined,
+    }
+    const textAlign = isMetric ? 'right' : dimensionKeys.has(field) ? 'left' : undefined
+    if (!progress) {
+      return {
+        ...common,
+        style: bindMarkColumnStyle(marks, field, { textAlign }),
+      }
+    }
+    return {
+      ...common,
+      ...progress.define,
+      style: bindMarkColumnStyle(marks, field, {
+        textAlign,
+        ...progress.style,
+      }),
     }
   })
 }

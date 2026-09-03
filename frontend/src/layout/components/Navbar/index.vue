@@ -8,6 +8,7 @@
 <script setup lang="ts" name="LayoutNavbar">
 import type { MenuInfo } from '@/core/data'
 import type { ModifyAccountPwdDialogInstance } from '@/views/account/components/ModifyAccountPwdDialog.vue'
+import LensLogo from '@/components/LensLogo.vue'
 import MenuIcon from '@/components/MenuIcon.vue'
 import { menuIconClass } from '@/core/menuIcons'
 import LayoutNotice from '@/layout/components/Notice/index.vue'
@@ -79,7 +80,7 @@ function switchRoot(root: MenuInfo) {
         :class="{ fold: appSetting.sidebarFold }"
         @click="goHome"
       >
-        <img class="w-24px" src="@/assets/icons/logo.svg" alt="logo">
+        <LensLogo class="nav-logo" surface="dark" />
         <div class="logo-txt">
           <span class="logo-title">Lens</span>
           <span class="logo-divider" />
@@ -248,6 +249,12 @@ function switchRoot(root: MenuInfo) {
 .logo-wrapper {
   box-sizing: border-box;
   width: 200px; //200
+
+  .nav-logo {
+    flex: 0 0 24px;
+    width: 24px;
+    height: 24px;
+  }
 
   &.fold {
     width: 42px !important; //42

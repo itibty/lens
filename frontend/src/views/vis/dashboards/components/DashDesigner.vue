@@ -2,7 +2,7 @@
  * @Description: 嵌入式看板设计器
 -->
 <script setup lang="ts">
-import type { FormInstance, FormRules } from 'element-plus'
+import type { FormInstance, FormRules, ScrollbarInstance } from 'element-plus'
 import type { DashFilterValues, DashSettingsDraft, VisDashFilterDef } from '../dashApi'
 import type { DashGroupDraft, DashWidget } from '../dashLayout'
 import type { DashCardRadiusId, DashThemeId } from '../dashTheme'
@@ -28,13 +28,17 @@ import {
   applyGroupDraft,
   collectCardIds,
   createGroupFromDraft,
+  createTextWidget,
   dissolveGroup,
   draftFromGroup,
   emptyGroupDraft,
+  emptyTextDraft,
   listGroups,
   moveCardToGroup,
   moveCardToRoot,
   removeCardFromTree,
+  removeTextWidget,
+  widgetKey,
 } from '../dashLayout'
 import { captureDashPreview, saveDashScreenshot } from '../dashScreenshot'
 import {
@@ -95,6 +99,7 @@ const saveOpen = ref(false)
 const saveFormRef = ref<FormInstance>()
 const reloading = ref(false)
 const capturing = ref(false)
+const canvasScrollbarRef = ref<ScrollbarInstance>()
 
 const states = reactive({
   id: '',
@@ -264,6 +269,34 @@ function rememberCards(list: VisCard[]) {
   cardMap.value = next
 }
 
+function findWidgetElement(key: string) {
+  const root = document.getElementById(DASH_DESIGNER_ID)
+  if (!root)
+    return
+  return Array.from(root.querySelectorAll<HTMLElement>('[data-dash-widget-key]'))
+    .find(element => element.dataset.dashWidgetKey === key)
+}
+
+async function revealAddedWidget(key: string) {
+  await nextTick()
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      const behavior = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'
+      const reveal = () => {
+        const target = findWidgetElement(key)
+        if (target) {
+          target.scrollIntoView({ behavior, block: 'nearest', inline: 'nearest' })
+          return
+        }
+        canvasScrollbarRef.value?.scrollTo({ top: Number.MAX_SAFE_INTEGER, behavior })
+      }
+      reveal()
+      // grid-layout-plus 会在属性更新后再次计算画布高度；完成后再校正一次。
+      window.setTimeout(reveal, 240)
+    })
+  })
+}
+
 async function addCards(list: VIS.VisCardInfo[]) {
   const used = new Set(collectCardIds(widgets.value))
   const selected = list.filter(info => Boolean(info.id && !used.has(String(info.id))))
@@ -274,7 +307,11 @@ async function addCards(list: VIS.VisCardInfo[]) {
     const nextCards = await Promise.all(selected.map(resolveCard))
     rememberCards(nextCards)
     const sizeById = new Map(nextCards.map(card => [card.id, dashCardDefaultSize(card.visual.chartType)]))
-    widgets.value = addCardsToRoot(widgets.value, nextCards.map(card => card.id), id => sizeById.get(id))
+    const nextWidgets = addCardsToRoot(widgets.value, nextCards.map(card => card.id), id => sizeById.get(id))
+    widgets.value = nextWidgets
+    const added = nextWidgets.at(-1)
+    if (added)
+      void revealAddedWidget(widgetKey(added))
   }
   catch (e) {
     showToast(apiErrorMessage(e, '添加卡片失败'), 'error')
@@ -290,6 +327,12 @@ function addGroup() {
   groupEditorOpen.value = true
 }
 
+function addText() {
+  const text = createTextWidget(widgets.value, emptyTextDraft())
+  widgets.value = [...widgets.value, text]
+  void revealAddedWidget(widgetKey(text))
+}
+
 function configureGroup(groupId: string) {
   const group = groups.value.find(item => item.id === groupId)
   if (!group)
@@ -302,10 +345,15 @@ function configureGroup(groupId: string) {
 async function onGroupEditorConfirm(draft: DashGroupDraft) {
   groupEditorLoading.value = true
   try {
-    widgets.value = groupEditorId.value
+    const creating = !groupEditorId.value
+    const nextWidgets = groupEditorId.value
       ? applyGroupDraft(widgets.value, groupEditorId.value, draft)
       : createGroupFromDraft(widgets.value, draft)
+    widgets.value = nextWidgets
     groupEditorOpen.value = false
+    const added = creating ? nextWidgets.at(-1) : undefined
+    if (added)
+      void revealAddedWidget(widgetKey(added))
   }
   catch (e) {
     showToast(apiErrorMessage(e, '保存分组失败'), 'error')
@@ -322,6 +370,12 @@ function removeCard(cardId: string) {
     const next = { ...cardMap.value }
     delete next[cardId]
     cardMap.value = next
+  })
+}
+
+function removeText(textId: string) {
+  showConfirm('确定删除这条标注吗？', '删除确认', 'warning', () => {
+    widgets.value = removeTextWidget(widgets.value, textId)
   })
 }
 
@@ -359,8 +413,8 @@ function dissolveCurrentGroup() {
 
 function confirmReloadCards() {
   showConfirm(
-    '将还原为上次保存的布局，并用服务端内容覆盖每张卡片，确定？',
-    '重载卡片',
+    '将还原为上次保存的布局、标注和卡片内容，确定？',
+    '重载看板',
     'warning',
     () => void reloadCards(),
   )
@@ -383,7 +437,7 @@ async function reloadCards() {
     refreshCards()
   }
   catch (e) {
-    showToast(apiErrorMessage(e, '重载失败'), 'error')
+    showToast(apiErrorMessage(e, '重载看板失败'), 'error')
   }
   finally {
     reloading.value = false
@@ -559,7 +613,7 @@ defineExpose<DashDesignerInstance>({
     :class="{ 'is-loading': loading }"
   >
     <div class="designer__stage" :style="themeStyle">
-      <el-scrollbar class="designer__canvas">
+      <el-scrollbar ref="canvasScrollbarRef" class="designer__canvas">
         <div class="designer__chrome">
           <DashFilterBar
             v-model:values="filterValues"
@@ -580,6 +634,7 @@ defineExpose<DashDesignerInstance>({
             @preview="openPreview"
             @screenshot="onScreenshot"
             @add-card="pickerOpen = true"
+            @add-text="addText"
             @add-group="addGroup"
             @settings="settingsOpen = true"
             @save="openSaveDialog"
@@ -599,6 +654,7 @@ defineExpose<DashDesignerInstance>({
             @detach="detachCard"
             @move-to-group="openMoveToGroup"
             @configure-group="configureGroup"
+            @remove-text="removeText"
           />
         </div>
       </el-scrollbar>

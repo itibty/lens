@@ -12,6 +12,12 @@ import { EditorContent, useEditor } from '@tiptap/vue-3'
 import { BubbleMenu } from '@tiptap/vue-3/menus'
 import { SlashCommand } from './slashCommand'
 
+const props = withDefaults(defineProps<{
+  embedded?: boolean
+}>(), {
+  embedded: false,
+})
+
 const TEXT_COLORS = [
   '#F5222D',
   '#FA541C',
@@ -197,7 +203,7 @@ watch(html, (next) => {
 </script>
 
 <template>
-  <div class="simple-html-editor">
+  <div class="simple-html-editor" :class="{ 'is-embedded': props.embedded }">
     <EditorContent
       v-if="editor"
       :editor="editor"
@@ -481,6 +487,39 @@ watch(html, (next) => {
       padding: 0 0.12em;
       border-radius: 2px;
       color: inherit;
+    }
+  }
+
+  &.is-embedded {
+    width: 100%;
+    height: auto;
+    min-height: 0;
+    max-height: none;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    overflow: visible;
+    resize: none;
+    user-select: text;
+
+    :deep(.tiptap) {
+      min-height: 1.65em;
+      padding: 0;
+      font: inherit;
+      color: inherit;
+
+      p.is-editor-empty:first-child::before {
+        color: var(--dash-content-muted, var(--el-text-color-placeholder));
+      }
+
+      blockquote {
+        border-left-color: var(--dash-border, var(--el-border-color));
+        color: var(--dash-content-muted, var(--el-text-color-regular));
+      }
+
+      a {
+        color: var(--dash-accent, var(--el-color-primary));
+      }
     }
   }
 }

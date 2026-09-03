@@ -31,7 +31,8 @@ function addMark() {
       <button
         type="button"
         class="vis-icon-btn"
-        title="添加"
+        title="添加标注规则"
+        aria-label="添加标注规则"
         @click="addMark"
       >
         <span class="i-mingcute-add-line" />

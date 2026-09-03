@@ -1,0 +1,631 @@
+<div id="lens-login-concept" aria-label="Lens 全屏登录页设计稿">
+  <style>
+    html,
+    body {
+      width: 100%;
+      min-width: 100%;
+      min-height: 100%;
+      margin: 0 !important;
+      padding: 0 !important;
+      overflow-x: hidden;
+    }
+
+    #lens-login-concept {
+      color-scheme: light dark;
+      position: relative;
+      width: 100%;
+      margin: 0;
+      min-height: max(720px, 100vh);
+      overflow: hidden;
+      background: light-dark(#f1eee6, #101210);
+      color: light-dark(#1c1f1d, #efeee8);
+      font-family: Inter, "SF Pro Display", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+      box-sizing: border-box;
+    }
+
+    #lens-login-concept * {
+      box-sizing: border-box;
+    }
+
+    #lens-login-concept button,
+    #lens-login-concept input {
+      font: inherit;
+    }
+
+    #lens-login-concept .lens-full-stage {
+      display: grid;
+      grid-template-columns: minmax(0, 1.5fr) minmax(420px, 0.82fr);
+      min-height: inherit;
+    }
+
+    #lens-login-concept .lens-brand-field {
+      position: relative;
+      isolation: isolate;
+      display: flex;
+      align-items: flex-end;
+      min-width: 0;
+      overflow: hidden;
+      padding: clamp(118px, 14vh, 164px) clamp(48px, 6vw, 92px) clamp(60px, 9vh, 92px);
+      background:
+        radial-gradient(circle at 76% 28%, rgb(55 121 107 / 9%) 0%, transparent 27%),
+        radial-gradient(circle at 84% 76%, rgb(104 91 141 / 7%) 0%, transparent 25%),
+        linear-gradient(135deg, #f3f1eb 0%, #e9ece8 100%);
+      color: #1d211e;
+    }
+
+    #lens-login-concept .lens-brand-field::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      opacity: 0.62;
+      background:
+        linear-gradient(rgb(29 37 32 / 5%) 1px, transparent 1px),
+        linear-gradient(90deg, rgb(29 37 32 / 5%) 1px, transparent 1px);
+      background-size: 72px 72px;
+      mask-image: linear-gradient(125deg, transparent 8%, #000 54%, transparent 92%);
+      pointer-events: none;
+    }
+
+    #lens-login-concept .lens-brand-field::after {
+      content: "";
+      position: absolute;
+      top: 9%;
+      right: -235px;
+      z-index: 1;
+      width: 520px;
+      height: 520px;
+      border: 1px solid rgb(32 42 36 / 8%);
+      border-radius: 50%;
+      box-shadow:
+        0 0 0 78px rgb(32 42 36 / 2.4%),
+        0 0 0 156px rgb(32 42 36 / 1.8%);
+      pointer-events: none;
+    }
+
+    #lens-login-concept .lens-brand {
+      position: absolute;
+      top: 46px;
+      left: clamp(48px, 6vw, 92px);
+      z-index: 4;
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      color: #1d211e;
+      font-size: 19px;
+      font-weight: 500;
+      letter-spacing: -0.03em;
+    }
+
+    #lens-login-concept .lens-brand-mark {
+      display: grid;
+      place-items: center;
+      width: 34px;
+      height: 34px;
+      overflow: visible;
+    }
+
+    #lens-login-concept .lens-brand-mark img {
+      display: block;
+      width: 34px;
+      height: 34px;
+      max-width: none;
+      object-fit: contain;
+    }
+
+    #lens-login-concept .lens-orbit {
+      position: absolute;
+      top: 46%;
+      left: 67%;
+      z-index: 1;
+      width: min(41vw, 520px);
+      aspect-ratio: 1 / 1.08;
+      border: 1px solid rgb(32 38 34 / 13%);
+      border-radius: 50%;
+      transform: translate(-50%, -50%) rotate(-17deg);
+    }
+
+    #lens-login-concept .lens-orbit::before,
+    #lens-login-concept .lens-orbit::after {
+      content: "";
+      position: absolute;
+      border: 1px solid rgb(32 38 34 / 10%);
+      border-radius: 50%;
+    }
+
+    #lens-login-concept .lens-orbit::before {
+      inset: 15% -11%;
+      transform: rotate(32deg);
+    }
+
+    #lens-login-concept .lens-orbit::after {
+      inset: 38%;
+      background: rgb(62 125 111 / 4%);
+    }
+
+    #lens-login-concept .lens-orbit-dot {
+      position: absolute;
+      top: 17%;
+      right: 8.5%;
+      width: 10px;
+      height: 10px;
+      border: 2px solid #ebede8;
+      border-radius: 50%;
+      background: #2b9c7f;
+      box-shadow: 0 0 0 7px rgb(43 156 127 / 11%);
+    }
+
+    #lens-login-concept .lens-slogan-wrap {
+      position: relative;
+      z-index: 2;
+      width: min(760px, 100%);
+    }
+
+    #lens-login-concept .lens-slogan-line {
+      width: 10px;
+      height: 10px;
+      margin-bottom: 28px;
+      border-radius: 50%;
+      background: #2b9c7f;
+    }
+
+    #lens-login-concept .lens-slogan {
+      margin: 0;
+      color: #1d211e;
+      font-family: Inter, "SF Pro Display", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+      font-size: clamp(40px, 4.6vw, 58px);
+      font-weight: 500;
+      line-height: 1.16;
+      letter-spacing: -0.055em;
+    }
+
+    #lens-login-concept .lens-slogan::after {
+      content: "";
+      display: block;
+      width: clamp(60px, 6vw, 90px);
+      height: 1px;
+      margin-top: 24px;
+      background: currentColor;
+      opacity: 0.2;
+    }
+
+    #lens-login-concept .lens-auth-field {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 0;
+      padding: 72px clamp(40px, 5vw, 76px);
+      background: light-dark(#f8f6f0, #161816);
+    }
+
+    #lens-login-concept .lens-auth-field::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      width: 1px;
+      background: light-dark(rgb(28 31 29 / 8%), rgb(255 255 255 / 8%));
+    }
+
+    #lens-login-concept .lens-auth-form {
+      width: min(360px, 100%);
+    }
+
+    #lens-login-concept .lens-auth-title {
+      margin: 0 0 12px;
+      color: light-dark(#1b1e1c, #f1f0eb);
+      font-size: 32px;
+      font-weight: 500;
+      line-height: 1.2;
+      letter-spacing: -0.04em;
+    }
+
+    #lens-login-concept .lens-auth-caption {
+      margin: 0 0 44px;
+      color: light-dark(#858981, #8f968e);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    #lens-login-concept .lens-form-item {
+      margin-bottom: 23px;
+    }
+
+    #lens-login-concept .lens-form-item label {
+      display: block;
+      margin-bottom: 10px;
+      color: light-dark(#555b55, #b8bdb7);
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    #lens-login-concept .lens-input-shell {
+      position: relative;
+    }
+
+    #lens-login-concept .lens-input-shell input {
+      width: 100%;
+      height: 54px;
+      padding: 0 48px 0 0;
+      border: 0;
+      border-bottom: 1px solid light-dark(#c9c9c1, #3c413c);
+      border-radius: 0;
+      outline: none;
+      background: transparent;
+      color: light-dark(#1d201e, #f0efe9);
+      font-size: 15px;
+      transition: border-color 160ms ease, box-shadow 160ms ease;
+    }
+
+    #lens-login-concept .lens-input-shell input::placeholder {
+      color: light-dark(#aaa9a1, #6f766f);
+    }
+
+    #lens-login-concept .lens-input-shell input:focus {
+      border-bottom-color: #2b826d;
+      box-shadow: 0 1px 0 #2b826d;
+    }
+
+    #lens-login-concept .lens-password-toggle {
+      position: absolute;
+      top: 50%;
+      right: 0;
+      display: grid;
+      place-items: center;
+      width: 34px;
+      height: 34px;
+      border: 0;
+      border-radius: 8px;
+      background: transparent;
+      color: light-dark(#858b84, #858d86);
+      cursor: pointer;
+      transform: translateY(-50%);
+    }
+
+    #lens-login-concept .lens-password-toggle:hover {
+      background: light-dark(#ebe9e2, #222522);
+      color: #2b826d;
+    }
+
+    #lens-login-concept .lens-password-toggle svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    #lens-login-concept .lens-form-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin: 28px 0 34px;
+      color: light-dark(#70756f, #939a93);
+      font-size: 13px;
+    }
+
+    #lens-login-concept .lens-remember {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    #lens-login-concept .lens-remember input {
+      width: 16px;
+      height: 16px;
+      margin: 0;
+      accent-color: #252825;
+    }
+
+    #lens-login-concept .lens-forgot {
+      border: 0;
+      padding: 0;
+      background: transparent;
+      color: light-dark(#626862, #9aa19a);
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    #lens-login-concept .lens-forgot:hover {
+      color: #2b826d;
+    }
+
+    #lens-login-concept .lens-submit {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      height: 56px;
+      padding: 0 22px;
+      border: 0;
+      border-radius: 4px;
+      background: light-dark(#202320, #eeece5);
+      color: light-dark(#ffffff, #171917);
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      box-shadow: 0 12px 26px light-dark(rgb(25 28 25 / 16%), rgb(0 0 0 / 25%));
+      transition: transform 150ms ease, box-shadow 150ms ease, background 150ms ease;
+    }
+
+    #lens-login-concept .lens-submit:hover {
+      background: light-dark(#090b09, #ffffff);
+      box-shadow: 0 16px 34px light-dark(rgb(25 28 25 / 22%), rgb(0 0 0 / 34%));
+      transform: translateY(-1px);
+    }
+
+    #lens-login-concept .lens-submit svg {
+      width: 19px;
+      height: 19px;
+    }
+
+    #lens-login-concept .lens-corner-index {
+      position: absolute;
+      right: 38px;
+      bottom: 32px;
+      color: light-dark(rgb(17 24 39 / 28%), rgb(255 255 255 / 24%));
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.16em;
+    }
+
+    @media (max-width: 980px) {
+      #lens-login-concept .lens-full-stage {
+        grid-template-columns: minmax(0, 1.2fr) minmax(390px, 0.88fr);
+      }
+
+      #lens-login-concept .lens-brand-field {
+        padding-right: 46px;
+        padding-left: 46px;
+      }
+
+      #lens-login-concept .lens-brand {
+        left: 46px;
+      }
+
+      #lens-login-concept .lens-slogan {
+        font-size: clamp(38px, 5vw, 48px);
+      }
+
+      #lens-login-concept .lens-auth-field {
+        padding-right: 38px;
+        padding-left: 38px;
+      }
+    }
+
+    @media (max-width: 760px) {
+      #lens-login-concept {
+        min-height: max(760px, 100vh);
+      }
+
+      #lens-login-concept .lens-full-stage {
+        grid-template-columns: 1fr;
+        grid-template-rows: minmax(270px, 36vh) 1fr;
+      }
+
+      #lens-login-concept .lens-brand-field {
+        align-items: flex-end;
+        padding: 92px 28px 34px;
+      }
+
+      #lens-login-concept .lens-brand {
+        top: 26px;
+        left: 28px;
+      }
+
+      #lens-login-concept .lens-brand-field::after {
+        content: none;
+      }
+
+      #lens-login-concept .lens-orbit {
+        top: 44%;
+        left: 72%;
+        width: 74vw;
+      }
+
+      #lens-login-concept .lens-slogan-line {
+        width: 8px;
+        height: 8px;
+        margin-bottom: 18px;
+      }
+
+      #lens-login-concept .lens-slogan {
+        font-size: 36px;
+      }
+
+      #lens-login-concept .lens-auth-field {
+        align-items: flex-start;
+        padding: 50px 28px 72px;
+      }
+
+      #lens-login-concept .lens-auth-field::before {
+        top: 0;
+        right: 0;
+        bottom: auto;
+        width: auto;
+        height: 1px;
+      }
+
+      #lens-login-concept .lens-auth-caption {
+        margin-bottom: 30px;
+      }
+
+      #lens-login-concept .lens-corner-index {
+        right: 24px;
+        bottom: 18px;
+      }
+    }
+
+    @media (max-width: 400px) {
+      #lens-login-concept .lens-full-stage {
+        grid-template-rows: 250px 1fr;
+      }
+
+      #lens-login-concept .lens-brand-field {
+        padding-right: 22px;
+        padding-left: 22px;
+      }
+
+      #lens-login-concept .lens-brand {
+        left: 22px;
+      }
+
+      #lens-login-concept .lens-slogan {
+        font-size: 30px;
+      }
+
+      #lens-login-concept .lens-slogan::after {
+        width: 48px;
+        margin-top: 18px;
+      }
+
+      #lens-login-concept .lens-auth-field {
+        padding: 40px 22px 64px;
+      }
+
+      #lens-login-concept .lens-auth-title {
+        font-size: 28px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      #lens-login-concept *,
+      #lens-login-concept *::before,
+      #lens-login-concept *::after {
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+
+  <main class="lens-full-stage">
+    <section class="lens-brand-field" aria-label="品牌区域">
+      <div class="lens-brand">
+        <span class="lens-brand-mark" aria-hidden="true">
+          <img src="./lens-logo-concept-v3.svg" alt="" />
+        </span>
+        <span>Lens</span>
+      </div>
+
+      <div class="lens-orbit" aria-hidden="true">
+        <i class="lens-orbit-dot"></i>
+      </div>
+
+      <div class="lens-slogan-wrap">
+        <div class="lens-slogan-line" aria-hidden="true"></div>
+        <h1 class="lens-slogan"><span id="lens-slogan-text">让数据更清晰</span></h1>
+      </div>
+    </section>
+
+    <section class="lens-auth-field" aria-label="登录区域">
+      <form class="lens-auth-form" onsubmit="return false">
+        <h2 class="lens-auth-title">登录</h2>
+        <p class="lens-auth-caption">使用你的 Lens 账号继续</p>
+
+        <div class="lens-form-item">
+          <label for="lens-account">账号</label>
+          <div class="lens-input-shell">
+            <input id="lens-account" name="account" autocomplete="username" placeholder="请输入账号" />
+          </div>
+        </div>
+
+        <div class="lens-form-item">
+          <label for="lens-password">密码</label>
+          <div class="lens-input-shell">
+            <input id="lens-password" name="password" type="password" autocomplete="current-password" placeholder="请输入密码" />
+            <button class="lens-password-toggle" type="button" aria-label="显示密码">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M2.7 12s3.4-5.1 9.3-5.1S21.3 12 21.3 12s-3.4 5.1-9.3 5.1S2.7 12 2.7 12Z" stroke="currentColor" stroke-width="1.7"/>
+                <circle cx="12" cy="12" r="2.5" stroke="currentColor" stroke-width="1.7"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="lens-form-meta">
+          <label class="lens-remember"><input type="checkbox" />保持登录</label>
+          <button class="lens-forgot" type="button">忘记密码？</button>
+        </div>
+
+        <button class="lens-submit" type="submit">
+          <span>进入 Lens</span>
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M5 12h13M14 7l5 5-5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </form>
+
+      <span class="lens-corner-index" aria-hidden="true">LENS / 01</span>
+    </section>
+  </main>
+
+  <script>
+    (() => {
+      const root = document.getElementById("lens-login-concept");
+      const password = root.querySelector("#lens-password");
+      const passwordToggle = root.querySelector(".lens-password-toggle");
+      const sloganLine = root.querySelector(".lens-slogan-line");
+      const sloganText = root.querySelector("#lens-slogan-text");
+      const submit = root.querySelector(".lens-submit");
+      const orbit = root.querySelector(".lens-orbit");
+      const orbitDot = root.querySelector(".lens-orbit-dot");
+      const slogans = [
+        "让数据更清晰",
+        "看见数据价值",
+        "聚焦数据洞见",
+        "数据驱动决策"
+      ];
+
+      passwordToggle.addEventListener("click", () => {
+        const showing = password.type === "text";
+        password.type = showing ? "password" : "text";
+        passwordToggle.setAttribute("aria-label", showing ? "显示密码" : "隐藏密码");
+      });
+
+      const design = {
+        accentTone: "mineral-green",
+        slogan: slogans[Math.floor(Math.random() * slogans.length)],
+        showGeometry: true,
+        buttonRadius: 4
+      };
+
+      function renderDesign() {
+        const accents = {
+          "mineral-green": "#2b9c7f",
+          "mist-blue": "#647f9e",
+          "soft-violet": "#8175a5"
+        };
+        const accent = accents[design.accentTone];
+        sloganLine.style.backgroundColor = accent;
+        sloganText.textContent = design.slogan;
+        orbitDot.style.backgroundColor = accent;
+        submit.style.borderRadius = `${design.buttonRadius}px`;
+        orbit.style.display = design.showGeometry ? "block" : "none";
+      }
+
+      renderDesign();
+
+      if (globalThis.Tweak) {
+        const tweak = new Tweak({ container: root, onChange: renderDesign });
+        tweak.addSelect(design, "accentTone", {
+          label: "强调色",
+          options: [
+            { label: "矿物绿", value: "mineral-green" },
+            { label: "雾霾蓝", value: "mist-blue" },
+            { label: "柔雾紫", value: "soft-violet" }
+          ],
+          reference: "login.accent"
+        });
+        tweak.addSelect(design, "slogan", {
+          label: "Slogan",
+          options: slogans,
+          reference: "login.slogan"
+        });
+        tweak.addToggle(design, "showGeometry", { label: "几何装饰", reference: "login.geometry" });
+        tweak.addSlider(design, "buttonRadius", { label: "按钮圆角", min: 0, max: 16, unit: "px", reference: "login.button-radius" });
+      }
+    })();
+  </script>
+</div>

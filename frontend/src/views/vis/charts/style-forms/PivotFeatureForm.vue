@@ -151,6 +151,7 @@ function setPlace(key: keyof typeof placeModel, value: string | number | boolean
       v-model:visual="visual"
       v-model:open-sections="openSections"
       :query="query"
+      allow-cell-visual
     />
 
     <StyleFormSection

@@ -1,12 +1,13 @@
 <!--
  * @Author: Chuang
  * @Date: 2022-12-12 13:26:13
- * @LastEditTime: 2026-03-20 11:31:22
- * @LastEditors: Chuang
+ * @LastEditTime: 2026-09-03
+ * @LastEditors: Codex
  * @Description: 登录页
 -->
 <script setup lang="ts">
 import type { FormInstance } from 'element-plus'
+import LensLogo from '@/components/LensLogo.vue'
 import { isDefaultHomeRedirect } from '@/router/navigation'
 import { useAccountStore } from '@/stores/modules/account'
 import { showToast } from '@/utils'
@@ -14,9 +15,20 @@ import { CacheKeyNameEnum, storageUtil } from '@/utils/cache'
 import { createLogger } from '@/utils/logger'
 import { isBlank } from '@/utils/validate'
 
-const logger = createLogger('LOGIN')
+const SLOGANS = [
+  '让数据更清晰',
+  '看见数据价值',
+  '聚焦数据洞见',
+  '数据驱动决策',
+] as const
 
-// data
+const logger = createLogger('LOGIN')
+const accountStore = useAccountStore()
+const router = useRouter()
+const route = useRoute()
+const formRef = ref<FormInstance>()
+const slogan = SLOGANS[Math.floor(Math.random() * SLOGANS.length)] ?? SLOGANS[0]
+
 const states = reactive({
   loading: false,
   form: {
@@ -25,36 +37,32 @@ const states = reactive({
     remember: false,
   },
 })
-const formRef = ref<FormInstance>()
+
 const rules = {
   username: [{ required: true, trigger: 'blur', message: '用户名不能为空' }],
   password: [{ required: true, trigger: 'blur', message: '密码不能为空' }],
 }
-const accountStore = useAccountStore()
-const router = useRouter()
-const route = useRoute()
 
 function initLoginForm() {
   const username = storageUtil.get(CacheKeyNameEnum.username)
-  const usernameExist = !isBlank(username)
-  if (usernameExist) {
+  if (!isBlank(username)) {
     states.form.username = username!
     states.form.remember = true
   }
-  // 清理遗留的密码存储（历史版本可能存储过明文密码）
+
+  // 清理历史版本可能遗留的明文密码。
   storageUtil.del(CacheKeyNameEnum.password)
 }
+
 async function handleLogin() {
   formRef.value?.validate(async (valid) => {
     if (!valid)
       return
 
-    if (states.form.remember) {
+    if (states.form.remember)
       storageUtil.set(CacheKeyNameEnum.username, states.form.username)
-    }
-    else {
+    else
       storageUtil.del(CacheKeyNameEnum.username)
-    }
 
     states.loading = true
     try {
@@ -72,9 +80,11 @@ async function handleLogin() {
     }
   })
 }
+
 function handleForgetPwd() {
   showToast('请联系管理员重置密码', 'info')
 }
+
 function getLoginRedirect() {
   const redirect = route.query.redirect
   if (typeof redirect !== 'string')
@@ -96,176 +106,557 @@ function getLoginRedirect() {
 
   return '/'
 }
-onMounted(() => {
-  initLoginForm()
-})
+
+onMounted(initLoginForm)
 </script>
 
 <template>
-  <div class="page flex-xy">
-    <div class="base-hover-shadow login-container">
-      <div class="pic-wrapper">
-        <div class="brand-header">
-          <img class="brand-logo" src="@/assets/icons/logo.svg" alt="logo">
-          <span>Lens</span>
-        </div>
-        <img class="pic" src="@/assets/images/login/welcome.png" alt="pic">
+  <main class="login-page">
+    <section class="brand-panel" aria-label="Lens 品牌区域">
+      <div class="brand-lockup">
+        <LensLogo class="brand-logo" surface="light" />
+        <span>Lens</span>
       </div>
-      <div class="form-wrapper">
-        <div class="title">
+
+      <div class="brand-orbit" aria-hidden="true">
+        <span class="brand-orbit__dot" />
+      </div>
+
+      <div class="slogan-block">
+        <span class="slogan-focus" aria-hidden="true" />
+        <h1>{{ slogan }}</h1>
+      </div>
+    </section>
+
+    <section class="auth-panel" aria-labelledby="login-title">
+      <el-form
+        ref="formRef"
+        :model="states.form"
+        :rules="rules"
+        class="login-form"
+        label-position="top"
+        size="large"
+        @submit.prevent="handleLogin"
+      >
+        <h2 id="login-title" class="auth-title">
           登录
+        </h2>
+        <p class="auth-caption">
+          使用你的 Lens 账号继续
+        </p>
+
+        <el-form-item class="field-item" label="账号" prop="username">
+          <el-input
+            v-model.trim="states.form.username"
+            autocomplete="username"
+            name="username"
+            placeholder="请输入账号"
+          />
+        </el-form-item>
+
+        <el-form-item class="field-item" label="密码" prop="password">
+          <el-input
+            v-model.trim="states.form.password"
+            autocomplete="current-password"
+            name="password"
+            placeholder="请输入密码"
+            show-password
+            type="password"
+          />
+        </el-form-item>
+
+        <div class="form-meta">
+          <el-checkbox v-model="states.form.remember">
+            保持登录
+          </el-checkbox>
+          <button class="forgot-button" type="button" @click="handleForgetPwd">
+            忘记密码？
+          </button>
         </div>
-        <div class="title-tips">
-          欢迎使用 Lens
-        </div>
-        <el-form
-          ref="formRef"
-          :model="states.form"
-          :rules="rules"
-          class="login-form"
-          size="large"
+
+        <el-button
+          :loading="states.loading"
+          class="login-button"
+          native-type="submit"
         >
-          <el-form-item prop="username">
-            <el-input v-model.trim="states.form.username" placeholder="用户名">
-              <template #prefix>
-                <el-icon class="text-18px">
-                  <i-mingcute-user-2-fill />
-                </el-icon>
-              </template>
-            </el-input>
-          </el-form-item>
-          <el-form-item
-            style="margin-top: 30px"
-            prop="password"
-          >
-            <el-input
-              v-model.trim="states.form.password"
-              placeholder="密码"
-              show-password
-              @keyup.enter="handleLogin"
-            >
-              <template #prefix>
-                <el-icon class="text-18px">
-                  <i-mingcute-lock-fill />
-                </el-icon>
-              </template>
-            </el-input>
-          </el-form-item>
-          <div class="remember-wrapper">
-            <el-checkbox v-model="states.form.remember">
-              记住账号
-            </el-checkbox>
-            <el-button type="primary" link @click="handleForgetPwd">
-              忘记密码?
-            </el-button>
-          </div>
-          <el-button
-            :loading="states.loading"
-            class="login-btn"
-            type="primary"
-            @click="handleLogin"
-          >
-            登 录
-          </el-button>
-        </el-form>
-      </div>
-    </div>
-  </div>
+          <span>进入 Lens</span>
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path
+              d="M5 12h13M14 7l5 5-5 5"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </el-button>
+      </el-form>
+
+      <span class="corner-index" aria-hidden="true">LENS / 01</span>
+    </section>
+  </main>
 </template>
 
 <style lang="scss" scoped>
-.page {
-  width: 100vw;
-  height: 100vh;
+.login-page {
+  --login-ink: #1d211e;
+  --login-muted: #747a74;
+  --login-accent: #4f8c7d;
 
-  background-color: var(--el-bg-color-page);
-  background-image: url(@/assets/images/login/background.svg);
-  background-repeat: no-repeat;
-  background-position: center 110px;
-  background-size: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(420px, 0.82fr);
+  width: 100%;
+  min-width: 320px;
+  min-height: max(680px, 100vh);
+  overflow: hidden;
+  background: #f1eee6;
+  color: var(--login-ink);
 }
 
-$leftImgBg: #e0edff;
-$introTxtColor: #000b6b;
+.brand-panel {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  min-width: 0;
+  align-items: flex-end;
+  overflow: hidden;
+  padding: clamp(112px, 14vh, 154px) clamp(48px, 6vw, 92px) clamp(58px, 8vh, 86px);
+  background:
+    radial-gradient(circle at 76% 28%, rgb(55 121 107 / 9%) 0%, transparent 27%),
+    radial-gradient(circle at 84% 76%, rgb(104 91 141 / 6%) 0%, transparent 25%),
+    linear-gradient(135deg, #f3f1eb 0%, #e9ece8 100%);
+}
 
-.login-container {
+.brand-panel::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background:
+    linear-gradient(rgb(29 37 32 / 5%) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(29 37 32 / 5%) 1px, transparent 1px);
+  background-size: 72px 72px;
+  content: '';
+  opacity: 0.62;
+  mask-image: linear-gradient(125deg, transparent 8%, #000 54%, transparent 92%);
+  pointer-events: none;
+}
+
+.brand-panel::after {
+  position: absolute;
+  top: 9%;
+  right: -235px;
+  z-index: -1;
+  width: 520px;
+  height: 520px;
+  border: 1px solid rgb(32 42 36 / 8%);
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 78px rgb(32 42 36 / 2.4%),
+    0 0 0 156px rgb(32 42 36 / 1.8%);
+  content: '';
+  pointer-events: none;
+}
+
+.brand-lockup {
+  position: absolute;
+  top: 42px;
+  left: clamp(48px, 6vw, 92px);
   display: flex;
   align-items: center;
-  width: 960px;
-  height: 540px;
-  background-color: $leftImgBg;
+  gap: 11px;
+  color: var(--login-ink);
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
 
-  .pic-wrapper {
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 506px;
-    height: 100%;
+.brand-logo {
+  width: 34px;
+  height: 34px;
+}
 
-    .brand-header {
-      position: absolute;
-      top: 32px;
-      left: 34px;
-      display: flex;
-      align-items: center;
-      color: $introTxtColor;
-      font-weight: 700;
-      font-size: 17px;
-      line-height: 1;
+.brand-orbit {
+  position: absolute;
+  top: 46%;
+  left: 67%;
+  z-index: -1;
+  width: min(41vw, 520px);
+  aspect-ratio: 1 / 1.08;
+  border: 1px solid rgb(32 38 34 / 13%);
+  border-radius: 50%;
+  transform: translate(-50%, -50%) rotate(-17deg);
+}
 
-      .brand-logo {
-        width: 24px;
-        height: 24px;
-        margin-right: 10px;
-      }
-    }
+.brand-orbit::before,
+.brand-orbit::after {
+  position: absolute;
+  border: 1px solid rgb(32 38 34 / 10%);
+  border-radius: 50%;
+  content: '';
+}
 
-    .pic {
-      width: 504px;
-      height: 309px;
-    }
+.brand-orbit::before {
+  inset: 15% -11%;
+  transform: rotate(32deg);
+}
+
+.brand-orbit::after {
+  inset: 38%;
+  background: rgb(62 125 111 / 4%);
+}
+
+.brand-orbit__dot {
+  position: absolute;
+  top: 17%;
+  right: 8.5%;
+  width: 10px;
+  height: 10px;
+  border: 2px solid #ebede8;
+  border-radius: 50%;
+  background: var(--login-accent);
+  box-shadow: 0 0 0 7px rgb(79 140 125 / 11%);
+}
+
+.slogan-block {
+  position: relative;
+  width: min(720px, 100%);
+}
+
+.slogan-focus {
+  display: block;
+  width: 9px;
+  height: 9px;
+  margin-bottom: 26px;
+  border-radius: 50%;
+  background: var(--login-accent);
+}
+
+.slogan-block h1 {
+  margin: 0;
+  color: var(--login-ink);
+  font-size: clamp(36px, 4vw, 50px);
+  font-weight: 500;
+  letter-spacing: -0.055em;
+  line-height: 1.16;
+}
+
+.slogan-block h1::after {
+  display: block;
+  width: clamp(58px, 6vw, 86px);
+  height: 1px;
+  margin-top: 23px;
+  background: currentColor;
+  content: '';
+  opacity: 0.18;
+}
+
+.auth-panel {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: center;
+  padding: 68px clamp(40px, 5vw, 76px);
+  background: #f8f6f0;
+}
+
+.auth-panel::before {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 1px;
+  background: rgb(28 31 29 / 8%);
+  content: '';
+}
+
+.login-form {
+  width: min(360px, 100%);
+}
+
+.auth-title {
+  margin: 0 0 12px;
+  color: #1b1e1c;
+  font-size: 32px;
+  font-weight: 500;
+  letter-spacing: -0.04em;
+  line-height: 1.2;
+}
+
+.auth-caption {
+  margin: 0 0 40px;
+  color: #858981;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.field-item {
+  margin-bottom: 24px;
+}
+
+.field-item :deep(.el-form-item__label) {
+  height: auto;
+  margin-bottom: 8px;
+  padding: 0;
+  color: #555b55;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.field-item :deep(.el-input__wrapper) {
+  min-height: 50px;
+  padding: 0 34px 0 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: 0 1px 0 #c9c9c1;
+  transition: box-shadow 160ms ease;
+}
+
+.field-item :deep(.el-input__wrapper:hover) {
+  box-shadow: 0 1px 0 #9da19a;
+}
+
+.field-item :deep(.el-input__wrapper.is-focus) {
+  box-shadow: 0 2px 0 var(--login-accent);
+}
+
+.field-item :deep(.el-input__inner) {
+  height: 50px;
+  color: #1d201e;
+  font-size: 15px;
+}
+
+.field-item :deep(.el-input__inner::placeholder) {
+  color: #aaa9a1;
+}
+
+.field-item :deep(.el-input__password) {
+  color: #858b84;
+  font-size: 18px;
+}
+
+.field-item :deep(.el-form-item__error) {
+  padding-top: 6px;
+}
+
+.form-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 27px 0 32px;
+}
+
+.form-meta :deep(.el-checkbox) {
+  --el-checkbox-checked-bg-color: #252927;
+  --el-checkbox-checked-input-border-color: #252927;
+  --el-checkbox-input-border-color-hover: #5f665f;
+
+  height: auto;
+  color: #70756f;
+}
+
+.form-meta :deep(.el-checkbox__label) {
+  padding-left: 9px;
+  color: inherit;
+  font-size: 13px;
+}
+
+.forgot-button {
+  padding: 4px 0;
+  border: 0;
+  background: transparent;
+  color: #626862;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  transition: color 150ms ease;
+}
+
+.forgot-button:hover {
+  color: var(--login-accent);
+}
+
+.forgot-button:focus-visible {
+  border-radius: 2px;
+  outline: 2px solid rgb(79 140 125 / 32%);
+  outline-offset: 4px;
+}
+
+.login-button {
+  width: 100%;
+  height: 56px;
+  padding: 0 21px;
+  border: 1px solid #202320;
+  border-radius: 4px;
+  background: #202320;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 500;
+  box-shadow: 0 12px 26px rgb(25 28 25 / 16%);
+  transition:
+    background 150ms ease,
+    border-color 150ms ease,
+    box-shadow 150ms ease,
+    transform 150ms ease;
+}
+
+.login-button:hover,
+.login-button:focus {
+  border-color: #090b09;
+  background: #090b09;
+  color: #fff;
+  box-shadow: 0 16px 34px rgb(25 28 25 / 22%);
+  transform: translateY(-1px);
+}
+
+.login-button :deep(> span) {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.login-button svg {
+  width: 19px;
+  height: 19px;
+}
+
+.corner-index {
+  position: absolute;
+  right: 34px;
+  bottom: 28px;
+  color: rgb(17 24 39 / 28%);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+}
+
+@media (max-width: 980px) {
+  .login-page {
+    grid-template-columns: minmax(0, 1.2fr) minmax(390px, 0.88fr);
   }
-  .form-wrapper {
-    box-sizing: border-box;
-    width: 454px;
-    height: 100%;
-    padding: 0 48px 0 30px;
-    background-color: var(--el-bg-color);
 
-    .login-form {
-      margin-top: 57px;
+  .brand-panel {
+    padding-right: 46px;
+    padding-left: 46px;
+  }
 
-      .remember-wrapper {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-top: 15px;
-        font-size: 13px;
-        line-height: 1;
-      }
+  .brand-lockup {
+    left: 46px;
+  }
 
-      .login-btn {
-        width: 377px;
-        height: 40px;
-        margin-top: 30px;
-      }
-    }
+  .auth-panel {
+    padding-right: 38px;
+    padding-left: 38px;
+  }
+}
 
-    .title {
-      margin-top: 67px;
-      color: $introTxtColor;
-      font-weight: 550;
-      font-size: 28px;
-      line-height: 1;
-    }
-    .title-tips {
-      margin-top: 10px;
-      color: $introTxtColor;
-      font-weight: 530;
-      font-size: 13px;
-      line-height: 1;
-    }
+@media (max-width: 760px) {
+  .login-page {
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(250px, 34vh) 1fr;
+    min-height: max(740px, 100vh);
+    overflow: auto;
+  }
+
+  .brand-panel {
+    padding: 86px 28px 32px;
+  }
+
+  .brand-panel::after {
+    content: none;
+  }
+
+  .brand-lockup {
+    top: 24px;
+    left: 28px;
+  }
+
+  .brand-logo {
+    width: 30px;
+    height: 30px;
+  }
+
+  .brand-orbit {
+    top: 44%;
+    left: 72%;
+    width: 74vw;
+  }
+
+  .slogan-focus {
+    width: 8px;
+    height: 8px;
+    margin-bottom: 17px;
+  }
+
+  .slogan-block h1 {
+    font-size: 34px;
+  }
+
+  .auth-panel {
+    align-items: flex-start;
+    padding: 44px 28px 68px;
+  }
+
+  .auth-panel::before {
+    top: 0;
+    right: 0;
+    bottom: auto;
+    width: auto;
+    height: 1px;
+  }
+
+  .auth-caption {
+    margin-bottom: 30px;
+  }
+
+  .corner-index {
+    right: 24px;
+    bottom: 16px;
+  }
+}
+
+@media (max-width: 400px) {
+  .login-page {
+    grid-template-rows: 232px 1fr;
+  }
+
+  .brand-panel {
+    padding-right: 22px;
+    padding-left: 22px;
+  }
+
+  .brand-lockup {
+    left: 22px;
+  }
+
+  .slogan-block h1 {
+    font-size: 30px;
+  }
+
+  .slogan-block h1::after {
+    width: 48px;
+    margin-top: 17px;
+  }
+
+  .auth-panel {
+    padding: 38px 22px 62px;
+  }
+
+  .auth-title {
+    font-size: 28px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login-page *,
+  .login-page *::before,
+  .login-page *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
   }
 }
 </style>

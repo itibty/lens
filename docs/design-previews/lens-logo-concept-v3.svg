@@ -1,0 +1,19 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  width="100"
+  height="100"
+  viewBox="0 0 100 100"
+  fill="none"
+  role="img"
+  aria-labelledby="lens-logo-v3-title lens-logo-v3-description"
+>
+  <title id="lens-logo-v3-title">Lens logo concept v3</title>
+  <desc id="lens-logo-v3-description">Five quiet axes converge into a compact circular insight mark.</desc>
+  <g fill="#292824">
+    <rect x="4" y="44.5" width="92" height="11" rx="5.5" />
+    <rect x="6" y="44" width="88" height="12" rx="6" transform="rotate(36 50 50)" />
+    <rect x="4.5" y="45" width="91" height="10" rx="5" transform="rotate(72 50 50)" />
+    <rect x="7" y="44.25" width="86" height="11.5" rx="5.75" transform="rotate(108 50 50)" />
+    <rect x="5" y="45" width="90" height="10" rx="5" transform="rotate(144 50 50)" />
+  </g>
+</svg>

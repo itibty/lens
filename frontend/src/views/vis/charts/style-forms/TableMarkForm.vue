@@ -273,7 +273,7 @@ defineExpose({ addRule })
     >
       <div class="table-mark__group-title">
         <span class="table-mark__group-name">
-          标注组 {{ row.ruleIndex + 1 }}
+          规则 {{ row.ruleIndex + 1 }}
         </span>
         <button
           type="button"
@@ -287,7 +287,7 @@ defineExpose({ addRule })
 
       <div class="vis-style-form__row is-block">
         <div class="vis-style-form__label">
-          字段
+          应用字段
         </div>
         <el-select
           :model-value="row.rule.fields"
@@ -307,15 +307,18 @@ defineExpose({ addRule })
         </el-select>
       </div>
 
-      <div class="vis-style-form__row is-block">
+      <div class="vis-style-form__row">
         <div class="vis-style-form__label">
-          样式
+          突出样式
         </div>
-        <div class="table-mark__toolbar">
+        <div class="table-mark__toolbar" role="toolbar" aria-label="突出样式">
           <button
             type="button"
             class="table-mark__tool"
             :class="{ 'is-on': !!row.rule.style?.bold }"
+            title="加粗"
+            aria-label="加粗"
+            :aria-pressed="!!row.rule.style?.bold"
             @click="patchStyle(row.ruleIndex, 'bold', !row.rule.style?.bold)"
           >
             <span
@@ -327,6 +330,9 @@ defineExpose({ addRule })
             type="button"
             class="table-mark__tool"
             :class="{ 'is-on': !!row.rule.style?.italic }"
+            title="斜体"
+            aria-label="斜体"
+            :aria-pressed="!!row.rule.style?.italic"
             @click="patchStyle(row.ruleIndex, 'italic', !row.rule.style?.italic)"
           >
             <span
@@ -337,10 +343,12 @@ defineExpose({ addRule })
           <el-popover
             v-for="palette in STYLE_PALETTES"
             :key="palette.key"
-            placement="bottom"
-            :width="220"
+            placement="bottom-end"
+            :width="196"
             trigger="hover"
-            :show-after="200"
+            :show-after="120"
+            :hide-after="120"
+            popper-class="table-mark-palette-popper"
           >
             <template #reference>
               <button
@@ -348,6 +356,8 @@ defineExpose({ addRule })
                 class="table-mark__tool"
                 :class="{ 'is-on': !!row.rule.style?.[palette.key] }"
                 :style="palette.key === 'color' && row.rule.style?.color ? { color: row.rule.style.color } : undefined"
+                :title="palette.key === 'color' ? '文字颜色' : '背景颜色'"
+                :aria-label="palette.key === 'color' ? '文字颜色' : '背景颜色'"
               >
                 <span
                   v-if="palette.key === 'color'"
@@ -403,7 +413,7 @@ defineExpose({ addRule })
 
       <div class="vis-style-form__row">
         <div class="vis-style-form__label">
-          条件
+          触发条件
         </div>
         <div class="table-mark__cond">
           <el-radio-group
@@ -422,7 +432,8 @@ defineExpose({ addRule })
           <button
             type="button"
             class="vis-icon-btn"
-            title="添加"
+            title="添加条件"
+            aria-label="添加条件"
             @click="addFilter(row.ruleIndex)"
           >
             <span class="i-mingcute-add-line" />
@@ -472,6 +483,9 @@ defineExpose({ addRule })
         </FieldPill>
       </div>
     </div>
+    <p v-if="!rules.length" class="table-mark__empty">
+      点击右上角“+”添加标注规则
+    </p>
   </div>
 </template>
 
@@ -486,10 +500,10 @@ defineExpose({ addRule })
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 8px 10px;
+  padding: 9px 10px 10px;
   border: 1px solid var(--el-border-color-extra-light);
   border-radius: 8px;
-  background: var(--el-fill-color-lighter);
+  background: var(--el-bg-color);
 }
 
 .table-mark__group-title {
@@ -502,7 +516,7 @@ defineExpose({ addRule })
 
 .table-mark__group-name {
   font-size: var(--vis-cfg-group-size, 12px);
-  font-weight: var(--vis-cfg-group-weight, 500);
+  font-weight: 600;
   color: var(--vis-cfg-group-color, var(--el-text-color-regular));
   line-height: 1.3;
   white-space: nowrap;
@@ -522,32 +536,28 @@ defineExpose({ addRule })
 }
 
 .table-mark__toolbar {
-  display: flex;
-  width: 100%;
+  display: inline-flex;
+  flex: 0 0 auto;
+  gap: 2px;
+  padding: 2px;
   border: 1px solid var(--el-border-color-lighter);
-  border-radius: 8px;
-  overflow: hidden;
-  background: var(--el-bg-color);
+  border-radius: 7px;
+  background: var(--el-fill-color-extra-light);
 
   > * {
-    flex: 1 1 0;
-    min-width: 0;
-    display: flex;
-  }
-
-  > :not(:last-child) {
-    border-right: 1px solid var(--el-border-color-extra-light);
+    display: inline-flex;
+    flex: 0 0 auto;
   }
 }
 
 .table-mark__tool {
-  width: 100%;
-  height: 32px;
+  width: 27px;
+  height: 26px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border: none;
-  border-radius: 0;
+  border-radius: 5px;
   background: transparent;
   color: var(--el-text-color-regular);
   cursor: pointer;
@@ -557,13 +567,15 @@ defineExpose({ addRule })
   }
 
   &.is-on {
-    background: var(--el-fill-color);
-    box-shadow: inset 0 0 0 1px var(--el-border-color);
+    background: var(--el-color-primary-light-9);
+    color: var(--el-color-primary);
+    box-shadow: inset 0 0 0 1px var(--el-color-primary-light-7);
   }
 }
 
 .table-mark__icon {
-  font-size: 16px;
+  width: 15px;
+  height: 15px;
   pointer-events: none;
 }
 
@@ -572,14 +584,14 @@ defineExpose({ addRule })
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 16px;
-  height: 16px;
+  width: 15px;
+  height: 15px;
   pointer-events: none;
 }
 
 .table-mark__bg-letter {
   font-family: Georgia, 'Times New Roman', serif;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
   line-height: 1;
 }
@@ -602,12 +614,12 @@ defineExpose({ addRule })
 .table-mark__swatches {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
-  gap: 6px;
+  gap: 5px;
 }
 
 .table-mark__swatch {
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
   padding: 0;
   border: 1px solid rgb(0 0 0 / 8%);
   border-radius: 4px;
@@ -654,5 +666,16 @@ defineExpose({ addRule })
   display: flex;
   flex-direction: column;
   gap: 6px;
+}
+
+.table-mark__empty {
+  margin: 0;
+  color: var(--vis-cfg-hint-color, var(--el-text-color-placeholder));
+  font-size: var(--vis-cfg-hint-size, 12px);
+  line-height: 1.4;
+}
+
+:global(.table-mark-palette-popper.el-popover) {
+  padding: 10px;
 }
 </style>

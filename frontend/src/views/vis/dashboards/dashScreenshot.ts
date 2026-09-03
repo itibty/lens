@@ -13,6 +13,7 @@ const HIDE_SEL = [
   '.filter-dock__right',
   '.dash-tile__handle',
   '.dash-tile__dot',
+  '.dash-text__actions',
   '.vis-card-view__actions',
   '.el-scrollbar__bar',
 ]

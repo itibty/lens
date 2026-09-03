@@ -171,6 +171,11 @@ export function resolveTableHeaderIconColor(visual?: VisVisualConfig, dark = fal
   return TABLE_CHROME[resolveChartThemeId(visual)]?.headerColor ?? '#646A73'
 }
 
+/** 数据条轨道只适配明暗表面，不参与进度填充配色。 */
+export function resolveVTableProgressTrackColor(dark = false) {
+  return dark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.025)'
+}
+
 /** 官方 DEFAULT；预设只叠表头 / 字色 / 外框，以及可选斑马纹 */
 export function resolveVTableTheme(visual?: VisVisualConfig, dark = false): ITableThemeDefine {
   const striped = resolveTableStyle(visual).striped

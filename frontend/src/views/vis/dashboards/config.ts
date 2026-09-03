@@ -12,6 +12,13 @@ export const DASH_DEFAULT_H = 10
 export const DASH_MIN_W = 4
 export const DASH_MIN_H = 4
 
+/** 看板原生文本标注；内容随看板保存，不进入卡片库。 */
+export const DASH_TEXT_DEFAULT_W = 24
+export const DASH_TEXT_DEFAULT_H = 4
+export const DASH_TEXT_MIN_W = 4
+export const DASH_TEXT_MIN_H = 2
+export const DASH_TEXT_HTML_MAX_LENGTH = 20_000
+
 /** 新加入看板上的默认格子。24 列：指标 1/6，排行 1/4，图 1/3，表 1/2。 */
 export function dashCardDefaultSize(chartType?: string): { w: number, h: number } {
   switch (String(chartType || '').toLowerCase()) {

@@ -43,6 +43,7 @@ const emit = defineEmits<{
   preview: []
   screenshot: []
   addCard: []
+  addText: []
   addGroup: []
   settings: []
   save: []
@@ -78,6 +79,18 @@ function pickTheme(id: DashThemeId) {
 }
 
 const descText = computed(() => props.desc.trim().replace(/\s+/g, ' '))
+
+function onAddCommand(command: 'card' | 'text' | 'group') {
+  if (command === 'card') {
+    if (!props.adding)
+      emit('addCard')
+    return
+  }
+  if (command === 'text')
+    emit('addText')
+  else
+    emit('addGroup')
+}
 
 function onPageScroll(event: Event) {
   if (isDashPopperTarget(event.target))
@@ -205,35 +218,37 @@ useEventListener(window, 'scroll', onPageScroll, true)
       <i class="filter-dock__tools-sep" />
       <div class="filter-dock__design">
         <template v-if="showDesign">
-          <el-tooltip
-            content="添加卡片"
-            placement="bottom"
-            :show-after="200"
-          >
-            <span>
-              <button
-                type="button"
-                class="filter-dock__btn"
-                :disabled="adding"
-                @click="emit('addCard')"
-              >
-                <span :class="adding ? 'i-svg-spinners-ring-resize' : 'i-mingcute-add-square-line'" />
-              </button>
-            </span>
-          </el-tooltip>
-          <el-tooltip
-            content="添加分组"
-            placement="bottom"
-            :show-after="200"
+          <el-dropdown
+            trigger="hover"
+            placement="bottom-end"
+            :show-timeout="100"
+            :hide-timeout="100"
+            @command="onAddCommand"
           >
             <button
               type="button"
-              class="filter-dock__btn"
-              @click="emit('addGroup')"
+              class="filter-dock__btn filter-dock__add"
+              aria-label="添加内容"
             >
-              <span class="i-mingcute-new-folder-line" />
+              <span :class="adding ? 'i-svg-spinners-ring-resize' : 'i-mingcute-add-square-line'" />
             </button>
-          </el-tooltip>
+            <template #dropdown>
+              <el-dropdown-menu class="dash-add-menu">
+                <el-dropdown-item command="card" :disabled="adding">
+                  <span class="i-mingcute-layout-grid-line" />
+                  卡片
+                </el-dropdown-item>
+                <el-dropdown-item command="text">
+                  <span class="i-mingcute-paragraph-line" />
+                  标注
+                </el-dropdown-item>
+                <el-dropdown-item command="group">
+                  <span class="i-mingcute-new-folder-line" />
+                  分组
+                </el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
           <el-tooltip
             content="配置"
             placement="bottom"
@@ -248,7 +263,7 @@ useEventListener(window, 'scroll', onPageScroll, true)
             </button>
           </el-tooltip>
           <el-tooltip
-            content="重载卡片"
+            content="重载看板"
             placement="bottom"
             :show-after="200"
           >
@@ -438,6 +453,10 @@ useEventListener(window, 'scroll', onPageScroll, true)
   margin-left: 2px;
 }
 
+.filter-dock__add {
+  gap: 2px;
+}
+
 .filter-dock__btn {
   position: relative;
   display: inline-flex;
@@ -492,6 +511,16 @@ useEventListener(window, 'scroll', onPageScroll, true)
       color: var(--dash-content-color, var(--el-text-color-regular));
     }
   }
+}
+
+:global(.dash-add-menu .el-dropdown-menu__item) {
+  gap: 9px;
+  min-width: 112px;
+}
+
+:global(.dash-add-menu .el-dropdown-menu__item > span:first-child) {
+  width: 16px;
+  height: 16px;
 }
 
 .filter-dock__tags {

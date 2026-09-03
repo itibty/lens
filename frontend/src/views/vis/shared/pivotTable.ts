@@ -2,6 +2,7 @@ import type { IHeaderTreeDefine, PivotTableConstructorOptions } from '@visactor/
 import type { VisQueryConfig, VisVisualConfig } from './types'
 import { TYPES } from '@visactor/vtable'
 import { formatMetricField } from './fieldStyle'
+import { metricProgressVTableConfig } from './metricCell'
 import { bindMarkColumnStyle, prepareTableMarks } from './tableMark'
 import { resolvePivotPlaces, resolvePivotTreeDisplay, resolveTableStyle } from './tableStyle'
 import { dimensionAlias, metricAlias } from './types'
@@ -434,14 +435,30 @@ export function buildPivotTableOption(
     records,
     rows: dimDefines(rowFields, treeDisplay ? treeRowHeaderWidth(rowFields.length) : undefined, marks),
     columns: dimDefines(colFields, undefined, marks, sortColumn && hideIndicatorName),
-    indicators: metrics.map(metric => ({
-      indicatorKey: metric,
-      title: metric,
-      width: 120,
-      showSort: sortColumn && !hideIndicatorName,
-      style: bindMarkColumnStyle(marks, metric, { textAlign: 'right' }),
-      format: (value: unknown) => formatMetricField(visual, query, metric, value),
-    })),
+    indicators: metrics.map((metric) => {
+      const progress = metricProgressVTableConfig(visual, query, metric, dark)
+      const common = {
+        indicatorKey: metric,
+        title: metric,
+        width: 120,
+        showSort: sortColumn && !hideIndicatorName,
+        format: (value: unknown) => formatMetricField(visual, query, metric, value),
+      }
+      if (!progress) {
+        return {
+          ...common,
+          style: bindMarkColumnStyle(marks, metric, { textAlign: 'right' }),
+        }
+      }
+      return {
+        ...common,
+        ...progress.define,
+        style: bindMarkColumnStyle(marks, metric, {
+          textAlign: 'right',
+          ...progress.style,
+        }),
+      }
+    }),
     rowTree,
     columnTree,
     rowHierarchyType: treeDisplay ? 'tree' : 'grid',

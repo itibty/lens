@@ -62,11 +62,14 @@ function createTable(el: HTMLElement, width: number, height: number) {
     fileName: 'export',
     ignoreIcon: true,
     exportAllData: true,
-    formatExportOutput: (cellInfo: { cellValue?: unknown }) => {
+    formatExportOutput: (cellInfo: { cellType?: string, cellValue?: unknown }) => {
       if (cellInfo.cellValue === PIVOT_SUBTOTAL_TOKEN)
         return '小计'
       if (cellInfo.cellValue === PIVOT_TOTAL_TOKEN)
         return '总计'
+      // 进度单元格默认会作为图片导出；返回上层格式化文字，保持 Excel 可检索。
+      if (cellInfo.cellType === 'progressbar')
+        return cellInfo.cellValue == null ? '' : String(cellInfo.cellValue)
       return undefined
     },
   }

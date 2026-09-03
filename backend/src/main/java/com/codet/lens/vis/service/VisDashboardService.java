@@ -77,13 +77,15 @@ public class VisDashboardService {
 
     @Transactional(rollbackFor = Exception.class)
     public Long save(VisDashboardSaveRequest request) {
-        List<Long> cardIds = VisDashWidgets.collectCardIds(request.getConfigJson());
+        VisDashWidgets.PreparedConfig prepared = VisDashWidgets.prepare(request.getConfigJson());
+        List<Long> cardIds = prepared.cardIds();
         if (CollUtil.isNotEmpty(cardIds)) {
             requireCardsExist(cardIds);
         }
         VisDashboard previous = request.getId() == null ? null : requireDashboard(request.getId());
 
         VisDashboard entity = BeanUtil.copyProperties(request, VisDashboard.class);
+        entity.setConfigJson(prepared.configJson());
         entity.setDashName(entity.getDashName().trim());
         entity.setIcon(StrUtil.blankToDefault(entity.getIcon(), null));
         entity.setGroupId(request.getGroupId() == null ? 0L : request.getGroupId());
@@ -92,9 +94,6 @@ public class VisDashboardService {
             if (group == null || Status.DEL.equals(group.getStatus())) {
                 throw fail("分组不存在");
             }
-        }
-        if (StrUtil.isBlank(entity.getConfigJson())) {
-            entity.setConfigJson(null);
         }
         if (request.getId() == null) {
             entity.createCallback();

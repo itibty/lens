@@ -1,8 +1,8 @@
 /**
- * 按指标覆盖显示格式（visual.fieldStyles）。
- * 只打扮数字，不改查询结果；未添加的字段走 implicitFieldFormat，落库只写差异。
+ * 按指标覆盖显示格式 / 表格单元格展示（visual.fieldStyles）。
+ * 不改查询结果；未添加的字段走 implicitFieldFormat，落库只写差异。
  */
-import type { VisFieldStyleRule, VisNumberFormat, VisQueryConfig, VisVisualConfig } from './types'
+import type { VisFieldStyleRule, VisMetricCellVisual, VisNumberFormat, VisQueryConfig, VisVisualConfig } from './types'
 import {
   formatMetricNumber,
   joinMetricNumber,
@@ -49,11 +49,13 @@ export function fieldStyleKey(metric: VIS.MetricItem) {
   ].join(':')
 }
 
-export function implicitFieldFormat(metric?: VIS.MetricItem): ResolvedFieldFormat {
-  return {
-    ...FIELD_FORMAT_DEFAULTS,
-    suffix: isDiffRateMetric(metric) ? '%' : '',
-  }
+export function implicitFieldFormat(_metric?: VIS.MetricItem): ResolvedFieldFormat {
+  return { ...FIELD_FORMAT_DEFAULTS }
+}
+
+/** 仅供新建格式草稿预填；不参与渲染默认值。 */
+export function suggestedFieldSuffix(metric?: VIS.MetricItem) {
+  return isDiffRateMetric(metric) ? '%' : ''
 }
 
 export function buildFieldStyleCandidates(
@@ -87,6 +89,7 @@ function sameRule(a: VisFieldStyleRule, b: VisFieldStyleRule) {
     && a.key === b.key
     && a.kind === b.kind
     && JSON.stringify(a.format ?? null) === JSON.stringify(b.format ?? null)
+    && JSON.stringify(a.cellVisual ?? null) === JSON.stringify(b.cellVisual ?? null)
 }
 
 export function syncFieldStyles(
@@ -112,12 +115,23 @@ export function syncFieldStyles(
       key: cand.key,
       kind: 'metric',
       format: compactFormat(rule.format, cand.metric),
+      cellVisual: compactCellVisual(rule.cellVisual),
     })
   }
   const prev = rules ?? []
   if (prev.length === next.length && prev.every((item, i) => sameRule(item, next[i]!)))
     return prev
   return next
+}
+
+export function compactCellVisual(raw: VisMetricCellVisual | undefined): VisMetricCellVisual | undefined {
+  if (raw?.type !== 'progress')
+    return undefined
+  const color = raw.color?.trim()
+  return {
+    type: 'progress',
+    ...(color ? { color } : {}),
+  }
 }
 
 function compactFormat(raw: VisNumberFormat | undefined, metric: VIS.MetricItem) {
@@ -149,13 +163,31 @@ export function unusedFieldStyleCandidates(
   return candidates.filter(item => !usedUid.has(item.sourceUid) && !usedKey.has(item.key))
 }
 
-export function fieldStyleFromDraft(candidate: FieldStyleCandidate, draft: VisNumberFormat): VisFieldStyleRule {
+export function fieldStyleFromDraft(
+  candidate: FieldStyleCandidate,
+  draft: VisNumberFormat,
+  cellVisual?: VisMetricCellVisual,
+): VisFieldStyleRule {
   return {
     sourceUid: candidate.sourceUid,
     key: candidate.key,
     kind: 'metric',
     format: compactFormat(draft, candidate.metric),
+    cellVisual: compactCellVisual(cellVisual),
   }
+}
+
+export function resolveMetricStyleRule(
+  visual: VisVisualConfig | undefined,
+  metric?: VIS.MetricItem & { _uid?: string },
+) {
+  if (!metric)
+    return undefined
+  const key = fieldStyleKey(metric)
+  const uid = metric._uid
+  return (visual?.fieldStyles ?? []).find(item =>
+    (uid && item.sourceUid === uid) || item.key === key,
+  )
 }
 
 export function resolveFieldFormat(
@@ -174,11 +206,7 @@ export function resolveMetricFormat(
   const implicit = implicitFieldFormat(metric)
   if (!metric)
     return implicit
-  const key = fieldStyleKey(metric)
-  const uid = metric._uid
-  const rule = (visual?.fieldStyles ?? []).find(item =>
-    (uid && item.sourceUid === uid) || item.key === key,
-  )
+  const rule = resolveMetricStyleRule(visual, metric)
   return {
     ...implicit,
     ...rule?.format,

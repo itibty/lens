@@ -170,7 +170,7 @@ export function isDiffRateField(
   return data?.contrasts?.some(item => item.label === field && item.calcType === 'diffRate') ?? false
 }
 
-/** 差值 / 差值率展示；差值率已在 SQL 乘 100，这里只加正负号和 % */
+/** 差值 / 差值率基础展示；只格式化数值和正负号，不推断单位。 */
 export function formatContrastValue(
   value: unknown,
   calcType?: VIS.ContrastConfig['calcType'],
@@ -181,13 +181,12 @@ export function formatContrastValue(
   if (!Number.isFinite(n))
     return String(value)
   const sign = n > 0 ? '+' : n < 0 ? '-' : ''
-  const suffix = calcType === 'diffRate' ? '%' : ''
   const body = new Intl.NumberFormat('zh-CN', {
     useGrouping: calcType !== 'diffRate',
     maximumFractionDigits: 2,
     minimumFractionDigits: 0,
   }).format(Math.abs(n))
-  return `${sign}${body}${suffix}`
+  return `${sign}${body}`
 }
 
 /** 自动显示名：字段 + 评估期 + 对比 + 结果 */

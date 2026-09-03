@@ -238,6 +238,16 @@ export interface VisNumberFormat {
   compact?: boolean
 }
 
+/** 指标单元格内的百分比进度背景；原始数值固定按 0～100 映射 */
+export interface VisMetricCellProgress {
+  type: 'progress'
+  /** 进度填充色；空 = 跟随表格主题 */
+  color?: string
+}
+
+/** 指标单元格展示；后续迷你图继续扩展此联合类型 */
+export type VisMetricCellVisual = VisMetricCellProgress
+
 /** 功能设置「格式」一条；只写覆盖，没写走产品默认 */
 export interface VisFieldStyleRule {
   /** 投放胶囊 _uid，跟着改名 */
@@ -246,6 +256,8 @@ export interface VisFieldStyleRule {
   key: string
   kind: 'metric'
   format?: VisNumberFormat
+  /** 仅表格 / 透视读取；空 = 普通数字 */
+  cellVisual?: VisMetricCellVisual
 }
 
 export type VisProgressSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl'
@@ -356,7 +368,7 @@ export interface VisVisualConfig {
   cardColor?: string
   /** 几何图系列色、表格 / 透视配色；默认不写 */
   chartTheme?: VisChartThemeId
-  /** 按投放指标覆盖的显示格式 */
+  /** 按投放指标覆盖的数字格式 / 单元格展示 */
   fieldStyles?: VisFieldStyleRule[]
   /** 指标卡专属样式 */
   number?: VisNumberStyle

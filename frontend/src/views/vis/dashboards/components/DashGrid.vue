@@ -1,10 +1,16 @@
 <!--
- * @Description: 看板根栅格。节点是卡片或分组。
+ * @Description: 看板根栅格。节点是卡片、分组或原生文本标注。
 -->
 <script setup lang="ts">
 import type { Layout } from 'grid-layout-plus'
 import type { DashCardGlobals } from '../dashApi'
-import type { DashGroupWidget, DashLayoutRect, DashWidget } from '../dashLayout'
+import type {
+  DashGroupWidget,
+  DashLayoutRect,
+  DashTextAppearance,
+  DashTextWidget,
+  DashWidget,
+} from '../dashLayout'
 import type { VisCard } from '@/views/vis/shared/types'
 import type { VisCardDetailOpenPayload } from '@/views/vis/shared/useVisCardDetail'
 import { useElementSize } from '@vueuse/core'
@@ -13,6 +19,7 @@ import { useVisCardDetail } from '@/views/vis/shared/useVisCardDetail'
 import VisDetailDrawer from '@/views/vis/shared/VisDetailDrawer.vue'
 import { DASH_COL_NUM, DASH_MARGIN, DASH_MIN_H, DASH_MIN_W, DASH_ROW_HEIGHT, DASH_STACK_MAX_WIDTH } from '../config'
 import {
+  applyTextDraft,
   collectCardIds,
   listGroups,
   patchWidgetRect,
@@ -24,6 +31,7 @@ import {
 import { layoutMatches, stackLayout, useDashGridInteract } from '../useDashGridInteract'
 import DashCardTile from './DashCardTile.vue'
 import DashGroupTile from './DashGroupTile.vue'
+import DashTextTile from './DashTextTile.vue'
 
 const props = withDefaults(defineProps<{
   cards: Record<string, VisCard>
@@ -51,6 +59,7 @@ const emit = defineEmits<{
   detach: [cardId: string]
   moveToGroup: [cardId: string]
   configureGroup: [groupId: string]
+  removeText: [textId: string]
 }>()
 
 const widgets = defineModel<DashWidget[]>('widgets', { default: () => [] })
@@ -147,6 +156,20 @@ function onUpdateGroup(next: DashGroupWidget) {
   widgets.value = replaceGroup(widgets.value, next)
 }
 
+function updateTextHtml(widget: DashTextWidget, html: string) {
+  widgets.value = applyTextDraft(widgets.value, widget.id, {
+    html,
+    appearance: widget.appearance,
+  })
+}
+
+function updateTextAppearance(widget: DashTextWidget, appearance: DashTextAppearance) {
+  widgets.value = applyTextDraft(widgets.value, widget.id, {
+    html: widget.html,
+    appearance,
+  })
+}
+
 const detailScope = ref<Omit<VisCardDetailOpenPayload, 'hit'> | null>(null)
 const {
   open: detailOpen,
@@ -201,7 +224,7 @@ onBeforeUnmount(() => {
     :class="{ 'is-editable': editable, 'is-resizing': !!interact.resizingId.value, 'is-stacked': stacked }"
   >
     <div v-if="!widgets.length" class="dash-grid__empty">
-      {{ designActions ? '点击「卡片」或「分组」把内容放到看板上' : '看板上还没有卡片' }}
+      {{ designActions ? '添加卡片、标注或分组，把内容放到看板上' : '看板上还没有内容' }}
     </div>
     <GridLayout
       v-else
@@ -227,12 +250,13 @@ onBeforeUnmount(() => {
         :h="item.h"
         :min-w="item.minW"
         :min-h="item.minH"
+        :data-dash-widget-key="String(item.i)"
         :static="!editable || stacked"
         :is-resizable="false"
         :drag-allow-from="widget.kind === 'group' ? '.dash-group__handle' : '.dash-tile__handle'"
         :drag-ignore-from="widget.kind === 'group'
           ? '.dash-group__body, .dash-group__actions, .dash-group__tab, .dash-group__cfg, .dash-group__chrome, .dash-group__dot, .dash-tile__body, .dash-tile__dot, .vis-card-view__actions, a'
-          : '.vis-card-view__actions, .dash-tile__body, .dash-tile__dot, a'"
+          : '.vis-card-view__actions, .dash-text__actions, .dash-tile__body, .dash-tile__dot, a'"
         @moved="applyLayout"
       >
         <DashCardTile
@@ -255,7 +279,7 @@ onBeforeUnmount(() => {
           @open-detail="onTileDetail"
         />
         <DashGroupTile
-          v-else
+          v-else-if="widget.kind === 'group'"
           :widget="widget"
           :cards="cards"
           :dashboard-id="dashboardId"
@@ -274,6 +298,17 @@ onBeforeUnmount(() => {
           @detach-card="emit('detach', $event)"
           @resize-start="(corner, event) => interact.onResizeStart(String(item.i), corner, event)"
           @open-detail="onTileDetail"
+        />
+        <DashTextTile
+          v-else
+          :widget="widget"
+          :editable="editable"
+          :design-actions="designActions"
+          :resizing="interact.resizingId.value === String(item.i)"
+          @update:html="updateTextHtml(widget, $event)"
+          @update:appearance="updateTextAppearance(widget, $event)"
+          @remove="emit('removeText', widget.id)"
+          @resize-start="(corner, event) => interact.onResizeStart(String(item.i), corner, event)"
         />
       </GridItem>
     </GridLayout>

@@ -96,7 +96,7 @@ export function resolveTrendView(
     if (prev === 0)
       changeText = formatFieldText(diff, format, { signed: true })
     else
-      changeText = formatFieldText((diff / Math.abs(prev)) * 100, { ...FIELD_FORMAT_DEFAULTS, suffix: '%' }, { signed: true })
+      changeText = formatFieldText((diff / Math.abs(prev)) * 100, FIELD_FORMAT_DEFAULTS, { signed: true })
   }
   const auxiliaries = metrics.slice(1).map((metric, index) => {
     const alias = metricAlias(metric)

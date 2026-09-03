@@ -1,5 +1,5 @@
 /**
- * 看板布局树。根节点是卡片或分组；组内卡片相对组，也按 24 列。
+ * 看板布局树。根节点是卡片、分组或文本；组内卡片相对组，也按 24 列。
  * 分组配置弹窗用 DashGroupDraft，写回走 createGroupFromDraft / applyGroupDraft。
  */
 import {
@@ -12,6 +12,11 @@ import {
   DASH_GROUP_MIN_W,
   DASH_MIN_H,
   DASH_MIN_W,
+  DASH_TEXT_DEFAULT_H,
+  DASH_TEXT_DEFAULT_W,
+  DASH_TEXT_HTML_MAX_LENGTH,
+  DASH_TEXT_MIN_H,
+  DASH_TEXT_MIN_W,
 } from './config'
 
 export interface DashLayoutRect {
@@ -26,6 +31,31 @@ export type DashGroupMode = 'tile' | 'tabs'
 export interface DashCardWidget extends DashLayoutRect {
   kind: 'card'
   cardId: string
+}
+
+export type DashTextPadding = 'sm' | 'md' | 'lg'
+export type DashTextVerticalAlign = 'start' | 'center' | 'end'
+
+export interface DashTextAppearance {
+  /** 标注始终是实体卡片；该字段保留在配置里便于向后兼容。 */
+  surface: 'card'
+  padding: DashTextPadding
+  verticalAlign: DashTextVerticalAlign
+  bg?: string
+  color?: string
+}
+
+export interface DashTextWidget extends DashLayoutRect {
+  kind: 'text'
+  /** 看板内局部 id，不是卡片 id。 */
+  id: string
+  html: string
+  appearance: DashTextAppearance
+}
+
+export interface DashTextDraft {
+  html: string
+  appearance: DashTextAppearance
 }
 
 export interface DashPageItem extends DashLayoutRect {
@@ -54,19 +84,23 @@ export interface DashGroupWidget extends DashLayoutRect, DashGroupLook {
   pages: DashGroupPage[]
 }
 
-export type DashWidget = DashCardWidget | DashGroupWidget
+export type DashWidget = DashCardWidget | DashGroupWidget | DashTextWidget
 
 export function createDashUid(prefix: string) {
   return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`
 }
 
 export function widgetKey(widget: DashWidget) {
-  return widget.kind === 'card' ? `c:${widget.cardId}` : `g:${widget.id}`
+  if (widget.kind === 'card')
+    return `c:${widget.cardId}`
+  return widget.kind === 'group' ? `g:${widget.id}` : `t:${widget.id}`
 }
 
 export function widgetMinSize(widget: DashWidget) {
   if (widget.kind === 'group')
     return { minW: DASH_GROUP_MIN_W, minH: DASH_GROUP_MIN_H }
+  if (widget.kind === 'text')
+    return { minW: DASH_TEXT_MIN_W, minH: DASH_TEXT_MIN_H }
   return { minW: DASH_MIN_W, minH: DASH_MIN_H }
 }
 
@@ -95,6 +129,64 @@ export function createEmptyPage(title?: string): DashGroupPage {
     ...(title ? { title } : {}),
     items: [],
   }
+}
+
+export function emptyTextDraft(): DashTextDraft {
+  return {
+    html: '',
+    appearance: {
+      surface: 'card',
+      padding: 'md',
+      verticalAlign: 'start',
+    },
+  }
+}
+
+function persistTextAppearance(appearance: DashTextAppearance): DashTextAppearance {
+  const takeColor = (raw?: string) => {
+    const value = raw?.trim()
+    return value && /^(?:#[\da-f]{3,8}|rgba?\([\d\s.,%]+\))$/i.test(value) ? value : undefined
+  }
+  const bg = takeColor(appearance.bg)
+  const color = takeColor(appearance.color)
+  return {
+    // 标注始终使用实体卡片承载；保留 surface 字段只为兼容既有配置结构。
+    surface: 'card',
+    padding: appearance.padding === 'sm' || appearance.padding === 'lg' ? appearance.padding : 'md',
+    verticalAlign: appearance.verticalAlign === 'center' || appearance.verticalAlign === 'end'
+      ? appearance.verticalAlign
+      : 'start',
+    ...(bg ? { bg } : {}),
+    ...(color ? { color } : {}),
+  }
+}
+
+export function createTextWidget(widgets: DashWidget[], draft: DashTextDraft): DashTextWidget {
+  return {
+    kind: 'text',
+    id: createDashUid('t'),
+    html: draft.html,
+    appearance: persistTextAppearance(draft.appearance),
+    ...nextRect(widgets, { w: DASH_TEXT_DEFAULT_W, h: DASH_TEXT_DEFAULT_H }),
+  }
+}
+
+export function applyTextDraft(
+  widgets: DashWidget[],
+  textId: string,
+  draft: DashTextDraft,
+): DashWidget[] {
+  return widgets.map(widget => widget.kind === 'text' && widget.id === textId
+    ? {
+        ...widget,
+        html: draft.html,
+        appearance: persistTextAppearance(draft.appearance),
+      }
+    : widget)
+}
+
+export function removeTextWidget(widgets: DashWidget[], textId: string): DashWidget[] {
+  return widgets.filter(widget => !(widget.kind === 'text' && widget.id === textId))
 }
 
 export function flattenGroupItems(group: DashGroupWidget): DashPageItem[] {
@@ -331,6 +423,8 @@ export function collectCardIds(widgets: DashWidget[]): string[] {
       add(widget.cardId)
       continue
     }
+    if (widget.kind !== 'group')
+      continue
     for (const page of widget.pages) {
       for (const item of page.items)
         add(item.cardId)
@@ -351,6 +445,8 @@ export function dropMissingCards(
   return widgets.flatMap((widget): DashWidget[] => {
     if (widget.kind === 'card')
       return keep.has(widget.cardId) ? [widget] : []
+    if (widget.kind === 'text')
+      return [widget]
     return [{
       ...widget,
       pages: widget.pages.map(page => ({
@@ -419,6 +515,8 @@ export function removeCardFromTree(widgets: DashWidget[], cardId: string): DashW
   return widgets.flatMap((widget): DashWidget[] => {
     if (widget.kind === 'card')
       return widget.cardId === cardId ? [] : [widget]
+    if (widget.kind === 'text')
+      return [widget]
     const pages = widget.pages
       .map(page => ({
         ...page,
@@ -578,7 +676,24 @@ function sanitizePages(raw: unknown, used: Set<string>, mode: DashGroupMode): Da
   return [{ id: pages[0]?.id ?? createDashUid('p'), items }]
 }
 
-function sanitizeWidget(raw: unknown, used: Set<string>, groupIds: Set<string>): DashWidget | null {
+function readTextAppearance(raw: unknown): DashTextAppearance {
+  const rec = raw && typeof raw === 'object' ? raw as Record<string, unknown> : {}
+  return persistTextAppearance({
+    surface: 'card',
+    padding: rec.padding === 'sm' || rec.padding === 'lg' ? rec.padding : 'md',
+    verticalAlign: rec.verticalAlign === 'center' || rec.verticalAlign === 'end'
+      ? rec.verticalAlign
+      : 'start',
+    bg: typeof rec.bg === 'string' ? rec.bg : undefined,
+    color: typeof rec.color === 'string' ? rec.color : undefined,
+  })
+}
+
+function sanitizeWidget(
+  raw: unknown,
+  used: Set<string>,
+  widgetIds: Set<string>,
+): DashWidget | null {
   if (!raw || typeof raw !== 'object')
     return null
   const rec = raw as Record<string, unknown>
@@ -593,12 +708,31 @@ function sanitizeWidget(raw: unknown, used: Set<string>, groupIds: Set<string>):
       ...readRect(rec, { x: 0, y: 0, w: DASH_DEFAULT_W, h: DASH_DEFAULT_H }, 1, 1),
     }
   }
+  if (rec.kind === 'text') {
+    let id = String(rec.id || '').trim() || createDashUid('t')
+    if (widgetIds.has(id))
+      id = createDashUid('t')
+    widgetIds.add(id)
+    const html = typeof rec.html === 'string' ? rec.html.slice(0, DASH_TEXT_HTML_MAX_LENGTH) : ''
+    return {
+      kind: 'text',
+      id,
+      html,
+      appearance: readTextAppearance(rec.appearance),
+      ...readRect(
+        rec,
+        { x: 0, y: 0, w: DASH_TEXT_DEFAULT_W, h: DASH_TEXT_DEFAULT_H },
+        DASH_TEXT_MIN_W,
+        DASH_TEXT_MIN_H,
+      ),
+    }
+  }
   if (rec.kind !== 'group')
     return null
   let id = String(rec.id || '').trim() || createDashUid('g')
-  if (groupIds.has(id))
+  if (widgetIds.has(id))
     id = createDashUid('g')
-  groupIds.add(id)
+  widgetIds.add(id)
   const mode: DashGroupMode = rec.mode === 'tabs' ? 'tabs' : 'tile'
   const bg = String(rec.bg || '').trim()
   const color = String(rec.color || '').trim()
@@ -620,9 +754,9 @@ export function sanitizeWidgets(raw: unknown): DashWidget[] {
   if (!Array.isArray(raw))
     return []
   const used = new Set<string>()
-  const groupIds = new Set<string>()
+  const widgetIds = new Set<string>()
   return raw.flatMap((item) => {
-    const widget = sanitizeWidget(item, used, groupIds)
+    const widget = sanitizeWidget(item, used, widgetIds)
     return widget ? [widget] : []
   })
 }

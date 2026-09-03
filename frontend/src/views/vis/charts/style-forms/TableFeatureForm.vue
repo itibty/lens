@@ -82,6 +82,7 @@ const mergeCell = branch.boolField('mergeCell', TABLE_STYLE_DEFAULTS.mergeCell)
       v-model:visual="visual"
       v-model:open-sections="openSections"
       :query="query"
+      allow-cell-visual
     />
 
     <TableMarkSection
