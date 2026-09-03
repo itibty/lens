@@ -1,0 +1,21 @@
+backend/src/main/resources/application.yml
+  s_1ace138bb8957f::t_0ffa2b5a5ea7eb 22-24,30-32,43-44
+backend/src/test/java/com/codet/lens/common/config/ApplicationConfigurationTest.java
+  s_1ace138bb8957f::t_0b6bcc54cacb77 1-64
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "bf664a8a6f5a427115b60b002d62bf7edf2cb07c",
+  "prompts": {},
+  "sessions": {
+    "s_1ace138bb8957f": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a065cd-f046-7420-9929-b4e604b69a58",
+        "model": "unknown"
+      },
+      "human_author": "Chuang <chuang.zhang1@atrenew.com>"
+    }
+  }
+}
