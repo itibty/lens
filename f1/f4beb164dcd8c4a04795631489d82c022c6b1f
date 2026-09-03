@@ -1,0 +1,29 @@
+README.md
+  s_1ace138bb8957f::t_86c084b02b90f9 26-27,43-51,76-85
+README.zh-CN.md
+  s_1ace138bb8957f::t_209d6fb0527d3c 5,7,11-14,17,21-22,24,26-33,37,40,42-47,49,51-52,54,57-60,67-77,79,81,83
+backend/README.md
+  s_1ace138bb8957f::t_964ef6d551d016 31-33,40-50
+frontend/README.md
+  s_1ace138bb8957f::t_2e3d786e13dd5c 47-48,51-52
+frontend/package.json
+  s_1ace138bb8957f::t_b12a04ac5cfd84 6
+verify.sh
+  s_1ace138bb8957f::t_7f183a79c60a9d 1-19
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "f1f4beb164dcd8c4a04795631489d82c022c6b1f",
+  "prompts": {},
+  "sessions": {
+    "s_1ace138bb8957f": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a065cd-f046-7420-9929-b4e604b69a58",
+        "model": "unknown"
+      },
+      "human_author": "Chuang <chuang.zhang1@atrenew.com>"
+    }
+  }
+}
