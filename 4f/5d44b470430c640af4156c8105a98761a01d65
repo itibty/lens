@@ -1,0 +1,45 @@
+frontend/src/assets/styles/base.scss
+  s_73a2ddbd1fcc21::t_727282655bb3a2 17
+frontend/src/assets/styles/tokens.scss
+  s_73a2ddbd1fcc21::t_c357664da07c2f 18-29,44-58
+frontend/src/assets/styles/utilities.scss
+  s_73a2ddbd1fcc21::t_fbfbd253d608de 23,26,29,32,35,39,51
+frontend/src/assets/styles/variables.scss
+  s_73a2ddbd1fcc21::t_05808158b12cf1 14
+frontend/src/layout/components/PageCard/index.vue
+  s_73a2ddbd1fcc21::t_6883b62cab3ac8 228
+frontend/src/views/ds/index.vue
+  s_73a2ddbd1fcc21::t_9c667f66c25113 185,283
+frontend/src/views/login/index.vue
+  s_73a2ddbd1fcc21::t_c77fe50519b870 204,225,306,318,484
+frontend/src/views/permission/role/index.vue
+  s_73a2ddbd1fcc21::t_74c86c40be0d2b 140,259
+frontend/src/views/permission/user/index.vue
+  s_73a2ddbd1fcc21::t_01596a5b384718 147,256
+frontend/src/views/vis/cards/edit.vue
+  s_73a2ddbd1fcc21::t_268fb6dfb8ae52 892-897
+frontend/src/views/vis/cards/index.vue
+  s_73a2ddbd1fcc21::t_da4fe349ec5675 187,289
+frontend/src/views/vis/dashboards/dashApi.test.ts
+  s_73a2ddbd1fcc21::t_9037ccdcff8349 45,62
+frontend/src/views/vis/dashboards/dashTheme.ts
+  s_73a2ddbd1fcc21::t_99864f79545660 128
+frontend/src/views/vis/shared/chartPalette.ts
+  s_73a2ddbd1fcc21::t_71b6bedf705ce3 105
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "4f5d44b470430c640af4156c8105a98761a01d65",
+  "prompts": {},
+  "sessions": {
+    "s_73a2ddbd1fcc21": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a06701-9a63-7c02-b974-8a31f15cb02a",
+        "model": "unknown"
+      },
+      "human_author": "Chuang <chuang.zhang1@atrenew.com>"
+    }
+  }
+}
