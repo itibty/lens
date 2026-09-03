@@ -1,0 +1,23 @@
+backend/pom.xml
+  s_1ace138bb8957f::t_cb5207f38a685b 22,115-132
+docs/superpowers/plans/2026-09-03-maintainability-improvements.md
+  s_1ace138bb8957f::t_1b05a20ef62ea1 9,21,68,70,74,77,319,333-334,357,384-385,424,430,433,436,443,448,451
+docs/superpowers/specs/2026-09-03-maintainability-improvements-design.md
+  s_1ace138bb8957f::t_547b99258cf2ab 20,52,149,178,191
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "1e9b1767f3e1994eba5581b050c1b2604e0fb46c",
+  "prompts": {},
+  "sessions": {
+    "s_1ace138bb8957f": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a065cd-f046-7420-9929-b4e604b69a58",
+        "model": "unknown"
+      },
+      "human_author": "Chuang <chuang.zhang1@atrenew.com>"
+    }
+  }
+}
