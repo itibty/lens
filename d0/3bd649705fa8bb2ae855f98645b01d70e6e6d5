@@ -1,0 +1,19 @@
+frontend/src/views/permission/menu/index.vue
+  s_cf404714212754::t_f18cfc644a86bf 305-313
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "d03bd649705fa8bb2ae855f98645b01d70e6e6d5",
+  "prompts": {},
+  "sessions": {
+    "s_cf404714212754": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a06616-62e6-7381-a2dc-75c662d494a7",
+        "model": "unknown"
+      },
+      "human_author": "Chuang <chuang.zhang1@atrenew.com>"
+    }
+  }
+}
