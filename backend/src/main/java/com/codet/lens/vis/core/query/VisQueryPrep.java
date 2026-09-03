@@ -242,87 +242,159 @@ public final class VisQueryPrep {
 
     private static void validateCardShape(ChartTypeEnum type, QueryConfig config) {
         int dimCount = CollUtil.size(config.getDimensions());
-        int metricCount = CollUtil.size(config.getMetrics());
-        if (type == ChartTypeEnum.NUMBER) {
-            if (dimCount > 0) {
-                throw fail("数字卡片不支持维度");
-            }
-            if (metricCount < 1) {
-                throw fail("数字卡片至少需要 1 个指标");
-            }
-            return;
+        int metricCount = regularMetricCount(config.getMetrics());
+        if (hasContrastMetric(config.getMetrics())
+                && type != ChartTypeEnum.TABLE && type != ChartTypeEnum.NUMBER) {
+            throw fail(type.getName() + "不支持同比 / 环比");
         }
-        if (type == ChartTypeEnum.PIE) {
-            if (dimCount != 1) {
-                throw fail("饼图需要恰好 1 个维度");
+        switch (type) {
+            case NUMBER -> {
+                if (dimCount > 0) {
+                    throw fail("数字卡片不支持维度");
+                }
+                if (metricCount < 1) {
+                    throw fail("数字卡片至少需要 1 个主指标");
+                }
             }
-            if (metricCount < 1) {
-                throw fail("饼图至少需要 1 个指标");
+            case PROGRESS -> {
+                if (dimCount > 0) {
+                    throw fail("进度条不支持维度");
+                }
+                if (metricCount < 1) {
+                    throw fail("进度条至少需要 1 个指标");
+                }
+                if (metricCount > 2) {
+                    throw fail("进度条最多 2 个指标");
+                }
             }
-            return;
+            case KPI -> {
+                if (dimCount != 1) {
+                    throw fail("KPI图需要恰好 1 个维度");
+                }
+                if (metricCount < 1) {
+                    throw fail("KPI图至少需要 1 个指标");
+                }
+                if (metricCount > 2) {
+                    throw fail("KPI图最多 2 个指标");
+                }
+            }
+            case BAR, LINE -> {
+                String label = type == ChartTypeEnum.BAR ? "柱状图" : "折线图";
+                if (dimCount < 1) {
+                    throw fail(label + "至少需要 1 个维度");
+                }
+                if (metricCount < 1) {
+                    throw fail(label + "至少需要 1 个指标");
+                }
+                if (metricCount > 1 && dimCount > 1) {
+                    throw fail(label + "在多个指标时只能使用 1 个维度");
+                }
+            }
+            case COMBO -> {
+                if (dimCount != 1) {
+                    throw fail("组合图需要恰好 1 个维度");
+                }
+                if (metricCount < 2) {
+                    throw fail("组合图至少需要 2 个指标");
+                }
+            }
+            case PIE, FUNNEL, WORD_CLOUD -> {
+                String label = switch (type) {
+                    case PIE -> "饼图";
+                    case FUNNEL -> "漏斗图";
+                    default -> "词云";
+                };
+                if (dimCount != 1) {
+                    throw fail(label + "需要恰好 1 个维度");
+                }
+                if (metricCount != 1) {
+                    throw fail(label + "需要恰好 1 个指标");
+                }
+            }
+            case TREEMAP -> {
+                if (dimCount < 1 || dimCount > 3) {
+                    throw fail("矩形树图需要 1 到 3 个维度");
+                }
+                if (metricCount != 1) {
+                    throw fail("矩形树图需要恰好 1 个指标");
+                }
+            }
+            case HEATMAP -> {
+                if (dimCount != 2) {
+                    throw fail("热力图需要恰好 2 个维度");
+                }
+                if (metricCount != 1) {
+                    throw fail("热力图需要恰好 1 个指标");
+                }
+            }
+            case SCATTER -> {
+                if (dimCount > 1) {
+                    throw fail("散点图最多 1 个维度");
+                }
+                if (metricCount != 2) {
+                    throw fail("散点图需要恰好 2 个指标");
+                }
+            }
+            case RADAR -> {
+                if (dimCount != 1) {
+                    throw fail("雷达图需要恰好 1 个维度");
+                }
+                if (metricCount < 1) {
+                    throw fail("雷达图至少需要 1 个指标");
+                }
+            }
+            case WATERFALL -> {
+                if (dimCount != 1) {
+                    throw fail("瀑布图需要恰好 1 个维度");
+                }
+                if (metricCount != 1) {
+                    throw fail("瀑布图需要恰好 1 个指标");
+                }
+            }
+            case TREND -> {
+                if (dimCount != 1) {
+                    throw fail("趋势指标卡需要恰好 1 个维度");
+                }
+                if (metricCount < 1) {
+                    throw fail("趋势指标卡至少需要 1 个指标");
+                }
+            }
+            case TORNADO -> {
+                if (dimCount != 1) {
+                    throw fail("对比条需要恰好 1 个维度");
+                }
+                if (metricCount != 2) {
+                    throw fail("对比条需要恰好 2 个指标");
+                }
+            }
+            case RANK -> {
+                if (dimCount != 1) {
+                    throw fail("排行榜需要恰好 1 个维度");
+                }
+                if (metricCount != 1) {
+                    throw fail("排行榜需要恰好 1 个指标");
+                }
+            }
+            case TABLE, PIVOT, RICH_TEXT, URL -> {
+                // 表格的非空规则由通用校验负责；其余类型不走普通查询形态校验。
+            }
         }
-        if (type == ChartTypeEnum.KPI) {
-            if (dimCount != 1) {
-                throw fail("KPI图需要恰好 1 个维度");
-            }
-            if (metricCount < 1) {
-                throw fail("KPI图至少需要 1 个指标");
-            }
-            return;
+    }
+
+    private static int regularMetricCount(List<MetricItem> metrics) {
+        if (CollUtil.isEmpty(metrics)) {
+            return 0;
         }
-        if (type == ChartTypeEnum.HEATMAP) {
-            if (dimCount != 2) {
-                throw fail("热力图需要恰好 2 个维度");
-            }
-            if (metricCount != 1) {
-                throw fail("热力图需要恰好 1 个指标");
-            }
-            return;
-        }
-        if (type == ChartTypeEnum.TREEMAP) {
-            if (dimCount < 1 || dimCount > 3) {
-                throw fail("矩形树图需要 1 到 3 个维度");
-            }
-            if (metricCount != 1) {
-                throw fail("矩形树图需要恰好 1 个指标");
-            }
-            return;
-        }
-        if (type == ChartTypeEnum.WATERFALL) {
-            if (dimCount != 1) {
-                throw fail("瀑布图需要恰好 1 个维度");
-            }
-            if (metricCount != 1) {
-                throw fail("瀑布图需要恰好 1 个指标");
-            }
-            return;
-        }
-        if (type == ChartTypeEnum.TREND) {
-            if (dimCount != 1) {
-                throw fail("趋势指标卡需要恰好 1 个维度");
-            }
-            if (metricCount < 1) {
-                throw fail("趋势指标卡至少需要 1 个指标");
-            }
-            return;
-        }
-        if (type == ChartTypeEnum.TORNADO) {
-            if (dimCount != 1) {
-                throw fail("对比条需要恰好 1 个维度");
-            }
-            if (metricCount != 2) {
-                throw fail("对比条需要恰好 2 个指标");
-            }
-            return;
-        }
-        if (type == ChartTypeEnum.RANK) {
-            if (dimCount != 1) {
-                throw fail("排行榜需要恰好 1 个维度");
-            }
-            if (metricCount != 1) {
-                throw fail("排行榜需要恰好 1 个指标");
-            }
-        }
+        return (int) metrics.stream()
+                .filter(Objects::nonNull)
+                .filter(metric -> metric.getContrast() == null)
+                .count();
+    }
+
+    private static boolean hasContrastMetric(List<MetricItem> metrics) {
+        return CollUtil.isNotEmpty(metrics) && metrics.stream()
+                .filter(Objects::nonNull)
+                .anyMatch(metric -> metric.getContrast() != null);
     }
 
     private static void validateDimensions(List<DimensionItem> dims, String name) {
