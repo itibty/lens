@@ -1,15 +1,15 @@
-import type { VisDashFilterDef } from './dashApi'
-import { describe, expect, it, vi } from 'vitest'
+import type { VisDashFilterDef } from './dashFilterModel'
+import { describe, expect, it } from 'vitest'
+import {
+  parseDashConfig,
+  stringifyDashConfig,
+} from './dashConfigCodec'
 import {
   applyFilterDefaults,
   dashFilterChipText,
   filterValueReady,
   globalsForCard,
-  parseDashConfig,
-  stringifyDashConfig,
-} from './dashApi'
-
-vi.mock('@/apis/vis/index', () => ({ default: {} }))
+} from './dashFilterModel'
 
 const selectFilter: VisDashFilterDef = {
   uid: 'region-filter',
