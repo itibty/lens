@@ -229,9 +229,6 @@ importers:
       eslint-plugin-vue:
         specifier: ^10.10.0
         version: 10.10.0(@stylistic/eslint-plugin@5.10.0(eslint@10.9.0(jiti@2.6.1)))(@typescript-eslint/parser@8.60.1(eslint@10.9.0(jiti@2.6.1))(typescript@6.0.3))(eslint@10.9.0(jiti@2.6.1))(vue-eslint-parser@10.4.1(eslint@10.9.0(jiti@2.6.1)))
-      lint-staged:
-        specifier: ^17.3.0
-        version: 17.3.0
       mockjs:
         specifier: ^1.1.0
         version: 1.1.0
@@ -241,18 +238,12 @@ importers:
       npm-run-all:
         specifier: ^4.1.5
         version: 4.1.5
-      picocolors:
-        specifier: ^1.1.1
-        version: 1.1.1
       rollup-plugin-visualizer:
         specifier: ^7.1.1
         version: 7.1.1(rolldown@1.2.5)
       sass:
         specifier: 1.79.6
         version: 1.79.6
-      simple-git-hooks:
-        specifier: ^2.13.1
-        version: 2.13.1
       typescript:
         specifier: ^6.0.3
         version: 6.0.3
@@ -5679,11 +5670,6 @@ packages:
   linkifyjs@4.3.3:
     resolution: {integrity: sha512-P8aEP5U/D1/IlTY2OeYsErdwh9bGuLE30NcXtKEjgdHcahveQoQwM2yZNsioQHsWFz0P7KKudisbrzCgR0sDHg==}
 
-  lint-staged@17.3.0:
-    resolution: {integrity: sha512-woZS3vNe3UKqBaLPvbLOtKRY4tLANpWQhom12MGWqC8Mh1lCOO+WgSwmX2amjJAqTY9BkXYW87fCUH5H9Ph6xw==}
-    engines: {node: '>=22.22.1'}
-    hasBin: true
-
   listenercount@1.0.1:
     resolution: {integrity: sha512-3mk/Zag0+IJxeDrxSgaDPy4zZ3w05PRZeJNnlWhzFz5OkX49J4krc+A8X2d2M69vGMBEX0uyl8M+W+8gH+kBqQ==}
 
@@ -7147,10 +7133,6 @@ packages:
   signal-exit@3.0.7:
     resolution: {integrity: sha512-wnD2ZE+l+SPC/uoS0vXeE9L1+0wuaMqKlfz9AMUo38JsyLSBWSFcHR1Rri62LZc12vLr1gb3jl7iwQhgwpAbGQ==}
 
-  simple-git-hooks@2.13.1:
-    resolution: {integrity: sha512-WszCLXwT4h2k1ufIXAgsbiTOazqqevFCIncOuUBZJ91DdvWcC5+OFkluWRQPrcuSYd8fjq+o2y1QfWqYMoAToQ==, tarball: https://registry.npmmirror.com/simple-git-hooks/-/simple-git-hooks-2.13.1.tgz}
-    hasBin: true
-
   simple-statistics@7.10.1:
     resolution: {integrity: sha512-Ao1uRUD8K18irQdAymQH8fDa3Tw8EfdxdNKOM2khG3AU5xnKZMS5WzgDmXze0bUAoNmsjsyknPHxyaq9UKMRzQ==}
 
@@ -7287,10 +7269,6 @@ packages:
   strict-uri-encode@1.1.0:
     resolution: {integrity: sha512-R3f198pcvnB+5IpnBlRkphuE9n46WyVl8I39W/ZUTZLz4nqSP/oLYUrcnJrw462Ds8he4YKMov2efsTIw1BDGQ==}
     engines: {node: '>=0.10.0'}
-
-  string-argv@0.3.2:
-    resolution: {integrity: sha512-aqD2Q0144Z+/RqG52NeHEkZauTAUWJO8c6yTftGJKO3Tja5tUgIfmIl6kExvhtxSDP7fXB6DvzkfMpCd/F3G+Q==}
-    engines: {node: '>=0.6.19'}
 
   string-width@4.2.3:
     resolution: {integrity: sha512-wKyQRQpjJ0sIp62ErSZdGsjMJWsap5oRNihHhu6G7JVO/9jIB6UyevL+tXuOqrng8j/cxKTWyWUwvSTriiZz/g==}
@@ -14286,14 +14264,6 @@ snapshots:
 
   linkifyjs@4.3.3: {}
 
-  lint-staged@17.3.0:
-    dependencies:
-      picomatch: 4.0.5
-      string-argv: 0.3.2
-      tinyexec: 1.2.4
-    optionalDependencies:
-      yaml: 2.9.0
-
   listenercount@1.0.1: {}
 
   load-json-file@4.0.0:
@@ -16145,8 +16115,6 @@ snapshots:
 
   signal-exit@3.0.7: {}
 
-  simple-git-hooks@2.13.1: {}
-
   simple-statistics@7.10.1: {}
 
   simple-swizzle@0.2.2:
@@ -16278,8 +16246,6 @@ snapshots:
   stream-source@0.3.5: {}
 
   strict-uri-encode@1.1.0: {}
-
-  string-argv@0.3.2: {}
 
   string-width@4.2.3:
     dependencies:

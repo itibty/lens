@@ -62,7 +62,9 @@ public class RdsUtil {
         try {
             return jdbc.execute((ConnectionCallback<SqlSelectResult>) conn -> {
                 PreparedStatement ps = conn.prepareStatement(tplRet.getSql());
-                ps.setMaxRows(maxRows);
+                // 多读一行只用于判断是否真的发生截断，返回值仍严格受 maxRows 限制。
+                int probeRows = maxRows == Integer.MAX_VALUE ? Integer.MAX_VALUE : maxRows + 1;
+                ps.setMaxRows(probeRows);
                 ps.setFetchSize(fetchSize);
                 Object[] params = tplRet.getParams() == null ? new Object[0] : tplRet.getParams();
                 for (int i = 0; i < params.length; i++) {
@@ -81,15 +83,16 @@ public class RdsUtil {
                     columns.add(new SqlColumnMeta(fields.get(i - 1), meta.getColumnTypeName(i), meta.getColumnType(i)));
                 }
                 List<Map<String, Object>> rows = new ArrayList<>();
-                while (rs.next() && rows.size() < maxRows) {
+                while (rs.next()) {
+                    if (rows.size() >= maxRows) {
+                        queryCtx.setTruncated(true);
+                        break;
+                    }
                     Map<String, Object> row = new LinkedHashMap<>(colCount);
                     for (int i = 1; i <= colCount; i++) {
                         row.put(fields.get(i - 1), rs.getObject(i));
                     }
                     rows.add(row);
-                }
-                if (rows.size() >= maxRows) {
-                    queryCtx.setTruncated(true);
                 }
                 return new SqlSelectResult(rows, columns);
             });

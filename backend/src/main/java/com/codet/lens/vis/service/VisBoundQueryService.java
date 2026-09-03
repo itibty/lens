@@ -88,6 +88,10 @@ public class VisBoundQueryService {
             return request == null ? new DetailQueryRequest() : request;
         }
         BoundCard boundCard = requireBoundCard(dashboardId, cardId);
+        Map<String, Object> visual = readVisual(boundCard.card().getVisualJson());
+        if (!Boolean.TRUE.equals(visual.get("allowDetail"))) {
+            throw ResultException.fail("卡片未开放明细");
+        }
         DetailQueryRequest bound = new DetailQueryRequest();
         bound.setQuery(readJson(boundCard.card().getQueryJson(), QueryConfig.class, "查询配置"));
         if (request != null) {

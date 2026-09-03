@@ -11,6 +11,7 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -51,6 +52,23 @@ class VisDashGroupServiceTest {
         service.toggle(1L);
 
         verify(permissionTokenService).invalidateDashboardUsers(List.of(10L));
+    }
+
+    @Test
+    void preservesDisabledStatusWhenEditOmitsStatus() {
+        VisDashGroup group = group(1L, 0L, Status.DBL);
+        group.setGroupName("旧名称");
+        when(groupMapper.selectById(1L)).thenReturn(group);
+        when(groupMapper.selectList(any())).thenReturn(List.of());
+        when(dashboardMapper.selectList(any())).thenReturn(List.of());
+        var request = new com.codet.lens.vis.dto.group.VisGroupDtos.SaveDashGroupRequest();
+        request.setId(1L);
+        request.setPid(0L);
+        request.setGroupName("新名称");
+
+        service.save(request);
+
+        assertEquals(Status.DBL, group.getStatus());
     }
 
     private void mockDisabledAncestorData() {

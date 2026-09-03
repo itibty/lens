@@ -23,6 +23,7 @@ public class AuthInterceptor implements HandlerInterceptor {
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+        AuthContext.clear();
         if (!(handler instanceof HandlerMethod method)) {
             return true;
         }
@@ -46,6 +47,7 @@ public class AuthInterceptor implements HandlerInterceptor {
             perm = method.getBeanType().getAnnotation(Permission.class);
         }
         if (perm != null && perm.value().length > 0 && !user.hasAnyPerm(perm.value())) {
+            AuthContext.clear();
             write(response, ResultEnum.ERROR403);
             return false;
         }

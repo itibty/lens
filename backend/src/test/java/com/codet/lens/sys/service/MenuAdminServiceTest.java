@@ -1,13 +1,17 @@
 package com.codet.lens.sys.service;
 
+import com.codet.lens.common.base.ResultException;
 import com.codet.lens.common.base.Status;
 import com.codet.lens.sys.dto.menu.SaveMenuRequest;
 import com.codet.lens.sys.entity.SysMenu;
 import com.codet.lens.sys.mapper.SysMenuMapper;
 import com.codet.lens.sys.mapper.SysRoleMenuMapper;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -20,6 +24,11 @@ class MenuAdminServiceTest {
     private final PermissionTokenService permissionTokenService = mock(PermissionTokenService.class);
     private final MenuAdminService service =
             new MenuAdminService(menuMapper, roleMenuMapper, permissionTokenService);
+
+    @BeforeEach
+    void mockRootMenu() {
+        when(menuMapper.selectById(1L)).thenReturn(menu(1L, 0L, "MENU"));
+    }
 
     @Test
     void invalidatesUsersWhenFunctionPermissionChanges() {
@@ -37,6 +46,35 @@ class MenuAdminServiceTest {
         service.save(saveRequest("same:code", "只改名称"));
 
         verify(permissionTokenService, never()).invalidateMenuUsers(100L);
+    }
+
+    @Test
+    void rejectsFunctionAsParent() {
+        when(menuMapper.selectById(2L)).thenReturn(menu(2L, 1L, "FUNC"));
+        SaveMenuRequest request = saveRequest("code", "功能");
+        request.setId(null);
+        request.setPid(2L);
+
+        assertThrows(ResultException.class, () -> service.save(request));
+    }
+
+    @Test
+    void rejectsMovingMenuUnderItsDescendant() {
+        when(menuMapper.selectById(100L)).thenReturn(menu(100L, 1L, "MENU"));
+        when(menuMapper.selectById(200L)).thenReturn(menu(200L, 100L, "MENU"));
+        SaveMenuRequest request = saveRequest(null, "目录");
+        request.setMenuType("MENU");
+        request.setPid(200L);
+
+        assertThrows(ResultException.class, () -> service.save(request));
+    }
+
+    @Test
+    void rejectsChangingParentMenuWithChildrenToFunction() {
+        when(menuMapper.selectById(100L)).thenReturn(menu(100L, 1L, "MENU"));
+        when(menuMapper.selectCount(any())).thenReturn(1L);
+
+        assertThrows(ResultException.class, () -> service.save(saveRequest("perm", "功能")));
     }
 
     @Test
@@ -60,6 +98,15 @@ class MenuAdminServiceTest {
         menu.setMenuName("功能");
         menu.setMenuType("FUNC");
         menu.setPermCode(permCode);
+        menu.setStatus(Status.EBL);
+        return menu;
+    }
+
+    private static SysMenu menu(Long id, Long pid, String type) {
+        SysMenu menu = new SysMenu();
+        menu.setId(id);
+        menu.setPid(pid);
+        menu.setMenuType(type);
         menu.setStatus(Status.EBL);
         return menu;
     }

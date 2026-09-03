@@ -22,9 +22,12 @@ import com.codet.lens.sys.mapper.SysRoleMapper;
 import com.codet.lens.sys.mapper.SysUserMapper;
 import com.codet.lens.sys.mapper.SysUserRoleMapper;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -110,6 +113,7 @@ public class UserAdminService {
 
     @Transactional
     public void resetRoles(ResetRolesRequest req) {
+        require(req.getUserId());
         resetRoleInfos(req.getUserId(), req.getRoleInfos() == null ? Collections.emptyList() : req.getRoleInfos());
     }
 
@@ -141,11 +145,25 @@ public class UserAdminService {
 
     /** 整单替换。页面只提交成对有效期或两端皆空；单边原样写入，不做补全或拒绝。 */
     private void resetRoleInfos(Long userId, List<UserRoleInfo> roleInfos) {
+        List<UserRoleInfo> distinctRoleInfos = roleInfos.stream()
+                .filter(Objects::nonNull)
+                .filter(info -> info.getRoleId() != null)
+                .collect(Collectors.collectingAndThen(
+                        Collectors.toMap(UserRoleInfo::getRoleId, Function.identity(), (first, ignored) -> first,
+                                LinkedHashMap::new),
+                        map -> List.copyOf(map.values())));
+        Set<Long> roleIds = distinctRoleInfos.stream().map(UserRoleInfo::getRoleId).collect(Collectors.toSet());
+        if (!roleIds.isEmpty()) {
+            Set<Long> existingRoleIds = roleMapper.selectBatchIds(roleIds).stream()
+                    .map(SysRole::getId)
+                    .collect(Collectors.toSet());
+            if (!existingRoleIds.containsAll(roleIds)) {
+                throw ResultException.fail("角色不存在");
+            }
+        }
         userRoleMapper.delete(Wrappers.<SysUserRole>lambdaQuery().eq(SysUserRole::getUserId, userId));
         long now = System.currentTimeMillis();
-        for (UserRoleInfo roleInfo : roleInfos) {
-            if (roleInfo == null || roleInfo.getRoleId() == null)
-                continue;
+        for (UserRoleInfo roleInfo : distinctRoleInfos) {
             SysUserRole link = new SysUserRole();
             link.setUserId(userId);
             link.setRoleId(roleInfo.getRoleId());

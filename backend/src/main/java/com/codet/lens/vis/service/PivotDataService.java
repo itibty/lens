@@ -49,6 +49,7 @@ public class PivotDataService {
                 QueryBO bo = grainBo(config, prepared, tplRet, grain, maxRows, sqlConf.getDsType());
                 SqlBuilder.SqlRet sqlRet = SqlBuilder.build(bo);
                 ctx.setMaxRows(grain.isDetail() ? maxRows : Math.max(maxRows, 1000));
+                ctx.setTruncated(false);
                 ctx.setNextSqlName("row" + grain.getRowLevel() + "_col" + grain.getColLevel());
                 List<Map<String, Object>> rows = RdsUtil.selectList(
                         new SqlTplRet(null, sqlConf.getDsName(), sqlRet.getSql(), sqlRet.getParams())
@@ -111,8 +112,10 @@ public class PivotDataService {
         }
         bo.setHavingFilters(config.getHavingFilters());
         bo.setOrderList(config.getOrderList());
-        bo.setLimit(config.getLimit() != null ? config.getLimit() : maxRows);
-        bo.setMaxLimit(MAX_LIMIT);
+        // 显式小上限是用户意图；只有碰到系统上限时才多取一行探测截断。
+        boolean systemCapped = config.getLimit() == null || config.getLimit() >= MAX_LIMIT;
+        bo.setLimit(systemCapped ? maxRows + 1 : config.getLimit());
+        bo.setMaxLimit(MAX_LIMIT + 1);
     }
 
     private static List<String> aliases(List<DimensionItem> dims) {

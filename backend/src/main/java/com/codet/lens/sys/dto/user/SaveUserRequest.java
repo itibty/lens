@@ -4,6 +4,7 @@ import com.codet.lens.common.base.EnumValue;
 import com.codet.lens.common.base.Status;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
@@ -29,6 +30,7 @@ public class SaveUserRequest {
     private String status;
 
     @Schema(description = "密码。编辑时可空")
+    @Pattern(regexp = "^\\w{8,20}$", message = "必须是8-20位数字、字母或下划线")
     private String password;
 
     @Schema(description = "角色 id")

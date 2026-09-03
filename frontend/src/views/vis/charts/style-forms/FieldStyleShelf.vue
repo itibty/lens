@@ -15,11 +15,11 @@ import FieldPill from '../../cards/components/FieldPill.vue'
 import NumberFormatFields from './NumberFormatFields.vue'
 import StyleFormSection from './StyleFormSection.vue'
 
-const SECTION = 'fieldStyle'
-
 const props = defineProps<{
   query?: VisQueryConfig
 }>()
+
+const SECTION = 'fieldStyle'
 
 const visual = defineModel<VisVisualConfig>('visual', { required: true })
 const openSections = defineModel<(string | number)[]>('openSections', { required: true })

@@ -30,9 +30,11 @@ public class VisDataService {
 
     private static final int EXPORT_BATCH_SIZE = 1000;
     private static final int EXPORT_MAX_BATCHES = 200;
+    private static final int QUERY_MAX_ROWS = 5000;
+    private static final int QUERY_PROBE_ROWS = QUERY_MAX_ROWS + 1;
 
     public QueryDataResponse query(QueryRequest request) {
-        QueryContext ctx = new QueryContext(5000, 1000);
+        QueryContext ctx = new QueryContext(QUERY_MAX_ROWS, 1000);
         ctx.setShowSql(VisExecSql.showSql());
         QueryContextHolder.set(ctx);
         try {
@@ -40,7 +42,7 @@ public class VisDataService {
             VisDatasetService.Ready dataset = openDataset(request.getQuery().getDatasetId(), request);
             SqlConf sqlConf = dataset.getSqlConf();
             QueryBO query = toQuery(request, sqlConf, prepared);
-            query.setLimit(request.getQuery().getLimit());
+            configureResultLimit(query, request.getQuery().getLimit());
 
             SqlBuilder.SqlRet sqlRet;
             ContrastSqlAssembler.Result contrastRet = null;
@@ -78,7 +80,7 @@ public class VisDataService {
     }
 
     public QueryDataResponse queryDetail(DetailQueryRequest request) {
-        QueryContext ctx = new QueryContext(5000, 1000);
+        QueryContext ctx = new QueryContext(QUERY_MAX_ROWS, 1000);
         ctx.setShowSql(VisExecSql.showSql());
         QueryContextHolder.set(ctx);
         try {
@@ -87,6 +89,7 @@ public class VisDataService {
             SqlConf sqlConf = dataset.getSqlConf();
             List<String> fields = detailFields(dataset.getFields());
             QueryBO query = toDetailQuery(sqlConf, prepared, fields, request.getQuery().getLimit());
+            configureResultLimit(query, request.getQuery().getLimit());
             ctx.setNextSqlName("detail");
             SqlBuilder.SqlRet sqlRet = SqlBuilder.build(query);
             List<Map<String, Object>> rows = RdsUtil.selectList(
@@ -178,6 +181,14 @@ public class VisDataService {
         query.setAsOfDate(prepared.getAsOfDate());
         query.setDialect(SqlDialect.of(sqlConf.getDsType()));
         return query;
+    }
+
+    static void configureResultLimit(QueryBO query, Integer requestedLimit) {
+        // 达到系统上限时让 SQL 多返回一行，RdsUtil 用它准确判断 truncated。
+        query.setMaxLimit(QUERY_PROBE_ROWS);
+        query.setLimit(requestedLimit == null || requestedLimit >= QUERY_MAX_ROWS
+                ? QUERY_PROBE_ROWS
+                : requestedLimit);
     }
 
     private List<String> detailFields(List<ConfSqlFieldInfo> saved) {

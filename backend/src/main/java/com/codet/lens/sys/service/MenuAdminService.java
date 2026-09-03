@@ -13,9 +13,11 @@ import com.codet.lens.sys.mapper.SysRoleMenuMapper;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -66,6 +68,16 @@ public class MenuAdminService {
             throw ResultException.fail("菜单类型无效");
         }
         SysMenu menu = req.getId() == null ? new SysMenu() : require(req.getId());
+        Long pid = req.getPid() == null ? 0L : req.getPid();
+        assertValidParentAndNoCycle(req.getId(), pid);
+        if (req.getId() != null && "MENU".equals(menu.getMenuType()) && "FUNC".equals(req.getMenuType())) {
+            long children = menuMapper.selectCount(Wrappers.<SysMenu>lambdaQuery()
+                    .eq(SysMenu::getPid, menu.getId())
+                    .ne(SysMenu::getStatus, Status.DEL));
+            if (children > 0) {
+                throw ResultException.fail("存在子菜单，不能改为功能权限");
+            }
+        }
         String nextPermCode = "MENU".equals(req.getMenuType()) ? null : req.getPermCode();
         String nextStatus = StrUtil.isBlank(req.getStatus())
                 ? (req.getId() == null ? Status.EBL : menu.getStatus())
@@ -77,7 +89,7 @@ public class MenuAdminService {
         boolean changedToMenu = req.getId() != null
                 && "FUNC".equals(menu.getMenuType())
                 && "MENU".equals(req.getMenuType());
-        menu.setPid(req.getPid() == null ? 0L : req.getPid());
+        menu.setPid(pid);
         menu.setMenuName(req.getMenuName());
         menu.setMenuType(req.getMenuType());
         menu.setRoutePath(req.getRoutePath());
@@ -100,6 +112,24 @@ public class MenuAdminService {
             }
         }
         return menu.getId();
+    }
+
+    private void assertValidParentAndNoCycle(Long id, Long pid) {
+        Set<Long> visited = new HashSet<>();
+        Long cursor = pid;
+        while (cursor != null && cursor != 0) {
+            if (Objects.equals(id, cursor)) {
+                throw ResultException.fail("不能把菜单挂到自己或自己的子孙下");
+            }
+            if (!visited.add(cursor)) {
+                throw ResultException.fail("菜单层级存在循环");
+            }
+            SysMenu parent = require(cursor);
+            if (!"MENU".equals(parent.getMenuType())) {
+                throw ResultException.fail("上级必须是目录菜单");
+            }
+            cursor = parent.getPid();
+        }
     }
 
     @Transactional

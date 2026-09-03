@@ -20,10 +20,14 @@ import com.codet.lens.sys.mapper.SysMenuMapper;
 import com.codet.lens.sys.mapper.SysRoleDashboardMapper;
 import com.codet.lens.sys.mapper.SysRoleMapper;
 import com.codet.lens.sys.mapper.SysRoleMenuMapper;
+import com.codet.lens.vis.entity.VisDashboard;
+import com.codet.lens.vis.mapper.VisDashboardMapper;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,6 +40,7 @@ public class RoleAdminService {
     private final SysRoleMenuMapper roleMenuMapper;
     private final SysRoleDashboardMapper roleDashboardMapper;
     private final SysMenuMapper menuMapper;
+    private final VisDashboardMapper dashboardMapper;
     private final PermissionTokenService permissionTokenService;
 
     public PageResponse<RoleInfo> query(QueryRoleRequest req) {
@@ -79,21 +84,24 @@ public class RoleAdminService {
     @Transactional
     public void resetMenus(ResetRoleMenusRequest req) {
         require(req.getRoleId());
+        Set<Long> menuIds = distinctIds(req.getMenuIds());
+        if (!menuIds.isEmpty()) {
+            Set<Long> validMenuIds = menuMapper.selectBatchIds(menuIds).stream()
+                    .filter(menu -> "FUNC".equals(menu.getMenuType()))
+                    .filter(menu -> !Status.DEL.equals(menu.getStatus()))
+                    .map(SysMenu::getId)
+                    .collect(Collectors.toSet());
+            if (!validMenuIds.containsAll(menuIds)) {
+                throw ResultException.fail("菜单不存在或不是功能权限");
+            }
+        }
         roleMenuMapper.delete(Wrappers.<SysRoleMenu>lambdaQuery().eq(SysRoleMenu::getRoleId, req.getRoleId()));
-        if (req.getMenuIds() == null || req.getMenuIds().isEmpty()) {
+        if (menuIds.isEmpty()) {
             permissionTokenService.invalidateRoleUsers(req.getRoleId());
             return;
         }
-        Set<Long> funcIds = new HashSet<>(menuMapper.selectList(Wrappers.<SysMenu>lambdaQuery()
-                        .eq(SysMenu::getMenuType, "FUNC")
-                        .ne(SysMenu::getStatus, Status.DEL)
-                        .in(SysMenu::getId, req.getMenuIds()))
-                .stream().map(SysMenu::getId).toList());
         long now = System.currentTimeMillis();
-        for (Long menuId : req.getMenuIds()) {
-            if (!funcIds.contains(menuId)) {
-                continue;
-            }
+        for (Long menuId : menuIds) {
             SysRoleMenu link = new SysRoleMenu();
             link.setRoleId(req.getRoleId());
             link.setMenuId(menuId);
@@ -106,14 +114,21 @@ public class RoleAdminService {
     @Transactional
     public void resetDashboards(ResetRoleDashboardsRequest req) {
         require(req.getRoleId());
+        Set<Long> dashboardIds = distinctIds(req.getDashboardIds());
+        if (!dashboardIds.isEmpty()) {
+            Set<Long> validDashboardIds = dashboardMapper.selectBatchIds(dashboardIds).stream()
+                    .filter(dashboard -> !Status.DEL.equals(dashboard.getStatus()))
+                    .map(VisDashboard::getId)
+                    .collect(Collectors.toSet());
+            if (!validDashboardIds.containsAll(dashboardIds)) {
+                throw ResultException.fail("看板不存在");
+            }
+        }
         roleDashboardMapper.delete(Wrappers.<SysRoleDashboard>lambdaQuery()
                 .eq(SysRoleDashboard::getRoleId, req.getRoleId()));
-        if (req.getDashboardIds() != null) {
+        if (!dashboardIds.isEmpty()) {
             long now = System.currentTimeMillis();
-            for (Long dashboardId : req.getDashboardIds()) {
-                if (dashboardId == null) {
-                    continue;
-                }
+            for (Long dashboardId : dashboardIds) {
                 SysRoleDashboard link = new SysRoleDashboard();
                 link.setRoleId(req.getRoleId());
                 link.setDashboardId(dashboardId);
@@ -122,6 +137,15 @@ public class RoleAdminService {
             }
         }
         permissionTokenService.invalidateRoleUsers(req.getRoleId());
+    }
+
+    private static Set<Long> distinctIds(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return Set.of();
+        }
+        return ids.stream()
+                .filter(Objects::nonNull)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
     public void toggle(Long roleId) {

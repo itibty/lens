@@ -96,10 +96,11 @@ Snowflake IDs are serialized as **strings** (not numbers) to avoid JS precision 
 - Redis hash `lens:auth:invalidate:{userId}` field `global` stores a timestamp; tokens with earlier `iatMs` are 401 (login kick / logout / disable / password or role change)
 - 权限码：系统菜单 `sys:{user|role|menu}:{query|write}`；可视化 `vis:{dataset|card|dashboard}:conf`。权限写在 token 里，改码后需重新登录。
 
-## Git Hooks
+## Manual Quality Checks
 
-- `pre-commit`: runs `lint-staged` (eslint --fix on staged files) then `type-check`
-- `commit-msg`: enforces conventional commit format (`feat:`, `fix:`, `docs:`, etc.)
+- Git hooks are intentionally not installed; developers run checks manually.
+- Frontend changes: run `pnpm lint` and `pnpm type-check` from `frontend/`.
+- Backend changes: run `mvn test` from `backend/`.
 
 ## Build Output
 

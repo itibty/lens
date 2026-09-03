@@ -313,7 +313,9 @@ public class VisDashGroupService {
         group.setGroupName(req.getGroupName().trim());
         group.setIcon(req.getIcon());
         group.setSortNum(req.getSortNum() == null ? 0 : req.getSortNum());
-        group.setStatus(StrUtil.blankToDefault(req.getStatus(), Status.EBL));
+        group.setStatus(StrUtil.isBlank(req.getStatus())
+                ? (req.getId() == null ? Status.EBL : group.getStatus())
+                : req.getStatus());
         if (req.getId() == null) {
             group.createCallback();
             groupMapper.insert(group);

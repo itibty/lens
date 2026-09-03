@@ -23,7 +23,7 @@ class PivotDataServiceTest {
         assertEquals("amount", bo.getHavingFilters().get(0).getField());
         assertEquals("sales", bo.getOrderList().get(0).getField());
         assertEquals(500, bo.getLimit());
-        assertEquals(PivotDataService.MAX_LIMIT, bo.getMaxLimit());
+        assertEquals(PivotDataService.MAX_LIMIT + 1, bo.getMaxLimit());
         assertFalse(bo.isSkipLimit());
     }
 
@@ -34,8 +34,8 @@ class PivotDataServiceTest {
         QueryBO bo = new QueryBO();
         PivotDataService.applyDetailDisplayControls(bo, true, config, 20000);
 
-        assertEquals(20000, bo.getLimit());
-        assertEquals(PivotDataService.MAX_LIMIT, bo.getMaxLimit());
+        assertEquals(20001, bo.getLimit());
+        assertEquals(PivotDataService.MAX_LIMIT + 1, bo.getMaxLimit());
     }
 
     @Test
