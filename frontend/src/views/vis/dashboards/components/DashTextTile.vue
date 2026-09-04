@@ -4,6 +4,7 @@
 <script setup lang="ts">
 import type { CSSProperties } from 'vue'
 import type { DashTextAppearance, DashTextWidget } from '../dashLayout'
+import type { DashFlowMode } from '../dashPresentation'
 import SimpleHtmlEditor from '@/views/vis/cards/components/SimpleHtmlEditor.vue'
 import { sanitizeRichText } from '@/views/vis/shared/sanitizeRichText'
 import DashTextSettings from './DashTextSettings.vue'
@@ -13,10 +14,12 @@ const props = withDefaults(defineProps<{
   editable?: boolean
   designActions?: boolean
   resizing?: boolean
+  flowMode?: DashFlowMode
 }>(), {
   editable: false,
   designActions: false,
   resizing: false,
+  flowMode: undefined,
 })
 
 const emit = defineEmits<{
@@ -55,6 +58,8 @@ function onResizePointerDown(corner: 'nw' | 'ne' | 'sw' | 'se', event: PointerEv
       {
         'is-editable': editable,
         'is-resizing': resizing,
+        'is-flow': !!flowMode,
+        [`is-flow-${flowMode}`]: !!flowMode,
       },
     ]"
     :style="tileStyle"
@@ -124,6 +129,61 @@ function onResizePointerDown(corner: 'nw' | 'ne' | 'sw' | 'se', event: PointerEv
   &.is-resizing {
     outline: 3px solid color-mix(in srgb, var(--dash-accent, #0052d9) 68%, var(--dash-card-bg, #fff));
     outline-offset: -1px;
+  }
+}
+
+.dash-text.is-flow {
+  height: auto;
+  min-height: 120px;
+  border: 1px solid color-mix(in srgb, var(--dash-border, #e5e7eb) 48%, transparent);
+
+  .dash-text__body {
+    height: auto;
+    min-height: inherit;
+    overflow: visible;
+  }
+
+  .dash-text__content {
+    font-size: 14px;
+    line-height: 1.72;
+  }
+
+  .dash-text__content :deep(h1) {
+    font-size: clamp(21px, 6vw, 24px);
+  }
+
+  .dash-text__content :deep(h2) {
+    font-size: clamp(18px, 5vw, 20px);
+  }
+
+  .dash-text__content :deep(h3) {
+    font-size: clamp(16px, 4.4vw, 17px);
+  }
+}
+
+.dash-text.is-flow-compact {
+  &.is-padding-md .dash-text__body {
+    padding: 13px 14px;
+  }
+
+  &.is-padding-lg .dash-text__body {
+    padding: 18px;
+  }
+}
+
+@media (max-width: 359px) {
+  .dash-text.is-flow {
+    &.is-padding-sm .dash-text__body {
+      padding: 8px;
+    }
+
+    &.is-padding-md .dash-text__body {
+      padding: 11px 12px;
+    }
+
+    &.is-padding-lg .dash-text__body {
+      padding: 15px 14px;
+    }
   }
 }
 

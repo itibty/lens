@@ -3,13 +3,16 @@
 -->
 <script setup lang="ts">
 import type { Layout } from 'grid-layout-plus'
+import type { CSSProperties } from 'vue'
 import type { DashCardGlobals } from '../dashApi'
 import type { DashLayoutRect, DashPageItem } from '../dashLayout'
+import type { DashFlowMode } from '../dashPresentation'
 import type { VisCard } from '@/views/vis/shared/types'
 import type { VisCardDetailOpenPayload } from '@/views/vis/shared/useVisCardDetail'
 import { GridItem, GridLayout } from 'grid-layout-plus'
 import { DASH_COL_NUM, DASH_MARGIN, DASH_MIN_H, DASH_MIN_W, DASH_ROW_HEIGHT } from '../config'
 import { groupEmptyHint, sameRect } from '../dashLayout'
+import { projectDashFlowCards } from '../dashPresentation'
 import { layoutMatches, stackLayout, useDashGridInteract } from '../useDashGridInteract'
 import DashCardTile from './DashCardTile.vue'
 
@@ -22,6 +25,7 @@ const props = withDefaults(defineProps<{
   showSql?: boolean
   autoRefresh?: boolean
   stacked?: boolean
+  flowMode?: DashFlowMode
   emptyText?: string
   dataTick?: number
   hideTitle?: boolean
@@ -34,6 +38,7 @@ const props = withDefaults(defineProps<{
   showSql: false,
   autoRefresh: false,
   stacked: false,
+  flowMode: undefined,
   emptyText: groupEmptyHint(false),
   dataTick: undefined,
   hideTitle: false,
@@ -49,6 +54,8 @@ const emit = defineEmits<{
 const items = defineModel<DashPageItem[]>('items', { default: () => [] })
 const layout = ref<Layout>([])
 const visibleItems = computed(() => items.value.filter(item => props.cards[item.cardId]))
+const flowing = computed(() => !!props.flowMode)
+const staticPresentation = computed(() => props.stacked || flowing.value)
 
 function toSlots(list: DashPageItem[]) {
   return list.map(item => ({
@@ -70,7 +77,7 @@ function toDesignLayout(list: DashPageItem[]): Layout {
 }
 
 function applyLayout(next?: Layout) {
-  if (!props.editable || props.stacked)
+  if (!props.editable || staticPresentation.value)
     return
   const source = next?.length ? next : layout.value
   const byId = new Map(source.map(item => [String(item.i), item]))
@@ -95,7 +102,7 @@ function applyRect(id: string, rect: DashLayoutRect) {
 const interact = useDashGridInteract({
   layout,
   editable: () => props.editable,
-  stacked: () => props.stacked,
+  stacked: () => staticPresentation.value,
   minSizeOf: () => ({ minW: DASH_MIN_W, minH: DASH_MIN_H }),
   applyRect,
   commit: applyLayout,
@@ -123,9 +130,25 @@ const tiles = computed(() => layout.value.flatMap((item) => {
   return card ? [{ item, card }] : []
 }))
 
+const flowTiles = computed(() => props.flowMode
+  ? projectDashFlowCards(
+      visibleItems.value,
+      props.flowMode,
+      cardId => props.cards[cardId]?.visual.chartType,
+    )
+  : [])
+
+function flowItemStyle(item: (typeof flowTiles.value)[number]): CSSProperties {
+  return {
+    gridColumn: `span ${item.columnSpan}`,
+    height: `${item.height}px`,
+  }
+}
+
 watch(
   () => [
     props.stacked,
+    props.flowMode,
     props.editable,
     visibleItems.value.map(item => `${item.cardId}:${item.x}:${item.y}:${item.w}:${item.h}`).join(','),
   ],
@@ -141,10 +164,45 @@ onBeforeUnmount(() => {
 <template>
   <div
     class="dash-inner"
-    :class="{ 'is-editable': editable, 'is-resizing': !!interact.resizingId.value, 'is-stacked': stacked }"
+    :class="{
+      'is-editable': editable,
+      'is-resizing': !!interact.resizingId.value,
+      'is-stacked': stacked,
+      'is-flow': flowing,
+    }"
   >
     <div v-if="!visibleItems.length" class="dash-inner__empty">
       {{ emptyText }}
+    </div>
+    <div
+      v-else-if="flowMode"
+      class="dash-inner__flow"
+      :class="`is-${flowMode}`"
+    >
+      <div
+        v-for="entry in flowTiles"
+        :key="entry.item.cardId"
+        class="dash-inner__flow-item"
+        :style="flowItemStyle(entry)"
+      >
+        <DashCardTile
+          :card="cards[entry.item.cardId]"
+          :dashboard-id="dashboardId"
+          :card-id="entry.item.cardId"
+          :globals="globalsOf(cards[entry.item.cardId])"
+          :editable="editable"
+          :design-actions="designActions"
+          in-group
+          :allow-fullscreen="allowFullscreen"
+          :show-sql="showSql"
+          :auto-refresh="autoRefresh"
+          :data-tick="dataTick"
+          :hide-title="hideTitle"
+          @remove="emit('remove', entry.item.cardId)"
+          @detach="emit('detach', entry.item.cardId)"
+          @open-detail="emit('openDetail', $event)"
+        />
+      </div>
     </div>
     <GridLayout
       v-else
@@ -225,5 +283,28 @@ onBeforeUnmount(() => {
 .dash-inner__empty {
   @include dash.empty-hint(120px);
   margin: var(--dash-grid-gap, 12px);
+}
+
+.dash-inner__flow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--dash-grid-gap, 12px);
+  box-sizing: border-box;
+  width: 100%;
+  padding: var(--dash-grid-gap, 12px);
+
+  &.is-medium {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.dash-inner__flow-item {
+  min-width: 0;
+
+  > :deep(.vis-full-wrap),
+  > :deep(.dash-tile) {
+    width: 100%;
+    height: 100%;
+  }
 }
 </style>

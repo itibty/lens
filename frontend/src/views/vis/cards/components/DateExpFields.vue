@@ -2,6 +2,7 @@
  * @Description: 日期快捷 valueExp + 所需 value[]
 -->
 <script setup lang="ts">
+import type { CSSProperties } from 'vue'
 import {
   DATE_VALUE_EXP_OPTIONS,
   dateExpValueError,
@@ -16,10 +17,12 @@ const props = withDefaults(defineProps<{
   /** 选中项下方的周期说明；对比浮层里由区间预览代替 */
   showHint?: boolean
   size?: 'default' | 'small' | 'large'
+  popperStyle?: CSSProperties
 }>(), {
   label: '日期快捷',
   showHint: true,
   size: 'small',
+  popperStyle: undefined,
 })
 
 const valueExp = defineModel<VIS.FilterItem['valueExp']>('valueExp')
@@ -49,7 +52,13 @@ function setNumber(index: number, n: number | undefined) {
 
 <template>
   <el-form-item :class="{ 'is-bare': !label }" :label="label || undefined">
-    <el-select v-model="valueExp" class="w-full" :size="size" placeholder="选择快捷">
+    <el-select
+      v-model="valueExp"
+      class="w-full"
+      :size="size"
+      :popper-style="popperStyle"
+      placeholder="选择快捷"
+    >
       <el-option
         v-for="opt in DATE_VALUE_EXP_OPTIONS"
         :key="opt.value"

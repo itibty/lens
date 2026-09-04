@@ -4,7 +4,7 @@
 <script setup lang="ts">
 import type { DetailHit, DetailMenuPayload, PivotPathMember } from '@/views/vis/shared/cardDetail'
 import type { VisQueryConfig, VisVisualConfig } from '@/views/vis/shared/types'
-import { onClickOutside, useEventListener } from '@vueuse/core'
+import { onClickOutside, useEventListener, useMediaQuery } from '@vueuse/core'
 import { showToast } from '@/utils/index'
 import { DASH_SURFACE_MODE_KEY } from '@/views/vis/dashboards/dashTheme'
 import {
@@ -130,6 +130,8 @@ const followsDashSurface = computed(() => props.embedded && !!dashSurfaceMode &&
 const darkSurface = computed(() => followsDashSurface.value && dashSurfaceMode?.value === 'dark')
 
 const hasHeaderText = computed(() => !!(cardTitle.value || cardRemark.value))
+const coarsePointer = useMediaQuery('(hover: none), (pointer: coarse)')
+const remarkTrigger = computed<'click' | 'hover'>(() => coarsePointer.value ? 'click' : 'hover')
 
 const empty = computed(() => {
   if (stageMode.value === 'pivot')
@@ -219,6 +221,7 @@ const moreRef = ref<{ handleClose: () => void } | null>(null)
 const menuRef = ref<HTMLElement>()
 const menu = ref<DetailMenuPayload | null>(null)
 const menuLabel = computed(() => menu.value ? detailMenuLabel(menu.value.hit) : '')
+const DETAIL_MENU_VIEWPORT_GAP = 8
 
 function closeMenu() {
   menu.value = null
@@ -231,12 +234,45 @@ function closeFloatingMenus() {
     moreRef.value?.handleClose()
 }
 
+function clampMenuToViewport() {
+  const current = menu.value
+  const el = menuRef.value
+  if (!current || !el)
+    return
+  const rect = el.getBoundingClientRect()
+  const viewport = window.visualViewport
+  const viewportLeft = viewport?.offsetLeft ?? 0
+  const viewportTop = viewport?.offsetTop ?? 0
+  const viewportRight = viewportLeft + (viewport?.width ?? window.innerWidth)
+  const viewportBottom = viewportTop + (viewport?.height ?? window.innerHeight)
+  const minLeft = viewportLeft + DETAIL_MENU_VIEWPORT_GAP
+  const minTop = viewportTop + DETAIL_MENU_VIEWPORT_GAP
+  const maxRight = viewportRight - DETAIL_MENU_VIEWPORT_GAP
+  const maxBottom = viewportBottom - DETAIL_MENU_VIEWPORT_GAP
+  const dx = rect.left < minLeft
+    ? minLeft - rect.left
+    : rect.right > maxRight
+      ? maxRight - rect.right
+      : 0
+  const dy = rect.top < minTop
+    ? minTop - rect.top
+    : rect.bottom > maxBottom
+      ? maxBottom - rect.bottom
+      : 0
+  if (dx || dy) {
+    menu.value = {
+      ...current,
+      clientX: current.clientX + dx,
+      clientY: current.clientY + dy,
+    }
+  }
+}
+
 function openMenu(hit: DetailHit | null, clientX: number, clientY: number) {
   if (!allowDetail.value || !hit)
     return
-  nextTick(() => {
-    menu.value = { hit, clientX, clientY }
-  })
+  menu.value = { hit, clientX, clientY }
+  void nextTick().then(clampMenuToViewport)
 }
 
 function pickMenuDetail() {
@@ -336,6 +372,7 @@ function onKpiDetailClick(payload: { record: Record<string, unknown>, clientX: n
 
 onClickOutside(menuRef, closeMenu)
 useEventListener(window, 'scroll', closeFloatingMenus, { capture: true, passive: true })
+useEventListener(window, 'resize', closeFloatingMenus, { passive: true })
 watch(allowDetail, (ok) => {
   if (!ok)
     closeMenu()
@@ -380,19 +417,22 @@ watch(allowDetail, (ok) => {
         >
           <el-popover
             v-if="cardRemark"
-            trigger="hover"
+            :trigger="remarkTrigger"
             placement="bottom-start"
             :show-after="200"
             :width="260"
             popper-class="vis-card-remark-popper"
           >
             <template #reference>
-              <span
-                class="vis-card-view__remark-icon i-mingcute-information-line"
-                tabindex="0"
+              <button
+                type="button"
+                class="vis-card-view__remark-btn"
+                aria-label="查看卡片备注"
                 @click.stop
                 @pointerdown.stop
-              />
+              >
+                <span class="vis-card-view__remark-icon i-mingcute-information-line" />
+              </button>
             </template>
             {{ cardRemark }}
           </el-popover>
@@ -411,12 +451,19 @@ watch(allowDetail, (ok) => {
           @mousedown.stop
           @click.stop
         >
-          <span
+          <button
             v-if="showFullscreen"
-            class="vis-card-view__full-icon"
-            :class="fullscreen ? 'i-mingcute-fullscreen-exit-line' : 'i-mingcute-fullscreen-line'"
+            type="button"
+            class="vis-card-view__full-btn"
+            :aria-label="fullscreen ? '退出全屏' : '全屏查看'"
+            :title="fullscreen ? '退出全屏' : '全屏查看'"
             @click="emit('toggleFullscreen')"
-          />
+          >
+            <span
+              class="vis-card-view__full-icon"
+              :class="fullscreen ? 'i-mingcute-fullscreen-exit-line' : 'i-mingcute-fullscreen-line'"
+            />
+          </button>
           <el-dropdown
             v-if="hasMoreMenu"
             ref="moreRef"
@@ -426,12 +473,12 @@ watch(allowDetail, (ok) => {
             @command="onMenuCommand"
             @visible-change="menuOpen = $event"
           >
-            <span class="vis-card-view__more-btn" tabindex="0">
+            <button type="button" class="vis-card-view__more-btn" aria-label="更多卡片操作">
               <span
                 :class="exporting ? 'i-svg-spinners-ring-resize' : 'i-mingcute-more-2-line'"
                 class="vis-card-view__more-icon"
               />
-            </span>
+            </button>
             <template #dropdown>
               <el-dropdown-menu>
                 <el-dropdown-item command="refresh">
@@ -795,12 +842,38 @@ watch(allowDetail, (ok) => {
     }
   }
 
+  &__full-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    width: 24px;
+    height: 24px;
+    margin-right: 2px;
+    padding: 0;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    cursor: pointer;
+    outline: none;
+
+    &:focus-visible {
+      background: var(--el-fill-color);
+    }
+
+    .is-card-color & {
+      color: inherit;
+
+      &:focus-visible {
+        background: rgb(255 255 255 / 14%);
+      }
+    }
+  }
+
   &__full-icon {
     width: 16px;
     height: 16px;
-    margin-right: 6px;
     color: var(--el-text-color-placeholder);
-    cursor: pointer;
 
     &:hover {
       color: var(--el-text-color-regular);
@@ -830,6 +903,7 @@ watch(allowDetail, (ok) => {
     box-sizing: border-box;
     width: 24px;
     height: 24px;
+    padding: 0;
     border: none;
     border-radius: 6px;
     background: transparent;
@@ -878,15 +952,28 @@ watch(allowDetail, (ok) => {
     }
   }
 
-  &__remark-icon {
+  &__remark-btn {
     flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
+    padding: 0;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: inherit;
+    cursor: help;
+    outline: none;
+  }
+
+  &__remark-icon {
     width: 14px;
     height: 14px;
     color: var(--el-text-color-placeholder);
-    cursor: help;
 
-    &:hover,
-    &:focus-visible {
+    &:hover {
       color: var(--el-text-color-regular);
     }
 
@@ -894,10 +981,17 @@ watch(allowDetail, (ok) => {
       color: inherit;
       opacity: 0.7;
 
-      &:hover,
-      &:focus-visible {
+      &:hover {
         opacity: 1;
       }
+    }
+  }
+
+  &__remark-btn:focus-visible &__remark-icon {
+    color: var(--el-text-color-regular);
+
+    .is-card-color & {
+      opacity: 1;
     }
   }
 
@@ -1072,11 +1166,53 @@ watch(allowDetail, (ok) => {
     color: var(--el-color-primary);
   }
 }
+
+@media (hover: none), (pointer: coarse) {
+  .vis-card-view {
+    &__header {
+      min-height: 44px;
+      padding: 4px 8px 0;
+
+      :is(.is-number, .is-progress, .is-trend) & {
+        padding: 4px 8px;
+      }
+    }
+
+    &__actions {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    &__full-btn,
+    &__more-btn,
+    &__remark-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 8px;
+    }
+
+    &__full-btn {
+      margin-right: 0;
+    }
+
+    &__full-icon,
+    &__more-icon {
+      width: 18px;
+      height: 18px;
+    }
+
+    &__remark-icon {
+      width: 16px;
+      height: 16px;
+    }
+  }
+}
 </style>
 
 <style lang="scss">
 .vis-card-remark-popper {
   z-index: 4000 !important;
+  max-width: calc(100vw - 16px);
   font-size: 12px;
   line-height: 1.5;
   word-break: break-word;
@@ -1105,8 +1241,13 @@ watch(allowDetail, (ok) => {
 .vis-detail-menu {
   position: fixed;
   z-index: 4000;
+  box-sizing: border-box;
   min-width: 132px;
+  max-width: calc(100vw - 16px);
+  max-height: calc(100vh - 16px);
+  max-height: calc(100dvh - 16px);
   padding: 4px;
+  overflow: auto;
   border: 1px solid var(--el-border-color-lighter);
   border-radius: 8px;
   background: var(--el-bg-color-overlay);
@@ -1129,6 +1270,13 @@ watch(allowDetail, (ok) => {
     &:hover {
       background: var(--el-fill-color-light);
     }
+  }
+}
+
+@media (hover: none), (pointer: coarse) {
+  .vis-card-more-popper .el-dropdown-menu__item,
+  .vis-detail-menu__item {
+    min-height: 44px;
   }
 }
 </style>

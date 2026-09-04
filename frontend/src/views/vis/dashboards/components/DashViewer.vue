@@ -6,6 +6,7 @@ import type { DashFilterValues, VisDashFilterDef } from '../dashApi'
 import type { DashWidget } from '../dashLayout'
 import type { DashCardRadiusId, DashThemeId } from '../dashTheme'
 import type { VisCard } from '@/views/vis/shared/types'
+import { useElementSize } from '@vueuse/core'
 import vis from '@/apis/vis/index'
 import { UIConfig } from '@/core/config'
 import { showToast } from '@/utils/index'
@@ -18,6 +19,12 @@ import {
   loadDashboardWidgets,
 } from '../dashApi'
 import { useDashFilterUrl } from '../dashFilterQuery'
+import {
+  DASH_EAGER_CARD_QUERIES_KEY,
+  DASH_PRESENTATION_MODE_KEY,
+  resolveDashPresentationMode,
+} from '../dashPresentation'
+import { createDashCardQueryTracker, DASH_CARD_QUERY_TRACKER_KEY } from '../dashQueryTracker'
 import { captureDashPreview, saveDashScreenshot } from '../dashScreenshot'
 import {
   DASH_SURFACE_MODE_KEY,
@@ -33,8 +40,24 @@ import DashGrid from './DashGrid.vue'
 
 defineOptions({ name: 'DashViewer' })
 
+const props = withDefaults(defineProps<{
+  /** 独立预览页按容器宽度切换 wide / medium / compact；报表中心保留原 auto 行为。 */
+  standalone?: boolean
+}>(), {
+  standalone: false,
+})
+
 const route = useRoute()
 const router = useRouter()
+const viewerRef = ref<HTMLElement | null>(null)
+const initialViewerWidth = typeof window === 'undefined' ? 1024 : window.innerWidth
+const { width: viewerWidth } = useElementSize(viewerRef, { width: initialViewerWidth, height: 0 })
+const presentationMode = computed(() => resolveDashPresentationMode(viewerWidth.value, props.standalone))
+provide(DASH_PRESENTATION_MODE_KEY, presentationMode)
+const eagerCardQueries = ref(false)
+provide(DASH_EAGER_CARD_QUERIES_KEY, readonly(eagerCardQueries))
+const cardQueryTracker = createDashCardQueryTracker()
+provide(DASH_CARD_QUERY_TRACKER_KEY, cardQueryTracker)
 const loading = ref(false)
 const name = ref('看板')
 const desc = ref('')
@@ -59,6 +82,13 @@ const { pauseFilterUrl, applyFilterQuery } = useDashFilterUrl(
 )
 const capturing = ref(false)
 
+async function waitForCardQueries(timeoutMs = 15_000) {
+  await nextTick()
+  await nextTick()
+  await cardQueryTracker.waitForIdle(timeoutMs)
+  await nextTick()
+}
+
 function openPreview() {
   if (!dashboardId.value)
     return
@@ -71,7 +101,7 @@ function openPreview() {
 
 useCardAutoRefresh({
   intervalSec: () => autoRefreshSec.value,
-  enabled: () => !loading.value && !dashDisabled.value && !emptyText.value,
+  enabled: () => !capturing.value && !loading.value && !dashDisabled.value && !emptyText.value,
   run: () => refreshCards(),
 })
 
@@ -176,9 +206,10 @@ async function onScreenshot() {
     return
   }
   capturing.value = true
+  eagerCardQueries.value = true
   revealChrome()
-  await nextTick()
   try {
+    await waitForCardQueries()
     const blob = await captureDashPreview(root)
     saveDashScreenshot(blob, name.value)
     showToast('截屏已保存')
@@ -187,6 +218,7 @@ async function onScreenshot() {
     showToast('截屏失败', 'error')
   }
   finally {
+    eagerCardQueries.value = false
     capturing.value = false
   }
 }
@@ -203,8 +235,10 @@ watch(
 <template>
   <div
     :id="DASH_VIEWER_ID"
+    ref="viewerRef"
     v-spinner="loading"
     class="viewer"
+    :class="`is-${presentationMode}`"
     :style="themeStyle"
   >
     <el-scrollbar
@@ -223,6 +257,7 @@ watch(
           :desc="desc"
           :defs="dashDisabled ? [] : filters"
           :filter-options-dashboard-id="dashboardId"
+          :presentation-mode="presentationMode"
           :preview-disabled="!dashboardId"
           :screenshotting="capturing || loading"
           @refresh="refreshCards"
@@ -247,6 +282,7 @@ watch(
           :dashboard-id="dashboardId"
           :globals-of="globalsOf"
           :data-tick="refreshTick"
+          :presentation-mode="presentationMode"
           allow-fullscreen
           auto-refresh
         />

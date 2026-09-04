@@ -2,6 +2,7 @@
  * @Description: 筛选 tag 弹层表单（只改草稿，确认由外层写回）
 -->
 <script setup lang="ts">
+import type { CSSProperties } from 'vue'
 import type { DashFilterValue, VisDashFilterDef } from '../dashApi'
 import { useDebounceFn } from '@vueuse/core'
 import DateExpFields from '@/views/vis/cards/components/DateExpFields.vue'
@@ -14,9 +15,11 @@ const props = withDefaults(defineProps<{
   opLabel: string
   bare?: boolean
   dashboardId?: string
+  popperStyle?: CSSProperties
 }>(), {
   bare: false,
   dashboardId: '',
+  popperStyle: undefined,
 })
 const emit = defineEmits<{
   patch: [next: DashFilterValue]
@@ -131,6 +134,7 @@ watch(
       :label="bare ? '默认值' : opLabel"
       size="default"
       :show-hint="false"
+      :popper-style="popperStyle"
       @update:value-exp="(val: VIS.FilterItem['valueExp']) => emit('patch', { valueExp: val })"
       @update:value="setValue"
     />
@@ -168,6 +172,7 @@ watch(
         :loading="loading"
         reserve-keyword
         placeholder="请选择"
+        :popper-style="popperStyle"
         @visible-change="onSelectVisible"
         @update:model-value="(val: string | string[]) => {
           if (def.formType === 'select')
@@ -222,6 +227,7 @@ watch(
           :placeholder="isRange ? '起' : (isDateTimeFormType(def.formType) ? '日期时间' : '日期')"
           clearable
           style="width: 100%"
+          :popper-style="popperStyle"
           @update:model-value="(val: string | number | null) => setTemporalAt(0, val)"
         />
         <template v-if="isRange">
@@ -233,6 +239,7 @@ watch(
             placeholder="止"
             clearable
             style="width: 100%"
+            :popper-style="popperStyle"
             @update:model-value="(val: string | number | null) => setTemporalAt(1, val)"
           />
         </template>

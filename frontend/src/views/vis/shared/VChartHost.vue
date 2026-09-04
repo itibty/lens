@@ -6,7 +6,9 @@ import type { ISpec } from '@visactor/vchart'
 import VChart, { darkTheme } from '@visactor/vchart'
 import { useResizeObserver } from '@vueuse/core'
 import { FONT_SANS } from '@/core/fonts'
+import { DASH_PRESENTATION_MODE_KEY } from '@/views/vis/dashboards/dashPresentation'
 import { unwrapChartDatum } from '@/views/vis/shared/chartDatum'
+import { projectChartPresentation } from '@/views/vis/shared/chartPresentation'
 
 const props = withDefaults(defineProps<{
   spec?: ISpec | null
@@ -30,6 +32,7 @@ const emit = defineEmits<{
   markClick: [payload: { datum: Record<string, unknown>, clientX: number, clientY: number }]
 }>()
 
+const presentationMode = inject(DASH_PRESENTATION_MODE_KEY, computed(() => 'auto' as const))
 const containerRef = ref<HTMLDivElement>()
 const chartWrapRef = ref<HTMLDivElement>()
 let chart: VChart | null = null
@@ -312,7 +315,7 @@ function syncChart() {
     destroyChart()
     return
   }
-  const spec = withSurfaceTheme(props.spec)
+  const spec = withSurfaceTheme(projectChartPresentation(props.spec, presentationMode.value))
   if (!chart) {
     createChart(spec)
     return
@@ -373,6 +376,12 @@ watch(
     nextTick(syncChart)
   },
 )
+
+watch(presentationMode, () => {
+  // breakpoint 变化时重建实例，确保移除移动端临时添加的图例布局属性。
+  destroyChart()
+  nextTick(syncChart)
+})
 
 useResizeObserver(containerRef, fitChart)
 useResizeObserver(chartWrapRef, fitChart)

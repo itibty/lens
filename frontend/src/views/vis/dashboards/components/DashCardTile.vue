@@ -6,6 +6,7 @@ import type { DashCardGlobals } from '../dashApi'
 import type { DetailHit } from '@/views/vis/shared/cardDetail'
 import type { VisCard } from '@/views/vis/shared/types'
 import type { VisCardDetailOpenPayload } from '@/views/vis/shared/useVisCardDetail'
+import { useIntersectionObserver } from '@vueuse/core'
 import { useAccountStore } from '@/stores/modules/account'
 import { FUNCTION_CARD_CONF } from '@/views/vis/cards/config'
 import { resolveAutoRefreshSec, useCardAutoRefresh } from '@/views/vis/shared/cardRefresh'
@@ -14,6 +15,12 @@ import { useVisCardQuery } from '@/views/vis/shared/useVisCardQuery'
 import VisCardView from '@/views/vis/shared/VisCardView.vue'
 import VisFullWrap from '@/views/vis/shared/VisFullWrap.vue'
 import { isVisDisabled } from '../dashApi'
+import {
+  DASH_EAGER_CARD_QUERIES_KEY,
+  DASH_PRESENTATION_MODE_KEY,
+  shouldDeferDashCardQuery,
+} from '../dashPresentation'
+import { DASH_CARD_QUERY_TRACKER_KEY } from '../dashQueryTracker'
 import { DASH_REFRESH_TICK } from '../useDashRefresh'
 
 const props = withDefaults(defineProps<{
@@ -62,6 +69,18 @@ const { hasFunction } = useAccountStore()
 const router = useRouter()
 const canEditCard = hasFunction(FUNCTION_CARD_CONF)
 const disabled = computed(() => isVisDisabled(props.card.status))
+const presentationMode = inject(DASH_PRESENTATION_MODE_KEY, computed(() => 'auto' as const))
+const eagerCardQueries = inject(DASH_EAGER_CARD_QUERIES_KEY, readonly(ref(false)))
+const queryTracker = inject(DASH_CARD_QUERY_TRACKER_KEY, null)
+const deferQuery = computed(() =>
+  !eagerCardQueries.value && shouldDeferDashCardQuery(presentationMode.value, props.editable),
+)
+const intersectionSupported = typeof IntersectionObserver !== 'undefined'
+const tileRef = ref<HTMLElement | null>(null)
+const scrollRoot = shallowRef<HTMLElement | null>(null)
+const nearViewport = ref(!deferQuery.value || !intersectionSupported)
+const queryPending = ref(true)
+const queryRequested = ref(false)
 
 const canFullscreen = computed(() =>
   !disabled.value && props.allowFullscreen && allowsFullscreen(props.card.visual.chartType),
@@ -148,15 +167,49 @@ const queryFp = computed(() => JSON.stringify({
 const injectedTick = inject(DASH_REFRESH_TICK, ref(0))
 const refreshTick = computed(() => props.dataTick ?? injectedTick.value)
 
+async function runWhenReady(options?: { silent?: boolean }) {
+  if (deferQuery.value && !nearViewport.value) {
+    queryPending.value = true
+    return
+  }
+  queryPending.value = false
+  queryRequested.value = true
+  const task = run(options)
+  await (queryTracker?.track(task) ?? task)
+}
+
 watch([queryFp, refreshTick], () => {
-  void run()
+  queryPending.value = true
+  void runWhenReady()
 }, { immediate: true })
+
+onMounted(() => {
+  scrollRoot.value = tileRef.value?.closest<HTMLElement>('.el-scrollbar__wrap') ?? null
+})
+
+useIntersectionObserver(
+  tileRef,
+  ([entry]) => {
+    nearViewport.value = entry?.isIntersecting ?? false
+  },
+  {
+    root: scrollRoot,
+    rootMargin: '600px 0px',
+  },
+)
+
+watch([nearViewport, deferQuery], ([near, deferred]) => {
+  if ((!deferred || near) && queryPending.value)
+    void runWhenReady()
+})
 
 if (props.autoRefresh) {
   useCardAutoRefresh({
     intervalSec: () => resolveAutoRefreshSec(props.card.visual),
-    enabled: () => !disabled.value,
-    run: () => run({ silent: true }),
+    enabled: () => !disabled.value
+      && !eagerCardQueries.value
+      && (!deferQuery.value || nearViewport.value),
+    run: () => runWhenReady({ silent: true }),
   })
 }
 
@@ -167,7 +220,8 @@ function onResizePointerDown(corner: 'nw' | 'ne' | 'sw' | 'se', event: PointerEv
 }
 
 function onRefresh() {
-  void run()
+  queryPending.value = true
+  void runWhenReady()
 }
 
 function onMenuAction(key: string) {
@@ -197,6 +251,7 @@ function onMenuAction(key: string) {
 <template>
   <VisFullWrap v-slot="{ isFull, toggle }" :enabled="canFullscreen">
     <div
+      ref="tileRef"
       class="dash-tile"
       :class="{
         'is-editable': editable,
@@ -229,7 +284,7 @@ function onMenuAction(key: string) {
           :title="card.name"
           :description="card.desc"
           :hide-title="hideTitle"
-          :loading="loading"
+          :loading="loading || (deferQuery && !queryRequested)"
           :error="disabled ? '' : error"
           :unavailable="disabled ? emptyText : ''"
           :empty-text="emptyText"
