@@ -96,7 +96,7 @@ watch(open, (visible) => {
       <header class="mobile-filter-sheet__header">
         <div class="mobile-filter-sheet__heading">
           <strong>筛选条件</strong>
-          <span>{{ draftFilledCount ? `已启用 ${draftFilledCount} 项` : '设置后统一应用' }}</span>
+          <span v-if="draftFilledCount">{{ `已启用 ${draftFilledCount} 项` }}</span>
         </div>
         <button
           type="button"
