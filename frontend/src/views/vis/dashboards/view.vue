@@ -23,6 +23,20 @@ defineOptions({ name: 'VisDashboardView' })
   --dash-safe-bottom: env(safe-area-inset-bottom, 0px);
   --dash-safe-left: env(safe-area-inset-left, 0px);
 
+  :deep(.viewer.is-compact) {
+    --dash-page-y: 9px;
+    --dash-chrome-x: 12px;
+    --dash-gutter: 8px;
+    --dash-grid-gap: 10px;
+  }
+
+  :deep(.viewer.is-medium) {
+    --dash-page-y: 10px;
+    --dash-chrome-x: 16px;
+    --dash-gutter: 10px;
+    --dash-grid-gap: 12px;
+  }
+
   :deep(.viewer__chrome) {
     padding-top: calc(var(--dash-page-y) + var(--dash-safe-top));
     padding-right: calc(var(--dash-chrome-x) + var(--dash-safe-right));
@@ -41,6 +55,26 @@ defineOptions({ name: 'VisDashboardView' })
 
   :deep(.filter-dock__preview) {
     display: none;
+  }
+
+  :deep(.viewer:is(.is-compact, .is-medium) .viewer__chrome) {
+    background: color-mix(in srgb, var(--dash-card-bg, var(--el-bg-color)) 94%, transparent);
+    backdrop-filter: blur(14px) saturate(1.06);
+    -webkit-backdrop-filter: blur(14px) saturate(1.06);
+  }
+
+  :deep(.viewer:is(.is-compact, .is-medium) .el-scrollbar__wrap) {
+    overscroll-behavior-y: contain;
+  }
+}
+
+@media (max-width: 359px) {
+  .view-page :deep(.viewer.is-compact) {
+    --dash-page-x: 10px;
+    --dash-page-y: 8px;
+    --dash-chrome-x: 10px;
+    --dash-gutter: 7px;
+    --dash-grid-gap: 8px;
   }
 }
 </style>

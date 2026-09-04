@@ -468,6 +468,8 @@ onBeforeUnmount(() => {
 
   &.is-medium {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    padding: 16px;
   }
 }
 
@@ -492,6 +494,18 @@ onBeforeUnmount(() => {
   > :deep(.dash-text),
   > :deep(.dash-group:not(.is-tabs)) {
     height: auto;
+  }
+
+  // 流式预览里的顶层卡片补一圈很淡的边界，在浅色和深色主题下都能与画布分开。
+  > :deep(.vis-full-wrap > .dash-tile:not(.is-in-group):not(.is-full)) {
+    border: 1px solid color-mix(in srgb, var(--dash-border, #e5e7eb) 48%, transparent);
+  }
+}
+
+@media (max-width: 359px) {
+  .dash-grid__flow {
+    gap: 8px;
+    padding: 8px;
   }
 }
 

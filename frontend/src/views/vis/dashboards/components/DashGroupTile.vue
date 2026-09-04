@@ -493,6 +493,51 @@ function onResizePointerDown(corner: 'nw' | 'ne' | 'sw' | 'se', event: PointerEv
   @include dash.empty-hint(120px);
 }
 
+.dash-group.is-flow {
+  background: var(
+    --dash-group-bg,
+    color-mix(in srgb, var(--dash-card-bg, var(--el-bg-color)) 94%, var(--dash-canvas-bg, transparent))
+  );
+  border: 1px solid color-mix(in srgb, var(--dash-border, #e5e7eb) 64%, transparent);
+
+  .dash-group__chrome {
+    min-height: 52px;
+    padding: 10px 14px 9px;
+    border-bottom: 1px solid color-mix(in srgb, var(--dash-group-fg, var(--dash-border, #e5e7eb)) 18%, transparent);
+  }
+
+  .dash-group__title {
+    font-size: 14px;
+    line-height: 22px;
+  }
+
+  .dash-group__desc {
+    margin-top: 1px;
+    line-height: 18px;
+  }
+
+  .dash-group__tabs {
+    gap: 2px;
+    border: 1px solid color-mix(in srgb, var(--dash-border, #e5e7eb) 42%, transparent);
+  }
+
+  &:not(.has-color) .dash-group__tab.is-active {
+    background: color-mix(
+      in srgb,
+      var(--dash-card-bg, var(--el-bg-color)) 90%,
+      var(--dash-accent, var(--el-color-primary))
+    );
+    box-shadow: none;
+  }
+
+  // 组内卡片比外层容器更亮一层，用边界而非重阴影表达嵌套关系。
+  :deep(.dash-tile.is-in-group:not(.is-full)) {
+    border: 1px solid color-mix(in srgb, var(--dash-border, #e5e7eb) 46%, transparent);
+    background: var(--dash-card-bg, var(--el-bg-color));
+    box-shadow: 0 1px 2px color-mix(in srgb, var(--dash-title, #1f2329) 6%, transparent);
+  }
+}
+
 .dash-group.is-flow:not(.is-tabs) {
   height: auto;
   min-height: 160px;
@@ -519,7 +564,9 @@ function onResizePointerDown(corner: 'nw' | 'ne' | 'sw' | 'se', event: PointerEv
 .dash-group.is-flow-compact.is-tabs {
   .dash-group__chrome {
     flex-direction: column;
-    gap: 2px;
+    align-items: stretch;
+    gap: 8px;
+    padding: 11px 12px 10px;
   }
 
   .dash-group__titles,
@@ -530,6 +577,38 @@ function onResizePointerDown(corner: 'nw' | 'ne' | 'sw' | 'se', event: PointerEv
 
   .dash-group__actions {
     justify-content: flex-start;
+  }
+
+  .dash-group__title {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    white-space: normal;
+  }
+
+  .dash-group__tabs {
+    width: 100%;
+    box-sizing: border-box;
+    scroll-snap-type: x proximity;
+  }
+
+  .dash-group__tab {
+    max-width: min(156px, 68vw);
+    scroll-snap-align: start;
+  }
+}
+
+@media (max-width: 359px) {
+  .dash-group.is-flow {
+    .dash-group__chrome {
+      padding-right: 10px;
+      padding-left: 10px;
+    }
+
+    .dash-group__body.is-tab {
+      padding: 8px;
+    }
   }
 }
 </style>
