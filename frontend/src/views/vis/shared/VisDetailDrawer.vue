@@ -3,6 +3,7 @@
 -->
 <script setup lang="ts">
 import type { VisVisualConfig } from '@/views/vis/shared/types'
+import { useMediaQuery } from '@vueuse/core'
 import VisDataTable from '@/views/vis/shared/VisDataTable.vue'
 
 const props = withDefaults(defineProps<{
@@ -23,6 +24,8 @@ const props = withDefaults(defineProps<{
 const open = defineModel<boolean>('open', { default: false })
 
 const contained = computed(() => !!props.appendTo)
+const mobileDrawer = useMediaQuery('(max-width: 767px), (pointer: coarse) and (max-width: 1024px)')
+const drawerSize = computed(() => contained.value ? '52%' : mobileDrawer.value ? '86dvh' : '46%')
 const tableVisual: VisVisualConfig = { chartType: 'table', table: { showFilter: true } }
 const tableQuery: VIS.QueryConfig = { datasetId: '', metrics: [] }
 const emptyData: VIS.QueryDataResponse = { columns: [], rows: [], total: 0, truncated: false }
@@ -35,6 +38,7 @@ const truncate = computed(() => !!tableData.value.truncated)
     v-if="open"
     v-model:visible="open"
     class="vis-detail-drawer-host"
+    :class="{ 'is-contained': contained }"
     :title="title"
     direction="btt"
     :show-footer="false"
@@ -44,7 +48,7 @@ const truncate = computed(() => !!tableData.value.truncated)
     :lock-scroll="!contained"
     :append-to-body="!contained"
     :append-to="appendTo || undefined"
-    :size-num="contained ? '52%' : '46%'"
+    :size-num="drawerSize"
   >
     <template
       v-if="tags.length"
@@ -103,6 +107,13 @@ const truncate = computed(() => !!tableData.value.truncated)
     min-height: 0;
     overflow: hidden;
   }
+
+  &:not(.is-contained) {
+    :deep(.el-drawer__header) {
+      padding-right: calc(12px + env(safe-area-inset-right, 0px));
+      padding-left: calc(12px + env(safe-area-inset-left, 0px));
+    }
+  }
 }
 
 .vis-detail-drawer {
@@ -112,7 +123,10 @@ const truncate = computed(() => !!tableData.value.truncated)
   height: 100%;
   display: flex;
   flex-direction: column;
-  padding: 8px 12px 10px;
+  padding-top: 8px;
+  padding-right: calc(12px + env(safe-area-inset-right, 0px));
+  padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+  padding-left: calc(12px + env(safe-area-inset-left, 0px));
   box-sizing: border-box;
 
   &__title {
@@ -158,6 +172,19 @@ const truncate = computed(() => !!tableData.value.truncated)
     background: color-mix(in srgb, var(--el-bg-color) 48%, transparent);
     font-size: 28px;
     color: var(--el-color-primary);
+  }
+}
+
+@media (hover: none), (pointer: coarse) {
+  .vis-detail-drawer-host:not(.is-contained) {
+    :deep(.el-drawer__close-btn) {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 44px;
+      height: 44px;
+      margin: -10px;
+    }
   }
 }
 </style>

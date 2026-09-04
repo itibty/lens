@@ -3,12 +3,14 @@
 -->
 <script setup lang="ts">
 import type { DashFilterValues, VisDashFilterDef } from '../dashApi'
+import type { DashPresentationMode } from '../dashPresentation'
 import type { DashThemeId } from '../dashTheme'
 import { useEventListener } from '@vueuse/core'
 import { DASH_THEME_PRESETS, dashThemeSwatchRadius, DEFAULT_DASH_THEME } from '../dashTheme'
 import { isDashPopperTarget, useDashFilterChips } from '../useDashFilterChips'
 import { useDashFilterLabels } from '../useDashFilterOptions'
 import DashFilterChipFields from './DashFilterChipFields.vue'
+import DashMobileFilterSheet from './DashMobileFilterSheet.vue'
 
 const props = withDefaults(defineProps<{
   defs: VisDashFilterDef[]
@@ -24,6 +26,7 @@ const props = withDefaults(defineProps<{
   saveDisabled?: boolean
   loading?: boolean
   filterOptionsDashboardId?: string
+  presentationMode?: DashPresentationMode
 }>(), {
   title: '',
   desc: '',
@@ -36,6 +39,7 @@ const props = withDefaults(defineProps<{
   saveDisabled: false,
   loading: false,
   filterOptionsDashboardId: '',
+  presentationMode: 'wide',
 })
 const emit = defineEmits<{
   refresh: []
@@ -51,6 +55,8 @@ const emit = defineEmits<{
 const theme = defineModel<DashThemeId>('theme', { default: DEFAULT_DASH_THEME })
 const values = defineModel<DashFilterValues>('values', { required: true })
 const themeOpen = ref(false)
+const mobileToolsOpen = ref(false)
+const mobileFiltersOpen = ref(false)
 const {
   openUid,
   tagsRef,
@@ -76,9 +82,12 @@ const { labelsOf } = useDashFilterLabels(
 function pickTheme(id: DashThemeId) {
   theme.value = id
   themeOpen.value = false
+  mobileToolsOpen.value = false
 }
 
 const descText = computed(() => props.desc.trim().replace(/\s+/g, ' '))
+const mobile = computed(() => props.presentationMode === 'compact' || props.presentationMode === 'medium')
+const filledFilterCount = computed(() => props.defs.filter(isFilled).length)
 
 function onAddCommand(command: 'card' | 'text' | 'group') {
   if (command === 'card') {
@@ -92,21 +101,222 @@ function onAddCommand(command: 'card' | 'text' | 'group') {
     emit('addGroup')
 }
 
+function closeMobileTools() {
+  mobileToolsOpen.value = false
+}
+
+function emitMobile(action: 'screenshot' | 'settings' | 'reloadCards' | 'save') {
+  closeMobileTools()
+  switch (action) {
+    case 'screenshot':
+      emit('screenshot')
+      break
+    case 'settings':
+      emit('settings')
+      break
+    case 'reloadCards':
+      emit('reloadCards')
+      break
+    case 'save':
+      emit('save')
+      break
+  }
+}
+
+function onMobileAdd(command: 'card' | 'text' | 'group') {
+  closeMobileTools()
+  onAddCommand(command)
+}
+
 function onPageScroll(event: Event) {
-  if (isDashPopperTarget(event.target))
+  if (
+    isDashPopperTarget(event.target)
+    || (event.target instanceof Element
+      && !!event.target.closest('.dash-mobile-tools-popper, .dash-mobile-filter-sheet'))
+  ) {
     return
+  }
   if (openUid.value)
     discardChip()
   themeOpen.value = false
+  mobileToolsOpen.value = false
 }
 
 useEventListener(window, 'scroll', onPageScroll, true)
+
+watch(mobile, (enabled) => {
+  if (enabled) {
+    if (openUid.value)
+      discardChip()
+    themeOpen.value = false
+    return
+  }
+  mobileToolsOpen.value = false
+  mobileFiltersOpen.value = false
+})
 </script>
 
 <template>
-  <div class="filter-dock">
+  <div
+    class="filter-dock"
+    :class="{
+      'is-mobile': mobile,
+      'is-compact': presentationMode === 'compact',
+      'is-medium': presentationMode === 'medium',
+    }"
+  >
     <div
-      v-if="title || descText"
+      v-if="mobile && (title || descText)"
+      class="filter-dock__mobile-heading"
+    >
+      <div class="filter-dock__mobile-title" :title="title || descText">
+        {{ title || '看板' }}
+      </div>
+      <span v-if="loading" class="filter-dock__loading i-svg-spinners-ring-resize" />
+      <span v-if="dirty" class="filter-dock__dirty">未保存</span>
+    </div>
+
+    <div v-if="mobile" class="filter-dock__mobile-actions">
+      <button
+        type="button"
+        class="filter-dock__mobile-btn"
+        aria-label="刷新数据"
+        :disabled="screenshotting"
+        @click="emit('refresh')"
+      >
+        <span class="i-mingcute-refresh-2-line" />
+      </button>
+      <el-popover
+        v-model:visible="mobileToolsOpen"
+        placement="bottom-end"
+        trigger="click"
+        :width="268"
+        :show-arrow="false"
+        :persistent="false"
+        popper-class="dash-mobile-tools-popper"
+      >
+        <template #reference>
+          <button
+            type="button"
+            class="filter-dock__mobile-btn"
+            :class="{ 'is-active': mobileToolsOpen }"
+            aria-label="更多操作"
+            :aria-expanded="mobileToolsOpen"
+          >
+            <span class="i-mingcute-more-2-line" />
+          </button>
+        </template>
+
+        <div class="dash-mobile-tools">
+          <div v-if="descText" class="dash-mobile-tools__desc">
+            <span>看板说明</span>
+            <p>{{ descText }}</p>
+          </div>
+
+          <button
+            type="button"
+            class="dash-mobile-tools__action"
+            :disabled="screenshotting"
+            @click="emitMobile('screenshot')"
+          >
+            <span :class="screenshotting ? 'i-svg-spinners-ring-resize' : 'i-mingcute-camera-2-line'" />
+            <span>{{ screenshotting ? '正在截屏…' : '一键截屏' }}</span>
+          </button>
+
+          <div class="dash-mobile-tools__themes">
+            <span class="dash-mobile-tools__label">临时换肤</span>
+            <div class="dash-mobile-tools__theme-grid">
+              <button
+                v-for="item in DASH_THEME_PRESETS"
+                :key="item.id"
+                type="button"
+                class="dash-mobile-tools__theme"
+                :class="{ 'is-active': theme === item.id }"
+                :aria-label="`切换为${item.name}主题`"
+                :title="item.name"
+                :style="{ background: item.tokens.canvas }"
+                @click="pickTheme(item.id)"
+              >
+                <span
+                  :style="{
+                    background: item.tokens.card,
+                    borderRadius: `${dashThemeSwatchRadius(item.tokens.radius)}px`,
+                  }"
+                />
+              </button>
+            </div>
+          </div>
+
+          <template v-if="showDesign">
+            <i class="dash-mobile-tools__sep" />
+            <span class="dash-mobile-tools__label">设计</span>
+            <div class="dash-mobile-tools__design-grid">
+              <button
+                type="button"
+                class="dash-mobile-tools__action"
+                :disabled="adding"
+                @click="onMobileAdd('card')"
+              >
+                <span :class="adding ? 'i-svg-spinners-ring-resize' : 'i-mingcute-layout-grid-line'" />
+                <span>添加卡片</span>
+              </button>
+              <button type="button" class="dash-mobile-tools__action" @click="onMobileAdd('text')">
+                <span class="i-mingcute-paragraph-line" />
+                <span>添加标注</span>
+              </button>
+              <button type="button" class="dash-mobile-tools__action" @click="onMobileAdd('group')">
+                <span class="i-mingcute-new-folder-line" />
+                <span>添加分组</span>
+              </button>
+              <button type="button" class="dash-mobile-tools__action" @click="emitMobile('settings')">
+                <span class="i-mingcute-settings-3-line" />
+                <span>配置</span>
+              </button>
+              <button type="button" class="dash-mobile-tools__action" @click="emitMobile('reloadCards')">
+                <span class="i-mingcute-refresh-anticlockwise-1-line" />
+                <span>重载看板</span>
+              </button>
+              <button
+                type="button"
+                class="dash-mobile-tools__action is-primary"
+                :disabled="saveDisabled || saveLoading"
+                @click="emitMobile('save')"
+              >
+                <span :class="saveLoading ? 'i-svg-spinners-ring-resize' : 'i-mingcute-save-2-line'" />
+                <span>保存</span>
+              </button>
+            </div>
+          </template>
+        </div>
+      </el-popover>
+    </div>
+
+    <button
+      v-if="mobile && defs.length"
+      type="button"
+      class="filter-dock__mobile-filter"
+      :class="{ 'is-on': filledFilterCount > 0 }"
+      :aria-label="filledFilterCount ? `筛选，已启用 ${filledFilterCount} 项` : '筛选'"
+      @click="mobileFiltersOpen = true"
+    >
+      <span class="i-mingcute-filter-2-line" />
+      <span>筛选</span>
+      <span v-if="filledFilterCount" class="filter-dock__mobile-filter-count">
+        {{ filledFilterCount }}
+      </span>
+      <span class="i-mingcute-right-line" />
+    </button>
+
+    <DashMobileFilterSheet
+      v-if="mobile"
+      v-model:open="mobileFiltersOpen"
+      v-model:values="values"
+      :defs="defs"
+      :dashboard-id="filterOptionsDashboardId"
+    />
+
+    <div
+      v-if="!mobile && (title || descText)"
       class="filter-dock__heading"
     >
       <div
@@ -129,7 +339,7 @@ useEventListener(window, 'scroll', onPageScroll, true)
         {{ descText }}
       </div>
     </div>
-    <div class="filter-dock__right">
+    <div v-if="!mobile" class="filter-dock__right">
       <div class="filter-dock__view">
         <el-tooltip
           :content="previewDisabled ? '请先保存看板' : '预览'"
@@ -155,6 +365,7 @@ useEventListener(window, 'scroll', onPageScroll, true)
           <button
             type="button"
             class="filter-dock__btn"
+            :disabled="screenshotting"
             @click="emit('refresh')"
           >
             <span class="i-mingcute-refresh-2-line" />
@@ -288,7 +499,7 @@ useEventListener(window, 'scroll', onPageScroll, true)
       </div>
     </div>
     <div
-      v-if="defs.length"
+      v-if="!mobile && defs.length"
       ref="tagsRef"
       class="filter-dock__tags"
     >
@@ -356,6 +567,136 @@ useEventListener(window, 'scroll', onPageScroll, true)
   row-gap: 8px;
   align-items: center;
   pointer-events: none;
+}
+
+.filter-dock.is-mobile {
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'mobile-heading mobile-actions'
+    'mobile-filter mobile-filter';
+  column-gap: 10px;
+  row-gap: 8px;
+}
+
+.filter-dock__mobile-heading {
+  grid-area: mobile-heading;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  min-height: 44px;
+  pointer-events: auto;
+}
+
+.filter-dock__mobile-title {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--dash-title, var(--el-text-color-primary));
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.filter-dock__mobile-actions {
+  grid-area: mobile-actions;
+  display: flex;
+  align-items: center;
+  justify-self: end;
+  gap: 8px;
+  pointer-events: auto;
+}
+
+.filter-dock__mobile-btn {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--dash-border, var(--el-border-color)) 78%, transparent);
+  border-radius: 10px;
+  background: var(--dash-btn-bg, var(--el-bg-color));
+  color: var(--dash-content-color, var(--el-text-color-regular));
+  cursor: pointer;
+  outline: none;
+  @include page.frost(btn);
+
+  &:active,
+  &.is-active {
+    border-color: var(--dash-accent, var(--el-color-primary));
+    color: var(--dash-accent, var(--el-color-primary));
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+  }
+
+  > span {
+    width: 19px;
+    height: 19px;
+  }
+}
+
+.filter-dock__mobile-filter {
+  grid-area: mobile-filter;
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  gap: 8px;
+  box-sizing: border-box;
+  min-width: 148px;
+  height: 44px;
+  padding: 0 12px;
+  border: 1px solid color-mix(in srgb, var(--dash-border, var(--el-border-color)) 78%, transparent);
+  border-radius: 10px;
+  background: var(--dash-btn-bg, var(--el-bg-color));
+  color: var(--dash-content-color, var(--el-text-color-regular));
+  cursor: pointer;
+  outline: none;
+  pointer-events: auto;
+  @include page.frost(btn);
+
+  > span:first-child,
+  > span:last-child {
+    width: 18px;
+    height: 18px;
+  }
+
+  > span:last-child {
+    margin-left: auto;
+    color: var(--dash-content-muted, var(--el-text-color-secondary));
+  }
+
+  &.is-on {
+    border-color: color-mix(in srgb, var(--dash-accent, #0052d9) 42%, transparent);
+    background: color-mix(in srgb, var(--dash-accent, #0052d9) 12%, var(--dash-card-bg, #fff));
+    color: var(--dash-accent, var(--el-color-primary));
+  }
+}
+
+.filter-dock.is-compact .filter-dock__mobile-filter {
+  width: 100%;
+}
+
+.filter-dock__mobile-filter-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--dash-accent, var(--el-color-primary));
+  color: #fff;
+  font-size: 12px;
+  line-height: 1;
+  box-sizing: border-box;
 }
 
 .filter-dock__heading {
@@ -644,6 +985,142 @@ useEventListener(window, 'scroll', onPageScroll, true)
 </style>
 
 <style lang="scss">
+.dash-mobile-tools-popper {
+  box-sizing: border-box;
+  max-width: calc(100vw - 24px);
+  max-height: min(72dvh, 620px);
+  padding: 8px !important;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.dash-mobile-tools {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.dash-mobile-tools__desc {
+  padding: 6px 8px 9px;
+  border-bottom: 1px solid var(--el-border-color-extra-light);
+
+  > span,
+  p {
+    display: block;
+    margin: 0;
+  }
+
+  > span {
+    margin-bottom: 4px;
+    color: var(--el-text-color-secondary);
+    font-size: 12px;
+  }
+
+  p {
+    display: -webkit-box;
+    overflow: hidden;
+    color: var(--el-text-color-regular);
+    font-size: 13px;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 4;
+  }
+}
+
+.dash-mobile-tools__action {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--el-text-color-regular);
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+
+  &:active {
+    background: var(--el-fill-color-light);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.48;
+  }
+
+  &.is-primary {
+    color: var(--el-color-primary);
+  }
+
+  > span:first-child {
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+  }
+}
+
+.dash-mobile-tools__themes {
+  padding: 6px 8px 8px;
+}
+
+.dash-mobile-tools__label {
+  display: block;
+  padding: 0 2px 7px;
+  color: var(--el-text-color-secondary);
+  font-size: 12px;
+}
+
+.dash-mobile-tools__theme-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.dash-mobile-tools__theme {
+  display: flex;
+  align-items: flex-end;
+  box-sizing: border-box;
+  min-width: 0;
+  height: 48px;
+  padding: 5px;
+  border: 2px solid transparent;
+  border-radius: 10px;
+  cursor: pointer;
+
+  &:active,
+  &.is-active {
+    border-color: var(--el-color-primary);
+  }
+
+  > span {
+    width: 100%;
+    height: 100%;
+    border: 1px solid rgb(15 23 42 / 8%);
+    box-shadow: 0 1px 2px rgb(15 23 42 / 4%);
+  }
+}
+
+.dash-mobile-tools__sep {
+  display: block;
+  height: 1px;
+  margin: 2px 8px;
+  background: var(--el-border-color-extra-light);
+}
+
+.dash-mobile-tools__design-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+}
+
 .dash-theme-popper {
   padding: 8px !important;
 }

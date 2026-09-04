@@ -4,6 +4,7 @@
 <script setup lang="ts">
 import type { DashCardGlobals } from '../dashApi'
 import type { DashGroupWidget, DashPageItem } from '../dashLayout'
+import type { DashFlowMode } from '../dashPresentation'
 import type { VisCard } from '@/views/vis/shared/types'
 import type { VisCardDetailOpenPayload } from '@/views/vis/shared/useVisCardDetail'
 import { createEmptyPage, groupEmptyHint } from '../dashLayout'
@@ -21,6 +22,7 @@ const props = withDefaults(defineProps<{
   showSql?: boolean
   autoRefresh?: boolean
   stacked?: boolean
+  flowMode?: DashFlowMode
   dataTick?: number
   globalsOf?: (card: VisCard) => DashCardGlobals
 }>(), {
@@ -32,6 +34,7 @@ const props = withDefaults(defineProps<{
   showSql: false,
   autoRefresh: false,
   stacked: false,
+  flowMode: undefined,
   dataTick: undefined,
   globalsOf: () => ({}),
 })
@@ -107,6 +110,8 @@ function onResizePointerDown(corner: 'nw' | 'ne' | 'sw' | 'se', event: PointerEv
       'is-editable': editable,
       'is-resizing': resizing,
       'is-tabs': widget.mode === 'tabs',
+      'is-flow': !!flowMode,
+      [`is-flow-${flowMode}`]: !!flowMode,
       'has-color': !!widget.color,
       'hide-resize-dots': editable && !designActions,
     }"
@@ -198,6 +203,7 @@ function onResizePointerDown(corner: 'nw' | 'ne' | 'sw' | 'se', event: PointerEv
         :auto-refresh="autoRefresh"
         :data-tick="dataTick"
         :stacked="stacked"
+        :flow-mode="flowMode"
         :globals-of="globalsOf"
         :hide-title="hideCardTitle"
         :empty-text="emptyText"
@@ -485,5 +491,45 @@ function onResizePointerDown(corner: 'nw' | 'ne' | 'sw' | 'se', event: PointerEv
 
 .dash-group__empty {
   @include dash.empty-hint(120px);
+}
+
+.dash-group.is-flow:not(.is-tabs) {
+  height: auto;
+  min-height: 160px;
+
+  .dash-group__body {
+    flex: none;
+    overflow: visible;
+  }
+}
+
+.dash-group.is-flow.is-tabs {
+  min-height: 0;
+
+  .dash-group__body.is-tab {
+    min-height: 0;
+  }
+
+  .dash-group__tab {
+    height: 44px;
+    line-height: 44px;
+  }
+}
+
+.dash-group.is-flow-compact.is-tabs {
+  .dash-group__chrome {
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .dash-group__titles,
+  .dash-group__actions {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .dash-group__actions {
+    justify-content: flex-start;
+  }
 }
 </style>

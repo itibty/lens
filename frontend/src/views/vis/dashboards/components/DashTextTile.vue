@@ -4,6 +4,7 @@
 <script setup lang="ts">
 import type { CSSProperties } from 'vue'
 import type { DashTextAppearance, DashTextWidget } from '../dashLayout'
+import type { DashFlowMode } from '../dashPresentation'
 import SimpleHtmlEditor from '@/views/vis/cards/components/SimpleHtmlEditor.vue'
 import { sanitizeRichText } from '@/views/vis/shared/sanitizeRichText'
 import DashTextSettings from './DashTextSettings.vue'
@@ -13,10 +14,12 @@ const props = withDefaults(defineProps<{
   editable?: boolean
   designActions?: boolean
   resizing?: boolean
+  flowMode?: DashFlowMode
 }>(), {
   editable: false,
   designActions: false,
   resizing: false,
+  flowMode: undefined,
 })
 
 const emit = defineEmits<{
@@ -55,6 +58,7 @@ function onResizePointerDown(corner: 'nw' | 'ne' | 'sw' | 'se', event: PointerEv
       {
         'is-editable': editable,
         'is-resizing': resizing,
+        'is-flow': !!flowMode,
       },
     ]"
     :style="tileStyle"
@@ -124,6 +128,17 @@ function onResizePointerDown(corner: 'nw' | 'ne' | 'sw' | 'se', event: PointerEv
   &.is-resizing {
     outline: 3px solid color-mix(in srgb, var(--dash-accent, #0052d9) 68%, var(--dash-card-bg, #fff));
     outline-offset: -1px;
+  }
+}
+
+.dash-text.is-flow {
+  height: auto;
+  min-height: 120px;
+
+  .dash-text__body {
+    height: auto;
+    min-height: inherit;
+    overflow: visible;
   }
 }
 

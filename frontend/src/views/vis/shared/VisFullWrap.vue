@@ -116,7 +116,10 @@ defineExpose<VisFullWrapInstance>({
   inset: 0;
   z-index: 99;
   display: flex;
-  padding: var(--dash-page-y, 16px) var(--dash-page-x, 24px);
+  padding-top: calc(var(--dash-page-y, 16px) + var(--dash-safe-top, env(safe-area-inset-top, 0px)));
+  padding-right: calc(var(--dash-page-x, 24px) + var(--dash-safe-right, env(safe-area-inset-right, 0px)));
+  padding-bottom: calc(var(--dash-page-y, 16px) + var(--dash-safe-bottom, env(safe-area-inset-bottom, 0px)));
+  padding-left: calc(var(--dash-page-x, 24px) + var(--dash-safe-left, env(safe-area-inset-left, 0px)));
   box-sizing: border-box;
   background: var(--dash-canvas-bg, var(--el-fill-color-lighter));
 }

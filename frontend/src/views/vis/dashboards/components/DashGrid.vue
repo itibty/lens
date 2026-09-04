@@ -3,6 +3,7 @@
 -->
 <script setup lang="ts">
 import type { Layout } from 'grid-layout-plus'
+import type { CSSProperties } from 'vue'
 import type { DashCardGlobals } from '../dashApi'
 import type {
   DashGroupWidget,
@@ -11,6 +12,7 @@ import type {
   DashTextWidget,
   DashWidget,
 } from '../dashLayout'
+import type { DashPresentationMode } from '../dashPresentation'
 import type { VisCard } from '@/views/vis/shared/types'
 import type { VisCardDetailOpenPayload } from '@/views/vis/shared/useVisCardDetail'
 import { useElementSize } from '@vueuse/core'
@@ -28,6 +30,7 @@ import {
   widgetKey,
   widgetMinSize,
 } from '../dashLayout'
+import { isDashFlowMode, projectDashFlowWidgets } from '../dashPresentation'
 import { layoutMatches, stackLayout, useDashGridInteract } from '../useDashGridInteract'
 import DashCardTile from './DashCardTile.vue'
 import DashGroupTile from './DashGroupTile.vue'
@@ -42,6 +45,7 @@ const props = withDefaults(defineProps<{
   showSql?: boolean
   autoRefresh?: boolean
   dataTick?: number
+  presentationMode?: DashPresentationMode
   globalsOf?: (card: VisCard) => DashCardGlobals
 }>(), {
   dashboardId: '',
@@ -51,6 +55,7 @@ const props = withDefaults(defineProps<{
   showSql: false,
   autoRefresh: false,
   dataTick: undefined,
+  presentationMode: 'auto',
   globalsOf: () => ({}),
 })
 
@@ -67,7 +72,13 @@ const layout = ref<Layout>([])
 const hostRef = ref<HTMLElement | null>(null)
 const { width: hostWidth } = useElementSize(hostRef)
 
-const stacked = computed(() => !props.editable && hostWidth.value > 0 && hostWidth.value < DASH_STACK_MAX_WIDTH)
+const flowMode = computed(() => isDashFlowMode(props.presentationMode) ? props.presentationMode : undefined)
+const flowing = computed(() => !!flowMode.value)
+const stacked = computed(() => props.presentationMode === 'auto'
+  && !props.editable
+  && hostWidth.value > 0
+  && hostWidth.value < DASH_STACK_MAX_WIDTH)
+const staticPresentation = computed(() => stacked.value || flowing.value)
 const canMoveToGroup = computed(() => props.designActions && listGroups(widgets.value).length > 0)
 const cardById = computed(() => props.cards)
 
@@ -94,7 +105,7 @@ function toDesignLayout(list: DashWidget[]): Layout {
 }
 
 function applyLayout(next?: Layout) {
-  if (!props.editable || stacked.value)
+  if (!props.editable || staticPresentation.value)
     return
   const source = next?.length ? next : layout.value
   const byId = new Map(source.map(item => [String(item.i), item]))
@@ -117,7 +128,7 @@ function applyRect(id: string, rect: DashLayoutRect) {
 const interact = useDashGridInteract({
   layout,
   editable: () => props.editable,
-  stacked: () => stacked.value,
+  stacked: () => staticPresentation.value,
   minSizeOf: (id) => {
     const widget = widgets.value.find(item => widgetKey(item) === id)
     return widget ? widgetMinSize(widget) : { minW: DASH_MIN_W, minH: DASH_MIN_H }
@@ -151,6 +162,25 @@ const tiles = computed(() => layout.value.flatMap((item) => {
     return []
   return [{ item, widget }]
 }))
+
+const flowTiles = computed(() => {
+  if (!flowMode.value)
+    return []
+  const visible = widgets.value.filter(widget => widget.kind !== 'card' || !!cardById.value[widget.cardId])
+  return projectDashFlowWidgets(
+    visible,
+    flowMode.value,
+    cardId => cardById.value[cardId]?.visual.chartType,
+  )
+})
+
+function flowItemStyle(item: (typeof flowTiles.value)[number]): CSSProperties {
+  return {
+    gridColumn: `span ${item.columnSpan}`,
+    ...(item.height ? { height: `${item.height}px` } : {}),
+    ...(item.minHeight ? { minHeight: `${item.minHeight}px` } : {}),
+  }
+}
 
 function onUpdateGroup(next: DashGroupWidget) {
   widgets.value = replaceGroup(widgets.value, next)
@@ -197,6 +227,8 @@ function onTileDetail(payload: VisCardDetailOpenPayload) {
 watch(
   () => [
     stacked.value,
+    flowing.value,
+    props.presentationMode,
     props.editable,
     widgets.value.map(item => `${widgetKey(item)}:${item.x}:${item.y}:${item.w}:${item.h}`).join(','),
   ],
@@ -221,10 +253,75 @@ onBeforeUnmount(() => {
   <div
     ref="hostRef"
     class="dash-grid"
-    :class="{ 'is-editable': editable, 'is-resizing': !!interact.resizingId.value, 'is-stacked': stacked }"
+    :class="{
+      'is-editable': editable,
+      'is-resizing': !!interact.resizingId.value,
+      'is-stacked': stacked,
+      'is-flow': flowing,
+    }"
   >
     <div v-if="!widgets.length" class="dash-grid__empty">
       {{ designActions ? '添加卡片、标注或分组，把内容放到看板上' : '看板上还没有内容' }}
+    </div>
+    <div
+      v-else-if="flowMode"
+      class="dash-grid__flow"
+      :class="`is-${flowMode}`"
+    >
+      <div
+        v-for="item in flowTiles"
+        :key="item.key"
+        class="dash-grid__flow-item"
+        :data-dash-widget-key="item.key"
+        :style="flowItemStyle(item)"
+      >
+        <DashCardTile
+          v-if="item.widget.kind === 'card'"
+          :card="cardById[item.widget.cardId]"
+          :dashboard-id="dashboardId"
+          :card-id="item.widget.cardId"
+          :globals="globalsOf(cardById[item.widget.cardId])"
+          :editable="editable"
+          :design-actions="designActions"
+          :can-move-to-group="canMoveToGroup"
+          :allow-fullscreen="allowFullscreen"
+          :show-sql="showSql"
+          :auto-refresh="autoRefresh"
+          :data-tick="dataTick"
+          @remove="emit('remove', item.widget.cardId)"
+          @move-to-group="emit('moveToGroup', item.widget.cardId)"
+          @open-detail="onTileDetail"
+        />
+        <DashGroupTile
+          v-else-if="item.widget.kind === 'group'"
+          :widget="item.widget"
+          :cards="cards"
+          :dashboard-id="dashboardId"
+          :editable="editable"
+          :design-actions="designActions"
+          :allow-fullscreen="allowFullscreen"
+          :show-sql="showSql"
+          :auto-refresh="autoRefresh"
+          :data-tick="dataTick"
+          :flow-mode="flowMode"
+          :globals-of="globalsOf"
+          @update:widget="onUpdateGroup"
+          @configure="emit('configureGroup', item.widget.id)"
+          @remove-card="emit('remove', $event)"
+          @detach-card="emit('detach', $event)"
+          @open-detail="onTileDetail"
+        />
+        <DashTextTile
+          v-else
+          :widget="item.widget"
+          :editable="editable"
+          :design-actions="designActions"
+          :flow-mode="flowMode"
+          @update:html="updateTextHtml(item.widget, $event)"
+          @update:appearance="updateTextAppearance(item.widget, $event)"
+          @remove="emit('removeText', item.widget.id)"
+        />
+      </div>
     </div>
     <GridLayout
       v-else
@@ -359,6 +456,43 @@ onBeforeUnmount(() => {
 
 .dash-grid__empty {
   @include dash.empty-hint(240px);
+}
+
+.dash-grid__flow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--dash-grid-gap, 12px);
+  box-sizing: border-box;
+  width: 100%;
+  padding: var(--dash-grid-gap, 12px);
+
+  &.is-medium {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.dash-grid__flow-item {
+  min-width: 0;
+
+  > :deep(.vis-full-wrap) {
+    width: 100%;
+    height: 100%;
+  }
+
+  > :deep(.dash-tile),
+  > :deep(.dash-group) {
+    width: 100%;
+  }
+
+  > :deep(.dash-tile:not(.dash-text)),
+  > :deep(.dash-group.is-tabs) {
+    height: 100%;
+  }
+
+  > :deep(.dash-text),
+  > :deep(.dash-group:not(.is-tabs)) {
+    height: auto;
+  }
 }
 
 :deep(.vgl-item--resizing),
