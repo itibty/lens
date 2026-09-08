@@ -1,4 +1,4 @@
-<!-- 指标卡和趋势卡共用的辅指标网格；标签靠左、数值靠右，窄卡自动换行。 -->
+<!-- 指标卡和趋势卡共用的辅指标组；标签、符号、数字紧邻，空间不足时整组换行。 -->
 <script setup lang="ts">
 import VisMetricValue from './VisMetricValue.vue'
 
@@ -16,7 +16,7 @@ defineProps<{
 </script>
 
 <template>
-  <div class="vis-metric-aux" :class="{ 'is-values-only': !showLabel }">
+  <div class="vis-metric-aux">
     <div
       v-for="item in items"
       :key="item.key"
@@ -37,8 +37,8 @@ defineProps<{
 
 <style scoped lang="scss">
 .vis-metric-aux {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 132px), 1fr));
+  display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
   align-content: start;
   gap: 6px 20px;
@@ -47,17 +47,11 @@ defineProps<{
   overflow-y: auto;
   scrollbar-width: thin;
 
-  &.is-values-only {
-    display: flex;
-    flex-wrap: wrap;
-  }
-
   &__item {
-    display: flex;
-    flex-wrap: wrap;
+    display: inline-flex;
+    flex: 0 1 auto;
     align-items: baseline;
-    justify-content: space-between;
-    gap: 2px 8px;
+    gap: 6px;
     min-width: 0;
     max-width: 100%;
     color: var(--vis-content-color, var(--el-text-color-regular));
@@ -76,7 +70,7 @@ defineProps<{
   }
 
   &__label {
-    flex: 1 1 3em;
+    flex: 0 1 auto;
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -88,7 +82,6 @@ defineProps<{
 
   &__value {
     flex: 0 1 auto;
-    margin-left: auto;
   }
 }
 </style>

@@ -21,8 +21,15 @@ withDefaults(defineProps<{
       class="vis-metric-value__direction"
       aria-hidden="true"
     >
-      <svg viewBox="0 0 12 12" :class="`is-${direction}`">
-        <path d="M 1 8.5 L 6 3.5 L 11 8.5 Z" fill="currentColor" />
+      <svg viewBox="0 0 12 16" :class="`is-${direction}`">
+        <path
+          d="M 6 14 V 2 M 2 6 L 6 2 L 10 6"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.75"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
       </svg>
     </span>
     <span v-if="prefix" class="vis-metric-value__affix">{{ prefix }}</span>
@@ -80,9 +87,9 @@ withDefaults(defineProps<{
     line-height: inherit;
 
     svg {
-      width: 0.8em;
-      height: 0.8em;
-      vertical-align: baseline;
+      width: 0.75em;
+      height: 1em;
+      vertical-align: -0.08em;
     }
 
     .is-down {
