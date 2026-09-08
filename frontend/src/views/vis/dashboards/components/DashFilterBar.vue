@@ -231,7 +231,7 @@ watch(mobile, (enabled) => {
             :variant="mobile ? 'ghost' : 'outline'"
             label="刷新数据"
             class="filter-dock__btn"
-            :disabled="screenshotting"
+            :disabled="loading || screenshotting"
             @click="emit('refresh')"
           >
             <span class="i-mingcute-refresh-2-line" />
@@ -254,12 +254,12 @@ watch(mobile, (enabled) => {
               :variant="mobile ? 'ghost' : 'outline'"
               class="filter-dock__btn"
               :active="toolsOpen"
-              :label="screenshotting ? '正在截屏…' : '更多操作'"
+              label="更多操作"
               aria-haspopup="dialog"
               :aria-expanded="toolsOpen"
               @keydown.esc.stop="closeTools"
             >
-              <span :class="screenshotting ? 'i-svg-spinners-ring-resize' : 'i-mingcute-more-2-line'" />
+              <span class="i-mingcute-more-2-line" />
             </VisActionButton>
           </template>
 
@@ -283,7 +283,7 @@ watch(mobile, (enabled) => {
             <button
               type="button"
               class="dash-tools__action"
-              :disabled="screenshotting"
+              :disabled="loading || screenshotting"
               @click="emitToolAction('screenshot')"
             >
               <span :class="screenshotting ? 'i-svg-spinners-ring-resize' : 'i-mingcute-camera-2-line'" />
@@ -323,7 +323,7 @@ watch(mobile, (enabled) => {
                 class="dash-tools__action"
                 :class="{ 'is-primary': gridGuides }"
                 :aria-pressed="gridGuides"
-                :disabled="screenshotting"
+                :disabled="loading || screenshotting"
                 @click="gridGuides = !gridGuides"
               >
                 <span class="i-mingcute-grid-line" />
@@ -377,7 +377,7 @@ watch(mobile, (enabled) => {
             class="filter-dock__btn"
             :active="gridGuides"
             :aria-pressed="gridGuides"
-            :disabled="screenshotting"
+            :disabled="loading || screenshotting"
             @click="gridGuides = !gridGuides"
           >
             <span class="i-mingcute-grid-line" />

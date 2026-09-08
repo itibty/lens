@@ -631,7 +631,7 @@ defineExpose<DashDesignerInstance>({
             :loading="loading"
             :dirty="dirty"
             :preview-disabled="!states.id"
-            :screenshotting="capturing || loading"
+            :screenshotting="capturing"
             :save-loading="saveLoading"
             :save-disabled="!states.id"
             @refresh="refreshCards"
