@@ -1,5 +1,6 @@
 import type { IHeaderTreeDefine, PivotTableConstructorOptions } from '@visactor/vtable'
 import type { VisQueryConfig, VisVisualConfig } from './types'
+import type { ThemeInput } from '@/theme/tokens'
 import { TYPES } from '@visactor/vtable'
 import { formatMetricField } from './fieldStyle'
 import { metricProgressVTableConfig } from './metricCell'
@@ -393,7 +394,7 @@ export function buildPivotTableOption(
   visual?: VisVisualConfig,
   query?: VisQueryConfig,
   sortState?: PivotHeaderSortState | null,
-  dark = false,
+  theme: ThemeInput = false,
 ): PivotTableConstructorOptions | null {
   const { metrics, rowFields, colFields } = resolvePivotSchema(data, query)
   if (!metrics.length)
@@ -436,7 +437,7 @@ export function buildPivotTableOption(
     rows: dimDefines(rowFields, treeDisplay ? treeRowHeaderWidth(rowFields.length) : undefined, marks),
     columns: dimDefines(colFields, undefined, marks, sortColumn && hideIndicatorName),
     indicators: metrics.map((metric) => {
-      const progress = metricProgressVTableConfig(visual, query, metric, dark)
+      const progress = metricProgressVTableConfig(visual, query, metric, theme)
       const common = {
         indicatorKey: metric,
         title: metric,
@@ -469,14 +470,14 @@ export function buildPivotTableOption(
     hideIndicatorName,
     supplementIndicatorNodes: empty,
     parseCustomTreeToMatchRecords: !empty,
-    emptyTip: empty ? resolveVTableEmptyTip(dark) : undefined,
+    emptyTip: empty ? resolveVTableEmptyTip(theme) : undefined,
     corner: { titleOnDimension: 'row' },
     formatCopyValue: (value: string) => value
       .replaceAll(PIVOT_SUBTOTAL_TOKEN, '小计')
       .replaceAll(PIVOT_TOTAL_TOKEN, '总计'),
     ...resolveVTableLayout(empty),
     hover: { highlightMode: 'cross' },
-    theme: resolveVTableTheme(visual, dark),
+    theme: resolveVTableTheme(visual, theme),
     dataConfig: {
       aggregationRules: metrics.map(metric => ({
         indicatorKey: metric,

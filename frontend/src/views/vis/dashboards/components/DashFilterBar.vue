@@ -9,6 +9,7 @@ import { useEventListener } from '@vueuse/core'
 import VisActionButton from '@/views/vis/shared/VisActionButton.vue'
 import {
   DASH_THEME_PRESETS,
+  dashChromeVars,
   dashOverlayVars,
   dashThemeSwatchStyle,
   DEFAULT_DASH_THEME,
@@ -23,6 +24,7 @@ const props = withDefaults(defineProps<{
   title?: string
   desc?: string
   previewDisabled?: boolean
+  showPreview?: boolean
   screenshotting?: boolean
   /** 设计页且有编辑权限：第二组整组出现 */
   showDesign?: boolean
@@ -37,6 +39,7 @@ const props = withDefaults(defineProps<{
   title: '',
   desc: '',
   previewDisabled: false,
+  showPreview: true,
   screenshotting: false,
   showDesign: false,
   adding: false,
@@ -95,6 +98,7 @@ const mobile = computed(() => props.presentationMode === 'compact' || props.pres
 const filledFilterDefs = computed(() => props.defs.filter(isFilled))
 const filledFilterCount = computed(() => filledFilterDefs.value.length)
 const overlayStyle = computed(() => dashOverlayVars(theme.value))
+const chromeStyle = computed(() => dashChromeVars(theme.value))
 
 function onAddCommand(command: 'card' | 'text' | 'group') {
   if (command === 'card') {
@@ -164,6 +168,7 @@ watch(mobile, (enabled) => {
 <template>
   <div
     class="filter-dock"
+    :style="chromeStyle"
     :class="{
       'is-mobile': mobile,
       'is-compact': presentationMode === 'compact',
@@ -204,7 +209,7 @@ watch(mobile, (enabled) => {
     <div class="filter-dock__right">
       <div class="filter-dock__view">
         <el-tooltip
-          v-if="!mobile && showDesign"
+          v-if="!mobile && showDesign && showPreview"
           :content="previewDisabled ? '请先保存看板' : '预览'"
           placement="bottom"
           :show-after="200"
@@ -265,7 +270,7 @@ watch(mobile, (enabled) => {
             </div>
 
             <button
-              v-if="!mobile && !showDesign"
+              v-if="!mobile && !showDesign && showPreview"
               type="button"
               class="dash-tools__action"
               :disabled="previewDisabled"
@@ -297,12 +302,15 @@ watch(mobile, (enabled) => {
                   :aria-label="`切换为${item.name}主题`"
                   :aria-pressed="theme === item.id"
                   :title="item.name"
-                  :style="{ background: item.tokens.canvas }"
                   @click="pickTheme(item.id)"
                 >
                   <span
-                    :style="dashThemeSwatchStyle(item)"
-                  />
+                    class="dash-tools__swatch"
+                    :style="{ background: item.tokens.canvas }"
+                  >
+                    <i :style="dashThemeSwatchStyle(item)" />
+                  </span>
+                  <span class="dash-tools__theme-name">{{ item.name }}</span>
                 </button>
               </div>
             </div>
@@ -380,6 +388,7 @@ watch(mobile, (enabled) => {
           placement="bottom-end"
           :show-timeout="100"
           :hide-timeout="100"
+          :popper-style="overlayStyle"
           @command="onAddCommand"
         >
           <VisActionButton
@@ -1023,13 +1032,16 @@ watch(mobile, (enabled) => {
 
 .dash-tools__theme {
   display: flex;
-  align-items: flex-end;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
   box-sizing: border-box;
   min-width: 0;
-  height: var(--dash-tools-swatch-height);
-  padding: 5px;
+  padding: 3px 3px 5px;
   border: 2px solid transparent;
   border-radius: 10px;
+  background: transparent;
+  color: var(--dash-mobile-content, var(--el-text-color-regular));
   cursor: pointer;
   outline: none;
 
@@ -1042,13 +1054,25 @@ watch(mobile, (enabled) => {
     outline: 2px solid color-mix(in srgb, var(--dash-mobile-accent, var(--el-color-primary)) 58%, transparent);
     outline-offset: 2px;
   }
+}
 
-  > span {
-    width: 100%;
-    height: 100%;
-    border: 1px solid rgb(15 23 42 / 8%);
-    box-shadow: 0 1px 2px rgb(15 23 42 / 4%);
+.dash-tools__swatch {
+  display: flex;
+  width: 100%;
+  height: var(--dash-tools-swatch-height);
+  padding: 5px;
+  box-sizing: border-box;
+  border-radius: 6px;
+
+  > i {
+    flex: 1;
+    min-width: 0;
   }
+}
+
+.dash-tools__theme-name {
+  font-size: var(--vis-caption-size);
+  line-height: 1.3;
 }
 
 .dash-tools__sep {

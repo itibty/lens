@@ -3,6 +3,7 @@
 -->
 <script setup lang="ts">
 import type { ISpec } from '@visactor/vchart'
+import type { ThemeColors } from '@/theme/tokens'
 import VChart from '@visactor/vchart'
 import { useResizeObserver } from '@vueuse/core'
 import { withChartTheme } from '@/theme/vchart'
@@ -19,6 +20,8 @@ const props = withDefaults(defineProps<{
   lockTooltip?: boolean
   /** 看板专属暗色 surface；不影响卡片设计页和全局主题 */
   dark?: boolean
+  theme?: ThemeColors
+  themePalette?: boolean
 }>(), {
   spec: null,
   empty: false,
@@ -26,6 +29,7 @@ const props = withDefaults(defineProps<{
   interactive: false,
   lockTooltip: false,
   dark: false,
+  themePalette: false,
 })
 
 const emit = defineEmits<{
@@ -255,7 +259,7 @@ function syncChart() {
     destroyChart()
     return
   }
-  const spec = withChartTheme(projectChartPresentation(props.spec, presentationMode.value), props.dark)
+  const spec = withChartTheme(projectChartPresentation(props.spec, presentationMode.value), props.theme ?? props.dark, props.themePalette)
   if (!chart) {
     createChart(spec)
     return
@@ -310,7 +314,7 @@ watch(
 )
 
 watch(
-  () => props.dark,
+  [() => props.dark, () => props.theme, () => props.themePalette],
   () => {
     destroyChart()
     nextTick(syncChart)

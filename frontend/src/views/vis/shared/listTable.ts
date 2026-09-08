@@ -1,5 +1,6 @@
 import type { ListTableConstructorOptions } from '@visactor/vtable'
 import type { VisVisualConfig } from './types'
+import type { ThemeInput } from '@/theme/tokens'
 import { TYPES } from '@visactor/vtable'
 import { FilterPlugin } from '@visactor/vtable-plugins'
 import { contrastPeriodDescription, findContrastInfo } from './contrastExp'
@@ -10,8 +11,8 @@ import { resolveTableStyle } from './tableStyle'
 import { dimensionAlias, metricAlias } from './types'
 import { resolveTableHeaderIconColor, resolveVTableEmptyTip, resolveVTableLayout, resolveVTableTheme } from './vtableTheme'
 
-function contrastPeriodHeaderIcon(tip: string, visual?: VisVisualConfig, dark = false) {
-  const color = resolveTableHeaderIconColor(visual, dark)
+function contrastPeriodHeaderIcon(tip: string, visual?: VisVisualConfig, theme: ThemeInput = false) {
+  const color = resolveTableHeaderIconColor(visual, theme)
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="${color}" stroke-width="1.7"/><path d="M12 11.2V17" stroke="${color}" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="8.2" r="1.15" fill="${color}"/></svg>`
   return {
     type: 'svg' as const,
@@ -55,7 +56,7 @@ export function listTableColumns(
   data: VIS.QueryDataResponse,
   sortable: boolean,
   visual?: VisVisualConfig,
-  dark = false,
+  theme: ThemeInput = false,
 ): NonNullable<ListTableConstructorOptions['columns']> {
   const metricKeys = new Set((query.metrics ?? []).map(metricAlias))
   const dimensionKeys = new Set((query.dimensions ?? []).map(dimensionAlias))
@@ -66,7 +67,7 @@ export function listTableColumns(
     const isMetric = metricKeys.has(field)
     const periodTip = contrastPeriodDescription(findContrastInfo(data, field))
     const progress = isMetric
-      ? metricProgressVTableConfig(visual, query, field, dark)
+      ? metricProgressVTableConfig(visual, query, field, theme)
       : null
     const common = {
       field,
@@ -75,7 +76,7 @@ export function listTableColumns(
       sort: sortable,
       mergeCell,
       description: periodTip || undefined,
-      headerIcon: periodTip ? contrastPeriodHeaderIcon(periodTip, visual, dark) : undefined,
+      headerIcon: periodTip ? contrastPeriodHeaderIcon(periodTip, visual, theme) : undefined,
       fieldFormat: isMetric
         ? (record: Record<string, unknown>) => formatMetricField(visual, query, field, record?.[field])
         : undefined,
@@ -102,18 +103,18 @@ export function buildListTableOption(
   query: VIS.QueryConfig,
   data: VIS.QueryDataResponse,
   visual: VisVisualConfig,
-  dark = false,
+  theme: ThemeInput = false,
 ): ListTableConstructorOptions | null {
   const tableStyle = resolveTableStyle(visual)
-  const columns = listTableColumns(query, data, tableStyle.sortable, visual, dark)
+  const columns = listTableColumns(query, data, tableStyle.sortable, visual, theme)
   if (!columns.length)
     return null
 
   return {
     records: data.rows ?? [],
     columns,
-    theme: resolveVTableTheme(visual, dark),
-    emptyTip: resolveVTableEmptyTip(dark),
+    theme: resolveVTableTheme(visual, theme),
+    emptyTip: resolveVTableEmptyTip(theme),
     ...resolveVTableLayout(!(data.rows?.length)),
     hover: { highlightMode: 'row' },
     rowSeriesNumber: tableStyle.showRowNumber

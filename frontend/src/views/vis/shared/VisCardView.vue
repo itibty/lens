@@ -29,6 +29,7 @@ import {
   resolveCardRemark,
   resolveCardTitle,
 } from '@/views/vis/shared/cardTheme'
+import { resolveChartThemeId } from '@/views/vis/shared/chartPalette'
 import { allowsFullscreen, resolveVisStage } from '@/views/vis/shared/types'
 import VChartHost from '@/views/vis/shared/VChartHost.vue'
 import VisActionButton from '@/views/vis/shared/VisActionButton.vue'
@@ -132,7 +133,8 @@ const hasCardBg = computed(() => !!chrome.value.bg)
 const hasCardColor = computed(() => !!chrome.value.color)
 const scopedTheme = inject(LENS_THEME_KEY, null)
 const followsDashSurface = computed(() => props.embedded && !!scopedTheme && !hasCardBg.value)
-const darkSurface = computed(() => followsDashSurface.value && scopedTheme?.value.mode === 'dark')
+const renderTheme = computed(() => followsDashSurface.value ? scopedTheme!.value : LIGHT_THEME)
+const useThemePalette = computed(() => resolveChartThemeId(props.visual) === 'DEFAULT')
 // 自定义背景维持原有的独立浅色卡片语义；显式文字色仍由内容样式覆盖。
 const surfaceThemeStyle = computed(() => hasCardBg.value ? themeCssVars(LIGHT_THEME) : undefined)
 const overlayThemeStyle = computed(() => themeCssVars(followsDashSurface.value ? scopedTheme!.value : LIGHT_THEME))
@@ -623,7 +625,7 @@ watch(allowDetail, (ok) => {
           :data="data"
           :empty-text="emptyText"
           :interactive="allowDetail"
-          :dark="darkSurface"
+          :theme="renderTheme"
           @cell-click="onTableClick"
         />
 
@@ -636,7 +638,7 @@ watch(allowDetail, (ok) => {
           :data="pivotData ?? emptyPivotData"
           :empty-text="emptyText"
           :interactive="allowDetail"
-          :dark="darkSurface"
+          :theme="renderTheme"
           @cell-click="onPivotClick"
         />
 
@@ -646,11 +648,12 @@ watch(allowDetail, (ok) => {
         >
           <VChartHost
             :spec="chartSpec"
+            :theme-palette="useThemePalette"
             :empty="chartEmpty"
             :empty-text="emptyText"
             :interactive="allowDetail"
             :lock-tooltip="!!menu"
-            :dark="darkSurface"
+            :theme="renderTheme"
             @mark-click="onMarkClick"
           />
         </div>

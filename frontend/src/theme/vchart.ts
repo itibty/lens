@@ -1,7 +1,8 @@
 import type { ISpec } from '@visactor/vchart'
+import type { ThemeInput } from './tokens'
 import { darkTheme, lightTheme } from '@visactor/vchart'
 import { FONT_SANS } from '@/core/fonts'
-import { DARK_THEME, DATA_SERIES, LIGHT_THEME } from './tokens'
+import { DATA_SERIES, LIGHT_THEME, mixColor, resolveThemeColors } from './tokens'
 
 function record(value: unknown): Record<string, unknown> {
   return value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {}
@@ -30,8 +31,9 @@ function chartMarks(base: unknown, current: unknown) {
 }
 
 /** VChart 原生颜色槽适配：坐标轴、图例、提示层统一随表面切换，业务 spec 的显式主题仍优先。 */
-export function withChartTheme(spec: ISpec, dark = false): ISpec {
-  const lens = dark ? DARK_THEME : LIGHT_THEME
+export function withChartTheme(spec: ISpec, input: ThemeInput = false, useThemePalette?: boolean): ISpec {
+  const lens = resolveThemeColors(input)
+  const dark = lens.mode === 'dark'
   const base = (dark ? darkTheme : lightTheme) as unknown as Record<string, unknown>
   const source = spec as unknown as Record<string, unknown>
   const current = record(source.theme)
@@ -74,10 +76,21 @@ export function withChartTheme(spec: ISpec, dark = false): ISpec {
       markByName: chartMarks(base.markByName, current.markByName),
     },
   }
-  // 只替换渲染器产生的默认系列；高对比、易辨色和显式系列色保持原样。
-  if (Array.isArray(source.color) && source.color.length === DATA_SERIES.length
-    && source.color.every((color, index) => color === DATA_SERIES[index])) {
-    result.color = [...lens.chart.series]
+  // 卡片显式声明默认色板时才跟随主题；独立调用兼容旧的默认系列数组。
+  const defaultSeries = Array.isArray(source.color) && source.color.length === DATA_SERIES.length
+    && source.color.every((color, index) => color === DATA_SERIES[index])
+  if (useThemePalette ?? defaultSeries) {
+    if (source.type === 'heatmap') {
+      result.color = {
+        ...record(source.color),
+        range: [mixColor(lens.primary.base, lens.surface.panel, 0.14), lens.primary.base],
+      }
+      const cell = record(source.cell)
+      result.cell = { ...cell, style: { ...record(cell.style), stroke: lens.surface.panel } }
+    }
+    else {
+      result.color = [...lens.chart.series]
+    }
   }
 
   if (source.indicator) {

@@ -259,6 +259,7 @@ watch(
           :filter-options-dashboard-id="dashboardId"
           :presentation-mode="presentationMode"
           :preview-disabled="!dashboardId"
+          :show-preview="!standalone"
           :screenshotting="capturing || loading"
           @refresh="refreshCards"
           @screenshot="onScreenshot"

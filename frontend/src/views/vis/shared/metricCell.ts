@@ -1,6 +1,7 @@
-/** 表格 / 透视指标单元格展示：配置解析与 VTable 百分比进度属性。 */
 import type { VisMetricCellVisual, VisQueryConfig, VisVisualConfig } from './types'
-import { ACCENT, alphaColor, LIGHT_THEME, mixColor, NEUTRAL } from '@/theme/tokens'
+/** 表格 / 透视指标单元格展示：配置解析与 VTable 百分比进度属性。 */
+import type { ThemeInput } from '@/theme/tokens'
+import { ACCENT, alphaColor, LIGHT_THEME, mixColor, NEUTRAL, resolveThemeColors } from '@/theme/tokens'
 import { sameCssColor } from './accentPresets'
 import { compactCellVisual, resolveMetricStyleRule } from './fieldStyle'
 import { metricAlias } from './types'
@@ -54,7 +55,7 @@ export function metricProgressVTableConfig(
   visual: VisVisualConfig | undefined,
   query: Pick<VisQueryConfig, 'metrics'> | undefined,
   alias: string,
-  dark = false,
+  theme: ThemeInput = false,
 ) {
   const cell = resolveMetricCellVisual(visual, query, alias)
   if (cell?.type !== 'progress')
@@ -70,8 +71,8 @@ export function metricProgressVTableConfig(
       barHeight: '100%',
       barBottom: 0,
       barPadding: [METRIC_PROGRESS_VERTICAL_GAP, 0],
-      barColor: cell.color || METRIC_PROGRESS_DEFAULT_COLOR,
-      barBgColor: resolveVTableProgressTrackColor(dark),
+      barColor: cell.color || alphaColor(resolveThemeColors(theme).chart.series[0], 0.26),
+      barBgColor: resolveVTableProgressTrackColor(theme),
     },
   }
 }

@@ -1,9 +1,9 @@
 import type { TYPES } from '@visactor/vtable'
 import type { VisChartThemeId, VisVisualConfig } from './types'
-import type { LensTheme } from '@/theme/tokens'
+import type { ThemeColors, ThemeInput } from '@/theme/tokens'
 import { themes } from '@visactor/vtable'
 import { FONT_SANS } from '@/core/fonts'
-import { alphaColor, DARK_THEME, LIGHT_THEME } from '@/theme/tokens'
+import { alphaColor, LIGHT_THEME, resolveThemeColors } from '@/theme/tokens'
 import { resolveChartThemeId } from './chartPalette'
 import { resolveTableStyle } from './tableStyle'
 
@@ -60,12 +60,12 @@ export const VTABLE_EMPTY_TIP = {
   },
 } as const
 
-export function resolveVTableEmptyTip(dark = false) {
+export function resolveVTableEmptyTip(input: ThemeInput = false) {
   return {
     ...VTABLE_EMPTY_TIP,
     textStyle: {
       ...VTABLE_EMPTY_TIP.textStyle,
-      color: dark ? DARK_THEME.text.muted : VTABLE_EMPTY_TIP.textStyle.color,
+      color: resolveThemeColors(input).text.muted,
     },
   }
 }
@@ -90,7 +90,7 @@ type TableChrome = {
 const DEFAULT_HEADER_BG = LIGHT_THEME.surface.subtle
 const DEFAULT_BODY_COLOR = LIGHT_THEME.text.strong
 
-function tableChrome(theme: LensTheme): TableChrome {
+function tableChrome(theme: ThemeColors): TableChrome {
   return {
     headerBg: theme.surface.subtle,
     headerColor: theme.text.strong,
@@ -178,22 +178,28 @@ const BASE_FRAME = {
 
 const HEADER_FONT = { fontSize: CELL_FONT_SIZE, fontWeight: 600, fontFamily: FONT_SANS } as const
 
-export function resolveTableHeaderIconColor(visual?: VisVisualConfig, dark = false) {
-  if (dark)
-    return DARK_THEME.text.muted
-  return TABLE_CHROME[resolveChartThemeId(visual)]?.headerColor ?? LIGHT_THEME.text.muted
+function resolveTableChrome(visual: VisVisualConfig | undefined, theme: ThemeColors) {
+  const id = resolveChartThemeId(visual)
+  // 高对比 / 易辨色等显式色板保持原有覆盖规则；默认表面跟随完整主题。
+  return theme.mode === 'dark' || id === 'DEFAULT'
+    ? tableChrome(theme)
+    : TABLE_CHROME[id] ?? tableChrome(theme)
 }
 
-/** 数据条轨道只适配明暗表面，不参与进度填充配色。 */
-export function resolveVTableProgressTrackColor(dark = false) {
-  return (dark ? DARK_THEME : LIGHT_THEME).chart.track
+export function resolveTableHeaderIconColor(visual?: VisVisualConfig, input: ThemeInput = false) {
+  return resolveTableChrome(visual, resolveThemeColors(input)).headerColor
+}
+
+/** 数据条轨道跟随所在表面，显式进度填充仍优先。 */
+export function resolveVTableProgressTrackColor(input: ThemeInput = false) {
+  return resolveThemeColors(input).chart.track
 }
 
 /** 字体、表面、选区统一适配，显式图表色板仍优先。 */
-export function resolveVTableTheme(visual?: VisVisualConfig, dark = false): ITableThemeDefine {
+export function resolveVTableTheme(visual?: VisVisualConfig, input: ThemeInput = false): ITableThemeDefine {
   const striped = resolveTableStyle(visual).striped
-  const theme = dark ? DARK_THEME : LIGHT_THEME
-  const chrome = dark ? tableChrome(theme) : TABLE_CHROME[resolveChartThemeId(visual)] ?? tableChrome(theme)
+  const theme = resolveThemeColors(input)
+  const chrome = resolveTableChrome(visual, theme)
 
   const headerHover = {
     cellBgColor: chrome.headerHover,
@@ -218,7 +224,7 @@ export function resolveVTableTheme(visual?: VisVisualConfig, dark = false): ITab
     select: headerSelect,
   }
 
-  return (dark ? themes.DARK : themes.DEFAULT).extends({
+  return (theme.mode === 'dark' ? themes.DARK : themes.DEFAULT).extends({
     underlayBackgroundColor: 'transparent',
     defaultStyle: {
       fontSize: CELL_FONT_SIZE,

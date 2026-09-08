@@ -1,5 +1,6 @@
 import type { VisQueryConfig, VisVisualConfig } from './types'
 import { describe, expect, it, vi } from 'vitest'
+import { alphaColor, DARK_THEME, THEME_PRESETS } from '@/theme/tokens'
 import { buildFieldStyleCandidates, fieldStyleKey, syncFieldStyles } from './fieldStyle'
 import { listTableColumns } from './listTable'
 import {
@@ -68,13 +69,19 @@ describe('metric cell progress', () => {
     expect(metricProgressVTableConfig({ chartType: 'table' }, query(), '完成率')).toBeNull()
   })
 
-  it('keeps the default fill independent from the table theme', () => {
+  it('adapts default progress fills to the table surface while preserving explicit colors', () => {
     const light = metricProgressVTableConfig(progressVisual(), query(), '完成率')
     const dark = metricProgressVTableConfig(progressVisual(), query(), '完成率', true)
 
     expect(light?.style.barColor).toBe(METRIC_PROGRESS_DEFAULT_COLOR)
-    expect(dark?.style.barColor).toBe(METRIC_PROGRESS_DEFAULT_COLOR)
+    expect(dark?.style.barColor).toBe(alphaColor(DARK_THEME.chart.series[0], 0.26))
     expect(light?.style.barBgColor).not.toBe(dark?.style.barBgColor)
+    for (const theme of Object.values(THEME_PRESETS)) {
+      expect(metricProgressVTableConfig(progressVisual(), query(), '完成率', theme)?.style.barColor)
+        .toBe(alphaColor(theme.chart.series[0], 0.26))
+      expect(metricProgressVTableConfig(progressVisual({ color: '#123456' }), query(), '完成率', theme)?.style.barColor)
+        .toBe('#123456')
+    }
   })
 
   it('binds the progress renderer and keeps formatted text in list tables', () => {

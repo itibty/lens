@@ -1,8 +1,8 @@
-import type { LensTheme } from './tokens'
+import type { ThemeColors } from './tokens'
 import { alphaColor, DARK_THEME, LIGHT_THEME, mixColor, NAVBAR_COLORS } from './tokens'
 
 /** 全局和局部作用域共用的 DOM / Element Plus 适配。不得在页面里重算色阶。 */
-export function themeCssVars(theme: LensTheme): Record<string, string> {
+export function themeCssVars(theme: ThemeColors): Record<string, string> {
   const { surface, text, border, primary, shadow } = theme
   const vars: Record<string, string> = {
     '--na-content-bg': surface.page,
