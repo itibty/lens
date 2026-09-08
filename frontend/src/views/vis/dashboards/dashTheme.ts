@@ -36,7 +36,7 @@ function dashboardPreset(id: DashThemeId, name: string, theme: LensTheme): DashT
     tokens: {
       canvas: theme.surface.page,
       card: theme.surface.panel,
-      title: theme.text.strong,
+      title: theme.heading.color,
       accent: theme.primary.base,
       border: theme.border.light,
       btnBg: theme.surface.elevated,
@@ -50,12 +50,12 @@ function dashboardPreset(id: DashThemeId, name: string, theme: LensTheme): DashT
 
 // 保留持久化编号；配色由公共预设提供，业务层只做字段适配。
 export const DASH_THEME_PRESETS: DashThemePreset[] = [
-  dashboardPreset('t1', '默认', THEME_PRESETS.default),
-  dashboardPreset('t2', '蓝', THEME_PRESETS.blue),
-  dashboardPreset('t3', '暖', THEME_PRESETS.warm),
-  dashboardPreset('t4', '绿', THEME_PRESETS.green),
-  dashboardPreset('t5', '紫', THEME_PRESETS.purple),
-  dashboardPreset('t6', 'Dark', THEME_PRESETS.dark),
+  dashboardPreset('t1', '简白', THEME_PRESETS.default),
+  dashboardPreset('t2', '雾蓝', THEME_PRESETS.blue),
+  dashboardPreset('t3', '暖砂', THEME_PRESETS.warm),
+  dashboardPreset('t4', '松绿', THEME_PRESETS.green),
+  dashboardPreset('t5', '暮紫', THEME_PRESETS.purple),
+  dashboardPreset('t6', '深夜', THEME_PRESETS.dark),
 ]
 
 const THEME_IDS = new Set<DashThemeId>(DASH_THEME_PRESETS.map(item => item.id))
@@ -98,8 +98,13 @@ export function resolveDashCardRadiusPx(id?: string) {
     ?? DASH_CARD_RADIUS_PRESETS.find(item => item.id === DEFAULT_DASH_CARD_RADIUS)!.value
 }
 
-export function dashThemeSwatchRadius(radius: number) {
-  return Math.max(4, Math.round(radius / 2))
+export function dashThemeSwatchStyle(preset: DashThemePreset) {
+  const { theme, tokens } = preset
+  return {
+    background: `linear-gradient(to bottom, ${theme.heading.background} 32%, ${tokens.card} 32%)`,
+    borderRadius: `${Math.max(4, Math.round(tokens.radius / 2))}px`,
+    boxShadow: `inset 0 0 0 1px ${theme.border.light}`,
+  }
 }
 
 export function resolveDashTheme(id?: string): DashThemePreset {
@@ -117,7 +122,9 @@ export function dashThemeVars(id?: string, radiusId?: string): Record<string, st
     ...themeCssVars(theme),
     '--dash-canvas-bg': tokens.canvas,
     '--dash-card-bg': tokens.card,
-    '--dash-card-header-bg': 'transparent',
+    '--dash-card-header-bg': theme.heading.background,
+    '--dash-card-header-border': theme.heading.border,
+    '--dash-chrome-bg': theme.heading.background,
     '--dash-card-header-color': tokens.title,
     '--dash-card-radius': `${resolveDashCardRadiusPx(radiusId)}px`,
     '--dash-title': tokens.title,
@@ -130,7 +137,7 @@ export function dashThemeVars(id?: string, radiusId?: string): Record<string, st
     '--dash-card-blur': 'none',
     '--dash-card-shadow': theme.shadow.panel,
     '--dash-btn-shadow': 'none',
-    '--dash-chrome-shadow': `0 1px 0 ${theme.border.light}`,
+    '--dash-chrome-shadow': `0 1px 0 ${theme.heading.border}`,
   }
 }
 

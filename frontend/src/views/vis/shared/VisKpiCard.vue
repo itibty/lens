@@ -10,6 +10,8 @@ import {
   resolveKpiView,
 } from '@/views/vis/shared/kpiCard'
 
+import VisMetricRatio from './VisMetricRatio.vue'
+
 const props = withDefaults(defineProps<{
   visual: VisVisualConfig
   query: VIS.QueryConfig
@@ -130,9 +132,11 @@ function onRowClick(record: Record<string, unknown>, event: MouseEvent) {
           :style="{ gridRow: index + 1 }"
           @click="onRowClick(row.record, $event)"
         >
-          <span class="vis-kpi-card__values">
-            {{ row.currentText }} / {{ row.targetText }}
-          </span>
+          <VisMetricRatio
+            class="vis-kpi-card__values"
+            :current="row.currentText"
+            :target="row.targetText"
+          />
         </div>
       </template>
       <div
@@ -310,9 +314,6 @@ function onRowClick(record: Record<string, unknown>, event: MouseEvent) {
 
 .vis-kpi-card__values {
   font-size: 12px;
-  line-height: 1.2;
-  font-variant-numeric: tabular-nums;
-  color: var(--vis-content-color, var(--el-text-color-secondary));
 }
 
 .vis-kpi-card__name.is-interactive,

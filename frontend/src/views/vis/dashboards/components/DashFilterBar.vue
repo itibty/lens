@@ -9,7 +9,7 @@ import { useEventListener } from '@vueuse/core'
 import {
   DASH_THEME_PRESETS,
   dashOverlayVars,
-  dashThemeSwatchRadius,
+  dashThemeSwatchStyle,
   DEFAULT_DASH_THEME,
 } from '../dashTheme'
 import { isDashPopperTarget, useDashFilterChips } from '../useDashFilterChips'
@@ -253,10 +253,7 @@ watch(mobile, (enabled) => {
                 @click="pickTheme(item.id)"
               >
                 <span
-                  :style="{
-                    background: item.tokens.card,
-                    borderRadius: `${dashThemeSwatchRadius(item.tokens.radius)}px`,
-                  }"
+                  :style="dashThemeSwatchStyle(item)"
                 />
               </button>
             </div>
@@ -438,10 +435,7 @@ watch(mobile, (enabled) => {
             >
               <span
                 class="dash-theme-popper__card"
-                :style="{
-                  background: item.tokens.card,
-                  borderRadius: `${dashThemeSwatchRadius(item.tokens.radius)}px`,
-                }"
+                :style="dashThemeSwatchStyle(item)"
               />
             </button>
           </div>

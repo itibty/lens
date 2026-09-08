@@ -54,7 +54,7 @@ $dash-grid-gap: 12px;
   flex-shrink: 0;
   padding: var(--dash-page-y) var(--dash-chrome-x) var(--dash-gutter);
   box-sizing: border-box;
-  background: var(--dash-card-bg, var(--na-surface-bg));
+  background: var(--dash-chrome-bg, var(--na-surface-bg));
   @include frost(chrome);
 }
 

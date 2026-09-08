@@ -28,11 +28,28 @@ describe('lens theme contract', () => {
       for (const text of [theme.text.strong, theme.text.regular, theme.text.muted])
         expect(contrast(text, background)).toBeGreaterThanOrEqual(4.5)
     }
+    expect(contrast(theme.heading.color, theme.heading.background)).toBeGreaterThanOrEqual(4.5)
+    expect(contrast(theme.text.muted, theme.heading.background)).toBeGreaterThanOrEqual(4.5)
     for (const paint of [theme.primary, ...Object.values(theme.status)]) {
       expect(contrast(paint.on, paint.base)).toBeGreaterThanOrEqual(4.5)
       expect(contrast(paint.on, paint.hover)).toBeGreaterThanOrEqual(4.5)
       expect(contrast(paint.base, paint.soft)).toBeGreaterThanOrEqual(4.5)
     }
+  })
+
+  it('gives colored dashboards coordinated chrome without changing category colors or data surfaces', () => {
+    const headings = new Set<string>()
+    for (const theme of Object.values(THEME_PRESETS)) {
+      headings.add(theme.heading.background)
+      if (theme.mode === 'light') {
+        expect(theme.surface.panel).toBe(LIGHT_THEME.surface.panel)
+        expect(theme.chart.series).toEqual(DATA_SERIES)
+      }
+    }
+    expect(headings.size).toBe(Object.keys(THEME_PRESETS).length)
+    const blue = dashThemeVars('t2')
+    expect(blue['--dash-card-header-bg']).toBe(THEME_PRESETS.blue.heading.background)
+    expect(blue['--dash-chrome-bg']).toBe(blue['--dash-card-header-bg'])
   })
 
   it('projects the same theme into page controls and teleported overlays without mutating the global default', () => {

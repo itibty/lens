@@ -4,6 +4,7 @@
 <script setup lang="ts">
 import type { VisStatItem } from './types'
 import { formatStaticStat } from './staticModules'
+import VisMetricValue from './VisMetricValue.vue'
 
 const props = defineProps<{
   items: VisStatItem[]
@@ -30,15 +31,7 @@ const many = computed(() => views.value.length > 1)
         {{ item.label }}
       </div>
       <div class="vis-static-stat__value">
-        <span
-          v-if="item.prefix"
-          class="vis-static-stat__affix"
-        >{{ item.prefix }}</span>
-        <span class="vis-static-stat__body">{{ item.body }}</span>
-        <span
-          v-if="item.suffix"
-          class="vis-static-stat__affix"
-        >{{ item.suffix }}</span>
+        <VisMetricValue :body="item.body" :prefix="item.prefix" :suffix="item.suffix" size="inherit" />
       </div>
     </div>
   </div>
@@ -69,35 +62,14 @@ const many = computed(() => views.value.length > 1)
   font-size: var(--vis-number-name, 13px);
   font-weight: 500;
   line-height: 1.3;
-  color: var(--vis-content-color, var(--el-text-color-secondary));
-  opacity: 0.88;
+  color: var(--vis-muted-color, var(--el-text-color-secondary));
 }
 
 .vis-static-stat__value {
   display: flex;
-  align-items: baseline;
   min-width: 0;
-  overflow: hidden;
   font-size: var(--vis-number-value, 28px);
   font-weight: 650;
-  letter-spacing: -0.025em;
-  line-height: 1.05;
   color: var(--vis-content-color, var(--el-text-color-primary));
-  font-variant-numeric: tabular-nums lining-nums;
-  white-space: nowrap;
-}
-
-.vis-static-stat__affix {
-  flex-shrink: 0;
-  margin-right: 0.08em;
-  font-size: 0.48em;
-  font-weight: 500;
-  opacity: 0.42;
-}
-
-.vis-static-stat__body {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 </style>

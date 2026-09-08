@@ -56,6 +56,7 @@ export interface LensTheme {
   surface: { page: string, panel: string, elevated: string, subtle: string, hover: string, faint: string }
   text: { strong: string, regular: string, muted: string, disabled: string }
   border: { normal: string, light: string, subtle: string }
+  heading: { background: string, color: string, border: string }
   status: Record<'success' | 'warning' | 'danger' | 'info', ThemePaint>
   chart: { series: string[], axis: string, grid: string, track: string }
   shadow: { panel: string, floating: string, sheet: string }
@@ -85,6 +86,11 @@ export function createTheme(mode: ThemeMode = 'light', accent: string = mode ===
     border: dark
       ? { normal: '#465365', light: '#34404D', subtle: '#2B3542' }
       : { normal: NEUTRAL.border, light: NEUTRAL.borderLight, subtle: NEUTRAL.borderSubtle },
+    heading: {
+      background: dark ? surface.subtle : surface.panel,
+      color: text.strong,
+      border: dark ? '#34404D' : surface.panel,
+    },
     status: {
       success: paint(dark ? '#75CCA1' : ACCENT.green),
       warning: paint(dark ? '#E4B76F' : ACCENT.orange),
@@ -106,13 +112,31 @@ export function createTheme(mode: ThemeMode = 'light', accent: string = mode ===
 export const LIGHT_THEME = createTheme()
 export const DARK_THEME = createTheme('dark')
 
-/** 预设只改变主色和画布，浅色卡片保持中性，图表颜色保持业务身份。 */
+/** 彩色主题由同一套比例生成画布、标题区和边框；数据内容区仍采用中性表面。 */
+function createTintedTheme(accent: string): LensTheme {
+  const theme = createTheme('light', accent, mixColor(accent, NEUTRAL.white, 0.13))
+  return {
+    ...theme,
+    text: { ...theme.text, muted: mixColor(NEUTRAL.muted, NEUTRAL.strong, 0.82) },
+    border: {
+      normal: mixColor(accent, NEUTRAL.white, 0.28),
+      light: mixColor(accent, NEUTRAL.white, 0.2),
+      subtle: mixColor(accent, NEUTRAL.white, 0.1),
+    },
+    heading: {
+      background: mixColor(accent, NEUTRAL.white, 0.075),
+      color: mixColor(accent, NEUTRAL.strong, 0.48),
+      border: mixColor(accent, NEUTRAL.white, 0.16),
+    },
+  }
+}
+
 export const THEME_PRESETS = {
   default: LIGHT_THEME,
-  blue: createTheme('light', ACCENT.blue, mixColor(ACCENT.blue, NEUTRAL.white, 0.045)),
-  warm: createTheme('light', ACCENT.orange, mixColor(ACCENT.orange, NEUTRAL.white, 0.045)),
-  green: createTheme('light', ACCENT.green, mixColor(ACCENT.green, NEUTRAL.white, 0.045)),
-  purple: createTheme('light', ACCENT.purple, mixColor(ACCENT.purple, NEUTRAL.white, 0.045)),
+  blue: createTintedTheme(ACCENT.blue),
+  warm: createTintedTheme(ACCENT.orange),
+  green: createTintedTheme(ACCENT.green),
+  purple: createTintedTheme(ACCENT.purple),
   dark: DARK_THEME,
 }
 

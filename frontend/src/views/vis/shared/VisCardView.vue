@@ -762,8 +762,10 @@ watch(allowDetail, (ok) => {
     }
   }
 
-  &.is-embedded &__header:not(.is-card-color) {
+  &.is-embedded &__header.is-text:not(.is-card-color):not(.is-card-bg) {
     background: var(--dash-card-header-bg, transparent);
+    box-shadow: inset 0 -1px var(--dash-card-header-border, transparent);
+    padding-bottom: 10px;
     color: var(--dash-card-header-color, var(--el-text-color-primary));
 
     .vis-card-view__title {
