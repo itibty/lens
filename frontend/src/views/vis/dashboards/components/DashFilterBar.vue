@@ -61,8 +61,7 @@ const emit = defineEmits<{
 const theme = defineModel<DashThemeId>('theme', { default: DEFAULT_DASH_THEME })
 const values = defineModel<DashFilterValues>('values', { required: true })
 const gridGuides = defineModel<boolean>('gridGuides', { default: true })
-const themeOpen = ref(false)
-const mobileToolsOpen = ref(false)
+const toolsOpen = ref(false)
 const mobileFiltersOpen = ref(false)
 const {
   openUid,
@@ -88,8 +87,7 @@ const { labelsOf } = useDashFilterLabels(
 
 function pickTheme(id: DashThemeId) {
   theme.value = id
-  themeOpen.value = false
-  mobileToolsOpen.value = false
+  toolsOpen.value = false
 }
 
 const descText = computed(() => props.desc.trim().replace(/\s+/g, ' '))
@@ -110,13 +108,16 @@ function onAddCommand(command: 'card' | 'text' | 'group') {
     emit('addGroup')
 }
 
-function closeMobileTools() {
-  mobileToolsOpen.value = false
+function closeTools() {
+  toolsOpen.value = false
 }
 
-function emitMobile(action: 'screenshot' | 'settings' | 'reloadCards' | 'save') {
-  closeMobileTools()
+function emitToolAction(action: 'preview' | 'screenshot' | 'settings' | 'reloadCards' | 'save') {
+  closeTools()
   switch (action) {
+    case 'preview':
+      emit('preview')
+      break
     case 'screenshot':
       emit('screenshot')
       break
@@ -132,8 +133,8 @@ function emitMobile(action: 'screenshot' | 'settings' | 'reloadCards' | 'save') 
   }
 }
 
-function onMobileAdd(command: 'card' | 'text' | 'group') {
-  closeMobileTools()
+function onMenuAdd(command: 'card' | 'text' | 'group') {
+  closeTools()
   onAddCommand(command)
 }
 
@@ -141,27 +142,22 @@ function onPageScroll(event: Event) {
   if (
     isDashPopperTarget(event.target)
     || (event.target instanceof Element
-      && !!event.target.closest('.dash-mobile-tools-popper, .dash-mobile-filter-sheet'))
+      && !!event.target.closest('.dash-tools-popper, .dash-mobile-filter-sheet'))
   ) {
     return
   }
   if (openUid.value)
     discardChip()
-  themeOpen.value = false
-  mobileToolsOpen.value = false
+  toolsOpen.value = false
 }
 
 useEventListener(window, 'scroll', onPageScroll, true)
 
 watch(mobile, (enabled) => {
-  if (enabled) {
-    if (openUid.value)
-      discardChip()
-    themeOpen.value = false
-    return
-  }
-  mobileToolsOpen.value = false
+  toolsOpen.value = false
   mobileFiltersOpen.value = false
+  if (enabled && openUid.value)
+    discardChip()
 })
 </script>
 
@@ -190,133 +186,263 @@ watch(mobile, (enabled) => {
       <span v-if="dirty" class="filter-dock__dirty">未保存</span>
     </div>
 
-    <div v-if="mobile" class="filter-dock__mobile-actions">
-      <VisActionButton
-        size="touch"
-        class="filter-dock__mobile-btn"
-        label="刷新数据"
-        :disabled="screenshotting"
-        @click="emit('refresh')"
-      >
-        <span class="i-mingcute-refresh-2-line" />
-      </VisActionButton>
-      <el-popover
-        v-model:visible="mobileToolsOpen"
-        placement="bottom-end"
-        trigger="click"
-        :width="268"
-        :show-arrow="false"
-        :persistent="false"
-        popper-class="dash-mobile-tools-popper"
-        :popper-style="overlayStyle"
-        role="dialog"
-      >
-        <template #reference>
+    <div
+      v-if="!mobile && (title || descText)"
+      class="filter-dock__heading"
+    >
+      <div class="filter-dock__title-row">
+        <div v-if="title" class="filter-dock__title" :title="title">
+          {{ title }}
+        </div>
+        <span v-if="loading" class="filter-dock__loading i-svg-spinners-ring-resize" />
+        <span v-if="dirty" class="filter-dock__dirty">未保存</span>
+      </div>
+      <div v-if="descText" class="filter-dock__desc" :title="descText">
+        {{ descText }}
+      </div>
+    </div>
+    <div class="filter-dock__right">
+      <div class="filter-dock__view">
+        <el-tooltip
+          v-if="!mobile && showDesign"
+          :content="previewDisabled ? '请先保存看板' : '预览'"
+          placement="bottom"
+          :show-after="200"
+        >
+          <span class="filter-dock__preview">
+            <VisActionButton
+              size="regular" variant="outline" label="预览看板"
+              class="filter-dock__btn"
+              :disabled="previewDisabled"
+              @click="emit('preview')"
+            >
+              <span class="i-mingcute-eye-2-line" />
+            </VisActionButton>
+          </span>
+        </el-tooltip>
+        <el-tooltip content="刷新数据" placement="bottom" :show-after="200" :disabled="mobile">
           <VisActionButton
-            size="touch"
-            class="filter-dock__mobile-btn"
-            :active="mobileToolsOpen"
-            label="更多操作"
-            aria-haspopup="dialog"
-            :aria-expanded="mobileToolsOpen"
-          >
-            <span class="i-mingcute-more-2-line" />
-          </VisActionButton>
-        </template>
-
-        <div class="dash-mobile-tools">
-          <div v-if="descText" class="dash-mobile-tools__desc">
-            <span>看板说明</span>
-            <p>{{ descText }}</p>
-          </div>
-
-          <button
-            type="button"
-            class="dash-mobile-tools__action"
+            :size="mobile ? 'touch' : 'regular'"
+            :variant="mobile ? 'ghost' : 'outline'"
+            label="刷新数据"
+            class="filter-dock__btn"
             :disabled="screenshotting"
-            @click="emitMobile('screenshot')"
+            @click="emit('refresh')"
           >
-            <span :class="screenshotting ? 'i-svg-spinners-ring-resize' : 'i-mingcute-camera-2-line'" />
-            <span>{{ screenshotting ? '正在截屏…' : '一键截屏' }}</span>
-          </button>
+            <span class="i-mingcute-refresh-2-line" />
+          </VisActionButton>
+        </el-tooltip>
+        <el-popover
+          v-model:visible="toolsOpen"
+          placement="bottom-end"
+          trigger="click"
+          :width="268"
+          :show-arrow="false"
+          :persistent="false"
+          :popper-class="mobile ? 'dash-tools-popper is-touch' : 'dash-tools-popper'"
+          :popper-style="overlayStyle"
+          role="dialog"
+        >
+          <template #reference>
+            <VisActionButton
+              :size="mobile ? 'touch' : 'regular'"
+              :variant="mobile ? 'ghost' : 'outline'"
+              class="filter-dock__btn"
+              :active="toolsOpen"
+              :label="screenshotting ? '正在截屏…' : '更多操作'"
+              aria-haspopup="dialog"
+              :aria-expanded="toolsOpen"
+              @keydown.esc.stop="closeTools"
+            >
+              <span :class="screenshotting ? 'i-svg-spinners-ring-resize' : 'i-mingcute-more-2-line'" />
+            </VisActionButton>
+          </template>
 
-          <div class="dash-mobile-tools__themes">
-            <span class="dash-mobile-tools__label">临时换肤</span>
-            <div class="dash-mobile-tools__theme-grid">
-              <button
-                v-for="item in DASH_THEME_PRESETS"
-                :key="item.id"
-                type="button"
-                class="dash-mobile-tools__theme"
-                :class="{ 'is-active': theme === item.id }"
-                :aria-label="`切换为${item.name}主题`"
-                :aria-pressed="theme === item.id"
-                :title="item.name"
-                :style="{ background: item.tokens.canvas }"
-                @click="pickTheme(item.id)"
-              >
-                <span
-                  :style="dashThemeSwatchStyle(item)"
-                />
-              </button>
+          <div class="dash-tools" @keydown.esc.stop="closeTools">
+            <div v-if="descText" class="dash-tools__desc">
+              <span>看板说明</span>
+              <p>{{ descText }}</p>
             </div>
-          </div>
 
-          <template v-if="showDesign">
-            <i class="dash-mobile-tools__sep" />
-            <span class="dash-mobile-tools__label">设计</span>
+            <button
+              v-if="!mobile && !showDesign"
+              type="button"
+              class="dash-tools__action"
+              :disabled="previewDisabled"
+              @click="emitToolAction('preview')"
+            >
+              <span class="i-mingcute-eye-2-line" />
+              <span>独立预览</span>
+            </button>
+
             <button
               type="button"
-              class="dash-mobile-tools__action"
-              :class="{ 'is-primary': gridGuides }"
-              :aria-pressed="gridGuides"
+              class="dash-tools__action"
               :disabled="screenshotting"
-              @click="gridGuides = !gridGuides"
+              @click="emitToolAction('screenshot')"
             >
-              <span class="i-mingcute-grid-line" />
-              <span>辅助线</span>
+              <span :class="screenshotting ? 'i-svg-spinners-ring-resize' : 'i-mingcute-camera-2-line'" />
+              <span>{{ screenshotting ? '正在截屏…' : '一键截屏' }}</span>
             </button>
-            <div class="dash-mobile-tools__design-grid">
-              <button
-                type="button"
-                class="dash-mobile-tools__action"
-                :disabled="adding"
-                @click="onMobileAdd('card')"
-              >
-                <span :class="adding ? 'i-svg-spinners-ring-resize' : 'i-mingcute-layout-grid-line'" />
-                <span>添加卡片</span>
-              </button>
-              <button type="button" class="dash-mobile-tools__action" @click="onMobileAdd('text')">
-                <span class="i-mingcute-paragraph-line" />
-                <span>添加标注</span>
-              </button>
-              <button type="button" class="dash-mobile-tools__action" @click="onMobileAdd('group')">
-                <span class="i-mingcute-new-folder-line" />
-                <span>添加分组</span>
-              </button>
-              <button type="button" class="dash-mobile-tools__action" @click="emitMobile('settings')">
-                <span class="i-mingcute-settings-3-line" />
-                <span>配置</span>
-              </button>
-              <button type="button" class="dash-mobile-tools__action" @click="emitMobile('reloadCards')">
-                <span class="i-mingcute-refresh-anticlockwise-1-line" />
-                <span>重载看板</span>
-              </button>
-              <button
-                type="button"
-                class="dash-mobile-tools__action is-primary"
-                :disabled="saveDisabled || saveLoading"
-                @click="emitMobile('save')"
-              >
-                <span :class="saveLoading ? 'i-svg-spinners-ring-resize' : 'i-mingcute-save-2-line'" />
-                <span>保存</span>
-              </button>
-            </div>
-          </template>
-        </div>
-      </el-popover>
-    </div>
 
+            <div class="dash-tools__themes">
+              <span class="dash-tools__label">临时换肤</span>
+              <div class="dash-tools__theme-grid">
+                <button
+                  v-for="item in DASH_THEME_PRESETS"
+                  :key="item.id"
+                  type="button"
+                  class="dash-tools__theme"
+                  :class="{ 'is-active': theme === item.id }"
+                  :aria-label="`切换为${item.name}主题`"
+                  :aria-pressed="theme === item.id"
+                  :title="item.name"
+                  :style="{ background: item.tokens.canvas }"
+                  @click="pickTheme(item.id)"
+                >
+                  <span
+                    :style="dashThemeSwatchStyle(item)"
+                  />
+                </button>
+              </div>
+            </div>
+
+            <template v-if="mobile && showDesign">
+              <i class="dash-tools__sep" />
+              <span class="dash-tools__label">设计</span>
+              <button
+                type="button"
+                class="dash-tools__action"
+                :class="{ 'is-primary': gridGuides }"
+                :aria-pressed="gridGuides"
+                :disabled="screenshotting"
+                @click="gridGuides = !gridGuides"
+              >
+                <span class="i-mingcute-grid-line" />
+                <span>辅助线</span>
+              </button>
+              <div class="dash-tools__design-grid">
+                <button
+                  type="button"
+                  class="dash-tools__action"
+                  :disabled="adding"
+                  @click="onMenuAdd('card')"
+                >
+                  <span :class="adding ? 'i-svg-spinners-ring-resize' : 'i-mingcute-layout-grid-line'" />
+                  <span>添加卡片</span>
+                </button>
+                <button type="button" class="dash-tools__action" @click="onMenuAdd('text')">
+                  <span class="i-mingcute-paragraph-line" />
+                  <span>添加标注</span>
+                </button>
+                <button type="button" class="dash-tools__action" @click="onMenuAdd('group')">
+                  <span class="i-mingcute-new-folder-line" />
+                  <span>添加分组</span>
+                </button>
+                <button type="button" class="dash-tools__action" @click="emitToolAction('settings')">
+                  <span class="i-mingcute-settings-3-line" />
+                  <span>配置</span>
+                </button>
+                <button type="button" class="dash-tools__action" @click="emitToolAction('reloadCards')">
+                  <span class="i-mingcute-refresh-anticlockwise-1-line" />
+                  <span>重载看板</span>
+                </button>
+                <button
+                  type="button"
+                  class="dash-tools__action is-primary"
+                  :disabled="saveDisabled || saveLoading"
+                  @click="emitToolAction('save')"
+                >
+                  <span :class="saveLoading ? 'i-svg-spinners-ring-resize' : 'i-mingcute-save-2-line'" />
+                  <span>保存</span>
+                </button>
+              </div>
+            </template>
+          </div>
+        </el-popover>
+      </div>
+      <i v-if="!mobile && showDesign" class="filter-dock__tools-sep" />
+      <div v-if="!mobile && showDesign" class="filter-dock__design">
+        <el-tooltip :content="gridGuides ? '隐藏辅助线' : '显示辅助线'" placement="bottom" :show-after="200">
+          <VisActionButton
+            size="regular" variant="outline" label="辅助线"
+            class="filter-dock__btn"
+            :active="gridGuides"
+            :aria-pressed="gridGuides"
+            :disabled="screenshotting"
+            @click="gridGuides = !gridGuides"
+          >
+            <span class="i-mingcute-grid-line" />
+          </VisActionButton>
+        </el-tooltip>
+        <el-dropdown
+          trigger="hover"
+          placement="bottom-end"
+          :show-timeout="100"
+          :hide-timeout="100"
+          @command="onAddCommand"
+        >
+          <VisActionButton
+            size="regular" variant="outline"
+            class="filter-dock__btn filter-dock__add"
+            label="添加内容"
+          >
+            <span :class="adding ? 'i-svg-spinners-ring-resize' : 'i-mingcute-add-square-line'" />
+          </VisActionButton>
+          <template #dropdown>
+            <el-dropdown-menu class="dash-add-menu">
+              <el-dropdown-item command="card" :disabled="adding">
+                <span class="i-mingcute-layout-grid-line" />
+                卡片
+              </el-dropdown-item>
+              <el-dropdown-item command="text">
+                <span class="i-mingcute-paragraph-line" />
+                标注
+              </el-dropdown-item>
+              <el-dropdown-item command="group">
+                <span class="i-mingcute-new-folder-line" />
+                分组
+              </el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
+        <el-tooltip
+          content="配置"
+          placement="bottom"
+          :show-after="200"
+        >
+          <VisActionButton
+            size="regular" variant="outline" label="配置看板"
+            class="filter-dock__btn"
+            @click="emit('settings')"
+          >
+            <span class="i-mingcute-settings-3-line" />
+          </VisActionButton>
+        </el-tooltip>
+        <el-tooltip
+          content="重载看板"
+          placement="bottom"
+          :show-after="200"
+        >
+          <VisActionButton
+            size="regular" variant="outline" label="重载看板"
+            class="filter-dock__btn"
+            @click="emit('reloadCards')"
+          >
+            <span class="i-mingcute-refresh-anticlockwise-1-line" />
+          </VisActionButton>
+        </el-tooltip>
+        <el-button
+          class="filter-dock__save"
+          type="primary"
+          :loading="saveLoading"
+          :disabled="saveDisabled"
+          @click="emit('save')"
+        >
+          保存
+        </el-button>
+      </div>
+    </div>
     <div v-if="mobile && defs.length" class="filter-dock__mobile-filters">
       <button
         type="button"
@@ -355,190 +481,6 @@ watch(mobile, (enabled) => {
       :surface-style="overlayStyle"
     />
 
-    <div
-      v-if="!mobile && (title || descText)"
-      class="filter-dock__heading"
-    >
-      <div class="filter-dock__title-row">
-        <div v-if="title" class="filter-dock__title">
-          {{ title }}
-        </div>
-        <span v-if="loading" class="filter-dock__loading i-svg-spinners-ring-resize" />
-        <span v-if="dirty" class="filter-dock__dirty">未保存</span>
-      </div>
-      <div v-if="descText" class="filter-dock__desc" :title="descText">
-        {{ descText }}
-      </div>
-    </div>
-    <div v-if="!mobile" class="filter-dock__right">
-      <div class="filter-dock__view">
-        <el-tooltip
-          :content="previewDisabled ? '请先保存看板' : '预览'"
-          placement="bottom"
-          :show-after="200"
-        >
-          <span class="filter-dock__preview">
-            <VisActionButton
-              size="regular" variant="outline" label="预览看板"
-              class="filter-dock__btn"
-              :disabled="previewDisabled"
-              @click="emit('preview')"
-            >
-              <span class="i-mingcute-eye-2-line" />
-            </VisActionButton>
-          </span>
-        </el-tooltip>
-        <el-tooltip
-          content="刷新数据"
-          placement="bottom"
-          :show-after="200"
-        >
-          <VisActionButton
-            size="regular" variant="outline" label="刷新数据"
-            class="filter-dock__btn"
-            :disabled="screenshotting"
-            @click="emit('refresh')"
-          >
-            <span class="i-mingcute-refresh-2-line" />
-          </VisActionButton>
-        </el-tooltip>
-        <el-tooltip
-          :content="screenshotting ? '正在截屏…' : '一键截屏'"
-          placement="bottom"
-          :show-after="200"
-        >
-          <VisActionButton
-            size="regular" variant="outline" label="一键截屏"
-            class="filter-dock__btn"
-            :disabled="screenshotting"
-            :class="{ 'is-active': screenshotting }"
-            @click="emit('screenshot')"
-          >
-            <span :class="screenshotting ? 'i-svg-spinners-ring-resize' : 'i-mingcute-camera-2-line'" />
-          </VisActionButton>
-        </el-tooltip>
-        <el-popover
-          v-model:visible="themeOpen"
-          placement="bottom-end"
-          trigger="click"
-          :width="168"
-          :show-arrow="false"
-          popper-class="dash-theme-popper"
-          :popper-style="overlayStyle"
-        >
-          <template #reference>
-            <VisActionButton
-              size="regular" variant="outline" label="临时换肤"
-              class="filter-dock__btn"
-              :class="{ 'is-active': themeOpen }"
-              title="临时换肤"
-            >
-              <span class="i-mingcute-palette-line" />
-            </VisActionButton>
-          </template>
-          <div class="dash-theme-popper__grid">
-            <button
-              v-for="item in DASH_THEME_PRESETS"
-              :key="item.id"
-              type="button"
-              class="dash-theme-popper__item"
-              :class="{ 'is-active': theme === item.id }"
-              :title="item.name"
-              :style="{ background: item.tokens.canvas }"
-              @click="pickTheme(item.id)"
-            >
-              <span
-                class="dash-theme-popper__card"
-                :style="dashThemeSwatchStyle(item)"
-              />
-            </button>
-          </div>
-        </el-popover>
-      </div>
-      <i class="filter-dock__tools-sep" />
-      <div class="filter-dock__design">
-        <template v-if="showDesign">
-          <el-tooltip :content="gridGuides ? '隐藏辅助线' : '显示辅助线'" placement="bottom" :show-after="200">
-            <VisActionButton
-              size="regular" variant="outline" label="辅助线"
-              class="filter-dock__btn"
-              :active="gridGuides"
-              :aria-pressed="gridGuides"
-              :disabled="screenshotting"
-              @click="gridGuides = !gridGuides"
-            >
-              <span class="i-mingcute-grid-line" />
-            </VisActionButton>
-          </el-tooltip>
-          <el-dropdown
-            trigger="hover"
-            placement="bottom-end"
-            :show-timeout="100"
-            :hide-timeout="100"
-            @command="onAddCommand"
-          >
-            <VisActionButton
-              size="regular" variant="outline"
-              class="filter-dock__btn filter-dock__add"
-              label="添加内容"
-            >
-              <span :class="adding ? 'i-svg-spinners-ring-resize' : 'i-mingcute-add-square-line'" />
-            </VisActionButton>
-            <template #dropdown>
-              <el-dropdown-menu class="dash-add-menu">
-                <el-dropdown-item command="card" :disabled="adding">
-                  <span class="i-mingcute-layout-grid-line" />
-                  卡片
-                </el-dropdown-item>
-                <el-dropdown-item command="text">
-                  <span class="i-mingcute-paragraph-line" />
-                  标注
-                </el-dropdown-item>
-                <el-dropdown-item command="group">
-                  <span class="i-mingcute-new-folder-line" />
-                  分组
-                </el-dropdown-item>
-              </el-dropdown-menu>
-            </template>
-          </el-dropdown>
-          <el-tooltip
-            content="配置"
-            placement="bottom"
-            :show-after="200"
-          >
-            <VisActionButton
-              size="regular" variant="outline" label="配置看板"
-              class="filter-dock__btn"
-              @click="emit('settings')"
-            >
-              <span class="i-mingcute-settings-3-line" />
-            </VisActionButton>
-          </el-tooltip>
-          <el-tooltip
-            content="重载看板"
-            placement="bottom"
-            :show-after="200"
-          >
-            <VisActionButton
-              size="regular" variant="outline" label="重载看板"
-              class="filter-dock__btn"
-              @click="emit('reloadCards')"
-            >
-              <span class="i-mingcute-refresh-anticlockwise-1-line" />
-            </VisActionButton>
-          </el-tooltip>
-          <el-button
-            class="filter-dock__save"
-            type="primary"
-            :loading="saveLoading"
-            :disabled="saveDisabled"
-            @click="emit('save')"
-          >
-            保存
-          </el-button>
-        </template>
-      </div>
-    </div>
     <div
       v-if="!mobile && defs.length"
       ref="tagsRef"
@@ -602,13 +544,17 @@ watch(mobile, (enabled) => {
 .filter-dock {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: 'heading actions';
+  column-gap: 16px;
+  row-gap: var(--vis-space-2);
+  align-items: center;
+  pointer-events: none;
+}
+
+.filter-dock:has(> .filter-dock__tags) {
   grid-template-areas:
     'heading actions'
     'tags tags';
-  column-gap: 16px;
-  row-gap: var(--vis-space-3);
-  align-items: center;
-  pointer-events: none;
 }
 
 .filter-dock.is-mobile {
@@ -669,7 +615,7 @@ watch(mobile, (enabled) => {
   line-height: 1;
 }
 
-.filter-dock__mobile-actions {
+.filter-dock.is-mobile .filter-dock__right {
   grid-area: mobile-actions;
   display: flex;
   align-items: center;
@@ -677,6 +623,10 @@ watch(mobile, (enabled) => {
   gap: 0;
   margin-right: -8px;
   pointer-events: auto;
+}
+
+.filter-dock.is-mobile .filter-dock__view {
+  gap: 0;
 }
 
 .filter-dock__mobile-filters {
@@ -759,15 +709,20 @@ watch(mobile, (enabled) => {
 .filter-dock__heading {
   grid-area: heading;
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--vis-space-1);
+  align-items: baseline;
+  gap: var(--vis-space-3);
   min-width: 0;
+  min-height: var(--vis-control-size);
   pointer-events: auto;
+
+  &:has(.filter-dock__desc) .filter-dock__title-row {
+    max-width: 60%;
+  }
 }
 
 .filter-dock__title-row {
   display: flex;
+  flex: 0 1 auto;
   align-items: center;
   gap: var(--vis-space-2);
   max-width: 100%;
@@ -801,6 +756,7 @@ watch(mobile, (enabled) => {
 }
 
 .filter-dock__desc {
+  flex: 1 1 180px;
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -820,13 +776,6 @@ watch(mobile, (enabled) => {
   gap: 8px;
   overflow: visible;
   pointer-events: auto;
-
-  &:not(:has(.filter-dock__design > *)) {
-    .filter-dock__tools-sep,
-    .filter-dock__design {
-      display: none;
-    }
-  }
 }
 
 .filter-dock__view,
@@ -956,7 +905,10 @@ watch(mobile, (enabled) => {
 </style>
 
 <style lang="scss">
-.dash-mobile-tools-popper {
+.dash-tools-popper {
+  --dash-tools-action-height: 36px;
+  --dash-tools-action-font: 13px;
+  --dash-tools-swatch-height: 40px;
   box-sizing: border-box;
   max-width: calc(100vw - 24px);
   max-height: min(72dvh, 620px);
@@ -971,14 +923,20 @@ watch(mobile, (enabled) => {
   overscroll-behavior: contain;
 }
 
-.dash-mobile-tools {
+.dash-tools-popper.is-touch {
+  --dash-tools-action-height: 44px;
+  --dash-tools-action-font: 14px;
+  --dash-tools-swatch-height: 48px;
+}
+
+.dash-tools {
   display: flex;
   flex-direction: column;
   gap: 6px;
   min-width: 0;
 }
 
-.dash-mobile-tools__desc {
+.dash-tools__desc {
   padding: 6px 8px 9px;
   border-bottom: 1px solid color-mix(in srgb, var(--dash-mobile-border, var(--el-border-color)) 56%, transparent);
 
@@ -995,31 +953,27 @@ watch(mobile, (enabled) => {
   }
 
   p {
-    display: -webkit-box;
-    overflow: hidden;
     color: var(--dash-mobile-content, var(--el-text-color-regular));
     font-size: 13px;
     line-height: 1.5;
     overflow-wrap: anywhere;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 4;
   }
 }
 
-.dash-mobile-tools__action {
+.dash-tools__action {
   display: flex;
   align-items: center;
   gap: 10px;
   box-sizing: border-box;
   width: 100%;
   min-width: 0;
-  min-height: 44px;
+  min-height: var(--dash-tools-action-height);
   padding: 0 10px;
   border: 1px solid transparent;
   border-radius: 9px;
   background: transparent;
   color: var(--dash-mobile-content, var(--el-text-color-regular));
-  font-size: 14px;
+  font-size: var(--dash-tools-action-font);
   text-align: left;
   cursor: pointer;
 
@@ -1050,29 +1004,29 @@ watch(mobile, (enabled) => {
   }
 }
 
-.dash-mobile-tools__themes {
+.dash-tools__themes {
   padding: 6px 8px 8px;
 }
 
-.dash-mobile-tools__label {
+.dash-tools__label {
   display: block;
   padding: 0 2px 7px;
   color: var(--dash-mobile-muted, var(--el-text-color-secondary));
   font-size: var(--vis-caption-size);
 }
 
-.dash-mobile-tools__theme-grid {
+.dash-tools__theme-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
 }
 
-.dash-mobile-tools__theme {
+.dash-tools__theme {
   display: flex;
   align-items: flex-end;
   box-sizing: border-box;
   min-width: 0;
-  height: 48px;
+  height: var(--dash-tools-swatch-height);
   padding: 5px;
   border: 2px solid transparent;
   border-radius: 10px;
@@ -1097,68 +1051,34 @@ watch(mobile, (enabled) => {
   }
 }
 
-.dash-mobile-tools__sep {
+.dash-tools__sep {
   display: block;
   height: 1px;
   margin: 2px 8px;
   background: color-mix(in srgb, var(--dash-mobile-border, var(--el-border-color)) 52%, transparent);
 }
 
-.dash-mobile-tools__design-grid {
+.dash-tools__design-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 4px;
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .dash-mobile-tools__action:hover:not(:disabled) {
+  .dash-tools__action:hover:not(:disabled) {
     background: var(--dash-mobile-soft, var(--el-fill-color-light));
   }
 
-  .dash-mobile-tools__theme:hover {
+  .dash-tools__theme:hover {
     border-color: color-mix(in srgb, var(--dash-mobile-accent, var(--el-color-primary)) 54%, transparent);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .dash-mobile-tools-popper {
+  .dash-tools-popper {
     transition-duration: 0.01ms !important;
     animation-duration: 0.01ms !important;
   }
-}
-
-.dash-theme-popper {
-  padding: 8px !important;
-}
-
-.dash-theme-popper__grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
-}
-
-.dash-theme-popper__item {
-  display: flex;
-  align-items: flex-end;
-  box-sizing: border-box;
-  height: 52px;
-  padding: 6px;
-  border: 2px solid transparent;
-  border-radius: 10px;
-  cursor: pointer;
-
-  &:hover,
-  &.is-active {
-    border-color: var(--el-color-primary);
-  }
-}
-
-.dash-theme-popper__card {
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  border: 1px solid rgb(15 23 42 / 8%);
-  box-shadow: 0 1px 2px rgb(15 23 42 / 4%);
 }
 
 .dash-filter-chip-popper {

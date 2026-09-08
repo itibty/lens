@@ -14,7 +14,7 @@ import {
 /** 点外关闭 / 页面滚动关闭时，这些浮层里的操作不算「页面」 */
 export const DASH_POPPER_IGNORE = [
   '.dash-filter-chip-popper',
-  '.dash-theme-popper',
+  '.dash-tools-popper',
   '.el-select__popper',
   '.el-picker__popper',
   '.el-select-dropdown',

@@ -12,7 +12,6 @@ const EXPAND_SEL = [
 const HIDE_SEL = [
   '.dash-grid-guides',
   '.filter-dock__right',
-  '.filter-dock__mobile-actions',
   '.dash-tile__handle',
   '.dash-tile__dot',
   '.dash-text__actions',
