@@ -8,6 +8,7 @@
   --vis-space-5: 20px;
   --vis-card-inset: 16px;
   --vis-card-header-y: 12px;
+  --vis-card-border: none;
   --vis-title-size: 14px;
   --vis-title-leading: 22px;
   --vis-page-title-size: 22px;
@@ -19,6 +20,7 @@
   --vis-control-touch: 44px;
   --vis-radius-sm: 6px;
   --vis-radius-control: 8px;
+  --vis-radius-pill: 999px;
   --vis-icon-size: 16px;
 }
 
@@ -42,6 +44,34 @@
   border: 1px solid var(--na-border-color-lighter);
   border-radius: var(--vis-radius-sm);
   background: var(--na-fill-color-lighter);
+}
+
+// 筛选是当前条件的摘要，用轻底色成组；只强调已选值，不给整组加描边。
+@mixin filter-chip {
+  height: var(--vis-control-compact);
+  border: none;
+  border-radius: var(--vis-radius-pill);
+  background: color-mix(in srgb, var(--na-text-strong) 6%, transparent);
+  transition: background-color 0.15s ease;
+  @include focus-ring;
+
+  &:hover,
+  &.is-open {
+    background: color-mix(in srgb, var(--na-text-strong) 9%, transparent);
+  }
+
+  &.is-on {
+    background: color-mix(in srgb, var(--na-color-primary) 10%, transparent);
+
+    &:hover,
+    &.is-open {
+      background: color-mix(in srgb, var(--na-color-primary) 15%, transparent);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
 }
 
 @mixin segmented {

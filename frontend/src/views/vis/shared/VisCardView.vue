@@ -725,7 +725,7 @@ watch(allowDetail, (ok) => {
     width: 100%;
     display: flex;
     flex-direction: column;
-    border: 1px solid var(--na-border-color-light);
+    border: var(--vis-card-border);
     border-radius: var(--dash-card-radius, 12px);
     background: var(--el-bg-color);
     box-sizing: border-box;

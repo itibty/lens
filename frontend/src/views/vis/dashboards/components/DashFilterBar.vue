@@ -884,7 +884,7 @@ watch(mobile, (enabled) => {
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
-  min-height: 32px;
+  min-height: var(--vis-control-compact);
   pointer-events: auto;
 }
 
@@ -893,27 +893,9 @@ watch(mobile, (enabled) => {
   align-items: stretch;
   box-sizing: border-box;
   max-width: 100%;
-  height: var(--vis-control-size);
   padding: 0;
-  border: 1px solid var(--na-border-color-light);
-  border-radius: var(--vis-radius-control);
-  background: var(--na-surface-bg);
   cursor: pointer;
-  transition:
-    background-color 0.15s ease,
-    border-color 0.15s ease;
-  @include ui.focus-ring;
-
-  &:hover,
-  &.is-open {
-    background: var(--na-fill-color-light);
-    border-color: var(--na-border-color);
-  }
-
-  &.is-on {
-    border-color: var(--na-color-primary-border);
-    background: var(--na-color-primary-soft);
-  }
+  @include ui.filter-chip;
 }
 
 .filter-chip__k,
@@ -942,21 +924,13 @@ watch(mobile, (enabled) => {
   padding-right: 6px;
 }
 
-.filter-chip.is-on .filter-chip__k {
-  color: color-mix(
-    in srgb,
-    var(--dash-accent, var(--na-color-primary)) 76%,
-    var(--dash-content-color, var(--na-text-strong))
-  );
-}
-
 .filter-chip__value {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   max-width: 16em;
   color: var(--dash-content-color, var(--el-text-color-regular));
-  font-size: 13px;
+  font-size: var(--vis-body-size);
 }
 
 .filter-chip:not(.is-on) .filter-chip__value {
@@ -965,7 +939,7 @@ watch(mobile, (enabled) => {
 
 .filter-chip.is-on .filter-chip__value {
   color: var(--dash-accent, var(--el-color-primary));
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .filter-chip__clear {
@@ -982,15 +956,6 @@ watch(mobile, (enabled) => {
     width: 11px;
     height: 11px;
   }
-
-  &:hover {
-    background: color-mix(in srgb, var(--dash-accent, var(--na-color-primary)) 14%, transparent);
-    color: var(--dash-accent, var(--el-color-primary));
-  }
-}
-
-.filter-chip.is-on .filter-chip__clear {
-  color: var(--dash-accent, var(--el-color-primary));
 
   &:hover {
     background: color-mix(in srgb, var(--dash-accent, var(--na-color-primary)) 14%, transparent);

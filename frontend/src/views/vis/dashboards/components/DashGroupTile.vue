@@ -232,7 +232,7 @@ function onResizePointerDown(corner: 'nw' | 'ne' | 'sw' | 'se', event: PointerEv
   box-sizing: border-box;
   padding: 0;
   background: var(--dash-group-bg, var(--dash-card-bg, var(--el-bg-color)));
-  border: 1px solid var(--dash-border, var(--na-border-color-light));
+  border: var(--vis-card-border);
   border-radius: var(--dash-card-radius, 12px);
   @include page.frost(card);
 }
@@ -467,13 +467,10 @@ function onResizePointerDown(corner: 'nw' | 'ne' | 'sw' | 'se', event: PointerEv
     --dash-group-bg,
     color-mix(in srgb, var(--dash-card-bg, var(--el-bg-color)) 94%, var(--dash-canvas-bg, transparent))
   );
-  border: 1px solid color-mix(in srgb, var(--dash-border, var(--na-border-color-light)) 64%, transparent);
 
   .dash-group__chrome {
     min-height: 52px;
     padding: var(--vis-card-header-y) var(--vis-card-inset);
-    border-bottom: 1px solid
-      color-mix(in srgb, var(--dash-group-fg, var(--dash-border, var(--na-border-color-light))) 18%, transparent);
   }
 
   .dash-group__title {
@@ -486,14 +483,8 @@ function onResizePointerDown(corner: 'nw' | 'ne' | 'sw' | 'se', event: PointerEv
     line-height: 18px;
   }
 
-  .dash-group__tabs {
-    gap: 2px;
-    border: 1px solid color-mix(in srgb, var(--dash-border, var(--na-border-color-light)) 42%, transparent);
-  }
-
-  // 组内卡片比外层容器更亮一层，用边界而非重阴影表达嵌套关系。
+  // 组内卡片靠表面和轻阴影表达嵌套关系，避免容器与内容层层描边。
   :deep(.dash-tile.is-in-group:not(.is-full)) {
-    border: 1px solid color-mix(in srgb, var(--dash-border, var(--na-border-color-light)) 46%, transparent);
     background: var(--dash-card-bg, var(--el-bg-color));
     box-shadow: 0 1px 2px color-mix(in srgb, var(--dash-title, var(--na-text-strong)) 6%, transparent);
   }
