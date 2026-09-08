@@ -12,4 +12,4 @@
 
 新增默认颜色应先检查已有语义。富文本用户色、语法高亮、分类色板、遮罩等有明确用途的颜色可以独立定义；不要机械合并数值相同但用途不同的颜色。
 
-数字排版使用 `views/vis/shared/VisMetricValue.vue`（数字、单位、趋势符号）、`VisMetricAux.vue`（辅助标签与数值紧凑成组，整组换行）和 `VisMetricRatio.vue`（当前值 / 目标值）。字号通过 `numberStyle.ts` / `numberFit.ts` 提供，避免各类卡片分别调整行高、单位间距和箭头位置。
+数字排版使用 `views/vis/shared/VisMetricValue.vue`（数字、单位、趋势符号）、`VisMetricAux.vue`（辅助标签与数值紧凑成组，整组换行）和 `VisMetricRatio.vue`（当前值 / 目标值）。字号通过 `numberStyle.ts` / `numberFit.ts` 提供，避免各类卡片分别调整行高、单位间距和箭头位置。趋势箭头与数字处于同一行内排版上下文，使用 `cap` 字形高度单位；辅助指标统一使用公共中性填充色，涨跌色只用于数值，不扩散到背景。

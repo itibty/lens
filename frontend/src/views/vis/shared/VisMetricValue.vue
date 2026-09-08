@@ -16,14 +16,17 @@ withDefaults(defineProps<{
     :class="`is-${size}`"
     :title="`${prefix || ''}${body}${compactSuffix || ''}${suffix || ''}`"
   >
-    <span
-      v-if="direction && direction !== 'flat'"
-      class="vis-metric-value__direction"
-      aria-hidden="true"
-    >
-      <svg viewBox="0 0 12 16" :class="`is-${direction}`">
+    <span v-if="prefix" class="vis-metric-value__affix">{{ prefix }}</span>
+    <span class="vis-metric-value__body">
+      <svg
+        v-if="direction && direction !== 'flat'"
+        class="vis-metric-value__direction"
+        :class="`is-${direction}`"
+        viewBox="0 0 10 14"
+        aria-hidden="true"
+      >
         <path
-          d="M 6 14 V 2 M 2 6 L 6 2 L 10 6"
+          d="M 5 13 V 1 M 1 5 L 5 1 L 9 5"
           fill="none"
           stroke="currentColor"
           stroke-width="1.75"
@@ -31,9 +34,8 @@ withDefaults(defineProps<{
           stroke-linejoin="round"
         />
       </svg>
+      <span>{{ body }}</span>
     </span>
-    <span v-if="prefix" class="vis-metric-value__affix">{{ prefix }}</span>
-    <span class="vis-metric-value__body">{{ body }}</span>
     <span v-if="compactSuffix || suffix" class="vis-metric-value__affix">{{ compactSuffix }}{{ suffix }}</span>
   </span>
 </template>
@@ -83,16 +85,18 @@ withDefaults(defineProps<{
   }
 
   &__direction {
-    flex: 0 0 auto;
-    line-height: inherit;
+    // 与数字处于同一个行内排版上下文，沿字形基线对齐，避免独立 SVG 盒子的基线偏差。
+    width: 0.52em;
+    height: 0.72em;
+    margin-right: 0.2em;
+    vertical-align: baseline;
 
-    svg {
-      width: 0.75em;
-      height: 1em;
-      vertical-align: -0.08em;
+    @supports (height: 1cap) {
+      width: calc(1cap * 5 / 7);
+      height: 1cap;
     }
 
-    .is-down {
+    &.is-down {
       transform: rotate(180deg);
     }
   }

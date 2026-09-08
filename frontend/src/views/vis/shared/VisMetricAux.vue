@@ -1,4 +1,4 @@
-<!-- 指标卡和趋势卡共用的辅指标组；标签、符号、数字紧邻，空间不足时整组换行。 -->
+<!-- 指标卡和趋势卡共用的辅指标组；中性浅底统一标签与数值，空间不足时整组换行。 -->
 <script setup lang="ts">
 import VisMetricValue from './VisMetricValue.vue'
 
@@ -41,7 +41,7 @@ defineProps<{
   flex-wrap: wrap;
   align-items: baseline;
   align-content: start;
-  gap: 6px 20px;
+  gap: 6px 8px;
   min-width: 0;
   min-height: 0;
   overflow-y: auto;
@@ -54,6 +54,10 @@ defineProps<{
     gap: 6px;
     min-width: 0;
     max-width: 100%;
+    box-sizing: border-box;
+    padding: 2px 6px;
+    border-radius: 5px;
+    background: var(--na-fill-color-light);
     color: var(--vis-content-color, var(--el-text-color-regular));
 
     &.is-up {
