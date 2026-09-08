@@ -295,6 +295,7 @@ function onMenuAction(key: string) {
           :extra-actions="extraActions"
           :allow-fullscreen="canFullscreen"
           :fullscreen="isFull"
+          :compact="presentationMode === 'compact' && !isFull"
           embedded
           @open-detail="onOpenDetail"
           @menu-action="onMenuAction"

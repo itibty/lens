@@ -293,6 +293,7 @@ watch(
 
 <style scoped lang="scss">
 @use '../dashPage' as dash;
+@use '@/theme/presentation.scss' as ui;
 
 .viewer {
   @include dash.preview-tokens;
@@ -302,6 +303,14 @@ watch(
   height: 100%;
   overflow: hidden;
   background: var(--dash-canvas-bg, var(--el-fill-color-lighter));
+
+  &.is-compact {
+    @include ui.compact-tokens;
+    --dash-grid-gap: 10px;
+    --dash-chrome-x: 14px;
+    --dash-page-y: 8px;
+    --dash-gutter: 0px;
+  }
 }
 
 .viewer__chrome {

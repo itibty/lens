@@ -140,8 +140,8 @@ const flowTiles = computed(() => props.flowMode
 
 function flowItemStyle(item: (typeof flowTiles.value)[number]): CSSProperties {
   return {
-    gridColumn: `span ${item.columnSpan}`,
-    height: `${item.height}px`,
+    '--dash-flow-span': item.columnSpan,
+    'height': `${item.height}px`,
   }
 }
 
@@ -287,7 +287,7 @@ onBeforeUnmount(() => {
 
 .dash-inner__flow {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--dash-grid-gap, 12px);
   box-sizing: border-box;
   width: 100%;
@@ -300,11 +300,22 @@ onBeforeUnmount(() => {
 
 .dash-inner__flow-item {
   min-width: 0;
+  grid-column: span var(--dash-flow-span, 2);
 
   > :deep(.vis-full-wrap),
   > :deep(.dash-tile) {
     width: 100%;
     height: 100%;
+  }
+}
+
+@container dash-flow (max-width: 359px) {
+  .dash-inner__flow {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .dash-inner__flow-item {
+    grid-column: 1 / -1;
   }
 }
 </style>

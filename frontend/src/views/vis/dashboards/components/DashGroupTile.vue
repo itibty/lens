@@ -517,8 +517,8 @@ function onResizePointerDown(corner: 'nw' | 'ne' | 'sw' | 'se', event: PointerEv
   .dash-group__chrome {
     flex-direction: column;
     align-items: stretch;
-    gap: 8px;
-    padding: var(--vis-card-header-y) var(--vis-card-inset);
+    gap: 4px;
+    padding: 12px var(--vis-card-inset) 0;
   }
 
   .dash-group__titles,
@@ -540,13 +540,16 @@ function onResizePointerDown(corner: 'nw' | 'ne' | 'sw' | 'se', event: PointerEv
   }
 
   .dash-group__tabs {
-    width: 100%;
+    width: auto;
+    max-width: 100%;
     box-sizing: border-box;
     scroll-snap-type: x proximity;
   }
 
   .dash-group__tab {
     max-width: min(156px, 68vw);
+    height: 32px;
+    line-height: 32px;
     scroll-snap-align: start;
   }
 }

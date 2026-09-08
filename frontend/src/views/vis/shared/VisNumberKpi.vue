@@ -147,7 +147,7 @@ const { vars: cardStyle } = useNumberFit(rootRef, () => props.fill)
   }
 
   &__deltas {
-    padding-top: var(--vis-number-gap, 14px);
+    padding-top: var(--vis-metric-aux-gap, var(--vis-number-gap, 14px));
   }
 }
 </style>

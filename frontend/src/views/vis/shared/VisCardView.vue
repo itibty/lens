@@ -76,6 +76,7 @@ const props = withDefaults(defineProps<{
   allowFullscreen?: boolean
   fullscreen?: boolean
   hideTitle?: boolean
+  compact?: boolean
 }>(), {
   title: '',
   description: '',
@@ -92,6 +93,7 @@ const props = withDefaults(defineProps<{
   allowFullscreen: false,
   fullscreen: false,
   hideTitle: false,
+  compact: false,
 })
 
 const emit = defineEmits<{
@@ -155,7 +157,8 @@ const headerThemeStyle = computed(() => {
   if (!hasCardColor.value)
     return undefined
   return {
-    color: chrome.value.color,
+    'color': chrome.value.color,
+    '--vis-content-color': chrome.value.color,
   }
 })
 
@@ -388,7 +391,7 @@ watch(allowDetail, (ok) => {
 <template>
   <div
     class="vis-card-view h-full min-h-0 flex flex-col"
-    :class="[stageClass, { 'is-menu-open': menuOpen, 'is-embedded': embedded, 'is-fullscreen': fullscreen }]"
+    :class="[stageClass, { 'is-menu-open': menuOpen, 'is-embedded': embedded, 'is-fullscreen': fullscreen, 'is-compact': compact }]"
     :style="surfaceThemeStyle"
   >
     <div
@@ -430,7 +433,7 @@ watch(allowDetail, (ok) => {
             {{ cardTitle }}
           </div>
           <el-popover
-            v-if="cardRemark"
+            v-if="cardRemark && !compact"
             :trigger="remarkTrigger"
             placement="bottom-start"
             :show-after="200"
@@ -488,6 +491,12 @@ watch(allowDetail, (ok) => {
               />
             </VisActionButton>
             <template #dropdown>
+              <div v-if="compact && hasHeaderText" class="vis-card-more-popper__summary">
+                <strong v-if="cardTitle">{{ cardTitle }}</strong>
+                <p v-if="cardRemark">
+                  {{ cardRemark }}
+                </p>
+              </div>
               <el-dropdown-menu>
                 <el-dropdown-item command="refresh">
                   <span class="vis-card-more-popper__icon i-mingcute-refresh-2-line" />
@@ -772,8 +781,8 @@ watch(allowDetail, (ok) => {
     gap: 8px;
     width: 100%;
     max-width: 100%;
-    min-height: calc(var(--vis-control-compact) + var(--vis-card-header-y) + var(--vis-space-2));
-    padding: var(--vis-card-header-y) var(--vis-card-inset) var(--vis-space-2);
+    min-height: calc(var(--vis-control-compact) + var(--vis-card-header-y) + var(--vis-card-header-gap));
+    padding: var(--vis-card-header-y) var(--vis-card-inset) var(--vis-card-header-gap);
     text-align: left;
     box-sizing: border-box;
 
@@ -820,7 +829,7 @@ watch(allowDetail, (ok) => {
   &__more-btn,
   &__remark-btn {
     .is-card-color & {
-      color: inherit;
+      color: var(--vis-content-color, inherit);
 
       &:hover {
         background: rgb(255 255 255 / 14%);
@@ -1044,6 +1053,25 @@ watch(allowDetail, (ok) => {
     }
   }
 }
+
+.vis-card-view.is-compact {
+  .vis-card-view__header {
+    min-height: var(--vis-control-touch);
+    gap: 2px;
+    padding: 0 4px 0 var(--vis-card-inset);
+  }
+
+  .vis-card-view__actions {
+    gap: 0;
+    opacity: 1;
+    pointer-events: auto;
+
+    :deep(.vis-action-button) {
+      width: var(--vis-control-touch);
+      height: var(--vis-control-touch);
+    }
+  }
+}
 </style>
 
 <style lang="scss">
@@ -1057,6 +1085,28 @@ watch(allowDetail, (ok) => {
 
 .vis-card-more-popper {
   z-index: 4000 !important;
+  max-width: min(280px, calc(100vw - 24px));
+
+  &__summary {
+    padding: 12px 14px 10px;
+    border-bottom: 1px solid var(--na-border-color-lighter);
+    white-space: normal;
+    overflow-wrap: anywhere;
+
+    strong {
+      color: var(--na-text-strong);
+      font-size: 13px;
+      line-height: 20px;
+      font-weight: 600;
+    }
+
+    p {
+      margin: 4px 0 0;
+      color: var(--na-text-muted);
+      font-size: 12px;
+      line-height: 18px;
+    }
+  }
 
   .el-dropdown-menu__item {
     display: flex;

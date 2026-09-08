@@ -176,7 +176,7 @@ const flowTiles = computed(() => {
 
 function flowItemStyle(item: (typeof flowTiles.value)[number]): CSSProperties {
   return {
-    gridColumn: `span ${item.columnSpan}`,
+    '--dash-flow-span': item.columnSpan,
     ...(item.height ? { height: `${item.height}px` } : {}),
     ...(item.minHeight ? { minHeight: `${item.minHeight}px` } : {}),
   }
@@ -258,6 +258,7 @@ onBeforeUnmount(() => {
       'is-resizing': !!interact.resizingId.value,
       'is-stacked': stacked,
       'is-flow': flowing,
+      'is-compact': presentationMode === 'compact',
     }"
   >
     <div v-if="!widgets.length" class="dash-grid__empty">
@@ -422,11 +423,22 @@ onBeforeUnmount(() => {
 
 <style scoped lang="scss">
 @use '../dashGrid.scss' as dash;
+@use '@/theme/presentation.scss' as ui;
 
 .dash-grid {
   min-height: 240px;
   @include dash.vgl-canvas;
   @include dash.vgl-fill(true);
+
+  &.is-flow {
+    container-type: inline-size;
+    container-name: dash-flow;
+  }
+
+  &.is-compact {
+    @include ui.compact-tokens;
+    --dash-grid-gap: 10px;
+  }
 
   &.is-editable,
   &.is-resizing {
@@ -460,7 +472,7 @@ onBeforeUnmount(() => {
 
 .dash-grid__flow {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--dash-grid-gap, 12px);
   box-sizing: border-box;
   width: 100%;
@@ -475,6 +487,7 @@ onBeforeUnmount(() => {
 
 .dash-grid__flow-item {
   min-width: 0;
+  grid-column: span var(--dash-flow-span, 2);
 
   > :deep(.vis-full-wrap) {
     width: 100%;
@@ -495,17 +508,17 @@ onBeforeUnmount(() => {
   > :deep(.dash-group:not(.is-tabs)) {
     height: auto;
   }
-
-  // 流式预览里的顶层卡片补一圈很淡的边界，在浅色和深色主题下都能与画布分开。
-  > :deep(.vis-full-wrap > .dash-tile:not(.is-in-group):not(.is-full)) {
-    border: 1px solid color-mix(in srgb, var(--dash-border, var(--na-border-color-light)) 48%, transparent);
-  }
 }
 
-@media (max-width: 359px) {
+@container dash-flow (max-width: 359px) {
   .dash-grid__flow {
+    grid-template-columns: minmax(0, 1fr);
     gap: 8px;
     padding: 8px;
+  }
+
+  .dash-grid__flow-item {
+    grid-column: 1 / -1;
   }
 }
 

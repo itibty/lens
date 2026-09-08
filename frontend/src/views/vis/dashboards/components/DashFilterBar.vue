@@ -93,7 +93,8 @@ function pickTheme(id: DashThemeId) {
 
 const descText = computed(() => props.desc.trim().replace(/\s+/g, ' '))
 const mobile = computed(() => props.presentationMode === 'compact' || props.presentationMode === 'medium')
-const filledFilterCount = computed(() => props.defs.filter(isFilled).length)
+const filledFilterDefs = computed(() => props.defs.filter(isFilled))
+const filledFilterCount = computed(() => filledFilterDefs.value.length)
 const overlayStyle = computed(() => dashOverlayVars(theme.value))
 
 function onAddCommand(command: 'card' | 'text' | 'group') {
@@ -190,7 +191,7 @@ watch(mobile, (enabled) => {
 
     <div v-if="mobile" class="filter-dock__mobile-actions">
       <VisActionButton
-        size="touch" variant="outline"
+        size="touch"
         class="filter-dock__mobile-btn"
         label="刷新数据"
         :disabled="screenshotting"
@@ -211,7 +212,7 @@ watch(mobile, (enabled) => {
       >
         <template #reference>
           <VisActionButton
-            size="touch" variant="outline"
+            size="touch"
             class="filter-dock__mobile-btn"
             :active="mobileToolsOpen"
             label="更多操作"
@@ -304,26 +305,34 @@ watch(mobile, (enabled) => {
       </el-popover>
     </div>
 
-    <button
-      v-if="mobile && defs.length"
-      type="button"
-      class="filter-dock__mobile-filter"
-      :class="{ 'is-on': filledFilterCount > 0 }"
-      :aria-label="filledFilterCount ? `筛选，已启用 ${filledFilterCount} 项` : '筛选'"
-      aria-haspopup="dialog"
-      :aria-expanded="mobileFiltersOpen"
-      @click="mobileFiltersOpen = true"
-    >
-      <span class="filter-dock__mobile-filter-icon i-mingcute-filter-2-line" />
-      <span class="filter-dock__mobile-filter-copy">
-        <span>筛选条件</span>
-        <small>{{ filledFilterCount ? '已设置数据范围' : '全部数据' }}</small>
-      </span>
-      <span v-if="filledFilterCount" class="filter-dock__mobile-filter-count">
-        {{ filledFilterCount }}
-      </span>
-      <span class="filter-dock__mobile-filter-arrow i-mingcute-right-line" />
-    </button>
+    <div v-if="mobile && defs.length" class="filter-dock__mobile-filters">
+      <button
+        type="button"
+        class="filter-dock__mobile-filter"
+        :aria-label="filledFilterCount ? `筛选，已启用 ${filledFilterCount} 项` : '筛选'"
+        aria-haspopup="dialog"
+        :aria-expanded="mobileFiltersOpen"
+        @click="mobileFiltersOpen = true"
+      >
+        <span class="filter-dock__mobile-filter-label" :class="{ 'is-on': filledFilterCount > 0 }">
+          <span class="i-mingcute-filter-2-line" />
+          筛选
+          <span v-if="filledFilterCount" class="filter-dock__mobile-filter-count">{{ filledFilterCount }}</span>
+        </span>
+      </button>
+      <div class="filter-dock__mobile-summary">
+        <span
+          v-for="def in filledFilterDefs"
+          :key="def.uid"
+          class="filter-dock__mobile-summary-item"
+          :title="`${chipLabel(def)}：${displayText(def, labelsOf(def.uid))}`"
+        >
+          <span>{{ chipLabel(def) }}</span>
+          {{ displayText(def, labelsOf(def.uid)) }}
+        </span>
+        <span v-if="!filledFilterCount" class="filter-dock__mobile-summary-empty">全部数据</span>
+      </div>
+    </div>
 
     <DashMobileFilterSheet
       v-if="mobile"
@@ -564,7 +573,6 @@ watch(mobile, (enabled) => {
 </template>
 
 <style scoped lang="scss">
-@use '../dashPage.scss' as page;
 @use '@/theme/presentation.scss' as ui;
 
 .filter-dock {
@@ -584,8 +592,8 @@ watch(mobile, (enabled) => {
   grid-template-areas:
     'mobile-heading mobile-actions'
     'mobile-filter mobile-filter';
-  column-gap: 10px;
-  row-gap: 10px;
+  column-gap: 4px;
+  row-gap: 0;
 }
 
 .filter-dock__mobile-heading {
@@ -594,7 +602,7 @@ watch(mobile, (enabled) => {
   align-items: center;
   gap: 8px;
   min-width: 0;
-  min-height: 48px;
+  min-height: var(--vis-control-touch);
   pointer-events: auto;
 }
 
@@ -603,7 +611,7 @@ watch(mobile, (enabled) => {
   flex: 1 1 auto;
   flex-direction: column;
   justify-content: center;
-  gap: 3px;
+  gap: 2px;
   min-width: 0;
 }
 
@@ -611,9 +619,9 @@ watch(mobile, (enabled) => {
   min-width: 0;
   overflow: hidden;
   color: var(--dash-title, var(--el-text-color-primary));
-  font-size: 18px;
+  font-size: 17px;
   font-weight: 650;
-  line-height: 1.2;
+  line-height: 24px;
   letter-spacing: -0.01em;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -642,127 +650,86 @@ watch(mobile, (enabled) => {
   display: flex;
   align-items: center;
   justify-self: end;
-  gap: 8px;
+  gap: 0;
+  margin-right: -8px;
+  pointer-events: auto;
+}
+
+.filter-dock__mobile-filters {
+  grid-area: mobile-filter;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
   pointer-events: auto;
 }
 
 .filter-dock__mobile-filter {
-  grid-area: mobile-filter;
   display: inline-flex;
+  flex: 0 0 auto;
   align-items: center;
-  justify-self: stretch;
-  gap: 10px;
-  box-sizing: border-box;
-  width: 100%;
-  min-width: 0;
-  min-height: 48px;
-  padding: 5px 11px;
-  border: 1px solid color-mix(in srgb, var(--dash-border, var(--el-border-color)) 66%, transparent);
-  border-radius: 12px;
-  background: color-mix(
-    in srgb,
-    var(--dash-title, var(--na-text-strong)) 3.5%,
-    var(--dash-card-bg, var(--na-surface-bg))
-  );
-  color: var(--dash-content-color, var(--el-text-color-regular));
+  height: var(--vis-control-touch);
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--dash-content-color, var(--na-text-regular));
+  font-size: var(--vis-caption-size);
   cursor: pointer;
-  outline: none;
-  pointer-events: auto;
-  @include page.frost(btn);
-
-  &:active {
-    background: color-mix(
-      in srgb,
-      var(--dash-title, var(--na-text-strong)) 6%,
-      var(--dash-card-bg, var(--na-surface-bg))
-    );
-  }
-
-  &:focus-visible {
-    outline: 2px solid color-mix(in srgb, var(--dash-accent, var(--na-color-primary)) 62%, transparent);
-    outline-offset: 2px;
-  }
-
-  .filter-dock__mobile-filter-icon {
-    width: 19px;
-    height: 19px;
-    color: var(--dash-accent, var(--el-color-primary));
-  }
-
-  .filter-dock__mobile-filter-arrow {
-    width: 18px;
-    height: 18px;
-    margin-left: auto;
-    color: var(--dash-content-muted, var(--el-text-color-secondary));
-  }
-
-  &.is-on {
-    border-color: color-mix(in srgb, var(--dash-accent, var(--na-color-primary)) 42%, transparent);
-    background: color-mix(
-      in srgb,
-      var(--dash-accent, var(--na-color-primary)) 12%,
-      var(--dash-card-bg, var(--na-surface-bg))
-    );
-    color: var(--dash-accent, var(--el-color-primary));
-  }
+  @include ui.focus-ring;
 }
 
-.filter-dock__mobile-filter-copy {
-  display: flex;
-  flex: 1 1 auto;
-  flex-direction: column;
-  gap: 1px;
-  min-width: 0;
-  text-align: left;
+.filter-dock__mobile-filter-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 10px;
+  @include ui.filter-chip;
 
-  > span {
-    overflow: hidden;
-    font-size: 13px;
-    font-weight: 600;
-    line-height: 1.35;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+  &.is-on {
+    color: var(--dash-accent, var(--na-color-primary));
   }
 
-  small {
-    overflow: hidden;
-    color: var(--dash-content-muted, var(--el-text-color-secondary));
-    font-size: 11px;
-    font-weight: 400;
-    line-height: 1.25;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+  > .i-mingcute-filter-2-line {
+    width: 14px;
+    height: 14px;
   }
 }
 
 .filter-dock__mobile-filter-count {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 20px;
-  height: 20px;
-  padding: 0 5px;
-  border-radius: 999px;
-  background: var(--dash-accent, var(--el-color-primary));
-  color: #fff;
-  font-size: 12px;
-  line-height: 1;
-  box-sizing: border-box;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
 }
 
-@media (hover: hover) and (pointer: fine) {
-  .filter-dock__mobile-filter:hover {
-    border-color: color-mix(
-      in srgb,
-      var(--dash-accent, var(--na-color-primary)) 30%,
-      var(--dash-border, var(--el-border-color))
-    );
-    background: color-mix(
-      in srgb,
-      var(--dash-title, var(--na-text-strong)) 5%,
-      var(--dash-card-bg, var(--na-surface-bg))
-    );
+.filter-dock__mobile-summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
   }
+}
+
+.filter-dock__mobile-summary-item {
+  display: inline-flex;
+  flex: 0 0 auto;
+  gap: 5px;
+  color: var(--dash-content-color, var(--na-text-regular));
+  font-size: var(--vis-caption-size);
+  line-height: 28px;
+  white-space: nowrap;
+
+  > span {
+    color: var(--dash-content-muted, var(--na-text-muted));
+  }
+}
+
+.filter-dock__mobile-summary-empty {
+  color: var(--dash-content-muted, var(--na-text-muted));
+  font-size: var(--vis-caption-size);
 }
 
 .filter-dock__heading {

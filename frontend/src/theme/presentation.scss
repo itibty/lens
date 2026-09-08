@@ -8,6 +8,7 @@
   --vis-space-5: 20px;
   --vis-card-inset: 16px;
   --vis-card-header-y: 12px;
+  --vis-card-header-gap: 8px;
   --vis-card-border: none;
   --vis-title-size: 14px;
   --vis-title-leading: 22px;
@@ -22,6 +23,21 @@
   --vis-radius-control: 8px;
   --vis-radius-pill: 999px;
   --vis-icon-size: 16px;
+  --vis-badge-inset: 8px;
+}
+
+// 小屏展示密度共用一套尺度；触控按钮的点击范围仍由 touch 尺寸保证。
+@mixin compact-tokens {
+  --vis-card-inset: 12px;
+  --vis-card-header-y: 0px;
+  --vis-card-header-gap: 0px;
+  --vis-title-size: 13px;
+  --vis-title-leading: 20px;
+  --vis-page-title-size: 17px;
+  --vis-page-title-leading: 24px;
+  --vis-badge-inset: 6px;
+  --vis-metric-aux-size: 13px;
+  --vis-metric-aux-gap: 6px;
 }
 
 @mixin title {
@@ -40,7 +56,7 @@
 
 @mixin badge {
   box-sizing: border-box;
-  padding: 2px var(--vis-space-2);
+  padding: 2px var(--vis-badge-inset);
   border: 1px solid var(--na-border-color-lighter);
   border-radius: var(--vis-radius-sm);
   background: var(--na-fill-color-lighter);

@@ -59,7 +59,7 @@ withDefaults(defineProps<{
   }
 
   &.is-aux {
-    font-size: var(--vis-number-aux, 15px);
+    font-size: var(--vis-metric-aux-size, var(--vis-number-aux, 15px));
   }
 
   &.is-inherit {
