@@ -2,7 +2,9 @@ import type { ISpec } from '@visactor/vchart'
 import type { VisVisualConfig } from '@/views/vis/shared/types'
 import { describe, expect, it } from 'vitest'
 import { dashOverlayVars, dashThemeVars, resolveDashThemeId } from '@/views/vis/dashboards/dashTheme'
+import { buildVChartSpec } from '@/views/vis/shared/cardRenderer'
 import { resolveCardChrome } from '@/views/vis/shared/cardTheme'
+import { CHART_SERIES_PALETTES, resolveChartSeriesColors } from '@/views/vis/shared/chartPalette'
 import { resolveProgressPaint } from '@/views/vis/shared/progressCard'
 import { resolveVTableTheme } from '@/views/vis/shared/vtableTheme'
 import { themeCssVars } from './cssVars'
@@ -89,6 +91,46 @@ describe('lens theme contract', () => {
     const colors = ['#123456', '#ABCDEF']
     const custom = withChartTheme({ type: 'bar', color: colors } as ISpec, true)
     expect(custom.color).toEqual(colors)
+  })
+
+  it('keeps default data marks distinguishable from light and dark panels', () => {
+    for (const theme of [LIGHT_THEME, DARK_THEME]) {
+      for (const color of theme.chart.series)
+        expect(contrast(color, theme.surface.panel)).toBeGreaterThanOrEqual(3)
+    }
+    for (const id of ['CONTRAST', 'COLORBLIND'] as const) {
+      const palette = CHART_SERIES_PALETTES.find(item => item.id === id)!.palette
+      expect(resolveChartSeriesColors({ chartTheme: id })).toEqual(palette)
+      expect(withChartTheme({ type: 'bar', color: palette } as ISpec, true).color).toEqual(palette)
+    }
+  })
+
+  it('preserves explicit mark styling and source specs when applying chart defaults', () => {
+    const spec = {
+      type: 'line',
+      point: { style: { size: 10 } },
+      theme: { markByName: { point: { style: { size: 7 } }, area: { style: { fillOpacity: 0.4 } } } },
+    } as ISpec
+    const before = JSON.stringify(spec)
+    const themed = withChartTheme(spec)
+    expect(themed.theme).toMatchObject({ markByName: { point: { style: { size: 7 } }, area: { style: { fillOpacity: 0.4 } } } })
+    expect(themed).toHaveProperty('point.style.size', 10)
+    expect(JSON.stringify(spec)).toBe(before)
+  })
+
+  it('retains categorical encoding and readable stacked labels with the shared chart palette', () => {
+    const query = { datasetId: 'preview', dimensions: [{ field: 'month' }], metrics: [{ field: 'online' }, { field: 'direct' }] }
+    const data = {
+      columns: ['month', 'online', 'direct'],
+      rows: [{ month: '1月', online: 120, direct: 80 }, { month: '2月', online: 150, direct: 100 }],
+      total: 2,
+      truncated: false,
+    }
+    const spec = buildVChartSpec('bar', query, data, { chartType: 'bar', chart: { stacked: true, dataLabel: true } })
+    expect(spec).toMatchObject({ color: DATA_SERIES, seriesField: '__vis_series', stack: true, label: { smartInvert: true, style: { lineWidth: 0 } } })
+    const pie = buildVChartSpec('pie', query, data, { chartType: 'pie' })
+    expect(pie).toHaveProperty('pie.state.hover.outerRadius', 0.85)
+    expect(pie).toHaveProperty('pie.state.hover.lineWidth', 0)
   })
 
   it('uses the same readable table surfaces as the surrounding application', () => {

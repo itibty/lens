@@ -26,8 +26,8 @@ export const ACCENT = {
   purple: '#7155A5',
 } as const
 
-/** 数据分类色不承担成功/失败语义；数组顺序是稳定的系列顺序。 */
-export const DATA_SERIES = ['#4263C7', '#348D9C', '#C08A45', '#7A6BB3', '#588B78', '#A77086', '#607B9A', '#A29460']
+/** 蓝 / 青绿 / 紫 / 琥珀优先；更多分类再使用扩展色。顺序稳定，不承担成功 / 失败语义。 */
+export const DATA_SERIES = ['#4F6BED', '#0D9488', '#8B5CF6', '#D97706', '#0284C7', '#DB2777', '#64748B', '#65A30D']
 
 export function mixColor(color: string, background: string, weight: number) {
   const channels = (hex: string) => [1, 3, 5].map(start => Number.parseInt(hex.slice(start, start + 2), 16))

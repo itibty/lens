@@ -95,7 +95,7 @@ export function pieGradientOrdinal(
 
 /**
  * 几何图系列色。
- * DEFAULT 使用品牌主色开头的默认系列色。
+ * DEFAULT 使用公共蓝青系列色；单系列自然取首色，多分类维持稳定顺序。
  * CONTRAST = Tableau 10 前 8 色；COLORBLIND = Okabe-Ito（不含黑）。
  * GRADIENT / WARM_GRADIENT 仅饼图 / 词云 / 矩形树图：按名次均分色带。热力图用 HEATMAP_COLOR_PRESETS。
  */

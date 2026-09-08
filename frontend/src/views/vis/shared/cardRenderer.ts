@@ -435,8 +435,7 @@ function pieIndicatorItem(
 
 const PIE_EMPHASIS = {
   outerRadius: 0.85,
-  stroke: LIGHT_THEME.text.strong,
-  lineWidth: 1,
+  lineWidth: 0,
 }
 
 function pieMarkSpec() {
@@ -531,8 +530,7 @@ function stackedBarInsideLabel(horizontal: boolean) {
     position: 'inside',
     smartInvert: true,
     style: {
-      stroke: NEUTRAL.white,
-      lineWidth: 2,
+      lineWidth: 0,
     },
     overlap: {
       hideOnHit: true,
