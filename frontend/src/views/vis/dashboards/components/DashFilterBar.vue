@@ -6,6 +6,7 @@ import type { DashFilterValues, VisDashFilterDef } from '../dashApi'
 import type { DashPresentationMode } from '../dashPresentation'
 import type { DashThemeId } from '../dashTheme'
 import { useEventListener } from '@vueuse/core'
+import VisActionButton from '@/views/vis/shared/VisActionButton.vue'
 import {
   DASH_THEME_PRESETS,
   dashOverlayVars,
@@ -93,7 +94,7 @@ function pickTheme(id: DashThemeId) {
 const descText = computed(() => props.desc.trim().replace(/\s+/g, ' '))
 const mobile = computed(() => props.presentationMode === 'compact' || props.presentationMode === 'medium')
 const filledFilterCount = computed(() => props.defs.filter(isFilled).length)
-const mobileSurfaceStyle = computed(() => dashOverlayVars(theme.value))
+const overlayStyle = computed(() => dashOverlayVars(theme.value))
 
 function onAddCommand(command: 'card' | 'text' | 'group') {
   if (command === 'card') {
@@ -188,15 +189,15 @@ watch(mobile, (enabled) => {
     </div>
 
     <div v-if="mobile" class="filter-dock__mobile-actions">
-      <button
-        type="button"
+      <VisActionButton
+        size="touch" variant="outline"
         class="filter-dock__mobile-btn"
-        aria-label="刷新数据"
+        label="刷新数据"
         :disabled="screenshotting"
         @click="emit('refresh')"
       >
         <span class="i-mingcute-refresh-2-line" />
-      </button>
+      </VisActionButton>
       <el-popover
         v-model:visible="mobileToolsOpen"
         placement="bottom-end"
@@ -205,20 +206,20 @@ watch(mobile, (enabled) => {
         :show-arrow="false"
         :persistent="false"
         popper-class="dash-mobile-tools-popper"
-        :popper-style="mobileSurfaceStyle"
+        :popper-style="overlayStyle"
         role="dialog"
       >
         <template #reference>
-          <button
-            type="button"
+          <VisActionButton
+            size="touch" variant="outline"
             class="filter-dock__mobile-btn"
-            :class="{ 'is-active': mobileToolsOpen }"
-            aria-label="更多操作"
+            :active="mobileToolsOpen"
+            label="更多操作"
             aria-haspopup="dialog"
             :aria-expanded="mobileToolsOpen"
           >
             <span class="i-mingcute-more-2-line" />
-          </button>
+          </VisActionButton>
         </template>
 
         <div class="dash-mobile-tools">
@@ -330,30 +331,21 @@ watch(mobile, (enabled) => {
       v-model:values="values"
       :defs="defs"
       :dashboard-id="filterOptionsDashboardId"
-      :surface-style="mobileSurfaceStyle"
+      :surface-style="overlayStyle"
     />
 
     <div
       v-if="!mobile && (title || descText)"
       class="filter-dock__heading"
     >
-      <div
-        v-if="title"
-        class="filter-dock__title"
-      >
-        {{ title }}
+      <div class="filter-dock__title-row">
+        <div v-if="title" class="filter-dock__title">
+          {{ title }}
+        </div>
+        <span v-if="loading" class="filter-dock__loading i-svg-spinners-ring-resize" />
+        <span v-if="dirty" class="filter-dock__dirty">未保存</span>
       </div>
-      <span v-if="loading" class="filter-dock__loading i-svg-spinners-ring-resize" />
-      <span v-if="dirty" class="filter-dock__dirty">未保存</span>
-      <i
-        v-if="title && descText"
-        class="filter-dock__sep"
-      />
-      <div
-        v-if="descText"
-        class="filter-dock__desc"
-        :title="descText"
-      >
+      <div v-if="descText" class="filter-dock__desc" :title="descText">
         {{ descText }}
       </div>
     </div>
@@ -365,14 +357,14 @@ watch(mobile, (enabled) => {
           :show-after="200"
         >
           <span class="filter-dock__preview">
-            <button
-              type="button"
+            <VisActionButton
+              size="regular" variant="outline" label="预览看板"
               class="filter-dock__btn"
               :disabled="previewDisabled"
               @click="emit('preview')"
             >
               <span class="i-mingcute-eye-2-line" />
-            </button>
+            </VisActionButton>
           </span>
         </el-tooltip>
         <el-tooltip
@@ -380,29 +372,29 @@ watch(mobile, (enabled) => {
           placement="bottom"
           :show-after="200"
         >
-          <button
-            type="button"
+          <VisActionButton
+            size="regular" variant="outline" label="刷新数据"
             class="filter-dock__btn"
             :disabled="screenshotting"
             @click="emit('refresh')"
           >
             <span class="i-mingcute-refresh-2-line" />
-          </button>
+          </VisActionButton>
         </el-tooltip>
         <el-tooltip
           :content="screenshotting ? '正在截屏…' : '一键截屏'"
           placement="bottom"
           :show-after="200"
         >
-          <button
-            type="button"
+          <VisActionButton
+            size="regular" variant="outline" label="一键截屏"
             class="filter-dock__btn"
             :disabled="screenshotting"
             :class="{ 'is-active': screenshotting }"
             @click="emit('screenshot')"
           >
             <span :class="screenshotting ? 'i-svg-spinners-ring-resize' : 'i-mingcute-camera-2-line'" />
-          </button>
+          </VisActionButton>
         </el-tooltip>
         <el-popover
           v-model:visible="themeOpen"
@@ -411,16 +403,17 @@ watch(mobile, (enabled) => {
           :width="168"
           :show-arrow="false"
           popper-class="dash-theme-popper"
+          :popper-style="overlayStyle"
         >
           <template #reference>
-            <button
-              type="button"
+            <VisActionButton
+              size="regular" variant="outline" label="临时换肤"
               class="filter-dock__btn"
               :class="{ 'is-active': themeOpen }"
               title="临时换肤"
             >
               <span class="i-mingcute-palette-line" />
-            </button>
+            </VisActionButton>
           </template>
           <div class="dash-theme-popper__grid">
             <button
@@ -451,13 +444,13 @@ watch(mobile, (enabled) => {
             :hide-timeout="100"
             @command="onAddCommand"
           >
-            <button
-              type="button"
+            <VisActionButton
+              size="regular" variant="outline"
               class="filter-dock__btn filter-dock__add"
-              aria-label="添加内容"
+              label="添加内容"
             >
               <span :class="adding ? 'i-svg-spinners-ring-resize' : 'i-mingcute-add-square-line'" />
-            </button>
+            </VisActionButton>
             <template #dropdown>
               <el-dropdown-menu class="dash-add-menu">
                 <el-dropdown-item command="card" :disabled="adding">
@@ -480,26 +473,26 @@ watch(mobile, (enabled) => {
             placement="bottom"
             :show-after="200"
           >
-            <button
-              type="button"
+            <VisActionButton
+              size="regular" variant="outline" label="配置看板"
               class="filter-dock__btn"
               @click="emit('settings')"
             >
               <span class="i-mingcute-settings-3-line" />
-            </button>
+            </VisActionButton>
           </el-tooltip>
           <el-tooltip
             content="重载看板"
             placement="bottom"
             :show-after="200"
           >
-            <button
-              type="button"
+            <VisActionButton
+              size="regular" variant="outline" label="重载看板"
               class="filter-dock__btn"
               @click="emit('reloadCards')"
             >
               <span class="i-mingcute-refresh-anticlockwise-1-line" />
-            </button>
+            </VisActionButton>
           </el-tooltip>
           <el-button
             class="filter-dock__save"
@@ -527,6 +520,7 @@ watch(mobile, (enabled) => {
         :persistent="true"
         :show-arrow="false"
         popper-class="dash-filter-chip-popper"
+        :popper-style="overlayStyle"
       >
         <template #reference>
           <button
@@ -571,6 +565,7 @@ watch(mobile, (enabled) => {
 
 <style scoped lang="scss">
 @use '../dashPage.scss' as page;
+@use '@/theme/presentation.scss' as ui;
 
 .filter-dock {
   display: grid;
@@ -579,7 +574,7 @@ watch(mobile, (enabled) => {
     'heading actions'
     'tags tags';
   column-gap: 16px;
-  row-gap: 8px;
+  row-gap: var(--vis-space-3);
   align-items: center;
   pointer-events: none;
 }
@@ -649,54 +644,6 @@ watch(mobile, (enabled) => {
   justify-self: end;
   gap: 8px;
   pointer-events: auto;
-}
-
-.filter-dock__mobile-btn {
-  display: inline-flex;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  box-sizing: border-box;
-  width: 44px;
-  height: 44px;
-  padding: 0;
-  border: 1px solid transparent;
-  border-radius: 12px;
-  background: color-mix(
-    in srgb,
-    var(--dash-title, var(--na-text-strong)) 5%,
-    var(--dash-card-bg, var(--na-surface-bg))
-  );
-  color: var(--dash-content-color, var(--el-text-color-regular));
-  cursor: pointer;
-  outline: none;
-  @include page.frost(btn);
-
-  &:active,
-  &.is-active {
-    border-color: color-mix(in srgb, var(--dash-accent, var(--na-color-primary)) 38%, transparent);
-    background: color-mix(
-      in srgb,
-      var(--dash-accent, var(--na-color-primary)) 10%,
-      var(--dash-card-bg, var(--na-surface-bg))
-    );
-    color: var(--dash-accent, var(--el-color-primary));
-  }
-
-  &:focus-visible {
-    outline: 2px solid color-mix(in srgb, var(--dash-accent, var(--na-color-primary)) 62%, transparent);
-    outline-offset: 2px;
-  }
-
-  &:disabled {
-    cursor: not-allowed;
-    opacity: 0.45;
-  }
-
-  > span {
-    width: 19px;
-    height: 19px;
-  }
 }
 
 .filter-dock__mobile-filter {
@@ -804,15 +751,6 @@ watch(mobile, (enabled) => {
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .filter-dock__mobile-btn:hover:not(:disabled) {
-    border-color: color-mix(in srgb, var(--dash-border, var(--el-border-color)) 62%, transparent);
-    background: color-mix(
-      in srgb,
-      var(--dash-title, var(--na-text-strong)) 7%,
-      var(--dash-card-bg, var(--na-surface-bg))
-    );
-  }
-
   .filter-dock__mobile-filter:hover {
     border-color: color-mix(
       in srgb,
@@ -830,11 +768,19 @@ watch(mobile, (enabled) => {
 .filter-dock__heading {
   grid-area: heading;
   display: flex;
-  align-items: center;
-  gap: 10px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--vis-space-1);
   min-width: 0;
-  min-height: 32px;
   pointer-events: auto;
+}
+
+.filter-dock__title-row {
+  display: flex;
+  align-items: center;
+  gap: var(--vis-space-2);
+  max-width: 100%;
+  min-width: 0;
 }
 
 .filter-dock__title {
@@ -843,17 +789,17 @@ watch(mobile, (enabled) => {
   text-overflow: ellipsis;
   white-space: nowrap;
   max-width: 16em;
-  font-size: 16px;
-  font-weight: 600;
-  letter-spacing: 0.01em;
-  line-height: 32px;
+  font-size: var(--vis-page-title-size);
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  line-height: var(--vis-page-title-leading);
   color: var(--dash-title, var(--el-text-color-primary));
 }
 
 .filter-dock__dirty {
   flex-shrink: 0;
   color: var(--el-color-warning);
-  font-size: 12px;
+  font-size: var(--vis-caption-size);
 }
 
 .filter-dock__loading {
@@ -863,21 +809,14 @@ watch(mobile, (enabled) => {
   color: var(--dash-accent, var(--el-color-primary));
 }
 
-.filter-dock__sep {
-  flex-shrink: 0;
-  width: 1px;
-  height: 12px;
-  background: color-mix(in srgb, var(--dash-title, var(--na-text-strong)) 16%, transparent);
-}
-
 .filter-dock__desc {
-  flex: 1 1 8em;
+  max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   min-width: 0;
-  font-size: 13px;
-  line-height: 32px;
+  font-size: var(--vis-body-size);
+  line-height: 20px;
   color: var(--dash-content-muted, var(--el-text-color-secondary));
 }
 
@@ -919,71 +858,14 @@ watch(mobile, (enabled) => {
 }
 
 .filter-dock__save {
+  height: var(--vis-control-size);
   margin-left: 2px;
+  border-radius: var(--vis-radius-control);
+  font-size: var(--vis-body-size);
 }
 
 .filter-dock__add {
   gap: 2px;
-}
-
-.filter-dock__btn {
-  position: relative;
-  display: inline-flex;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  box-sizing: border-box;
-  width: 32px;
-  height: 32px;
-  padding: 0;
-  overflow: visible;
-  border: 1px solid color-mix(in srgb, var(--dash-border, var(--el-border-color)) 78%, transparent);
-  border-radius: 8px;
-  background: var(--dash-btn-bg, var(--el-bg-color));
-  color: var(--dash-content-color, var(--el-text-color-regular));
-  @include page.frost(btn);
-  cursor: pointer;
-  outline: none;
-  pointer-events: auto;
-
-  .i-mingcute-palette-line,
-  .i-mingcute-refresh-2-line,
-  .i-mingcute-refresh-anticlockwise-1-line,
-  .i-mingcute-eye-2-line,
-  .i-mingcute-camera-2-line,
-  .i-mingcute-add-square-line,
-  .i-mingcute-new-folder-line,
-  .i-mingcute-settings-3-line,
-  .i-svg-spinners-ring-resize {
-    width: 16px;
-    height: 16px;
-  }
-
-  .filter-dock__design & {
-    background: color-mix(
-      in srgb,
-      var(--dash-accent, var(--na-color-primary)) 11%,
-      var(--dash-card-bg, var(--na-surface-bg))
-    );
-    border-color: color-mix(in srgb, var(--dash-accent, var(--na-color-primary)) 26%, transparent);
-    color: var(--dash-accent, var(--na-color-primary));
-  }
-
-  &:hover,
-  &.is-active {
-    border-color: var(--dash-accent, var(--na-color-primary));
-    color: var(--dash-accent, var(--na-color-primary));
-  }
-
-  &:disabled {
-    cursor: not-allowed;
-    opacity: 0.45;
-
-    &:hover {
-      border-color: var(--dash-border, var(--el-border-color));
-      color: var(--dash-content-color, var(--el-text-color-regular));
-    }
-  }
 }
 
 :global(.dash-add-menu .el-dropdown-menu__item) {
@@ -1009,47 +891,28 @@ watch(mobile, (enabled) => {
 .filter-chip {
   display: inline-flex;
   align-items: stretch;
+  box-sizing: border-box;
   max-width: 100%;
-  height: 28px;
+  height: var(--vis-control-size);
   padding: 0;
-  overflow: hidden;
-  border: none;
-  border-radius: 999px;
-  background: color-mix(
-    in srgb,
-    var(--dash-title, var(--na-text-strong)) 6.5%,
-    var(--dash-card-bg, var(--na-surface-bg))
-  );
-  box-shadow: var(--dash-btn-shadow, none);
+  border: 1px solid var(--na-border-color-light);
+  border-radius: var(--vis-radius-control);
+  background: var(--na-surface-bg);
   cursor: pointer;
-  outline: none;
-  transition: background-color 0.15s ease;
-  @include page.frost;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+  @include ui.focus-ring;
 
   &:hover,
   &.is-open {
-    background: color-mix(
-      in srgb,
-      var(--dash-title, var(--na-text-strong)) 9.5%,
-      var(--dash-card-bg, var(--na-surface-bg))
-    );
+    background: var(--na-fill-color-light);
+    border-color: var(--na-border-color);
   }
 
   &.is-on {
-    background: color-mix(
-      in srgb,
-      var(--dash-accent, var(--na-color-primary)) 22%,
-      var(--dash-card-bg, var(--na-surface-bg))
-    );
-  }
-
-  &.is-on:hover,
-  &.is-on.is-open {
-    background: color-mix(
-      in srgb,
-      var(--dash-accent, var(--na-color-primary)) 28%,
-      var(--dash-card-bg, var(--na-surface-bg))
-    );
+    border-color: var(--na-color-primary-border);
+    background: var(--na-color-primary-soft);
   }
 }
 
@@ -1064,7 +927,7 @@ watch(mobile, (enabled) => {
   align-items: center;
   padding: 0 2px 0 12px;
   color: var(--dash-content-muted, var(--el-text-color-secondary));
-  font-size: 12px;
+  font-size: var(--vis-caption-size);
 }
 
 .filter-chip__v {
@@ -1239,7 +1102,7 @@ watch(mobile, (enabled) => {
   display: block;
   padding: 0 2px 7px;
   color: var(--dash-mobile-muted, var(--el-text-color-secondary));
-  font-size: 12px;
+  font-size: var(--vis-caption-size);
 }
 
 .dash-mobile-tools__theme-grid {

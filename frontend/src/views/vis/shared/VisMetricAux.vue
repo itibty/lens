@@ -36,6 +36,8 @@ defineProps<{
 </template>
 
 <style scoped lang="scss">
+@use '@/theme/presentation.scss' as ui;
+
 .vis-metric-aux {
   display: flex;
   flex-wrap: wrap;
@@ -54,11 +56,8 @@ defineProps<{
     gap: 6px;
     min-width: 0;
     max-width: 100%;
-    box-sizing: border-box;
-    padding: 2px 6px;
-    border-radius: 5px;
-    background: var(--na-fill-color-light);
-    color: var(--vis-content-color, var(--el-text-color-regular));
+    @include ui.badge;
+    color: var(--na-text-regular);
 
     &.is-up {
       color: var(--el-color-success);
@@ -69,7 +68,7 @@ defineProps<{
     }
 
     &.is-flat {
-      color: var(--vis-muted-color, var(--el-text-color-secondary));
+      color: var(--na-text-muted);
     }
   }
 
@@ -81,7 +80,7 @@ defineProps<{
     white-space: nowrap;
     font-size: var(--vis-number-aux-label, 12px);
     line-height: 1.5;
-    color: var(--vis-muted-color, var(--el-text-color-secondary));
+    color: var(--na-text-muted);
   }
 
   &__value {

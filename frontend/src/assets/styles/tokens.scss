@@ -1,6 +1,8 @@
 @use './variables.scss' as *;
+@use '@/theme/presentation.scss' as presentation;
 
 :root {
+  @include presentation.tokens;
   // -- typography --
   // 系统 UI 优先：Apple 用 SF + PingFang，Windows 用 Segoe + 雅黑 UI。
   // 不要把 Helvetica Neue 放最前，否则 macOS 西文会停在旧无衬线，和中文不成套。

@@ -1,0 +1,78 @@
+// 看板与卡片预览共用的展示尺度；颜色继续来自 Lens 语义主题。
+// 可在看板容器覆盖这些变量，组件不再各自定义一套尺寸。
+@mixin tokens {
+  --vis-space-1: 4px;
+  --vis-space-2: 8px;
+  --vis-space-3: 12px;
+  --vis-space-4: 16px;
+  --vis-space-5: 20px;
+  --vis-card-inset: 16px;
+  --vis-card-header-y: 12px;
+  --vis-title-size: 14px;
+  --vis-title-leading: 22px;
+  --vis-page-title-size: 22px;
+  --vis-page-title-leading: 30px;
+  --vis-body-size: 13px;
+  --vis-caption-size: 12px;
+  --vis-control-size: 32px;
+  --vis-control-compact: 28px;
+  --vis-control-touch: 44px;
+  --vis-radius-sm: 6px;
+  --vis-radius-control: 8px;
+  --vis-icon-size: 16px;
+}
+
+@mixin title {
+  font-size: var(--vis-title-size);
+  font-weight: 600;
+  line-height: var(--vis-title-leading);
+  letter-spacing: 0;
+}
+
+@mixin focus-ring {
+  &:focus-visible {
+    outline: 2px solid var(--na-color-primary);
+    outline-offset: 2px;
+  }
+}
+
+@mixin badge {
+  box-sizing: border-box;
+  padding: 2px var(--vis-space-2);
+  border: 1px solid var(--na-border-color-lighter);
+  border-radius: var(--vis-radius-sm);
+  background: var(--na-fill-color-lighter);
+}
+
+@mixin segmented {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border-radius: var(--vis-radius-control);
+  background: var(--na-fill-color-light);
+}
+
+@mixin segment {
+  height: var(--vis-control-compact);
+  padding: 0 var(--vis-space-3);
+  border: none;
+  border-radius: var(--vis-radius-sm);
+  background: transparent;
+  color: var(--na-text-muted);
+  font-size: var(--vis-caption-size);
+  font-weight: 500;
+  line-height: var(--vis-control-compact);
+  cursor: pointer;
+  @include focus-ring;
+
+  &:hover:not(.is-active) {
+    color: var(--na-text-strong);
+  }
+
+  &.is-active {
+    background: var(--na-surface-bg);
+    color: var(--na-text-strong);
+    box-shadow: var(--na-shadow-surface);
+  }
+}

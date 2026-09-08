@@ -31,6 +31,7 @@ import {
 } from '@/views/vis/shared/cardTheme'
 import { allowsFullscreen, resolveVisStage } from '@/views/vis/shared/types'
 import VChartHost from '@/views/vis/shared/VChartHost.vue'
+import VisActionButton from '@/views/vis/shared/VisActionButton.vue'
 import VisDataTable from '@/views/vis/shared/VisDataTable.vue'
 import VisKpiCard from '@/views/vis/shared/VisKpiCard.vue'
 import VisNumberKpi from '@/views/vis/shared/VisNumberKpi.vue'
@@ -421,6 +422,13 @@ watch(allowDetail, (ok) => {
           v-if="!hideTitle && hasHeaderText"
           class="vis-card-view__heading"
         >
+          <div
+            v-if="cardTitle"
+            class="vis-card-view__title"
+            :title="cardTitle"
+          >
+            {{ cardTitle }}
+          </div>
           <el-popover
             v-if="cardRemark"
             :trigger="remarkTrigger"
@@ -431,24 +439,17 @@ watch(allowDetail, (ok) => {
             :popper-style="overlayThemeStyle"
           >
             <template #reference>
-              <button
-                type="button"
+              <VisActionButton
                 class="vis-card-view__remark-btn"
-                aria-label="查看卡片备注"
+                label="查看卡片备注"
                 @click.stop
                 @pointerdown.stop
               >
                 <span class="vis-card-view__remark-icon i-mingcute-information-line" />
-              </button>
+              </VisActionButton>
             </template>
             {{ cardRemark }}
           </el-popover>
-          <div
-            v-if="cardTitle"
-            class="vis-card-view__title"
-          >
-            {{ cardTitle }}
-          </div>
         </div>
         <div
           v-if="hasMenu"
@@ -458,11 +459,10 @@ watch(allowDetail, (ok) => {
           @mousedown.stop
           @click.stop
         >
-          <button
+          <VisActionButton
             v-if="showFullscreen"
-            type="button"
             class="vis-card-view__full-btn"
-            :aria-label="fullscreen ? '退出全屏' : '全屏查看'"
+            :label="fullscreen ? '退出全屏' : '全屏查看'"
             :title="fullscreen ? '退出全屏' : '全屏查看'"
             @click="emit('toggleFullscreen')"
           >
@@ -470,7 +470,7 @@ watch(allowDetail, (ok) => {
               class="vis-card-view__full-icon"
               :class="fullscreen ? 'i-mingcute-fullscreen-exit-line' : 'i-mingcute-fullscreen-line'"
             />
-          </button>
+          </VisActionButton>
           <el-dropdown
             v-if="hasMoreMenu"
             ref="moreRef"
@@ -481,12 +481,12 @@ watch(allowDetail, (ok) => {
             @command="onMenuCommand"
             @visible-change="menuOpen = $event"
           >
-            <button type="button" class="vis-card-view__more-btn" aria-label="更多卡片操作">
+            <VisActionButton class="vis-card-view__more-btn" label="更多卡片操作">
               <span
                 :class="exporting ? 'i-svg-spinners-ring-resize' : 'i-mingcute-more-2-line'"
                 class="vis-card-view__more-icon"
               />
-            </button>
+            </VisActionButton>
             <template #dropdown>
               <el-dropdown-menu>
                 <el-dropdown-item command="refresh">
@@ -696,6 +696,8 @@ watch(allowDetail, (ok) => {
 </template>
 
 <style scoped lang="scss">
+@use '@/theme/presentation.scss' as ui;
+
 .vis-card-view {
   flex: 1;
   min-height: 0;
@@ -723,12 +725,12 @@ watch(allowDetail, (ok) => {
     width: 100%;
     display: flex;
     flex-direction: column;
-    border: 1px solid color-mix(in srgb, var(--el-border-color) 72%, transparent);
+    border: 1px solid var(--na-border-color-light);
     border-radius: var(--dash-card-radius, 12px);
     background: var(--el-bg-color);
     box-sizing: border-box;
     overflow: hidden;
-    box-shadow: 0 1px 2px rgb(15 23 42 / 5%);
+    box-shadow: var(--na-shadow-surface);
 
     &:is(.is-number, .is-progress, .is-trend) {
       flex: 0 0 auto;
@@ -762,40 +764,6 @@ watch(allowDetail, (ok) => {
     }
   }
 
-  &.is-embedded &__header.is-text:not(.is-card-color):not(.is-card-bg) {
-    background: var(--dash-card-header-bg, transparent);
-    box-shadow: inset 0 -1px var(--dash-card-header-border, transparent);
-    padding-bottom: 10px;
-    color: var(--dash-card-header-color, var(--el-text-color-primary));
-
-    .vis-card-view__title {
-      color: var(--dash-card-header-color, var(--el-text-color-primary));
-    }
-
-    .vis-card-view__remark-icon {
-      color: var(--dash-card-header-color, var(--el-text-color-placeholder));
-      opacity: 0.72;
-    }
-  }
-
-  &.is-embedded &__full-icon {
-    color: var(--dash-content-muted, var(--el-text-color-placeholder));
-
-    &:hover {
-      color: var(--dash-content-color, var(--el-text-color-regular));
-    }
-  }
-
-  &.is-embedded &__header:not(.is-card-color) &__more-btn {
-    color: var(--dash-content-muted, var(--el-text-color-secondary));
-
-    &:hover,
-    &:focus-visible {
-      background: color-mix(in srgb, var(--dash-title, #1f2329) 10%, transparent);
-      color: var(--dash-content-color, var(--el-text-color-primary));
-    }
-  }
-
   &__header {
     flex-shrink: 0;
     display: flex;
@@ -804,13 +772,13 @@ watch(allowDetail, (ok) => {
     gap: 8px;
     width: 100%;
     max-width: 100%;
-    min-height: 36px;
-    padding: 10px 12px 0;
+    min-height: calc(var(--vis-control-compact) + var(--vis-card-header-y) + var(--vis-space-2));
+    padding: var(--vis-card-header-y) var(--vis-card-inset) var(--vis-space-2);
     text-align: left;
     box-sizing: border-box;
 
     &.is-text {
-      align-items: flex-start;
+      align-items: center;
       justify-content: space-between;
     }
 
@@ -822,10 +790,6 @@ watch(allowDetail, (ok) => {
       width: auto;
       min-height: 0;
       padding: 6px 8px;
-    }
-
-    :is(.is-number, .is-progress, .is-trend) & {
-      padding: 12px 14px 8px;
     }
   }
 
@@ -852,106 +816,30 @@ watch(allowDetail, (ok) => {
     }
   }
 
-  &__full-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    box-sizing: border-box;
-    width: 24px;
-    height: 24px;
-    margin-right: 2px;
-    padding: 0;
-    border: none;
-    border-radius: 6px;
-    background: transparent;
-    cursor: pointer;
-    outline: none;
-
-    &:focus-visible {
-      background: var(--el-fill-color);
-    }
-
+  &__full-btn,
+  &__more-btn,
+  &__remark-btn {
     .is-card-color & {
       color: inherit;
 
-      &:focus-visible {
+      &:hover {
         background: rgb(255 255 255 / 14%);
       }
     }
   }
 
-  &__full-icon {
-    width: 16px;
-    height: 16px;
-    color: var(--el-text-color-placeholder);
-
-    &:hover {
-      color: var(--el-text-color-regular);
-    }
-
-    .is-card-color & {
-      color: inherit;
-      opacity: 0.45;
-
-      &:hover {
-        opacity: 0.8;
-      }
-    }
-  }
-
   &__body:hover &__actions,
+  &__body:focus-within &__actions,
   &__actions.is-busy,
   &__actions.is-open {
     opacity: 1;
     pointer-events: auto;
   }
 
-  &__more-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    box-sizing: border-box;
-    width: 24px;
-    height: 24px;
-    padding: 0;
-    border: none;
-    border-radius: 6px;
-    background: transparent;
-    color: var(--vis-content-color, var(--el-text-color-secondary));
-    cursor: pointer;
-    outline: none;
-
-    &:hover,
-    &:focus-visible {
-      background: var(--el-fill-color);
-      color: var(--el-text-color-primary);
-    }
-
-    .is-card-color & {
-      color: inherit;
-      background: transparent;
-      opacity: 0.72;
-
-      &:hover,
-      &:focus-visible {
-        opacity: 1;
-        background: rgb(255 255 255 / 14%);
-      }
-    }
-  }
-
-  &__more-icon {
-    width: 16px;
-    height: 16px;
-  }
-
   &__title {
-    flex: 1;
+    @include ui.title;
+    flex: 0 1 auto;
     min-width: 0;
-    font-size: 13px;
-    font-weight: 600;
-    letter-spacing: 0.01em;
-    line-height: 1.4;
     color: var(--el-text-color-primary);
     overflow: hidden;
     text-overflow: ellipsis;
@@ -964,45 +852,7 @@ watch(allowDetail, (ok) => {
 
   &__remark-btn {
     flex-shrink: 0;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 14px;
-    height: 14px;
-    padding: 0;
-    border: none;
-    border-radius: 6px;
-    background: transparent;
-    color: inherit;
     cursor: help;
-    outline: none;
-  }
-
-  &__remark-icon {
-    width: 14px;
-    height: 14px;
-    color: var(--el-text-color-placeholder);
-
-    &:hover {
-      color: var(--el-text-color-regular);
-    }
-
-    .is-card-color & {
-      color: inherit;
-      opacity: 0.7;
-
-      &:hover {
-        opacity: 1;
-      }
-    }
-  }
-
-  &__remark-btn:focus-visible &__remark-icon {
-    color: var(--el-text-color-regular);
-
-    .is-card-color & {
-      opacity: 1;
-    }
   }
 
   &__content {
@@ -1018,21 +868,21 @@ watch(allowDetail, (ok) => {
       flex: 1 1 auto;
       align-items: stretch;
       justify-content: center;
-      padding: 6px 14px 12px;
+      padding: var(--vis-space-2) var(--vis-card-inset) var(--vis-card-inset);
     }
 
     :is(.is-number, .is-progress, .is-trend).is-headless & {
-      padding: 12px 14px;
+      padding: var(--vis-card-inset);
     }
 
     .is-embedded :is(.is-number, .is-progress, .is-trend) & {
       flex: 1 1 0;
       min-height: 0;
-      padding: 8px 12px 10px;
+      padding: var(--vis-space-2) var(--vis-card-inset) var(--vis-card-inset);
     }
 
     .is-embedded :is(.is-number, .is-progress, .is-trend).is-headless & {
-      padding: 10px 12px;
+      padding: var(--vis-card-inset);
     }
 
     .is-rank &,
@@ -1181,39 +1031,16 @@ watch(allowDetail, (ok) => {
   .vis-card-view {
     &__header {
       min-height: 44px;
-      padding: 4px 8px 0;
+      padding: var(--vis-space-1) var(--vis-card-inset) 0;
 
       :is(.is-number, .is-progress, .is-trend) & {
-        padding: 4px 8px;
+        padding: var(--vis-space-1) var(--vis-card-inset);
       }
     }
 
     &__actions {
       opacity: 1;
       pointer-events: auto;
-    }
-
-    &__full-btn,
-    &__more-btn,
-    &__remark-btn {
-      width: 44px;
-      height: 44px;
-      border-radius: 8px;
-    }
-
-    &__full-btn {
-      margin-right: 0;
-    }
-
-    &__full-icon,
-    &__more-icon {
-      width: 18px;
-      height: 18px;
-    }
-
-    &__remark-icon {
-      width: 16px;
-      height: 16px;
     }
   }
 }

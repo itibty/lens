@@ -316,7 +316,7 @@ function onMenuAction(key: string) {
   min-height: 0;
   box-sizing: border-box;
   background: var(--dash-card-bg, var(--el-bg-color));
-  border: none;
+  border: 1px solid var(--dash-border, var(--na-border-color-light));
   border-radius: var(--dash-card-radius, 12px);
   @include page.frost(card);
 
