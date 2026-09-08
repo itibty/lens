@@ -889,8 +889,8 @@ onBeforeRouteUpdate((to) => {
 
 .designer {
   /* 设计器自定义色（非字段条）；字段条走 EP primary/success/warning */
-  --vis-shelf-well: #eef2f6;
-  --vis-muted-bar: #e6eaf0;
+  --vis-shelf-well: var(--na-fill-color-light);
+  --vis-muted-bar: var(--na-border-color-light);
   --vis-select-bg: var(--el-color-primary-light-9);
   --vis-select-border: var(--el-color-primary-light-5);
   --vis-select-fg: var(--el-color-primary);

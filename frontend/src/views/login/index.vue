@@ -199,9 +199,9 @@ onMounted(initLoginForm)
 
 <style lang="scss" scoped>
 .login-page {
-  --login-ink: #1d211e;
-  --login-muted: #747a74;
-  --login-accent: #496d9b;
+  --login-ink: var(--na-text-strong);
+  --login-muted: var(--na-text-muted);
+  --login-accent: var(--na-color-primary);
 
   display: grid;
   grid-template-columns: minmax(0, 1.5fr) minmax(420px, 0.82fr);
@@ -209,7 +209,7 @@ onMounted(initLoginForm)
   min-width: 320px;
   min-height: max(680px, 100vh);
   overflow: hidden;
-  background: #f1eee6;
+  background: var(--na-content-bg);
   color: var(--login-ink);
 }
 
@@ -223,8 +223,8 @@ onMounted(initLoginForm)
   padding: clamp(112px, 14vh, 154px) clamp(48px, 6vw, 92px) clamp(58px, 8vh, 86px);
   background:
     radial-gradient(circle at 76% 28%, color-mix(in srgb, var(--login-accent) 9%, transparent) 0%, transparent 27%),
-    radial-gradient(circle at 84% 76%, rgb(104 91 141 / 6%) 0%, transparent 25%),
-    linear-gradient(135deg, #f3f1eb 0%, #e9ece8 100%);
+    radial-gradient(circle at 84% 76%, color-mix(in srgb, var(--na-color-primary) 6%, transparent) 0%, transparent 25%),
+    linear-gradient(135deg, var(--na-content-bg) 0%, var(--na-fill-color-light) 100%);
 }
 
 .brand-panel::before {
@@ -232,8 +232,8 @@ onMounted(initLoginForm)
   z-index: -1;
   inset: 0;
   background:
-    linear-gradient(rgb(29 37 32 / 5%) 1px, transparent 1px),
-    linear-gradient(90deg, rgb(29 37 32 / 5%) 1px, transparent 1px);
+    linear-gradient(color-mix(in srgb, var(--na-text-strong) 5%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--na-text-strong) 5%, transparent) 1px, transparent 1px);
   background-size: 72px 72px;
   content: '';
   opacity: 0.62;
@@ -248,11 +248,11 @@ onMounted(initLoginForm)
   z-index: -1;
   width: 520px;
   height: 520px;
-  border: 1px solid rgb(32 42 36 / 8%);
+  border: 1px solid color-mix(in srgb, var(--na-text-strong) 8%, transparent);
   border-radius: 50%;
   box-shadow:
-    0 0 0 78px rgb(32 42 36 / 2.4%),
-    0 0 0 156px rgb(32 42 36 / 1.8%);
+    0 0 0 78px color-mix(in srgb, var(--na-text-strong) 2.4%, transparent),
+    0 0 0 156px color-mix(in srgb, var(--na-text-strong) 1.8%, transparent);
   content: '';
   pointer-events: none;
 }
@@ -283,7 +283,7 @@ onMounted(initLoginForm)
   z-index: -1;
   width: min(41vw, 520px);
   aspect-ratio: 1 / 1.08;
-  border: 1px solid rgb(32 38 34 / 13%);
+  border: 1px solid color-mix(in srgb, var(--na-text-strong) 13%, transparent);
   border-radius: 50%;
   transform: translate(-50%, -50%) rotate(-17deg);
 }
@@ -291,7 +291,7 @@ onMounted(initLoginForm)
 .brand-orbit::before,
 .brand-orbit::after {
   position: absolute;
-  border: 1px solid rgb(32 38 34 / 10%);
+  border: 1px solid color-mix(in srgb, var(--na-text-strong) 10%, transparent);
   border-radius: 50%;
   content: '';
 }
@@ -312,7 +312,7 @@ onMounted(initLoginForm)
   right: 8.5%;
   width: 10px;
   height: 10px;
-  border: 2px solid #ebede8;
+  border: 2px solid var(--na-surface-bg);
   border-radius: 50%;
   background: var(--login-accent);
   box-shadow: 0 0 0 7px color-mix(in srgb, var(--login-accent) 11%, transparent);
@@ -358,7 +358,7 @@ onMounted(initLoginForm)
   align-items: center;
   justify-content: center;
   padding: 68px clamp(40px, 5vw, 76px);
-  background: #f8f6f0;
+  background: var(--na-surface-bg);
 }
 
 .auth-panel::before {
@@ -367,7 +367,7 @@ onMounted(initLoginForm)
   bottom: 0;
   left: 0;
   width: 1px;
-  background: rgb(28 31 29 / 8%);
+  background: color-mix(in srgb, var(--na-text-strong) 8%, transparent);
   content: '';
 }
 
@@ -377,7 +377,7 @@ onMounted(initLoginForm)
 
 .auth-title {
   margin: 0 0 12px;
-  color: #1b1e1c;
+  color: var(--na-text-strong);
   font-size: 32px;
   font-weight: 500;
   letter-spacing: -0.04em;
@@ -386,7 +386,7 @@ onMounted(initLoginForm)
 
 .auth-caption {
   margin: 0 0 40px;
-  color: #858981;
+  color: var(--na-text-muted);
   font-size: 14px;
   line-height: 1.6;
 }
@@ -399,7 +399,7 @@ onMounted(initLoginForm)
   height: auto;
   margin-bottom: 8px;
   padding: 0;
-  color: #555b55;
+  color: var(--na-text-regular);
   font-size: 14px;
   font-weight: 500;
   line-height: 1.5;
@@ -410,12 +410,12 @@ onMounted(initLoginForm)
   padding: 0 34px 0 0;
   border-radius: 0;
   background: transparent;
-  box-shadow: 0 1px 0 #c9c9c1;
+  box-shadow: 0 1px 0 var(--na-border-color);
   transition: box-shadow 160ms ease;
 }
 
 .field-item :deep(.el-input__wrapper:hover) {
-  box-shadow: 0 1px 0 #9da19a;
+  box-shadow: 0 1px 0 var(--na-text-disabled);
 }
 
 .field-item :deep(.el-input__wrapper.is-focus) {
@@ -424,16 +424,16 @@ onMounted(initLoginForm)
 
 .field-item :deep(.el-input__inner) {
   height: 50px;
-  color: #1d201e;
+  color: var(--na-text-strong);
   font-size: 15px;
 }
 
 .field-item :deep(.el-input__inner::placeholder) {
-  color: #aaa9a1;
+  color: var(--na-text-muted);
 }
 
 .field-item :deep(.el-input__password) {
-  color: #858b84;
+  color: var(--na-text-muted);
   font-size: 18px;
 }
 
@@ -450,12 +450,12 @@ onMounted(initLoginForm)
 }
 
 .form-meta :deep(.el-checkbox) {
-  --el-checkbox-checked-bg-color: #252927;
-  --el-checkbox-checked-input-border-color: #252927;
-  --el-checkbox-input-border-color-hover: #5f665f;
+  --el-checkbox-checked-bg-color: var(--na-color-primary);
+  --el-checkbox-checked-input-border-color: var(--na-color-primary);
+  --el-checkbox-input-border-color-hover: var(--na-color-primary-hover);
 
   height: auto;
-  color: #70756f;
+  color: var(--na-text-regular);
 }
 
 .form-meta :deep(.el-checkbox__label) {
@@ -468,7 +468,7 @@ onMounted(initLoginForm)
   padding: 4px 0;
   border: 0;
   background: transparent;
-  color: #626862;
+  color: var(--na-text-regular);
   font: inherit;
   font-size: 13px;
   cursor: pointer;
@@ -489,13 +489,13 @@ onMounted(initLoginForm)
   width: 100%;
   height: 56px;
   padding: 0 21px;
-  border: 1px solid #202320;
+  border: 1px solid var(--na-color-primary);
   border-radius: 4px;
-  background: #202320;
-  color: #fff;
+  background: var(--na-color-primary);
+  color: var(--na-on-primary);
   font-size: 15px;
   font-weight: 500;
-  box-shadow: 0 12px 26px rgb(25 28 25 / 16%);
+  box-shadow: var(--na-shadow-surface);
   transition:
     background 150ms ease,
     border-color 150ms ease,
@@ -505,10 +505,10 @@ onMounted(initLoginForm)
 
 .login-button:hover,
 .login-button:focus {
-  border-color: #090b09;
-  background: #090b09;
-  color: #fff;
-  box-shadow: 0 16px 34px rgb(25 28 25 / 22%);
+  border-color: var(--na-color-primary-hover);
+  background: var(--na-color-primary-hover);
+  color: var(--na-on-primary);
+  box-shadow: var(--na-shadow-floating);
   transform: translateY(-1px);
 }
 
@@ -528,7 +528,7 @@ onMounted(initLoginForm)
   position: absolute;
   right: 34px;
   bottom: 28px;
-  color: rgb(17 24 39 / 28%);
+  color: var(--na-text-muted);
   font-size: 11px;
   font-weight: 500;
   letter-spacing: 0.16em;

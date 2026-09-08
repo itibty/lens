@@ -1,4 +1,5 @@
 import type { VisChartThemeId, VisVisualConfig } from './types'
+import { DATA_SERIES, LIGHT_THEME, mixColor, NEUTRAL } from '@/theme/tokens'
 import { isHeatmapChart } from './types'
 
 export const DEFAULT_CHART_THEME: VisChartThemeId = 'DEFAULT'
@@ -20,7 +21,7 @@ export const HEATMAP_COLOR_PRESETS: ChartPalettePreset[] = [
   {
     id: 'DEFAULT',
     label: '默认',
-    palette: ['#D9E7FF', '#0052D9'],
+    palette: [mixColor(LIGHT_THEME.primary.base, NEUTRAL.white, 0.14), LIGHT_THEME.primary.base],
   },
   {
     id: 'GRADIENT',
@@ -102,7 +103,7 @@ export const CHART_SERIES_PALETTES: ChartPalettePreset[] = [
   {
     id: 'DEFAULT',
     label: '默认',
-    palette: ['#0052D9', '#319CC5', '#E98A18', '#36A36E', '#725BC2', '#C79B18', '#496A8F', '#9A7BC6'],
+    palette: [...DATA_SERIES],
   },
   {
     id: 'GRADIENT',

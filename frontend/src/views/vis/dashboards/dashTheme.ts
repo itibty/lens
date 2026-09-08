@@ -1,8 +1,10 @@
-import type { ComputedRef, InjectionKey } from 'vue'
+import type { LensTheme, ThemeMode } from '@/theme/tokens'
+import { themeCssVars } from '@/theme/cssVars'
+import { THEME_PRESETS } from '@/theme/tokens'
 
 /** 默认主题 / 默认圆角不写进 configJson；预览顶栏换肤只是会话临时覆盖。 */
 export type DashThemeId = 't1' | 't2' | 't3' | 't4' | 't5' | 't6'
-export type DashSurfaceMode = 'light' | 'dark'
+export type DashSurfaceMode = ThemeMode
 
 export interface DashThemeTokens {
   canvas: string
@@ -21,92 +23,39 @@ export interface DashThemePreset {
   id: DashThemeId
   name: string
   tokens: DashThemeTokens
+  theme: LensTheme
 }
 
 export const DEFAULT_DASH_THEME: DashThemeId = 't1'
 
+function dashboardPreset(id: DashThemeId, name: string, theme: LensTheme): DashThemePreset {
+  return {
+    id,
+    name,
+    theme,
+    tokens: {
+      canvas: theme.surface.page,
+      card: theme.surface.panel,
+      title: theme.text.strong,
+      accent: theme.primary.base,
+      border: theme.border.light,
+      btnBg: theme.surface.elevated,
+      radius: 12,
+      mode: theme.mode,
+      content: theme.text.regular,
+      muted: theme.text.muted,
+    },
+  }
+}
+
+// 保留持久化编号；配色由公共预设提供，业务层只做字段适配。
 export const DASH_THEME_PRESETS: DashThemePreset[] = [
-  {
-    id: 't1',
-    name: '默认',
-    tokens: {
-      canvas: '#f3f4f6',
-      card: '#ffffff',
-      title: '#1f2329',
-      accent: '#0052d9',
-      border: '#e5e7eb',
-      btnBg: '#ffffff',
-      radius: 12,
-    },
-  },
-  {
-    id: 't2',
-    name: '蓝',
-    tokens: {
-      canvas: '#c5dbf4',
-      card: '#f3f8fd',
-      title: '#143a6b',
-      accent: '#1a6fd6',
-      border: '#8fb0d4',
-      btnBg: '#f3f8fd',
-      radius: 16,
-    },
-  },
-  {
-    id: 't3',
-    name: '暖',
-    tokens: {
-      canvas: '#edd09a',
-      card: '#fff4e4',
-      title: '#5a2f10',
-      accent: '#d06214',
-      border: '#d0a66a',
-      btnBg: '#fff4e4',
-      radius: 18,
-    },
-  },
-  {
-    id: 't4',
-    name: '绿',
-    tokens: {
-      canvas: '#b7e0c4',
-      card: '#eef8f1',
-      title: '#14532d',
-      accent: '#17803d',
-      border: '#7dbe90',
-      btnBg: '#eef8f1',
-      radius: 16,
-    },
-  },
-  {
-    id: 't5',
-    name: '紫',
-    tokens: {
-      canvas: '#ddd4f0',
-      card: '#f6f3fb',
-      title: '#3b1d6e',
-      accent: '#7c3aed',
-      border: '#b8a4d8',
-      btnBg: '#f6f3fb',
-      radius: 16,
-    },
-  },
-  {
-    id: 't6',
-    name: 'Dark',
-    tokens: {
-      canvas: '#10151d',
-      card: '#1b222c',
-      title: '#f2f5f9',
-      accent: '#4d9fff',
-      border: '#34404d',
-      btnBg: '#222b36',
-      radius: 12,
-      mode: 'dark',
-      content: '#e9eef5',
-      muted: '#9da9b8',
-    },
-  },
+  dashboardPreset('t1', '默认', THEME_PRESETS.default),
+  dashboardPreset('t2', '蓝', THEME_PRESETS.blue),
+  dashboardPreset('t3', '暖', THEME_PRESETS.warm),
+  dashboardPreset('t4', '绿', THEME_PRESETS.green),
+  dashboardPreset('t5', '紫', THEME_PRESETS.purple),
+  dashboardPreset('t6', 'Dark', THEME_PRESETS.dark),
 ]
 
 const THEME_IDS = new Set<DashThemeId>(DASH_THEME_PRESETS.map(item => item.id))
@@ -162,43 +111,47 @@ export function resolveDashSurfaceMode(id?: string): DashSurfaceMode {
   return resolveDashTheme(id).tokens.mode ?? 'light'
 }
 
-export const DASH_SURFACE_MODE_KEY: InjectionKey<ComputedRef<DashSurfaceMode>> = Symbol('dash-surface-mode')
-
-const PAPER_SHADOW = '0 1px 2px rgb(15 23 42 / 5%), 0 6px 16px rgb(15 23 42 / 3%)'
-
-function surfaceVars(mode: DashSurfaceMode): Record<string, string> {
-  if (mode === 'dark') {
-    return {
-      '--dash-card-blur': 'none',
-      '--dash-card-shadow': '0 1px 2px rgb(0 0 0 / 22%), 0 6px 16px rgb(0 0 0 / 12%)',
-      '--dash-btn-shadow': 'none',
-      '--dash-chrome-shadow': '0 1px 0 color-mix(in srgb, var(--dash-border) 88%, transparent)',
-    }
-  }
-  return {
-    '--dash-card-blur': 'none',
-    '--dash-card-shadow': PAPER_SHADOW,
-    '--dash-btn-shadow': 'none',
-    '--dash-chrome-shadow': '0 1px 0 color-mix(in srgb, var(--dash-border, #e5e7eb) 85%, transparent)',
-  }
-}
-
 export function dashThemeVars(id?: string, radiusId?: string): Record<string, string> {
-  const { tokens } = resolveDashTheme(id)
-  const mode = tokens.mode ?? 'light'
+  const { tokens, theme } = resolveDashTheme(id)
   return {
+    ...themeCssVars(theme),
     '--dash-canvas-bg': tokens.canvas,
     '--dash-card-bg': tokens.card,
     '--dash-card-header-bg': 'transparent',
     '--dash-card-header-color': tokens.title,
     '--dash-card-radius': `${resolveDashCardRadiusPx(radiusId)}px`,
     '--dash-title': tokens.title,
-    '--dash-content-color': tokens.content ?? tokens.title,
-    '--dash-content-muted': tokens.muted ?? `color-mix(in srgb, ${tokens.title} 64%, transparent)`,
-    '--dash-surface-mode': mode,
+    '--dash-content-color': theme.text.strong,
+    '--dash-content-muted': theme.text.muted,
+    '--dash-surface-mode': theme.mode,
     '--dash-accent': tokens.accent,
     '--dash-border': tokens.border,
     '--dash-btn-bg': tokens.btnBg,
-    ...surfaceVars(mode),
+    '--dash-card-blur': 'none',
+    '--dash-card-shadow': theme.shadow.panel,
+    '--dash-btn-shadow': 'none',
+    '--dash-chrome-shadow': `0 1px 0 ${theme.border.light}`,
+  }
+}
+
+/** Teleport 弹层继承所属看板的主题，不修改应用根节点。 */
+export function dashOverlayVars(id?: string): Record<string, string> {
+  const { theme } = resolveDashTheme(id)
+  return {
+    ...themeCssVars(theme),
+    '--dash-mobile-surface': theme.surface.panel,
+    '--dash-mobile-elevated': theme.surface.elevated,
+    '--dash-mobile-title': theme.text.strong,
+    '--dash-mobile-content': theme.text.regular,
+    '--dash-mobile-muted': theme.text.muted,
+    '--dash-mobile-border': theme.border.light,
+    '--dash-mobile-accent': theme.primary.base,
+    '--dash-mobile-soft': theme.surface.subtle,
+    '--dash-mobile-lighter': theme.surface.faint,
+    '--dash-mobile-popper-shadow': theme.shadow.floating,
+    '--dash-mobile-sheet-shadow': theme.shadow.sheet,
+    'background': theme.surface.panel,
+    'borderColor': theme.border.light,
+    'color': theme.text.regular,
   }
 }

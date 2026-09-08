@@ -36,7 +36,10 @@ $dash-grid-gap: 12px;
   } @else if $shadow == btn {
     box-shadow: var(--dash-btn-shadow, 0 1px 2px rgb(15 23 42 / 4%));
   } @else if $shadow == chrome {
-    box-shadow: var(--dash-chrome-shadow, 0 1px 0 color-mix(in srgb, var(--dash-border, #e5e7eb) 85%, transparent));
+    box-shadow: var(
+      --dash-chrome-shadow,
+      0 1px 0 color-mix(in srgb, var(--dash-border, var(--na-border-color-light)) 85%, transparent)
+    );
   }
 }
 
@@ -51,7 +54,7 @@ $dash-grid-gap: 12px;
   flex-shrink: 0;
   padding: var(--dash-page-y) var(--dash-chrome-x) var(--dash-gutter);
   box-sizing: border-box;
-  background: var(--dash-card-bg, #fff);
+  background: var(--dash-card-bg, var(--na-surface-bg));
   @include frost(chrome);
 }
 

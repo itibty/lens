@@ -127,7 +127,8 @@ function onResizePointerDown(corner: 'nw' | 'ne' | 'sw' | 'se', event: PointerEv
   &.is-editable:hover,
   &.is-editable:focus-within,
   &.is-resizing {
-    outline: 3px solid color-mix(in srgb, var(--dash-accent, #0052d9) 68%, var(--dash-card-bg, #fff));
+    outline: 3px solid
+      color-mix(in srgb, var(--dash-accent, var(--na-color-primary)) 68%, var(--dash-card-bg, var(--na-surface-bg)));
     outline-offset: -1px;
   }
 }
@@ -135,7 +136,7 @@ function onResizePointerDown(corner: 'nw' | 'ne' | 'sw' | 'se', event: PointerEv
 .dash-text.is-flow {
   height: auto;
   min-height: 120px;
-  border: 1px solid color-mix(in srgb, var(--dash-border, #e5e7eb) 48%, transparent);
+  border: 1px solid color-mix(in srgb, var(--dash-border, var(--na-border-color-light)) 48%, transparent);
 
   .dash-text__body {
     height: auto;
@@ -343,9 +344,9 @@ function onResizePointerDown(corner: 'nw' | 'ne' | 'sw' | 'se', event: PointerEv
   display: flex;
   gap: 3px;
   padding: 3px;
-  border: 1px solid color-mix(in srgb, var(--dash-border, #e5e7eb) 72%, transparent);
+  border: 1px solid color-mix(in srgb, var(--dash-border, var(--na-border-color-light)) 72%, transparent);
   border-radius: 8px;
-  background: color-mix(in srgb, var(--dash-card-bg, #fff) 92%, transparent);
+  background: color-mix(in srgb, var(--dash-card-bg, var(--na-surface-bg)) 92%, transparent);
   box-shadow: 0 4px 14px rgb(15 23 42 / 10%);
   opacity: 0;
   pointer-events: none;
@@ -365,8 +366,8 @@ function onResizePointerDown(corner: 'nw' | 'ne' | 'sw' | 'se', event: PointerEv
     cursor: pointer;
 
     &:hover {
-      background: color-mix(in srgb, var(--dash-accent, #0052d9) 10%, transparent);
-      color: var(--dash-accent, #0052d9);
+      background: color-mix(in srgb, var(--dash-accent, var(--na-color-primary)) 10%, transparent);
+      color: var(--dash-accent, var(--na-color-primary));
     }
   }
 }
@@ -400,7 +401,7 @@ function onResizePointerDown(corner: 'nw' | 'ne' | 'sw' | 'se', event: PointerEv
 .dash-tile__handle-icon {
   width: 34px;
   height: 24px;
-  color: var(--dash-content-muted, #646a73);
+  color: var(--dash-content-muted, var(--na-text-muted));
 }
 
 .dash-tile__dot {
@@ -411,9 +412,9 @@ function onResizePointerDown(corner: 'nw' | 'ne' | 'sw' | 'se', event: PointerEv
   box-sizing: border-box;
   width: 16px;
   height: 16px;
-  border: 2px solid var(--dash-card-bg, #fff);
+  border: 2px solid var(--dash-card-bg, var(--na-surface-bg));
   border-radius: 50%;
-  background: var(--dash-accent, #0052d9);
+  background: var(--dash-accent, var(--na-color-primary));
   touch-action: none;
   opacity: 0;
   pointer-events: none;

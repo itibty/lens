@@ -103,7 +103,7 @@ export function rankColorPreview(item: (typeof RANK_COLOR_PRESETS)[number]) {
 }
 
 export function resolveRankBarColor(visual: VisVisualConfig) {
-  return visual.rank?.color || resolveCardChrome(visual).color || '#1677FF'
+  return visual.rank?.color || resolveCardChrome(visual).color || 'var(--na-chart-accent)'
 }
 
 export function pruneRankVisual(visual: VisVisualConfig) {

@@ -404,7 +404,7 @@ function pillError(uid: string) {
   border-radius: 8px;
   padding: 10px 12px 12px;
   margin-bottom: 12px;
-  background: var(--vis-shelf-well, #eef3f8);
+  background: var(--vis-shelf-well, var(--na-fill-color-light));
 
   &.is-invalid {
     border-color: var(--el-color-danger-light-5);
@@ -425,7 +425,7 @@ function pillError(uid: string) {
     padding: 8px;
     border: 1px dashed var(--el-border-color);
     border-radius: 6px;
-    background: #fff;
+    background: var(--na-surface-bg);
 
     &.is-empty {
       min-height: 44px;

@@ -5,8 +5,10 @@
 import type { DetailHit, DetailMenuPayload, PivotPathMember } from '@/views/vis/shared/cardDetail'
 import type { VisQueryConfig, VisVisualConfig } from '@/views/vis/shared/types'
 import { onClickOutside, useEventListener, useMediaQuery } from '@vueuse/core'
+import { LENS_THEME_KEY } from '@/theme/context'
+import { themeCssVars } from '@/theme/cssVars'
+import { LIGHT_THEME } from '@/theme/tokens'
 import { showToast } from '@/utils/index'
-import { DASH_SURFACE_MODE_KEY } from '@/views/vis/dashboards/dashTheme'
 import {
   contextFromChartDatum,
   contextFromPivotPaths,
@@ -125,9 +127,12 @@ const stageClass = computed(() => `is-${stageMode.value}`)
 const chrome = computed(() => resolveCardChrome(props.visual))
 const hasCardBg = computed(() => !!chrome.value.bg)
 const hasCardColor = computed(() => !!chrome.value.color)
-const dashSurfaceMode = inject(DASH_SURFACE_MODE_KEY, null)
-const followsDashSurface = computed(() => props.embedded && !!dashSurfaceMode && !hasCardBg.value)
-const darkSurface = computed(() => followsDashSurface.value && dashSurfaceMode?.value === 'dark')
+const scopedTheme = inject(LENS_THEME_KEY, null)
+const followsDashSurface = computed(() => props.embedded && !!scopedTheme && !hasCardBg.value)
+const darkSurface = computed(() => followsDashSurface.value && scopedTheme?.value.mode === 'dark')
+// 自定义背景维持原有的独立浅色卡片语义；显式文字色仍由内容样式覆盖。
+const surfaceThemeStyle = computed(() => hasCardBg.value ? themeCssVars(LIGHT_THEME) : undefined)
+const overlayThemeStyle = computed(() => themeCssVars(followsDashSurface.value ? scopedTheme!.value : LIGHT_THEME))
 
 const hasHeaderText = computed(() => !!(cardTitle.value || cardRemark.value))
 const coarsePointer = useMediaQuery('(hover: none), (pointer: coarse)')
@@ -383,6 +388,7 @@ watch(allowDetail, (ok) => {
   <div
     class="vis-card-view h-full min-h-0 flex flex-col"
     :class="[stageClass, { 'is-menu-open': menuOpen, 'is-embedded': embedded, 'is-fullscreen': fullscreen }]"
+    :style="surfaceThemeStyle"
   >
     <div
       class="vis-card-view__body"
@@ -422,6 +428,7 @@ watch(allowDetail, (ok) => {
             :show-after="200"
             :width="260"
             popper-class="vis-card-remark-popper"
+            :popper-style="overlayThemeStyle"
           >
             <template #reference>
               <button
@@ -470,6 +477,7 @@ watch(allowDetail, (ok) => {
             trigger="click"
             placement="bottom-end"
             popper-class="vis-card-more-popper"
+            :popper-style="overlayThemeStyle"
             @command="onMenuCommand"
             @visible-change="menuOpen = $event"
           >
@@ -672,7 +680,7 @@ watch(allowDetail, (ok) => {
         v-if="menu"
         ref="menuRef"
         class="vis-detail-menu"
-        :style="{ left: `${menu.clientX}px`, top: `${menu.clientY}px` }"
+        :style="{ ...overlayThemeStyle, left: `${menu.clientX}px`, top: `${menu.clientY}px` }"
         @click.stop
       >
         <button

@@ -238,7 +238,8 @@ function onResizePointerDown(corner: 'nw' | 'ne' | 'sw' | 'se', event: PointerEv
 .dash-group.is-editable:focus-within,
 .dash-group.is-resizing,
 .dash-group.is-editable:has(.vis-card-view.is-menu-open) {
-  outline: 3px solid color-mix(in srgb, var(--dash-accent, #0052d9) 68%, var(--dash-card-bg, #fff));
+  outline: 3px solid
+    color-mix(in srgb, var(--dash-accent, var(--na-color-primary)) 68%, var(--dash-card-bg, var(--na-surface-bg)));
   outline-offset: -1px;
 }
 
@@ -283,7 +284,7 @@ function onResizePointerDown(corner: 'nw' | 'ne' | 'sw' | 'se', event: PointerEv
 .dash-group__handle-icon {
   width: 34px;
   height: 24px;
-  color: var(--dash-content-muted, #646a73);
+  color: var(--dash-content-muted, var(--na-text-muted));
 }
 
 .dash-group.hide-resize-dots .dash-group__dot {
@@ -299,9 +300,9 @@ function onResizePointerDown(corner: 'nw' | 'ne' | 'sw' | 'se', event: PointerEv
   box-sizing: border-box;
   width: 16px;
   height: 16px;
-  border: 2px solid var(--dash-card-bg, #fff);
+  border: 2px solid var(--dash-card-bg, var(--na-surface-bg));
   border-radius: 50%;
-  background: var(--dash-accent, #0052d9);
+  background: var(--dash-accent, var(--na-color-primary));
   touch-action: none;
   pointer-events: none;
 
@@ -411,7 +412,11 @@ function onResizePointerDown(corner: 'nw' | 'ne' | 'sw' | 'se', event: PointerEv
   padding: 2px;
   overflow-x: auto;
   border-radius: 8px;
-  background: color-mix(in srgb, var(--dash-title, #1f2329) 8%, var(--dash-card-bg, #fff));
+  background: color-mix(
+    in srgb,
+    var(--dash-title, var(--na-text-strong)) 8%,
+    var(--dash-card-bg, var(--na-surface-bg))
+  );
   scrollbar-width: none;
 
   &::-webkit-scrollbar {
@@ -498,12 +503,13 @@ function onResizePointerDown(corner: 'nw' | 'ne' | 'sw' | 'se', event: PointerEv
     --dash-group-bg,
     color-mix(in srgb, var(--dash-card-bg, var(--el-bg-color)) 94%, var(--dash-canvas-bg, transparent))
   );
-  border: 1px solid color-mix(in srgb, var(--dash-border, #e5e7eb) 64%, transparent);
+  border: 1px solid color-mix(in srgb, var(--dash-border, var(--na-border-color-light)) 64%, transparent);
 
   .dash-group__chrome {
     min-height: 52px;
     padding: 10px 14px 9px;
-    border-bottom: 1px solid color-mix(in srgb, var(--dash-group-fg, var(--dash-border, #e5e7eb)) 18%, transparent);
+    border-bottom: 1px solid
+      color-mix(in srgb, var(--dash-group-fg, var(--dash-border, var(--na-border-color-light))) 18%, transparent);
   }
 
   .dash-group__title {
@@ -518,7 +524,7 @@ function onResizePointerDown(corner: 'nw' | 'ne' | 'sw' | 'se', event: PointerEv
 
   .dash-group__tabs {
     gap: 2px;
-    border: 1px solid color-mix(in srgb, var(--dash-border, #e5e7eb) 42%, transparent);
+    border: 1px solid color-mix(in srgb, var(--dash-border, var(--na-border-color-light)) 42%, transparent);
   }
 
   &:not(.has-color) .dash-group__tab.is-active {
@@ -532,9 +538,9 @@ function onResizePointerDown(corner: 'nw' | 'ne' | 'sw' | 'se', event: PointerEv
 
   // 组内卡片比外层容器更亮一层，用边界而非重阴影表达嵌套关系。
   :deep(.dash-tile.is-in-group:not(.is-full)) {
-    border: 1px solid color-mix(in srgb, var(--dash-border, #e5e7eb) 46%, transparent);
+    border: 1px solid color-mix(in srgb, var(--dash-border, var(--na-border-color-light)) 46%, transparent);
     background: var(--dash-card-bg, var(--el-bg-color));
-    box-shadow: 0 1px 2px color-mix(in srgb, var(--dash-title, #1f2329) 6%, transparent);
+    box-shadow: 0 1px 2px color-mix(in srgb, var(--dash-title, var(--na-text-strong)) 6%, transparent);
   }
 }
 

@@ -498,7 +498,7 @@ onBeforeUnmount(() => {
 
   // 流式预览里的顶层卡片补一圈很淡的边界，在浅色和深色主题下都能与画布分开。
   > :deep(.vis-full-wrap > .dash-tile:not(.is-in-group):not(.is-full)) {
-    border: 1px solid color-mix(in srgb, var(--dash-border, #e5e7eb) 48%, transparent);
+    border: 1px solid color-mix(in srgb, var(--dash-border, var(--na-border-color-light)) 48%, transparent);
   }
 }
 

@@ -85,8 +85,8 @@
   .t-loading__gradient-conic {
     background: conic-gradient(
       from 90deg at 50% 50%,
-      rgba(0, 82, 217, 0) 0deg,
-      var(--td-loading-color, var(--el-color-primary, #0052d9)) 360deg
+      transparent 0deg,
+      var(--td-loading-color, var(--na-color-primary)) 360deg
     );
     -webkit-mask: radial-gradient(transparent calc(50% - 0.5px), #fff 50%);
     width: 100%;
@@ -109,5 +109,18 @@
     100% {
       transform: rotate(360deg);
     }
+  }
+}
+
+// 实心按钮使用配对的前景色，暗色表面的亮主色也能保持可读。
+@each $tone in primary, success, warning, danger, info {
+  .el-button--#{$tone}:not(.is-plain):not(.is-text):not(.is-link) {
+    --el-button-text-color: var(--na-on-#{$tone});
+    --el-button-hover-text-color: var(--na-on-#{$tone});
+    --el-button-active-text-color: var(--na-on-#{$tone});
+    --el-button-hover-bg-color: var(--na-color-#{$tone}-hover);
+    --el-button-hover-border-color: var(--na-color-#{$tone}-hover);
+    --el-button-active-bg-color: var(--na-color-#{$tone}-active);
+    --el-button-active-border-color: var(--na-color-#{$tone}-active);
   }
 }

@@ -128,14 +128,14 @@ export function resolveKpiPaint(visual?: VisVisualConfig) {
   const color = visual?.kpi?.color
   const track = visual?.kpi?.trackColor
   const cardColor = visual ? resolveCardChrome(visual).color : undefined
-  const fill = color || 'var(--el-color-primary)'
+  const fill = color || 'var(--na-chart-accent)'
   return {
     fill,
-    fillGradient: `linear-gradient(to right, ${fill}, color-mix(in srgb, ${fill} 58%, #fff))`,
+    fillGradient: fill,
     track: track
       || (cardColor
         ? 'color-mix(in srgb, var(--vis-content-color) 18%, transparent)'
-        : 'var(--el-fill-color)'),
+        : 'var(--na-chart-track)'),
   }
 }
 

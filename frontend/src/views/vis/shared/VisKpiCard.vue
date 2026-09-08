@@ -249,11 +249,11 @@ function onRowClick(record: Record<string, unknown>, event: MouseEvent) {
   line-height: 1;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
-  color: var(--vis-content-color, #1f2329);
+  color: var(--vis-content-color, var(--na-text-strong));
   pointer-events: none;
 
   &.is-on-fill {
-    color: #fff;
+    color: var(--na-on-primary);
   }
 }
 
@@ -273,7 +273,11 @@ function onRowClick(record: Record<string, unknown>, event: MouseEvent) {
   bottom: 0;
   width: 2px;
   margin-left: -1px;
-  background: repeating-linear-gradient(to bottom, var(--vis-content-color, #1f2329) 0 5px, transparent 5px 9px);
+  background: repeating-linear-gradient(
+    to bottom,
+    var(--vis-content-color, var(--na-text-strong)) 0 5px,
+    transparent 5px 9px
+  );
 }
 
 .vis-kpi-card__pace-tag {
@@ -287,7 +291,7 @@ function onRowClick(record: Record<string, unknown>, event: MouseEvent) {
   font-size: 11px;
   line-height: 18px;
   white-space: nowrap;
-  color: #fff;
+  color: var(--na-on-primary);
 }
 
 .vis-kpi-card__pace.is-label-left .vis-kpi-card__pace-tag {

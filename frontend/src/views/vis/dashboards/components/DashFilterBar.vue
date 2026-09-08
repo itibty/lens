@@ -8,9 +8,9 @@ import type { DashThemeId } from '../dashTheme'
 import { useEventListener } from '@vueuse/core'
 import {
   DASH_THEME_PRESETS,
+  dashOverlayVars,
   dashThemeSwatchRadius,
   DEFAULT_DASH_THEME,
-  resolveDashTheme,
 } from '../dashTheme'
 import { isDashPopperTarget, useDashFilterChips } from '../useDashFilterChips'
 import { useDashFilterLabels } from '../useDashFilterOptions'
@@ -93,59 +93,7 @@ function pickTheme(id: DashThemeId) {
 const descText = computed(() => props.desc.trim().replace(/\s+/g, ' '))
 const mobile = computed(() => props.presentationMode === 'compact' || props.presentationMode === 'medium')
 const filledFilterCount = computed(() => props.defs.filter(isFilled).length)
-const mobileSurfaceStyle = computed<Record<string, string>>(() => {
-  const { tokens } = resolveDashTheme(theme.value)
-  const content = tokens.content ?? tokens.title
-  const muted = tokens.muted ?? `color-mix(in srgb, ${tokens.title} 64%, transparent)`
-  const softFill = `color-mix(in srgb, ${tokens.title} 5%, ${tokens.card})`
-  const lighterFill = `color-mix(in srgb, ${tokens.title} 3%, ${tokens.card})`
-  const disabledText = `color-mix(in srgb, ${content} 42%, transparent)`
-  const accentOnSurface = (weight: number) => `color-mix(in srgb, ${tokens.accent} ${weight}%, ${tokens.card})`
-
-  return {
-    '--dash-mobile-surface': tokens.card,
-    '--dash-mobile-elevated': tokens.btnBg,
-    '--dash-mobile-title': tokens.title,
-    '--dash-mobile-content': content,
-    '--dash-mobile-muted': muted,
-    '--dash-mobile-border': tokens.border,
-    '--dash-mobile-accent': tokens.accent,
-    '--dash-mobile-soft': softFill,
-    '--dash-mobile-lighter': lighterFill,
-    '--dash-mobile-popper-shadow': tokens.mode === 'dark'
-      ? '0 8px 24px rgb(0 0 0 / 28%)'
-      : '0 8px 24px rgb(15 23 42 / 10%)',
-    '--dash-mobile-sheet-shadow': tokens.mode === 'dark'
-      ? '0 -8px 24px rgb(0 0 0 / 28%)'
-      : '0 -8px 24px rgb(15 23 42 / 10%)',
-    '--el-bg-color': tokens.card,
-    '--el-bg-color-overlay': tokens.card,
-    '--el-fill-color-blank': tokens.btnBg,
-    '--el-fill-color-light': softFill,
-    '--el-fill-color-lighter': lighterFill,
-    '--el-border-color': tokens.border,
-    '--el-border-color-light': `color-mix(in srgb, ${tokens.border} 76%, transparent)`,
-    '--el-border-color-lighter': `color-mix(in srgb, ${tokens.border} 58%, transparent)`,
-    '--el-border-color-extra-light': `color-mix(in srgb, ${tokens.border} 42%, transparent)`,
-    '--el-text-color-primary': tokens.title,
-    '--el-text-color-regular': content,
-    '--el-text-color-secondary': muted,
-    '--el-text-color-placeholder': disabledText,
-    '--el-disabled-bg-color': softFill,
-    '--el-disabled-border-color': `color-mix(in srgb, ${tokens.border} 52%, transparent)`,
-    '--el-disabled-text-color': disabledText,
-    '--el-color-primary': tokens.accent,
-    '--el-color-primary-light-3': accentOnSurface(70),
-    '--el-color-primary-light-5': accentOnSurface(50),
-    '--el-color-primary-light-7': accentOnSurface(30),
-    '--el-color-primary-light-8': accentOnSurface(20),
-    '--el-color-primary-light-9': accentOnSurface(10),
-    '--el-color-primary-dark-2': `color-mix(in srgb, ${tokens.accent} 80%, #000)`,
-    'background': tokens.card,
-    'borderColor': tokens.border,
-    'color': content,
-  }
-})
+const mobileSurfaceStyle = computed(() => dashOverlayVars(theme.value))
 
 function onAddCommand(command: 'card' | 'text' | 'group') {
   if (command === 'card') {
@@ -720,7 +668,11 @@ watch(mobile, (enabled) => {
   padding: 0;
   border: 1px solid transparent;
   border-radius: 12px;
-  background: color-mix(in srgb, var(--dash-title, #1f2329) 5%, var(--dash-card-bg, #fff));
+  background: color-mix(
+    in srgb,
+    var(--dash-title, var(--na-text-strong)) 5%,
+    var(--dash-card-bg, var(--na-surface-bg))
+  );
   color: var(--dash-content-color, var(--el-text-color-regular));
   cursor: pointer;
   outline: none;
@@ -728,13 +680,17 @@ watch(mobile, (enabled) => {
 
   &:active,
   &.is-active {
-    border-color: color-mix(in srgb, var(--dash-accent, #0052d9) 38%, transparent);
-    background: color-mix(in srgb, var(--dash-accent, #0052d9) 10%, var(--dash-card-bg, #fff));
+    border-color: color-mix(in srgb, var(--dash-accent, var(--na-color-primary)) 38%, transparent);
+    background: color-mix(
+      in srgb,
+      var(--dash-accent, var(--na-color-primary)) 10%,
+      var(--dash-card-bg, var(--na-surface-bg))
+    );
     color: var(--dash-accent, var(--el-color-primary));
   }
 
   &:focus-visible {
-    outline: 2px solid color-mix(in srgb, var(--dash-accent, #0052d9) 62%, transparent);
+    outline: 2px solid color-mix(in srgb, var(--dash-accent, var(--na-color-primary)) 62%, transparent);
     outline-offset: 2px;
   }
 
@@ -762,7 +718,11 @@ watch(mobile, (enabled) => {
   padding: 5px 11px;
   border: 1px solid color-mix(in srgb, var(--dash-border, var(--el-border-color)) 66%, transparent);
   border-radius: 12px;
-  background: color-mix(in srgb, var(--dash-title, #1f2329) 3.5%, var(--dash-card-bg, #fff));
+  background: color-mix(
+    in srgb,
+    var(--dash-title, var(--na-text-strong)) 3.5%,
+    var(--dash-card-bg, var(--na-surface-bg))
+  );
   color: var(--dash-content-color, var(--el-text-color-regular));
   cursor: pointer;
   outline: none;
@@ -770,11 +730,15 @@ watch(mobile, (enabled) => {
   @include page.frost(btn);
 
   &:active {
-    background: color-mix(in srgb, var(--dash-title, #1f2329) 6%, var(--dash-card-bg, #fff));
+    background: color-mix(
+      in srgb,
+      var(--dash-title, var(--na-text-strong)) 6%,
+      var(--dash-card-bg, var(--na-surface-bg))
+    );
   }
 
   &:focus-visible {
-    outline: 2px solid color-mix(in srgb, var(--dash-accent, #0052d9) 62%, transparent);
+    outline: 2px solid color-mix(in srgb, var(--dash-accent, var(--na-color-primary)) 62%, transparent);
     outline-offset: 2px;
   }
 
@@ -792,8 +756,12 @@ watch(mobile, (enabled) => {
   }
 
   &.is-on {
-    border-color: color-mix(in srgb, var(--dash-accent, #0052d9) 42%, transparent);
-    background: color-mix(in srgb, var(--dash-accent, #0052d9) 12%, var(--dash-card-bg, #fff));
+    border-color: color-mix(in srgb, var(--dash-accent, var(--na-color-primary)) 42%, transparent);
+    background: color-mix(
+      in srgb,
+      var(--dash-accent, var(--na-color-primary)) 12%,
+      var(--dash-card-bg, var(--na-surface-bg))
+    );
     color: var(--dash-accent, var(--el-color-primary));
   }
 }
@@ -844,12 +812,24 @@ watch(mobile, (enabled) => {
 @media (hover: hover) and (pointer: fine) {
   .filter-dock__mobile-btn:hover:not(:disabled) {
     border-color: color-mix(in srgb, var(--dash-border, var(--el-border-color)) 62%, transparent);
-    background: color-mix(in srgb, var(--dash-title, #1f2329) 7%, var(--dash-card-bg, #fff));
+    background: color-mix(
+      in srgb,
+      var(--dash-title, var(--na-text-strong)) 7%,
+      var(--dash-card-bg, var(--na-surface-bg))
+    );
   }
 
   .filter-dock__mobile-filter:hover {
-    border-color: color-mix(in srgb, var(--dash-accent, #0052d9) 30%, var(--dash-border, var(--el-border-color)));
-    background: color-mix(in srgb, var(--dash-title, #1f2329) 5%, var(--dash-card-bg, #fff));
+    border-color: color-mix(
+      in srgb,
+      var(--dash-accent, var(--na-color-primary)) 30%,
+      var(--dash-border, var(--el-border-color))
+    );
+    background: color-mix(
+      in srgb,
+      var(--dash-title, var(--na-text-strong)) 5%,
+      var(--dash-card-bg, var(--na-surface-bg))
+    );
   }
 }
 
@@ -893,7 +873,7 @@ watch(mobile, (enabled) => {
   flex-shrink: 0;
   width: 1px;
   height: 12px;
-  background: color-mix(in srgb, var(--dash-title, #1f2329) 16%, transparent);
+  background: color-mix(in srgb, var(--dash-title, var(--na-text-strong)) 16%, transparent);
 }
 
 .filter-dock__desc {
@@ -937,7 +917,7 @@ watch(mobile, (enabled) => {
   width: 1px;
   height: 16px;
   margin: 0 2px;
-  background: color-mix(in srgb, var(--dash-title, #1f2329) 14%, transparent);
+  background: color-mix(in srgb, var(--dash-title, var(--na-text-strong)) 14%, transparent);
 }
 
 .filter-dock__preview {
@@ -986,15 +966,19 @@ watch(mobile, (enabled) => {
   }
 
   .filter-dock__design & {
-    background: color-mix(in srgb, var(--dash-accent, #0052d9) 11%, var(--dash-card-bg, #fff));
-    border-color: color-mix(in srgb, var(--dash-accent, #0052d9) 26%, transparent);
-    color: var(--dash-accent, #0052d9);
+    background: color-mix(
+      in srgb,
+      var(--dash-accent, var(--na-color-primary)) 11%,
+      var(--dash-card-bg, var(--na-surface-bg))
+    );
+    border-color: color-mix(in srgb, var(--dash-accent, var(--na-color-primary)) 26%, transparent);
+    color: var(--dash-accent, var(--na-color-primary));
   }
 
   &:hover,
   &.is-active {
-    border-color: var(--dash-accent, #0052d9);
-    color: var(--dash-accent, #0052d9);
+    border-color: var(--dash-accent, var(--na-color-primary));
+    color: var(--dash-accent, var(--na-color-primary));
   }
 
   &:disabled {
@@ -1037,7 +1021,11 @@ watch(mobile, (enabled) => {
   overflow: hidden;
   border: none;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--dash-title, #1f2329) 6.5%, var(--dash-card-bg, #fff));
+  background: color-mix(
+    in srgb,
+    var(--dash-title, var(--na-text-strong)) 6.5%,
+    var(--dash-card-bg, var(--na-surface-bg))
+  );
   box-shadow: var(--dash-btn-shadow, none);
   cursor: pointer;
   outline: none;
@@ -1046,16 +1034,28 @@ watch(mobile, (enabled) => {
 
   &:hover,
   &.is-open {
-    background: color-mix(in srgb, var(--dash-title, #1f2329) 9.5%, var(--dash-card-bg, #fff));
+    background: color-mix(
+      in srgb,
+      var(--dash-title, var(--na-text-strong)) 9.5%,
+      var(--dash-card-bg, var(--na-surface-bg))
+    );
   }
 
   &.is-on {
-    background: color-mix(in srgb, var(--dash-accent, #0052d9) 22%, var(--dash-card-bg, #fff));
+    background: color-mix(
+      in srgb,
+      var(--dash-accent, var(--na-color-primary)) 22%,
+      var(--dash-card-bg, var(--na-surface-bg))
+    );
   }
 
   &.is-on:hover,
   &.is-on.is-open {
-    background: color-mix(in srgb, var(--dash-accent, #0052d9) 28%, var(--dash-card-bg, #fff));
+    background: color-mix(
+      in srgb,
+      var(--dash-accent, var(--na-color-primary)) 28%,
+      var(--dash-card-bg, var(--na-surface-bg))
+    );
   }
 }
 
@@ -1086,7 +1086,11 @@ watch(mobile, (enabled) => {
 }
 
 .filter-chip.is-on .filter-chip__k {
-  color: color-mix(in srgb, var(--dash-accent, #0052d9) 76%, var(--dash-content-color, #1f2329));
+  color: color-mix(
+    in srgb,
+    var(--dash-accent, var(--na-color-primary)) 76%,
+    var(--dash-content-color, var(--na-text-strong))
+  );
 }
 
 .filter-chip__value {
@@ -1123,7 +1127,7 @@ watch(mobile, (enabled) => {
   }
 
   &:hover {
-    background: color-mix(in srgb, var(--dash-accent, #0052d9) 14%, transparent);
+    background: color-mix(in srgb, var(--dash-accent, var(--na-color-primary)) 14%, transparent);
     color: var(--dash-accent, var(--el-color-primary));
   }
 }
@@ -1132,7 +1136,7 @@ watch(mobile, (enabled) => {
   color: var(--dash-accent, var(--el-color-primary));
 
   &:hover {
-    background: color-mix(in srgb, var(--dash-accent, #0052d9) 14%, transparent);
+    background: color-mix(in srgb, var(--dash-accent, var(--na-color-primary)) 14%, transparent);
     color: var(--dash-accent, var(--el-color-primary));
   }
 }

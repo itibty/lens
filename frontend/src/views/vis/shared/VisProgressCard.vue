@@ -368,11 +368,7 @@ watch(
     height: 100%;
     border-radius: inherit;
     min-width: 0;
-    background: linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--vis-progress-fill, var(--el-color-primary)) 72%, var(--dash-card-bg, #fff)) 0%,
-      var(--vis-progress-fill, var(--el-color-primary)) 100%
-    );
+    background: var(--vis-progress-fill, var(--na-chart-accent));
     transition: width 0.7s cubic-bezier(0.22, 1, 0.36, 1);
 
     .is-filled & {

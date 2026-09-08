@@ -11,6 +11,7 @@ import vis from '@/apis/vis/index'
 import { useLeaveConfirm } from '@/hooks/leaveConfirm'
 import { useSwipeBackGuard } from '@/hooks/swipeBack'
 import { useAccountStore } from '@/stores/modules/account'
+import { LENS_THEME_KEY } from '@/theme/context'
 import { showConfirm, showToast } from '@/utils/index'
 import MenuIconPicker from '@/views/permission/menu/components/MenuIconPicker.vue'
 import { fromVisCardInfo } from '@/views/vis/cards/cardApi'
@@ -42,11 +43,10 @@ import {
 } from '../dashLayout'
 import { captureDashPreview, saveDashScreenshot } from '../dashScreenshot'
 import {
-  DASH_SURFACE_MODE_KEY,
   dashThemeVars,
   DEFAULT_DASH_CARD_RADIUS,
   DEFAULT_DASH_THEME,
-  resolveDashSurfaceMode,
+  resolveDashTheme,
 } from '../dashTheme'
 import { useDashRefresh } from '../useDashRefresh'
 import CardPickerDialog from './CardPickerDialog.vue'
@@ -119,7 +119,7 @@ const cardRadius = ref<DashCardRadiusId>(DEFAULT_DASH_CARD_RADIUS)
 const autoRefreshSec = ref<number>()
 const groupTree = ref<VIS.DashGroupInfo[]>([])
 const baselineSnapshot = ref('')
-provide(DASH_SURFACE_MODE_KEY, computed(() => resolveDashSurfaceMode(theme.value)))
+provide(LENS_THEME_KEY, computed(() => resolveDashTheme(theme.value).theme))
 
 const saveForm = reactive({
   name: '',

@@ -1,5 +1,6 @@
 import type { ISpec } from '@visactor/vchart'
 import type { VisVisualConfig } from './types'
+import { LIGHT_THEME, NEUTRAL } from '@/theme/tokens'
 import {
   joinTreePath,
   TREE_CHILDREN,
@@ -426,7 +427,7 @@ function pieIndicatorItem(
     fitStrategy: 'inscribed' as const,
     style: {
       fontSize: 12,
-      fill: '#4E5969',
+      fill: LIGHT_THEME.text.regular,
       text,
     },
   }
@@ -434,7 +435,7 @@ function pieIndicatorItem(
 
 const PIE_EMPHASIS = {
   outerRadius: 0.85,
-  stroke: '#000',
+  stroke: LIGHT_THEME.text.strong,
   lineWidth: 1,
 }
 
@@ -467,7 +468,7 @@ function pieIndicatorSpec(
       style: {
         fontSize: 14,
         fontWeight: 500,
-        fill: '#1D2129',
+        fill: LIGHT_THEME.text.strong,
         text: (datum?: Record<string, unknown>) =>
           isPieIndicatorSlice(datum, categoryField)
             ? String(datum![categoryField])
@@ -530,7 +531,7 @@ function stackedBarInsideLabel(horizontal: boolean) {
     position: 'inside',
     smartInvert: true,
     style: {
-      stroke: '#fff',
+      stroke: NEUTRAL.white,
       lineWidth: 2,
     },
     overlap: {
@@ -1266,7 +1267,7 @@ function buildTreemapSpec(
       roam: false,
       leaf: {
         style: {
-          stroke: '#fff',
+          stroke: NEUTRAL.white,
           lineWidth: 1,
         },
       },
@@ -1341,7 +1342,7 @@ function buildHeatmapSpec(
       cell: {
         style: {
           fill: { field: valueField, scale: 'color' },
-          stroke: '#fff',
+          stroke: NEUTRAL.white,
           lineWidth: 1,
         },
       },
@@ -1653,7 +1654,7 @@ export function buildVChartSpec(
               maskShape: {
                 type: 'text',
                 text: opt.shapeText,
-                fill: '#eee',
+                fill: LIGHT_THEME.surface.subtle,
                 fontWeight: 'bold',
               },
               wordMask: { visible: true },

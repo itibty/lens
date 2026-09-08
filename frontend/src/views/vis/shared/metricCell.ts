@@ -1,5 +1,6 @@
 /** 表格 / 透视指标单元格展示：配置解析与 VTable 百分比进度属性。 */
 import type { VisMetricCellVisual, VisQueryConfig, VisVisualConfig } from './types'
+import { ACCENT, alphaColor, LIGHT_THEME, mixColor, NEUTRAL } from '@/theme/tokens'
 import { sameCssColor } from './accentPresets'
 import { compactCellVisual, resolveMetricStyleRule } from './fieldStyle'
 import { metricAlias } from './types'
@@ -8,15 +9,20 @@ import { resolveVTableProgressTrackColor } from './vtableTheme'
 export const METRIC_PROGRESS_MIN = 0
 export const METRIC_PROGRESS_MAX = 100
 export const METRIC_PROGRESS_VERTICAL_GAP = 3
-export const METRIC_PROGRESS_DEFAULT_COLOR = 'rgba(22, 119, 255, 0.36)'
+export const METRIC_PROGRESS_DEFAULT_COLOR = alphaColor(LIGHT_THEME.chart.series[0], 0.26)
 
 /** 横向数据条使用固定的半透明预设，兼顾色彩识别与上层数字可读性。 */
+function dataBarPreset<Id extends keyof typeof ACCENT>(id: Id, label: string) {
+  const base = id === 'blue' ? LIGHT_THEME.chart.series[0] : ACCENT[id]
+  return { id, label, color: alphaColor(base, 0.26), preview: mixColor(base, NEUTRAL.white, 0.26) }
+}
+
 export const METRIC_PROGRESS_COLOR_PRESETS = [
-  { id: 'blue', label: '蓝色', color: METRIC_PROGRESS_DEFAULT_COLOR, preview: '#ABCEFF' },
-  { id: 'cyan', label: '青色', color: 'rgba(19, 194, 194, 0.36)', preview: '#AAE9E9' },
-  { id: 'green', label: '绿色', color: 'rgba(82, 196, 26, 0.34)', preview: '#C4EAB1' },
-  { id: 'orange', label: '橙色', color: 'rgba(250, 140, 22, 0.36)', preview: '#FDD6AB' },
-  { id: 'purple', label: '紫色', color: 'rgba(114, 46, 209, 0.34)', preview: '#CFB8EF' },
+  dataBarPreset('blue', '蓝色'),
+  dataBarPreset('cyan', '青色'),
+  dataBarPreset('green', '绿色'),
+  dataBarPreset('orange', '橙色'),
+  dataBarPreset('purple', '紫色'),
 ] as const
 
 export type MetricProgressColorPresetId = (typeof METRIC_PROGRESS_COLOR_PRESETS)[number]['id']
