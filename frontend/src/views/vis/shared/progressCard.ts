@@ -205,11 +205,11 @@ export function resolveProgressPaint(visual?: VisVisualConfig) {
   const track = visual?.progress?.trackColor
   const cardColor = visual ? resolveCardChrome(visual).color : undefined
   return {
-    fill: color || 'var(--el-color-primary)',
+    fill: color || 'var(--na-chart-accent)',
     track: track
       || (cardColor
         ? 'color-mix(in srgb, var(--vis-content-color) 16%, transparent)'
-        : 'color-mix(in srgb, var(--el-color-primary) 10%, var(--el-fill-color-light))'),
+        : 'var(--na-chart-track)'),
   }
 }
 

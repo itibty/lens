@@ -18,6 +18,8 @@ import {
   useProgressFit,
 } from '@/views/vis/shared/progressFit'
 
+import VisMetricRatio from './VisMetricRatio.vue'
+
 const props = withDefaults(defineProps<{
   visual: VisVisualConfig
   query?: VIS.QueryConfig
@@ -250,9 +252,7 @@ watch(
       v-if="options.showValue"
       class="vis-progress-card__values"
     >
-      <span class="vis-progress-card__current">{{ resolved.currentText }}</span>
-      <span class="vis-progress-card__sep">/</span>
-      <span class="vis-progress-card__target">{{ resolved.targetText }}</span>
+      <VisMetricRatio :current="resolved.currentText" :target="resolved.targetText" />
     </div>
   </div>
 </template>
@@ -368,11 +368,7 @@ watch(
     height: 100%;
     border-radius: inherit;
     min-width: 0;
-    background: linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--vis-progress-fill, var(--el-color-primary)) 72%, var(--dash-card-bg, #fff)) 0%,
-      var(--vis-progress-fill, var(--el-color-primary)) 100%
-    );
+    background: var(--vis-progress-fill, var(--na-chart-accent));
     transition: width 0.7s cubic-bezier(0.22, 1, 0.36, 1);
 
     .is-filled & {
@@ -387,23 +383,6 @@ watch(
     font-size: var(--vis-progress-values, 13px);
     line-height: 1.3;
     font-variant-numeric: tabular-nums;
-  }
-
-  &__current {
-    font-weight: 600;
-    color: var(--vis-content-color, var(--el-text-color-primary));
-  }
-
-  &__target {
-    font-weight: 400;
-    color: var(--vis-muted-color, var(--el-text-color-secondary));
-    opacity: 0.82;
-  }
-
-  &__sep {
-    opacity: 0.38;
-    font-weight: 400;
-    color: var(--vis-muted-color, var(--el-text-color-secondary));
   }
 
   &__ring-slot {

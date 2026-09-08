@@ -6,24 +6,24 @@ import type { Extension } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
 import { FONT_MONO } from '@/core/fonts'
 
-/** 品牌主色，与 variables.scss $cfe-color-primary 一致 */
-const PRIMARY = '#0052d9'
-const TEXT = '#303133'
-const TEXT_SECONDARY = '#606266'
-const TEXT_WEAK = '#909399'
-const BORDER = '#e4e7ed'
-const HEADER_BG = '#f5f7fa'
-const SELECTED_BG = 'rgba(0, 82, 217, 0.08)'
-const HOVER_BG = '#f5f7fa'
+// CodeMirror 输出的是 DOM 样式，可直接继承作用域中的公共变量。
+const PRIMARY = 'var(--na-color-primary)'
+const TEXT = 'var(--na-text-strong)'
+const TEXT_SECONDARY = 'var(--na-text-regular)'
+const TEXT_WEAK = 'var(--na-text-muted)'
+const BORDER = 'var(--na-border-color-light)'
+const HEADER_BG = 'var(--na-fill-color-light)'
+const SELECTED_BG = 'var(--na-color-primary-soft)'
+const HOVER_BG = 'var(--na-fill-color-light)'
 
 export function completionPanelTheme(): Extension {
   return EditorView.theme({
     '.cm-tooltip': {
       border: `1px solid ${BORDER}`,
       borderRadius: '4px',
-      backgroundColor: '#fff',
+      backgroundColor: 'var(--na-surface-elevated)',
       color: TEXT,
-      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
+      boxShadow: 'var(--na-shadow-floating)',
       fontFamily: 'inherit',
     },
 
@@ -100,8 +100,8 @@ export function completionPanelTheme(): Extension {
       lineHeight: '1.5',
       border: `1px solid ${BORDER}`,
       borderRadius: '4px',
-      backgroundColor: '#fff',
-      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
+      backgroundColor: 'var(--na-surface-elevated)',
+      boxShadow: 'var(--na-shadow-floating)',
       maxWidth: '280px',
     },
   })

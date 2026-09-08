@@ -7,6 +7,7 @@ import type { DashGroupWidget, DashPageItem } from '../dashLayout'
 import type { DashFlowMode } from '../dashPresentation'
 import type { VisCard } from '@/views/vis/shared/types'
 import type { VisCardDetailOpenPayload } from '@/views/vis/shared/useVisCardDetail'
+import VisActionButton from '@/views/vis/shared/VisActionButton.vue'
 import { createEmptyPage, groupEmptyHint } from '../dashLayout'
 import DashCardTile from './DashCardTile.vue'
 import DashInnerGrid from './DashInnerGrid.vue'
@@ -147,22 +148,23 @@ function onResizePointerDown(corner: 'nw' | 'ne' | 'sw' | 'se', event: PointerEv
             class="dash-group__tab"
             :class="{ 'is-active': activeCardId === tab.cardId }"
             :title="tab.title"
+            :aria-pressed="activeCardId === tab.cardId"
             @pointerdown.stop
             @click="activeCardId = tab.cardId"
           >
             {{ tab.title }}
           </button>
         </div>
-        <el-button
+        <VisActionButton
           v-if="designActions"
           class="dash-group__cfg"
-          text
+          label="分组配置"
           title="分组配置"
           @pointerdown.stop
           @click="emit('configure')"
         >
           <span class="i-mingcute-settings-3-line" />
-        </el-button>
+        </VisActionButton>
       </div>
     </div>
     <div class="dash-group__body" :class="{ 'is-tab': widget.mode === 'tabs' }">
@@ -218,6 +220,7 @@ function onResizePointerDown(corner: 'nw' | 'ne' | 'sw' | 'se', event: PointerEv
 <style scoped lang="scss">
 @use '../dashGrid.scss' as dash;
 @use '../dashPage.scss' as page;
+@use '@/theme/presentation.scss' as ui;
 
 .dash-group {
   position: relative;
@@ -229,7 +232,7 @@ function onResizePointerDown(corner: 'nw' | 'ne' | 'sw' | 'se', event: PointerEv
   box-sizing: border-box;
   padding: 0;
   background: var(--dash-group-bg, var(--dash-card-bg, var(--el-bg-color)));
-  border: none;
+  border: var(--vis-card-border);
   border-radius: var(--dash-card-radius, 12px);
   @include page.frost(card);
 }
@@ -238,7 +241,8 @@ function onResizePointerDown(corner: 'nw' | 'ne' | 'sw' | 'se', event: PointerEv
 .dash-group.is-editable:focus-within,
 .dash-group.is-resizing,
 .dash-group.is-editable:has(.vis-card-view.is-menu-open) {
-  outline: 3px solid color-mix(in srgb, var(--dash-accent, #0052d9) 68%, var(--dash-card-bg, #fff));
+  outline: 3px solid
+    color-mix(in srgb, var(--dash-accent, var(--na-color-primary)) 68%, var(--dash-card-bg, var(--na-surface-bg)));
   outline-offset: -1px;
 }
 
@@ -283,7 +287,7 @@ function onResizePointerDown(corner: 'nw' | 'ne' | 'sw' | 'se', event: PointerEv
 .dash-group__handle-icon {
   width: 34px;
   height: 24px;
-  color: var(--dash-content-muted, #646a73);
+  color: var(--dash-content-muted, var(--na-text-muted));
 }
 
 .dash-group.hide-resize-dots .dash-group__dot {
@@ -299,9 +303,9 @@ function onResizePointerDown(corner: 'nw' | 'ne' | 'sw' | 'se', event: PointerEv
   box-sizing: border-box;
   width: 16px;
   height: 16px;
-  border: 2px solid var(--dash-card-bg, #fff);
+  border: 2px solid var(--dash-card-bg, var(--na-surface-bg));
   border-radius: 50%;
-  background: var(--dash-accent, #0052d9);
+  background: var(--dash-accent, var(--na-color-primary));
   touch-action: none;
   pointer-events: none;
 
@@ -343,7 +347,7 @@ function onResizePointerDown(corner: 'nw' | 'ne' | 'sw' | 'se', event: PointerEv
   gap: 12px;
   flex-shrink: 0;
   min-width: 0;
-  padding: 6px var(--dash-grid-gap, 12px) 0;
+  padding: var(--vis-card-header-y) var(--vis-card-inset) 0;
 }
 
 .dash-group__titles {
@@ -376,10 +380,8 @@ function onResizePointerDown(corner: 'nw' | 'ne' | 'sw' | 'se', event: PointerEv
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.01em;
-  line-height: 28px;
+  @include ui.title;
+  line-height: var(--vis-control-compact);
   color: var(--dash-group-fg, var(--dash-title, var(--el-text-color-primary)));
 }
 
@@ -404,14 +406,10 @@ function onResizePointerDown(corner: 'nw' | 'ne' | 'sw' | 'se', event: PointerEv
 }
 
 .dash-group__tabs {
-  display: flex;
-  align-items: center;
+  @include ui.segmented;
   min-width: 0;
   max-width: 100%;
-  padding: 2px;
   overflow-x: auto;
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--dash-title, #1f2329) 8%, var(--dash-card-bg, #fff));
   scrollbar-width: none;
 
   &::-webkit-scrollbar {
@@ -441,41 +439,12 @@ function onResizePointerDown(corner: 'nw' | 'ne' | 'sw' | 'se', event: PointerEv
 }
 
 .dash-group__tab {
+  @include ui.segment;
   flex-shrink: 0;
   max-width: 120px;
-  height: 24px;
-  padding: 0 10px;
-  border: none;
-  border-radius: 6px;
-  background: transparent;
-  color: var(--dash-content-muted, var(--el-text-color-secondary));
-  font-size: 12px;
-  line-height: 24px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  cursor: pointer;
-
-  &:hover:not(.is-active) {
-    color: var(--dash-content-color, var(--el-text-color-primary));
-  }
-
-  &.is-active {
-    background: var(--dash-card-bg, var(--el-bg-color));
-    color: var(--dash-accent, var(--el-color-primary));
-    font-weight: 600;
-    box-shadow: 0 1px 2px rgb(15 23 42 / 8%);
-  }
-}
-
-.dash-group__cfg {
-  flex-shrink: 0;
-  padding: 4px;
-
-  .i-mingcute-settings-3-line {
-    width: 16px;
-    height: 16px;
-  }
 }
 
 .dash-group__body {
@@ -498,12 +467,10 @@ function onResizePointerDown(corner: 'nw' | 'ne' | 'sw' | 'se', event: PointerEv
     --dash-group-bg,
     color-mix(in srgb, var(--dash-card-bg, var(--el-bg-color)) 94%, var(--dash-canvas-bg, transparent))
   );
-  border: 1px solid color-mix(in srgb, var(--dash-border, #e5e7eb) 64%, transparent);
 
   .dash-group__chrome {
     min-height: 52px;
-    padding: 10px 14px 9px;
-    border-bottom: 1px solid color-mix(in srgb, var(--dash-group-fg, var(--dash-border, #e5e7eb)) 18%, transparent);
+    padding: var(--vis-card-header-y) var(--vis-card-inset);
   }
 
   .dash-group__title {
@@ -516,25 +483,10 @@ function onResizePointerDown(corner: 'nw' | 'ne' | 'sw' | 'se', event: PointerEv
     line-height: 18px;
   }
 
-  .dash-group__tabs {
-    gap: 2px;
-    border: 1px solid color-mix(in srgb, var(--dash-border, #e5e7eb) 42%, transparent);
-  }
-
-  &:not(.has-color) .dash-group__tab.is-active {
-    background: color-mix(
-      in srgb,
-      var(--dash-card-bg, var(--el-bg-color)) 90%,
-      var(--dash-accent, var(--el-color-primary))
-    );
-    box-shadow: none;
-  }
-
-  // 组内卡片比外层容器更亮一层，用边界而非重阴影表达嵌套关系。
+  // 组内卡片靠表面和轻阴影表达嵌套关系，避免容器与内容层层描边。
   :deep(.dash-tile.is-in-group:not(.is-full)) {
-    border: 1px solid color-mix(in srgb, var(--dash-border, #e5e7eb) 46%, transparent);
     background: var(--dash-card-bg, var(--el-bg-color));
-    box-shadow: 0 1px 2px color-mix(in srgb, var(--dash-title, #1f2329) 6%, transparent);
+    box-shadow: 0 1px 2px color-mix(in srgb, var(--dash-title, var(--na-text-strong)) 6%, transparent);
   }
 }
 
@@ -565,8 +517,8 @@ function onResizePointerDown(corner: 'nw' | 'ne' | 'sw' | 'se', event: PointerEv
   .dash-group__chrome {
     flex-direction: column;
     align-items: stretch;
-    gap: 8px;
-    padding: 11px 12px 10px;
+    gap: 4px;
+    padding: 12px var(--vis-card-inset) 0;
   }
 
   .dash-group__titles,
@@ -588,13 +540,16 @@ function onResizePointerDown(corner: 'nw' | 'ne' | 'sw' | 'se', event: PointerEv
   }
 
   .dash-group__tabs {
-    width: 100%;
+    width: auto;
+    max-width: 100%;
     box-sizing: border-box;
     scroll-snap-type: x proximity;
   }
 
   .dash-group__tab {
     max-width: min(156px, 68vw);
+    height: 32px;
+    line-height: 32px;
     scroll-snap-align: start;
   }
 }

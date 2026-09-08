@@ -10,6 +10,8 @@ import {
   resolveKpiView,
 } from '@/views/vis/shared/kpiCard'
 
+import VisMetricRatio from './VisMetricRatio.vue'
+
 const props = withDefaults(defineProps<{
   visual: VisVisualConfig
   query: VIS.QueryConfig
@@ -111,12 +113,13 @@ function onRowClick(record: Record<string, unknown>, event: MouseEvent) {
               class="vis-kpi-card__fill"
               :style="{
                 width: `${play * row.fillRatio * 100}%`,
-                background: paint.fillGradient,
+                background: paint.fill,
               }"
             >
               <span
                 v-if="options.showPercent"
-                class="vis-kpi-card__bar-percent is-on-fill"
+                class="vis-kpi-card__bar-percent"
+                :style="{ color: paint.onFill }"
               >
                 {{ row.percentText }}
               </span>
@@ -130,9 +133,11 @@ function onRowClick(record: Record<string, unknown>, event: MouseEvent) {
           :style="{ gridRow: index + 1 }"
           @click="onRowClick(row.record, $event)"
         >
-          <span class="vis-kpi-card__values">
-            {{ row.currentText }} / {{ row.targetText }}
-          </span>
+          <VisMetricRatio
+            class="vis-kpi-card__values"
+            :current="row.currentText"
+            :target="row.targetText"
+          />
         </div>
       </template>
       <div
@@ -249,12 +254,8 @@ function onRowClick(record: Record<string, unknown>, event: MouseEvent) {
   line-height: 1;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
-  color: var(--vis-content-color, #1f2329);
+  color: var(--vis-content-color, var(--na-text-strong));
   pointer-events: none;
-
-  &.is-on-fill {
-    color: #fff;
-  }
 }
 
 .vis-kpi-card__pace-slot {
@@ -273,7 +274,11 @@ function onRowClick(record: Record<string, unknown>, event: MouseEvent) {
   bottom: 0;
   width: 2px;
   margin-left: -1px;
-  background: repeating-linear-gradient(to bottom, var(--vis-content-color, #1f2329) 0 5px, transparent 5px 9px);
+  background: repeating-linear-gradient(
+    to bottom,
+    var(--vis-content-color, var(--na-text-strong)) 0 5px,
+    transparent 5px 9px
+  );
 }
 
 .vis-kpi-card__pace-tag {
@@ -287,7 +292,7 @@ function onRowClick(record: Record<string, unknown>, event: MouseEvent) {
   font-size: 11px;
   line-height: 18px;
   white-space: nowrap;
-  color: #fff;
+  color: var(--na-on-primary);
 }
 
 .vis-kpi-card__pace.is-label-left .vis-kpi-card__pace-tag {
@@ -306,9 +311,6 @@ function onRowClick(record: Record<string, unknown>, event: MouseEvent) {
 
 .vis-kpi-card__values {
   font-size: 12px;
-  line-height: 1.2;
-  font-variant-numeric: tabular-nums;
-  color: var(--vis-content-color, var(--el-text-color-secondary));
 }
 
 .vis-kpi-card__name.is-interactive,

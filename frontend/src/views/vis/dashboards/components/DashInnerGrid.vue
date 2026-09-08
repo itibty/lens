@@ -13,8 +13,10 @@ import { GridItem, GridLayout } from 'grid-layout-plus'
 import { DASH_COL_NUM, DASH_MARGIN, DASH_MIN_H, DASH_MIN_W, DASH_ROW_HEIGHT } from '../config'
 import { groupEmptyHint, sameRect } from '../dashLayout'
 import { projectDashFlowCards } from '../dashPresentation'
+import { useDashGridGuides } from '../useDashGridGuides'
 import { layoutMatches, stackLayout, useDashGridInteract } from '../useDashGridInteract'
 import DashCardTile from './DashCardTile.vue'
+import DashGridGuides from './DashGridGuides.vue'
 
 const props = withDefaults(defineProps<{
   cards: Record<string, VisCard>
@@ -108,6 +110,18 @@ const interact = useDashGridInteract({
   commit: applyLayout,
 })
 
+const guides = useDashGridGuides({
+  layout,
+  resizingId: interact.resizingId,
+  editable: () => props.editable,
+  staticPresentation: () => staticPresentation.value,
+})
+
+function onItemMoved() {
+  guides.onMoveEnd()
+  applyLayout()
+}
+
 function syncLayout() {
   if (interact.busy())
     return
@@ -140,8 +154,8 @@ const flowTiles = computed(() => props.flowMode
 
 function flowItemStyle(item: (typeof flowTiles.value)[number]): CSSProperties {
   return {
-    gridColumn: `span ${item.columnSpan}`,
-    height: `${item.height}px`,
+    '--dash-flow-span': item.columnSpan,
+    'height': `${item.height}px`,
   }
 }
 
@@ -170,7 +184,9 @@ onBeforeUnmount(() => {
       'is-stacked': stacked,
       'is-flow': flowing,
     }"
+    @pointerdown.capture="guides.onPointerDown"
   >
+    <DashGridGuides v-if="guides.visible.value" :active-item="guides.activeItem.value" />
     <div v-if="!visibleItems.length" class="dash-inner__empty">
       {{ emptyText }}
     </div>
@@ -222,6 +238,7 @@ onBeforeUnmount(() => {
         v-for="{ item, card } in tiles"
         :key="item.i"
         :i="item.i"
+        :data-dash-guide-id="String(item.i)"
         :x="item.x"
         :y="item.y"
         :w="item.w"
@@ -232,7 +249,8 @@ onBeforeUnmount(() => {
         :is-resizable="false"
         drag-allow-from=".dash-tile__handle"
         drag-ignore-from=".vis-card-view__actions, .dash-tile__body, .dash-tile__dot, a"
-        @moved="applyLayout"
+        @move="guides.onMove"
+        @moved="onItemMoved"
       >
         <DashCardTile
           :card="card"
@@ -262,9 +280,16 @@ onBeforeUnmount(() => {
 @use '../dashGrid.scss' as dash;
 
 .dash-inner {
+  position: relative;
   min-height: 120px;
   @include dash.vgl-canvas;
   @include dash.vgl-fill;
+
+  // 分组内部按自己的可用宽度折列，避免沿用外层看板宽度挤压指标。
+  &.is-flow {
+    container-type: inline-size;
+    container-name: dash-flow;
+  }
 
   &.is-editable,
   &.is-resizing {
@@ -287,7 +312,7 @@ onBeforeUnmount(() => {
 
 .dash-inner__flow {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--dash-grid-gap, 12px);
   box-sizing: border-box;
   width: 100%;
@@ -300,11 +325,22 @@ onBeforeUnmount(() => {
 
 .dash-inner__flow-item {
   min-width: 0;
+  grid-column: span var(--dash-flow-span, 2);
 
   > :deep(.vis-full-wrap),
   > :deep(.dash-tile) {
     width: 100%;
     height: 100%;
+  }
+}
+
+@container dash-flow (max-width: 359px) {
+  .dash-inner__flow {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .dash-inner__flow-item {
+    grid-column: 1 / -1;
   }
 }
 </style>

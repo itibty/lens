@@ -66,14 +66,14 @@ export function isLightweightDashCard(chartType?: string): boolean {
  * 流式布局使用稳定的产品高度，而不是照搬桌面栅格的 h。
  * 表格留出更多纵向浏览空间，指标类则保持紧凑。
  */
-export function dashFlowCardHeight(chartType?: string): number {
+export function dashFlowCardHeight(chartType?: string, mode: DashFlowMode = 'medium'): number {
   switch (String(chartType || '').trim().toLowerCase()) {
     case 'number':
-      return 176
+      return mode === 'compact' ? 156 : 176
     case 'progress':
-      return 196
+      return mode === 'compact' ? 172 : 196
     case 'trend':
-      return 220
+      return mode === 'compact' ? 196 : 220
     case 'kpi':
     case 'richtext':
       return 260
@@ -85,12 +85,29 @@ export function dashFlowCardHeight(chartType?: string): number {
     case 'pivot':
       return 420
     default:
-      return 320
+      return mode === 'compact' ? 296 : 320
   }
 }
 
 export function dashFlowColumnSpan(mode: DashFlowMode, chartType?: string): 1 | 2 {
-  return mode === 'medium' && isLightweightDashCard(chartType) ? 1 : mode === 'medium' ? 2 : 1
+  const simpleMetric = String(chartType || '').trim().toLowerCase() === 'number'
+  return (mode === 'compact' ? simpleMetric : isLightweightDashCard(chartType)) ? 1 : 2
+}
+
+// 只配对相邻指标，保持阅读顺序；落单指标铺满一行，避免图表前留下半行空白。
+function pairCompactMetrics<T extends { columnSpan: 1 | 2 }>(items: T[], mode: DashFlowMode): T[] {
+  if (mode !== 'compact')
+    return items
+  for (let index = 0; index < items.length; index++) {
+    const item = items[index]!
+    if (item.columnSpan !== 1)
+      continue
+    if (items[index + 1]?.columnSpan === 1)
+      index++
+    else
+      item.columnSpan = 2
+  }
+  return items
 }
 
 export function projectDashFlowWidgets(
@@ -98,31 +115,31 @@ export function projectDashFlowWidgets(
   mode: DashFlowMode,
   chartTypeOf: (cardId: string) => string | undefined,
 ): DashFlowWidgetProjection[] {
-  return sortByDashPosition(widgets).map((widget) => {
+  return pairCompactMetrics(sortByDashPosition(widgets).map((widget): DashFlowWidgetProjection => {
     if (widget.kind === 'card') {
       const chartType = chartTypeOf(widget.cardId)
       return {
         key: widgetKey(widget),
         widget,
         columnSpan: dashFlowColumnSpan(mode, chartType),
-        height: dashFlowCardHeight(chartType),
+        height: dashFlowCardHeight(chartType, mode),
       }
     }
     if (widget.kind === 'text') {
       return {
         key: widgetKey(widget),
         widget,
-        columnSpan: mode === 'medium' ? 2 : 1,
-        minHeight: 120,
+        columnSpan: 2,
+        minHeight: mode === 'compact' ? 96 : 120,
       }
     }
     return {
       key: widgetKey(widget),
       widget,
-      columnSpan: mode === 'medium' ? 2 : 1,
-      ...(widget.mode === 'tabs' ? { height: mode === 'compact' ? 440 : 420 } : { minHeight: 160 }),
+      columnSpan: 2,
+      ...(widget.mode === 'tabs' ? { height: mode === 'compact' ? 380 : 420 } : { minHeight: 160 }),
     }
-  })
+  }), mode)
 }
 
 export function projectDashFlowCards(
@@ -130,9 +147,9 @@ export function projectDashFlowCards(
   mode: DashFlowMode,
   chartTypeOf: (cardId: string) => string | undefined,
 ): DashFlowCardProjection[] {
-  return sortByDashPosition(items).map(item => ({
+  return pairCompactMetrics(sortByDashPosition(items).map(item => ({
     item,
     columnSpan: dashFlowColumnSpan(mode, chartTypeOf(item.cardId)),
-    height: dashFlowCardHeight(chartTypeOf(item.cardId)),
-  }))
+    height: dashFlowCardHeight(chartTypeOf(item.cardId), mode),
+  })), mode)
 }

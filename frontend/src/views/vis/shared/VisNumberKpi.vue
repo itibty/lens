@@ -10,6 +10,9 @@ import {
   resolveNumberValueColor,
 } from '@/views/vis/shared/numberStyle'
 
+import VisMetricAux from './VisMetricAux.vue'
+import VisMetricValue from './VisMetricValue.vue'
+
 const props = withDefaults(defineProps<{
   visual: VisVisualConfig
   query: VIS.QueryConfig
@@ -62,46 +65,20 @@ const { vars: cardStyle } = useNumberFit(rootRef, () => props.fill)
         :style="valueColor ? { color: valueColor } : undefined"
         @click="onValueClick"
       >
-        <span
-          v-if="view.prefix"
-          class="vis-number-kpi__affix is-prefix"
-        >{{ view.prefix }}</span>
-        <span class="vis-number-kpi__body">{{ view.body }}</span>
-        <span
-          v-if="view.compactSuffix"
-          class="vis-number-kpi__affix is-suffix"
-        >{{ view.compactSuffix }}</span>
-        <span
-          v-if="view.suffix"
-          class="vis-number-kpi__affix is-suffix"
-        >{{ view.suffix }}</span>
+        <VisMetricValue
+          :body="view.body"
+          :prefix="view.prefix"
+          :compact-suffix="view.compactSuffix"
+          :suffix="view.suffix"
+        />
       </div>
     </div>
-    <div
+    <VisMetricAux
       v-if="view.auxiliaries.length"
       class="vis-number-kpi__deltas"
-    >
-      <div
-        v-for="item in view.auxiliaries"
-        :key="item.key"
-        class="vis-number-kpi__delta"
-        :class="[`is-${item.direction}`, item.kind === 'metric' ? 'is-metric' : '']"
-        :title="item.title || undefined"
-      >
-        <span
-          v-if="style.showAuxLabel"
-          class="vis-number-kpi__delta-name"
-        >{{ item.label }}</span>
-        <span class="vis-number-kpi__delta-value">
-          <i
-            v-if="item.kind !== 'metric' && item.direction !== 'flat'"
-            class="vis-number-kpi__caret"
-            aria-hidden="true"
-          />
-          {{ item.text }}
-        </span>
-      </div>
-    </div>
+      :items="view.auxiliaries"
+      :show-label="style.showAuxLabel"
+    />
   </div>
 </template>
 
@@ -128,6 +105,7 @@ const { vars: cardStyle } = useNumberFit(rootRef, () => props.fill)
 
   &__hero {
     display: flex;
+    flex-shrink: 0;
     flex-direction: column;
     gap: 2px;
     min-width: 0;
@@ -146,8 +124,7 @@ const { vars: cardStyle } = useNumberFit(rootRef, () => props.fill)
     font-weight: 500;
     letter-spacing: 0.02em;
     line-height: 1.3;
-    color: var(--vis-content-color, var(--el-text-color-secondary));
-    opacity: 0.88;
+    color: var(--vis-muted-color, var(--el-text-color-secondary));
   }
 
   &__value {
@@ -157,10 +134,6 @@ const { vars: cardStyle } = useNumberFit(rootRef, () => props.fill)
     min-width: 0;
     max-width: 100%;
     overflow: hidden;
-    font-size: var(--vis-number-value, 36px);
-    font-weight: 650;
-    letter-spacing: -0.025em;
-    line-height: 1.05;
     color: var(--vis-content-color, var(--el-text-color-primary));
     white-space: nowrap;
 
@@ -173,111 +146,8 @@ const { vars: cardStyle } = useNumberFit(rootRef, () => props.fill)
     }
   }
 
-  &__affix {
-    flex-shrink: 0;
-    font-weight: 500;
-    letter-spacing: 0;
-    line-height: 1;
-    opacity: 0.42;
-
-    &.is-prefix {
-      margin-right: 0.1em;
-      font-size: 0.48em;
-    }
-
-    &.is-suffix {
-      margin-left: 0.06em;
-      font-size: 0.48em;
-    }
-  }
-
-  &__body {
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    font-variant-numeric: tabular-nums lining-nums;
-  }
-
   &__deltas {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: 4px 20px;
-    padding-top: var(--vis-number-gap, 10px);
-  }
-
-  &__delta {
-    flex: 0 1 auto;
-    min-width: 0;
-    max-width: 100%;
-    display: flex;
-    flex-direction: row;
-    align-items: baseline;
-    gap: 6px;
-
-    &[title] {
-      cursor: help;
-    }
-
-    &.is-up {
-      --vis-kpi-delta: var(--el-color-success);
-    }
-
-    &.is-down {
-      --vis-kpi-delta: var(--el-color-danger);
-    }
-
-    &.is-flat {
-      --vis-kpi-delta: var(--vis-muted-color, var(--el-text-color-secondary));
-    }
-
-    &.is-metric {
-      --vis-kpi-delta: var(--vis-content-color, var(--el-text-color-regular));
-    }
-  }
-
-  &__delta-value {
-    display: inline-flex;
-    flex-shrink: 0;
-    align-items: center;
-    gap: 3px;
-    font-size: var(--vis-number-aux, 15px);
-    font-weight: 600;
-    line-height: 1.2;
-    letter-spacing: -0.015em;
-    font-variant-numeric: tabular-nums;
-    white-space: nowrap;
-    color: var(--vis-kpi-delta, var(--el-text-color-regular));
-  }
-
-  &__caret {
-    flex-shrink: 0;
-    width: 0;
-    height: 0;
-    border-left: 3.5px solid transparent;
-    border-right: 3.5px solid transparent;
-
-    .is-up & {
-      border-bottom: 5px solid currentColor;
-    }
-
-    .is-down & {
-      border-top: 5px solid currentColor;
-    }
-  }
-
-  &__delta-name {
-    flex: 0 1 auto;
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    font-size: var(--vis-number-aux-label, 11px);
-    font-weight: 400;
-    line-height: 1.25;
-    color: var(--vis-muted-color, var(--el-text-color-secondary));
-    opacity: 0.88;
+    padding-top: var(--vis-metric-aux-gap, var(--vis-number-gap, 14px));
   }
 }
 </style>

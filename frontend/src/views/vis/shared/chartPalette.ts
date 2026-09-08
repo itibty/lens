@@ -1,4 +1,5 @@
 import type { VisChartThemeId, VisVisualConfig } from './types'
+import { DATA_SERIES, LIGHT_THEME, mixColor, NEUTRAL } from '@/theme/tokens'
 import { isHeatmapChart } from './types'
 
 export const DEFAULT_CHART_THEME: VisChartThemeId = 'DEFAULT'
@@ -20,7 +21,7 @@ export const HEATMAP_COLOR_PRESETS: ChartPalettePreset[] = [
   {
     id: 'DEFAULT',
     label: '默认',
-    palette: ['#D9E7FF', '#0052D9'],
+    palette: [mixColor(LIGHT_THEME.primary.base, NEUTRAL.white, 0.14), LIGHT_THEME.primary.base],
   },
   {
     id: 'GRADIENT',
@@ -94,7 +95,7 @@ export function pieGradientOrdinal(
 
 /**
  * 几何图系列色。
- * DEFAULT 使用品牌主色开头的默认系列色。
+ * DEFAULT 使用公共蓝青系列色；单系列自然取首色，多分类维持稳定顺序。
  * CONTRAST = Tableau 10 前 8 色；COLORBLIND = Okabe-Ito（不含黑）。
  * GRADIENT / WARM_GRADIENT 仅饼图 / 词云 / 矩形树图：按名次均分色带。热力图用 HEATMAP_COLOR_PRESETS。
  */
@@ -102,7 +103,7 @@ export const CHART_SERIES_PALETTES: ChartPalettePreset[] = [
   {
     id: 'DEFAULT',
     label: '默认',
-    palette: ['#0052D9', '#319CC5', '#E98A18', '#36A36E', '#725BC2', '#C79B18', '#496A8F', '#9A7BC6'],
+    palette: [...DATA_SERIES],
   },
   {
     id: 'GRADIENT',

@@ -7,10 +7,12 @@
  */
 import { createApp } from 'vue'
 import pinia from '@/stores'
+import { installTheme } from '@/theme/cssVars'
 import App from './App.vue'
 import install from './install'
 import router from './router'
 
+installTheme()
 const app = createApp(App)
 app.use(pinia)
 app.use(router)

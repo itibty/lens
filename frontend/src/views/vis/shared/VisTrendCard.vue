@@ -11,6 +11,9 @@ import {
 } from '@/views/vis/shared/numberStyle'
 import { resolveTrendOptions, resolveTrendView, sparklineGeom } from '@/views/vis/shared/trendCard'
 
+import VisMetricAux from './VisMetricAux.vue'
+import VisMetricValue from './VisMetricValue.vue'
+
 const props = withDefaults(defineProps<{
   visual: VisVisualConfig
   query: VIS.QueryConfig
@@ -101,26 +104,19 @@ function onValueClick(event: MouseEvent) {
           :style="valueColor ? { color: valueColor } : undefined"
           @click="onValueClick"
         >
-          <span
-            v-if="view.prefix"
-            class="vis-trend-card__affix is-prefix"
-          >{{ view.prefix }}</span>
-          <span class="vis-trend-card__body">{{ view.body }}</span>
-          <span
-            v-if="view.compactSuffix"
-            class="vis-trend-card__affix is-suffix"
-          >{{ view.compactSuffix }}</span>
-          <span
-            v-if="view.suffix"
-            class="vis-trend-card__affix is-suffix"
-          >{{ view.suffix }}</span>
+          <VisMetricValue
+            :body="view.body"
+            :prefix="view.prefix"
+            :compact-suffix="view.compactSuffix"
+            :suffix="view.suffix"
+          />
         </div>
         <div
           v-if="view.changeText"
           class="vis-trend-card__change"
           :class="`is-${view.changeDirection}`"
         >
-          {{ view.changeText }}
+          <VisMetricValue :body="view.changeText" size="aux" />
         </div>
       </div>
     </div>
@@ -169,23 +165,12 @@ function onValueClick(event: MouseEvent) {
         />
       </svg>
     </div>
-    <div
+    <VisMetricAux
       v-if="view.auxiliaries.length"
       class="vis-trend-card__aux"
-    >
-      <div
-        v-for="item in view.auxiliaries"
-        :key="item.key"
-        class="vis-trend-card__aux-item"
-      >
-        <span
-          v-if="style.showAuxLabel"
-          class="vis-trend-card__aux-name"
-          :title="item.label"
-        >{{ item.label }}</span>
-        <span class="vis-trend-card__aux-value">{{ item.text }}</span>
-      </div>
-    </div>
+      :items="view.auxiliaries"
+      :show-label="style.showAuxLabel"
+    />
   </div>
   <div
     v-else
@@ -235,28 +220,24 @@ function onValueClick(event: MouseEvent) {
     letter-spacing: 0.02em;
     line-height: 1.3;
     color: var(--vis-muted-color, var(--el-text-color-secondary));
-    opacity: 0.88;
   }
 
   &__row {
     display: flex;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
     align-items: baseline;
     justify-content: space-between;
-    gap: 12px;
+    gap: 6px 12px;
     min-width: 0;
   }
 
   &__value {
-    display: block;
+    display: flex;
+    align-items: baseline;
     flex: 1 1 auto;
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
-    font-size: var(--vis-number-value, 36px);
-    font-weight: 650;
-    letter-spacing: -0.025em;
-    line-height: 1.05;
     color: var(--vis-content-color, var(--el-text-color-primary));
     white-space: nowrap;
 
@@ -269,37 +250,11 @@ function onValueClick(event: MouseEvent) {
     }
   }
 
-  &__affix {
-    flex-shrink: 0;
-    font-weight: 500;
-    letter-spacing: 0;
-    line-height: 1;
-    opacity: 0.42;
-
-    &.is-prefix {
-      margin-right: 0.1em;
-      font-size: 0.48em;
-    }
-
-    &.is-suffix {
-      margin-left: 0.06em;
-      font-size: 0.48em;
-    }
-  }
-
-  &__body {
-    font-variant-numeric: tabular-nums lining-nums;
-  }
-
   &__change {
     position: relative;
     z-index: 1;
     flex: 0 0 auto;
     max-width: 100%;
-    font-size: var(--vis-number-aux, 15px);
-    font-weight: 600;
-    font-variant-numeric: tabular-nums;
-    line-height: 1.2;
     white-space: nowrap;
 
     &.is-up {
@@ -315,8 +270,7 @@ function onValueClick(event: MouseEvent) {
     }
   }
 
-  &__hero,
-  &__aux {
+  &__hero {
     flex-shrink: 0;
     min-width: 0;
   }
@@ -360,45 +314,8 @@ function onValueClick(event: MouseEvent) {
   }
 
   &__aux {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: 4px 20px;
-    /* 抵掉根 gap，只留和指标卡一样的一层顶距 */
-    margin-top: calc(-1 * var(--vis-number-gap, 14px));
-    padding-top: var(--vis-number-gap, 10px);
-    border-top: 1px solid color-mix(in srgb, var(--el-border-color-lighter) 70%, transparent);
-  }
-
-  &__aux-item {
-    flex: 0 1 auto;
-    display: flex;
-    flex-direction: row;
-    align-items: baseline;
-    gap: 6px;
-    min-width: 0;
-    max-width: 100%;
-  }
-
-  &__aux-value {
-    flex-shrink: 0;
-    font-size: var(--vis-number-aux, 15px);
-    font-weight: 600;
-    font-variant-numeric: tabular-nums;
-    white-space: nowrap;
-  }
-
-  &__aux-name {
-    flex: 0 1 auto;
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    font-size: var(--vis-number-aux-label, 11px);
-    font-weight: 400;
-    line-height: 1.25;
-    color: var(--vis-muted-color, var(--el-text-color-secondary));
-    opacity: 0.88;
+    padding-top: 8px;
+    border-top: 1px solid var(--el-border-color-lighter);
   }
 }
 </style>

@@ -7,10 +7,12 @@ import type { DashFilterValues, DashSettingsDraft, VisDashFilterDef } from '../d
 import type { DashGroupDraft, DashWidget } from '../dashLayout'
 import type { DashCardRadiusId, DashThemeId } from '../dashTheme'
 import type { VisCard } from '@/views/vis/shared/types'
+import { useStorage } from '@vueuse/core'
 import vis from '@/apis/vis/index'
 import { useLeaveConfirm } from '@/hooks/leaveConfirm'
 import { useSwipeBackGuard } from '@/hooks/swipeBack'
 import { useAccountStore } from '@/stores/modules/account'
+import { LENS_THEME_KEY } from '@/theme/context'
 import { showConfirm, showToast } from '@/utils/index'
 import MenuIconPicker from '@/views/permission/menu/components/MenuIconPicker.vue'
 import { fromVisCardInfo } from '@/views/vis/cards/cardApi'
@@ -42,12 +44,12 @@ import {
 } from '../dashLayout'
 import { captureDashPreview, saveDashScreenshot } from '../dashScreenshot'
 import {
-  DASH_SURFACE_MODE_KEY,
   dashThemeVars,
   DEFAULT_DASH_CARD_RADIUS,
   DEFAULT_DASH_THEME,
-  resolveDashSurfaceMode,
+  resolveDashTheme,
 } from '../dashTheme'
+import { provideDashGridGuides } from '../useDashGridGuides'
 import { useDashRefresh } from '../useDashRefresh'
 import CardPickerDialog from './CardPickerDialog.vue'
 import DashFilterBar from './DashFilterBar.vue'
@@ -99,6 +101,8 @@ const saveOpen = ref(false)
 const saveFormRef = ref<FormInstance>()
 const reloading = ref(false)
 const capturing = ref(false)
+const gridGuides = useStorage('lens:dash:grid-guides', true)
+provideDashGridGuides(computed(() => canWrite && gridGuides.value && !capturing.value))
 const canvasScrollbarRef = ref<ScrollbarInstance>()
 
 const states = reactive({
@@ -119,7 +123,7 @@ const cardRadius = ref<DashCardRadiusId>(DEFAULT_DASH_CARD_RADIUS)
 const autoRefreshSec = ref<number>()
 const groupTree = ref<VIS.DashGroupInfo[]>([])
 const baselineSnapshot = ref('')
-provide(DASH_SURFACE_MODE_KEY, computed(() => resolveDashSurfaceMode(theme.value)))
+provide(LENS_THEME_KEY, computed(() => resolveDashTheme(theme.value).theme))
 
 const saveForm = reactive({
   name: '',
@@ -618,6 +622,7 @@ defineExpose<DashDesignerInstance>({
           <DashFilterBar
             v-model:values="filterValues"
             v-model:theme="theme"
+            v-model:grid-guides="gridGuides"
             :title="states.name"
             :desc="states.desc"
             :defs="filters"
@@ -626,7 +631,7 @@ defineExpose<DashDesignerInstance>({
             :loading="loading"
             :dirty="dirty"
             :preview-disabled="!states.id"
-            :screenshotting="capturing || loading"
+            :screenshotting="capturing"
             :save-loading="saveLoading"
             :save-disabled="!states.id"
             @refresh="refreshCards"

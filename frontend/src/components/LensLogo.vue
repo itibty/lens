@@ -28,18 +28,18 @@ withDefaults(defineProps<{
 
 <style scoped>
 .lens-logo {
-  --lens-logo-primary: #0b5fd7;
-  --lens-logo-medium: #347fe5;
-  --lens-logo-light: #72a9f2;
+  --lens-logo-primary: var(--na-color-primary);
+  --lens-logo-medium: var(--el-color-primary-light-3);
+  --lens-logo-light: var(--el-color-primary-light-5);
 
   display: block;
   overflow: visible;
 }
 
 .lens-logo--on-dark {
-  --lens-logo-primary: #6da8ff;
-  --lens-logo-medium: #4389ed;
-  --lens-logo-light: #9bc5ff;
+  --lens-logo-primary: var(--na-brand-on-dark);
+  --lens-logo-medium: var(--na-brand-on-dark-muted);
+  --lens-logo-light: var(--na-brand-on-dark-light);
 }
 
 .lens-logo__orbit,

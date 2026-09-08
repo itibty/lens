@@ -1,23 +1,17 @@
 import type { TYPES } from '@visactor/vtable'
 import type { VisChartThemeId, VisVisualConfig } from './types'
+import type { ThemeColors } from '@/theme/tokens'
 import { themes } from '@visactor/vtable'
 import { FONT_SANS } from '@/core/fonts'
+import { alphaColor, LIGHT_THEME } from '@/theme/tokens'
 import { resolveChartThemeId } from './chartPalette'
 import { resolveTableStyle } from './tableStyle'
 
 type ITableThemeDefine = TYPES.ITableThemeDefine
 
 const CELL_FONT_SIZE = 13
-const BODY_BG = '#FFFFFF'
-const DEFAULT_STRIPE = '#F7F8FA'
-const DARK_BODY_BG = '#1B222C'
-const DARK_STRIPE = '#202832'
-const DARK_HEADER_BG = '#252E39'
-const DARK_TEXT = '#E9EEF5'
-const DARK_MUTED = '#9DA9B8'
-const DARK_BORDER = '#34404D'
-const DARK_HOVER = '#293441'
-const DARK_ACCENT = '#4D9FFF'
+const BODY_BG = LIGHT_THEME.surface.panel
+const DEFAULT_STRIPE = LIGHT_THEME.surface.faint
 
 /** 表格 / 透视共用画布与行高 */
 export const VTABLE_LAYOUT = {
@@ -57,7 +51,7 @@ export const VTABLE_EMPTY_TIP = {
   textStyle: {
     fontSize: 13,
     fontFamily: FONT_SANS,
-    color: '#909399',
+    color: LIGHT_THEME.text.muted,
   },
   icon: {
     width: 0,
@@ -66,12 +60,12 @@ export const VTABLE_EMPTY_TIP = {
   },
 } as const
 
-export function resolveVTableEmptyTip(dark = false) {
+export function resolveVTableEmptyTip(theme: ThemeColors = LIGHT_THEME) {
   return {
     ...VTABLE_EMPTY_TIP,
     textStyle: {
       ...VTABLE_EMPTY_TIP.textStyle,
-      color: dark ? DARK_MUTED : VTABLE_EMPTY_TIP.textStyle.color,
+      color: theme.text.muted,
     },
   }
 }
@@ -93,10 +87,28 @@ type TableChrome = {
   stripeOdd: string
 }
 
-const DEFAULT_HEADER_BG = '#ECF1F5'
-const DEFAULT_BODY_COLOR = '#000000'
+const DEFAULT_HEADER_BG = LIGHT_THEME.surface.subtle
+const DEFAULT_BODY_COLOR = LIGHT_THEME.text.strong
 
-/** CONTRAST = Tableau；COLORBLIND = Okabe-Ito。默认不写，沿用官方表头。 */
+function tableChrome(theme: ThemeColors): TableChrome {
+  return {
+    headerBg: theme.surface.subtle,
+    headerColor: theme.text.strong,
+    headerHover: theme.primary.soft,
+    headerHoverRow: theme.surface.hover,
+    headerSelect: theme.primary.soft,
+    bodyColor: theme.text.strong,
+    border: theme.border.light,
+    hover: theme.primary.soft,
+    hoverRow: theme.surface.faint,
+    accent: theme.primary.base,
+    accentSoft: theme.primary.soft,
+    selection: alphaColor(theme.primary.base, 0.12),
+    stripeOdd: theme.surface.faint,
+  }
+}
+
+/** 显式色板保留；默认和暗色表面共用公共语义适配。 */
 const TABLE_CHROME: Partial<Record<VisChartThemeId, TableChrome>> = {
   CONTRAST: {
     headerBg: '#4E79A7',
@@ -165,99 +177,27 @@ const BASE_FRAME = {
 
 const HEADER_FONT = { fontSize: CELL_FONT_SIZE, fontWeight: 600, fontFamily: FONT_SANS } as const
 
-export function resolveTableHeaderIconColor(visual?: VisVisualConfig, dark = false) {
-  if (dark)
-    return DARK_MUTED
-  return TABLE_CHROME[resolveChartThemeId(visual)]?.headerColor ?? '#646A73'
+function resolveTableChrome(visual: VisVisualConfig | undefined, theme: ThemeColors) {
+  const id = resolveChartThemeId(visual)
+  // 高对比 / 易辨色等显式色板保持原有覆盖规则；默认表面跟随完整主题。
+  return theme.mode === 'dark' || id === 'DEFAULT'
+    ? tableChrome(theme)
+    : TABLE_CHROME[id] ?? tableChrome(theme)
 }
 
-/** 数据条轨道只适配明暗表面，不参与进度填充配色。 */
-export function resolveVTableProgressTrackColor(dark = false) {
-  return dark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.025)'
+export function resolveTableHeaderIconColor(visual?: VisVisualConfig, theme: ThemeColors = LIGHT_THEME) {
+  return resolveTableChrome(visual, theme).headerColor
 }
 
-/** 官方 DEFAULT；预设只叠表头 / 字色 / 外框，以及可选斑马纹 */
-export function resolveVTableTheme(visual?: VisVisualConfig, dark = false): ITableThemeDefine {
+/** 数据条轨道跟随所在表面，显式进度填充仍优先。 */
+export function resolveVTableProgressTrackColor(theme: ThemeColors = LIGHT_THEME) {
+  return theme.chart.track
+}
+
+/** 字体、表面、选区统一适配，显式图表色板仍优先。 */
+export function resolveVTableTheme(visual?: VisVisualConfig, theme: ThemeColors = LIGHT_THEME): ITableThemeDefine {
   const striped = resolveTableStyle(visual).striped
-  const chrome = TABLE_CHROME[resolveChartThemeId(visual)]
-
-  if (dark) {
-    const header = {
-      ...HEADER_FONT,
-      bgColor: DARK_HEADER_BG,
-      color: DARK_TEXT,
-      hover: {
-        cellBgColor: DARK_HOVER,
-        inlineRowBgColor: DARK_HOVER,
-        inlineColumnBgColor: DARK_HOVER,
-      },
-      select: {
-        cellBgColor: DARK_HOVER,
-        inlineRowBgColor: DARK_HOVER,
-        inlineColumnBgColor: DARK_HOVER,
-      },
-    }
-    return themes.DARK.extends({
-      underlayBackgroundColor: 'transparent',
-      defaultStyle: {
-        fontSize: CELL_FONT_SIZE,
-        fontFamily: FONT_SANS,
-        color: DARK_TEXT,
-        borderColor: DARK_BORDER,
-      },
-      headerStyle: header,
-      rowHeaderStyle: header,
-      cornerHeaderStyle: header,
-      bodyStyle: {
-        fontSize: CELL_FONT_SIZE,
-        fontFamily: FONT_SANS,
-        fontWeight: 400,
-        color: DARK_TEXT,
-        bgColor: striped ? stripeBg(DARK_STRIPE, DARK_BODY_BG) : DARK_BODY_BG,
-        hover: {
-          cellBgColor: DARK_HOVER,
-          inlineRowBgColor: DARK_HOVER,
-          inlineColumnBgColor: DARK_HOVER,
-        },
-      },
-      frameStyle: {
-        ...BASE_FRAME,
-        borderColor: DARK_BORDER,
-      },
-      columnResize: {
-        lineColor: DARK_ACCENT,
-        bgColor: DARK_HOVER,
-      },
-      selectionStyle: {
-        cellBgColor: 'rgba(77, 159, 255, 0.18)',
-        cellBorderColor: DARK_ACCENT,
-      },
-      functionalIconsStyle: {
-        sort_color: DARK_MUTED,
-        sort_color_2: DARK_MUTED,
-        frozen_color: DARK_MUTED,
-        collapse_color: DARK_MUTED,
-        expand_color: DARK_MUTED,
-      },
-    })
-  }
-
-  if (!chrome) {
-    return themes.DEFAULT.extends({
-      underlayBackgroundColor: 'transparent',
-      defaultStyle: { fontSize: CELL_FONT_SIZE, fontFamily: FONT_SANS },
-      headerStyle: HEADER_FONT,
-      rowHeaderStyle: HEADER_FONT,
-      cornerHeaderStyle: HEADER_FONT,
-      bodyStyle: {
-        fontSize: CELL_FONT_SIZE,
-        fontFamily: FONT_SANS,
-        fontWeight: 400,
-        ...(striped ? { bgColor: stripeBg(DEFAULT_STRIPE) } : {}),
-      },
-      frameStyle: BASE_FRAME,
-    })
-  }
+  const chrome = resolveTableChrome(visual, theme)
 
   const headerHover = {
     cellBgColor: chrome.headerHover,
@@ -282,7 +222,7 @@ export function resolveVTableTheme(visual?: VisVisualConfig, dark = false): ITab
     select: headerSelect,
   }
 
-  return themes.DEFAULT.extends({
+  return (theme.mode === 'dark' ? themes.DARK : themes.DEFAULT).extends({
     underlayBackgroundColor: 'transparent',
     defaultStyle: {
       fontSize: CELL_FONT_SIZE,
@@ -298,7 +238,7 @@ export function resolveVTableTheme(visual?: VisVisualConfig, dark = false): ITab
       fontFamily: FONT_SANS,
       fontWeight: 400,
       color: chrome.bodyColor,
-      bgColor: striped ? stripeBg(chrome.stripeOdd) : BODY_BG,
+      bgColor: striped ? stripeBg(chrome.stripeOdd, theme.surface.panel) : theme.surface.panel,
       hover: bodyHover,
     },
     frameStyle: {

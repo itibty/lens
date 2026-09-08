@@ -204,46 +204,6 @@ function switchRoot(root: MenuInfo) {
       }
     }
   }
-
-  &.light {
-    background-color: var(--el-bg-color);
-
-    .logo-txt {
-      color: #2e2e2e;
-    }
-
-    .root-nav-trigger,
-    .account-trigger {
-      color: #707070;
-
-      &:hover,
-      &.open {
-        color: #2e2e2e;
-        background-color: rgba(112, 112, 112, 0.2);
-      }
-    }
-  }
-
-  &.blue {
-    background: $prussian-blue;
-
-    // background: linear-gradient(270deg, #f8d900, #fff544);
-
-    .logo-txt {
-      color: #fff;
-    }
-
-    .root-nav-trigger,
-    .account-trigger {
-      color: #c8d7e6;
-
-      &:hover,
-      &.open {
-        color: #fff;
-        background-color: rgba(200, 215, 230, 0.2);
-      }
-    }
-  }
 }
 
 .logo-wrapper {

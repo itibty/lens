@@ -295,6 +295,7 @@ function onMenuAction(key: string) {
           :extra-actions="extraActions"
           :allow-fullscreen="canFullscreen"
           :fullscreen="isFull"
+          :compact="presentationMode === 'compact' && !isFull"
           embedded
           @open-detail="onOpenDetail"
           @menu-action="onMenuAction"
@@ -316,7 +317,7 @@ function onMenuAction(key: string) {
   min-height: 0;
   box-sizing: border-box;
   background: var(--dash-card-bg, var(--el-bg-color));
-  border: none;
+  border: var(--vis-card-border);
   border-radius: var(--dash-card-radius, 12px);
   @include page.frost(card);
 
@@ -341,7 +342,8 @@ function onMenuAction(key: string) {
 .dash-tile.is-editable:not(.is-full):not(.is-locked):focus-within,
 .dash-tile:not(.is-full):not(.is-locked).is-resizing,
 .dash-tile.is-editable:not(.is-full):not(.is-locked):has(.vis-card-view.is-menu-open) {
-  outline: 3px solid color-mix(in srgb, var(--dash-accent, #0052d9) 68%, var(--dash-card-bg, #fff));
+  outline: 3px solid
+    color-mix(in srgb, var(--dash-accent, var(--na-color-primary)) 68%, var(--dash-card-bg, var(--na-surface-bg)));
   outline-offset: -1px;
 }
 
@@ -396,7 +398,7 @@ function onMenuAction(key: string) {
 .dash-tile__handle-icon {
   width: 34px;
   height: 24px;
-  color: var(--dash-content-muted, #646a73);
+  color: var(--dash-content-muted, var(--na-text-muted));
 }
 
 .dash-tile.hide-resize-dots .dash-tile__dot {
@@ -412,9 +414,9 @@ function onMenuAction(key: string) {
   box-sizing: border-box;
   width: 16px;
   height: 16px;
-  border: 2px solid var(--dash-card-bg, #fff);
+  border: 2px solid var(--dash-card-bg, var(--na-surface-bg));
   border-radius: 50%;
-  background: var(--dash-accent, #0052d9);
+  background: var(--dash-accent, var(--na-color-primary));
   touch-action: none;
   pointer-events: none;
 

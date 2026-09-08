@@ -3,9 +3,10 @@
 -->
 <script setup lang="ts">
 import type { ISpec } from '@visactor/vchart'
-import VChart, { darkTheme } from '@visactor/vchart'
+import type { ThemeColors } from '@/theme/tokens'
+import VChart from '@visactor/vchart'
 import { useResizeObserver } from '@vueuse/core'
-import { FONT_SANS } from '@/core/fonts'
+import { withChartTheme } from '@/theme/vchart'
 import { DASH_PRESENTATION_MODE_KEY } from '@/views/vis/dashboards/dashPresentation'
 import { unwrapChartDatum } from '@/views/vis/shared/chartDatum'
 import { projectChartPresentation } from '@/views/vis/shared/chartPresentation'
@@ -17,15 +18,16 @@ const props = withDefaults(defineProps<{
   interactive?: boolean
   /** 明细菜单打开时压住提示，避免盖住菜单 */
   lockTooltip?: boolean
-  /** 看板专属暗色 surface；不影响卡片设计页和全局主题 */
-  dark?: boolean
+  /** 所在表面的完整颜色；独立卡片省略时使用应用默认主题。 */
+  theme?: ThemeColors
+  themePalette?: boolean
 }>(), {
   spec: null,
   empty: false,
   emptyText: '暂无数据',
   interactive: false,
   lockTooltip: false,
-  dark: false,
+  themePalette: false,
 })
 
 const emit = defineEmits<{
@@ -67,66 +69,6 @@ function specRec(spec: ISpec | null | undefined) {
   if (!spec || typeof spec !== 'object')
     return null
   return spec as unknown as Record<string, unknown>
-}
-
-function plainRecord(value: unknown): Record<string, unknown> {
-  return value && typeof value === 'object' && !Array.isArray(value)
-    ? value as Record<string, unknown>
-    : {}
-}
-
-function darkTextBlock(value: unknown, fill: string) {
-  const block = plainRecord(value)
-  return {
-    ...block,
-    style: {
-      ...plainRecord(block.style),
-      fill,
-    },
-  }
-}
-
-function darkIndicator(value: unknown) {
-  const indicator = plainRecord(value)
-  return {
-    ...indicator,
-    title: darkTextBlock(indicator.title, '#F2F5F9'),
-    content: Array.isArray(indicator.content)
-      ? indicator.content.map(item => darkTextBlock(item, '#9DA9B8'))
-      : indicator.content,
-  }
-}
-
-function withSurfaceTheme(spec: ISpec): ISpec {
-  const source = spec as unknown as Record<string, unknown>
-  const current = plainRecord(source.theme)
-  if (!props.dark) {
-    return {
-      ...source,
-      theme: {
-        fontFamily: FONT_SANS,
-        ...current,
-      },
-    } as ISpec
-  }
-  const base = darkTheme as unknown as Record<string, unknown>
-  return {
-    ...source,
-    ...(source.indicator ? { indicator: darkIndicator(source.indicator) } : {}),
-    theme: {
-      ...base,
-      fontFamily: FONT_SANS,
-      ...current,
-      component: {
-        ...plainRecord(base.component),
-        ...plainRecord(current.component),
-      },
-      series: {
-        ...plainRecord(base.series),
-        ...plainRecord(current.series),
-      },
-    },
-  } as ISpec
 }
 
 function lineCurveType(spec: ISpec | null | undefined) {
@@ -315,7 +257,7 @@ function syncChart() {
     destroyChart()
     return
   }
-  const spec = withSurfaceTheme(projectChartPresentation(props.spec, presentationMode.value))
+  const spec = withChartTheme(projectChartPresentation(props.spec, presentationMode.value), props.theme, props.themePalette)
   if (!chart) {
     createChart(spec)
     return
@@ -370,7 +312,7 @@ watch(
 )
 
 watch(
-  () => props.dark,
+  [() => props.theme, () => props.themePalette],
   () => {
     destroyChart()
     nextTick(syncChart)

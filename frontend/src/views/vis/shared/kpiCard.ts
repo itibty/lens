@@ -1,4 +1,5 @@
 import type { VisKpiOptions, VisKpiPeriodMode, VisQueryConfig, VisVisualConfig } from './types'
+import { NEUTRAL } from '@/theme/tokens'
 import { resolveAccentByPaint } from './accentPresets'
 import { resolveCardChrome } from './cardTheme'
 import { formatFieldText, resolveMetricFormat } from './fieldStyle'
@@ -128,14 +129,15 @@ export function resolveKpiPaint(visual?: VisVisualConfig) {
   const color = visual?.kpi?.color
   const track = visual?.kpi?.trackColor
   const cardColor = visual ? resolveCardChrome(visual).color : undefined
-  const fill = color || 'var(--el-color-primary)'
+  const fill = color || 'var(--na-chart-accent)'
   return {
     fill,
-    fillGradient: `linear-gradient(to right, ${fill}, color-mix(in srgb, ${fill} 58%, #fff))`,
+    // 显式填充沿用原来的白字；默认填充才使用主题的配对文字色。
+    onFill: color ? NEUTRAL.white : 'var(--na-on-primary)',
     track: track
       || (cardColor
         ? 'color-mix(in srgb, var(--vis-content-color) 18%, transparent)'
-        : 'var(--el-fill-color)'),
+        : 'var(--na-chart-track)'),
   }
 }
 

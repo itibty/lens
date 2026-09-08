@@ -14,13 +14,13 @@
 
 @mixin vgl-canvas {
   :deep(.vgl-layout) {
-    --vgl-placeholder-bg: var(--dash-accent, #0052d9);
+    --vgl-placeholder-bg: var(--dash-accent, var(--na-color-primary));
     --vgl-placeholder-opacity: 0.16;
   }
 
   :deep(.vgl-item--placeholder) {
     display: none;
-    background-color: var(--dash-accent, #0052d9);
+    background-color: var(--dash-accent, var(--na-color-primary));
     opacity: 0.16;
     border-radius: var(--dash-card-radius, 12px);
   }

@@ -9,6 +9,7 @@ import type { VisCard } from '@/views/vis/shared/types'
 import { useElementSize } from '@vueuse/core'
 import vis from '@/apis/vis/index'
 import { UIConfig } from '@/core/config'
+import { LENS_THEME_KEY } from '@/theme/context'
 import { showToast } from '@/utils/index'
 import { useCardAutoRefresh } from '@/views/vis/shared/cardRefresh'
 import { apiErrorMessage } from '@/views/vis/shared/visRequest'
@@ -27,11 +28,10 @@ import {
 import { createDashCardQueryTracker, DASH_CARD_QUERY_TRACKER_KEY } from '../dashQueryTracker'
 import { captureDashPreview, saveDashScreenshot } from '../dashScreenshot'
 import {
-  DASH_SURFACE_MODE_KEY,
   dashThemeVars,
   DEFAULT_DASH_CARD_RADIUS,
   DEFAULT_DASH_THEME,
-  resolveDashSurfaceMode,
+  resolveDashTheme,
 } from '../dashTheme'
 import { useDashChromeScroll } from '../useDashChromeScroll'
 import { useDashRefresh } from '../useDashRefresh'
@@ -72,7 +72,7 @@ const theme = ref<DashThemeId>(DEFAULT_DASH_THEME)
 const cardRadius = ref<DashCardRadiusId>(DEFAULT_DASH_CARD_RADIUS)
 const autoRefreshSec = ref<number>()
 const themeStyle = computed(() => dashThemeVars(theme.value, cardRadius.value))
-provide(DASH_SURFACE_MODE_KEY, computed(() => resolveDashSurfaceMode(theme.value)))
+provide(LENS_THEME_KEY, computed(() => resolveDashTheme(theme.value).theme))
 const { refreshCards, refreshTick } = useDashRefresh()
 const { chromeHidden, onCanvasScroll, revealChrome } = useDashChromeScroll()
 const { pauseFilterUrl, applyFilterQuery } = useDashFilterUrl(
@@ -259,7 +259,9 @@ watch(
           :filter-options-dashboard-id="dashboardId"
           :presentation-mode="presentationMode"
           :preview-disabled="!dashboardId"
-          :screenshotting="capturing || loading"
+          :show-preview="!standalone"
+          :loading="loading"
+          :screenshotting="capturing"
           @refresh="refreshCards"
           @screenshot="onScreenshot"
           @preview="openPreview"
@@ -293,6 +295,7 @@ watch(
 
 <style scoped lang="scss">
 @use '../dashPage' as dash;
+@use '@/theme/presentation.scss' as ui;
 
 .viewer {
   @include dash.preview-tokens;
@@ -302,6 +305,14 @@ watch(
   height: 100%;
   overflow: hidden;
   background: var(--dash-canvas-bg, var(--el-fill-color-lighter));
+
+  &.is-compact {
+    @include ui.compact-tokens;
+    --dash-grid-gap: 10px;
+    --dash-chrome-x: 14px;
+    --dash-page-y: 8px;
+    --dash-gutter: 0px;
+  }
 }
 
 .viewer__chrome {

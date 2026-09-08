@@ -3,6 +3,7 @@
 -->
 <script setup lang="ts">
 import type { MousePointerCellEvent } from '@visactor/vtable'
+import type { ThemeColors } from '@/theme/tokens'
 import type { VisVisualConfig } from '@/views/vis/shared/types'
 import { ListTable, TABLE_EVENT_TYPE } from '@visactor/vtable'
 import { buildListTableOption, listTableColumns } from '@/views/vis/shared/listTable'
@@ -16,11 +17,10 @@ const props = withDefaults(defineProps<{
   data: VIS.QueryDataResponse
   emptyText?: string
   interactive?: boolean
-  dark?: boolean
+  theme?: ThemeColors
 }>(), {
   emptyText: '暂无数据',
   interactive: false,
-  dark: false,
 })
 
 const emit = defineEmits<{
@@ -30,7 +30,7 @@ const emit = defineEmits<{
 const empty = computed(() => !listTableColumns(props.query, props.data, false).length)
 
 function createTable(el: HTMLElement, width: number, height: number) {
-  const option = buildListTableOption(props.query, props.data, props.visual, props.dark)
+  const option = buildListTableOption(props.query, props.data, props.visual, props.theme)
   if (!option)
     return null
   const table = new ListTable(el, {
@@ -66,6 +66,6 @@ function createTable(el: HTMLElement, width: number, height: number) {
     :empty="empty"
     :empty-text="emptyText"
     :create="createTable"
-    :deps="() => [props.data, props.query, props.visual, props.interactive, props.dark]"
+    :deps="() => [props.data, props.query, props.visual, props.interactive, props.theme]"
   />
 </template>

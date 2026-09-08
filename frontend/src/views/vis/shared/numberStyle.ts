@@ -22,9 +22,9 @@ export type VisNumberColorPresetId = VisAccentPresetId
 export const NUMBER_TYPE = {
   value: 36,
   aux: 15,
-  auxLabel: 11,
+  auxLabel: 12,
   labelSize: 15,
-  gap: 18,
+  gap: 14,
 } as const
 
 /* —— 配色解析 —— */

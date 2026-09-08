@@ -83,7 +83,7 @@ watch(open, (visible) => {
     v-model="open"
     class="dash-mobile-filter-sheet"
     direction="btt"
-    size="min(84dvh, 720px)"
+    size="auto"
     :with-header="false"
     :append-to-body="true"
     :lock-scroll="true"
@@ -150,7 +150,7 @@ watch(open, (visible) => {
 <style scoped lang="scss">
 .mobile-filter-sheet {
   display: flex;
-  flex: 1;
+  flex: 1 1 auto;
   flex-direction: column;
   min-height: 0;
   background: var(--dash-mobile-surface, var(--el-bg-color));
@@ -171,9 +171,8 @@ watch(open, (visible) => {
   flex-shrink: 0;
   align-items: center;
   justify-content: space-between;
-  min-height: 58px;
-  padding: 4px 12px 8px 16px;
-  border-bottom: 1px solid color-mix(in srgb, var(--dash-mobile-border, var(--el-border-color)) 54%, transparent);
+  min-height: 48px;
+  padding: 0 8px 8px 16px;
   box-sizing: border-box;
 }
 
@@ -184,7 +183,7 @@ watch(open, (visible) => {
 
   strong {
     color: var(--dash-mobile-title, var(--el-text-color-primary));
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 650;
     line-height: 1.25;
     letter-spacing: -0.01em;
@@ -205,8 +204,8 @@ watch(open, (visible) => {
   height: 44px;
   padding: 0;
   border: 1px solid transparent;
-  border-radius: 12px;
-  background: var(--dash-mobile-soft, transparent);
+  border-radius: 8px;
+  background: transparent;
   color: var(--dash-mobile-content, var(--el-text-color-regular));
   cursor: pointer;
   outline: none;
@@ -221,15 +220,15 @@ watch(open, (visible) => {
   }
 
   > span {
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
   }
 }
 
 .mobile-filter-sheet__body {
-  flex: 1 1 0;
+  flex: 1 1 auto;
   min-height: 0;
-  padding: 6px 16px 20px;
+  padding: 8px 16px 20px;
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
@@ -237,13 +236,10 @@ watch(open, (visible) => {
 }
 
 .mobile-filter-sheet__item {
-  padding: 14px;
-  border: 1px solid color-mix(in srgb, var(--dash-mobile-border, var(--el-border-color)) 46%, transparent);
-  border-radius: 12px;
-  background: var(--dash-mobile-lighter, var(--el-fill-color-lighter));
+  padding: 0;
 
   & + & {
-    margin-top: 10px;
+    margin-top: 20px;
   }
 }
 
@@ -252,8 +248,8 @@ watch(open, (visible) => {
   align-items: baseline;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 10px;
-  font-size: 14px;
+  margin-bottom: 8px;
+  font-size: 13px;
   font-weight: 600;
 
   > span {
@@ -266,9 +262,7 @@ watch(open, (visible) => {
 
   small {
     flex-shrink: 0;
-    padding: 2px 6px;
-    border-radius: 999px;
-    background: var(--dash-mobile-soft, var(--el-fill-color-light));
+    padding: 0;
     color: var(--dash-mobile-muted, var(--el-text-color-secondary));
     font-size: 12px;
     font-weight: 400;
@@ -285,7 +279,7 @@ watch(open, (visible) => {
   :deep(.el-input-tag__wrapper),
   :deep(.el-date-editor.el-input__wrapper) {
     min-height: 44px;
-    border-radius: 10px;
+    border-radius: 8px;
   }
 }
 
@@ -326,18 +320,17 @@ watch(open, (visible) => {
 <style lang="scss">
 .dash-mobile-filter-sheet {
   display: flex;
-  max-height: calc(100dvh - env(safe-area-inset-top));
+  max-height: min(82dvh, 680px, calc(100dvh - env(safe-area-inset-top)));
   overflow: hidden;
-  border: 1px solid var(--dash-mobile-border, var(--el-border-color-light));
-  border-bottom: 0;
-  border-radius: 18px 18px 0 0;
+  border: none;
+  border-radius: 16px 16px 0 0;
   background: var(--dash-mobile-surface, var(--el-bg-color));
   box-shadow: var(--dash-mobile-sheet-shadow, 0 -8px 24px rgb(15 23 42 / 10%));
   color: var(--dash-mobile-content, var(--el-text-color-regular));
 
   .el-drawer__body {
     display: flex;
-    flex: 1;
+    flex: 1 1 auto;
     min-height: 0;
     padding: 0;
     background: inherit;
