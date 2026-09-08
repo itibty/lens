@@ -1,61 +1,26 @@
-import type { LensTheme, ThemeMode } from '@/theme/tokens'
+import type { LensTheme } from '@/theme/tokens'
 import { themeCssVars } from '@/theme/cssVars'
 import { THEME_PRESETS } from '@/theme/tokens'
 
 /** 默认主题 / 默认圆角不写进 configJson；预览顶栏换肤只是会话临时覆盖。 */
 export type DashThemeId = 't1' | 't2' | 't3' | 't4' | 't5' | 't6'
-export type DashSurfaceMode = ThemeMode
-
-export interface DashThemeTokens {
-  canvas: string
-  card: string
-  title: string
-  accent: string
-  border: string
-  btnBg: string
-  radius: number
-  mode?: DashSurfaceMode
-  content?: string
-  muted?: string
-}
 
 export interface DashThemePreset {
   id: DashThemeId
   name: string
-  tokens: DashThemeTokens
   theme: LensTheme
 }
 
 export const DEFAULT_DASH_THEME: DashThemeId = 't1'
 
-function dashboardPreset(id: DashThemeId, name: string, theme: LensTheme): DashThemePreset {
-  return {
-    id,
-    name,
-    theme,
-    tokens: {
-      canvas: theme.surface.page,
-      card: theme.surface.panel,
-      title: theme.heading.color,
-      accent: theme.primary.base,
-      border: theme.border.light,
-      btnBg: theme.surface.elevated,
-      radius: 12,
-      mode: theme.mode,
-      content: theme.text.regular,
-      muted: theme.text.muted,
-    },
-  }
-}
-
 // 保留持久化编号；配色由公共预设提供，业务层只做字段适配。
 export const DASH_THEME_PRESETS: DashThemePreset[] = [
-  dashboardPreset('t1', '极简白', THEME_PRESETS.default),
-  dashboardPreset('t2', '海军蓝', THEME_PRESETS.navy),
-  dashboardPreset('t3', '象牙纸', THEME_PRESETS.paper),
-  dashboardPreset('t4', '森林绿', THEME_PRESETS.forest),
-  dashboardPreset('t5', '石墨橙', THEME_PRESETS.graphite),
-  dashboardPreset('t6', '深夜', THEME_PRESETS.dark),
+  { id: 't1', name: '默认', theme: THEME_PRESETS.default },
+  { id: 't2', name: '海军蓝', theme: THEME_PRESETS.navy },
+  { id: 't3', name: '象牙纸', theme: THEME_PRESETS.paper },
+  { id: 't4', name: '森林绿', theme: THEME_PRESETS.forest },
+  { id: 't5', name: '石墨橙', theme: THEME_PRESETS.graphite },
+  { id: 't6', name: '深夜', theme: THEME_PRESETS.dark },
 ]
 
 const THEME_IDS = new Set<DashThemeId>(DASH_THEME_PRESETS.map(item => item.id))
@@ -99,10 +64,10 @@ export function resolveDashCardRadiusPx(id?: string) {
 }
 
 export function dashThemeSwatchStyle(preset: DashThemePreset) {
-  const { theme, tokens } = preset
+  const { theme } = preset
   return {
-    background: `linear-gradient(to bottom, ${theme.chrome.surface.panel} 32%, ${tokens.card} 32%)`,
-    borderRadius: `${Math.max(4, Math.round(tokens.radius / 2))}px`,
+    background: `linear-gradient(to bottom, ${theme.chrome.surface.panel} 32%, ${theme.surface.panel} 32%)`,
+    borderRadius: '6px',
     boxShadow: `inset 0 0 0 1px ${theme.border.light}`,
   }
 }
@@ -112,28 +77,19 @@ export function resolveDashTheme(id?: string): DashThemePreset {
   return DASH_THEME_PRESETS.find(item => item.id === resolved) ?? DASH_THEME_PRESETS[0]
 }
 
-export function resolveDashSurfaceMode(id?: string): DashSurfaceMode {
-  return resolveDashTheme(id).tokens.mode ?? 'light'
-}
-
 export function dashThemeVars(id?: string, radiusId?: string): Record<string, string> {
-  const { tokens, theme } = resolveDashTheme(id)
+  const { theme } = resolveDashTheme(id)
   return {
     ...themeCssVars(theme),
-    '--dash-canvas-bg': tokens.canvas,
-    '--dash-card-bg': tokens.card,
-    '--dash-card-header-bg': theme.heading.background,
-    '--dash-card-header-border': theme.heading.border,
+    '--dash-canvas-bg': theme.surface.page,
+    '--dash-card-bg': theme.surface.panel,
     '--dash-chrome-bg': theme.chrome.surface.panel,
-    '--dash-card-header-color': tokens.title,
     '--dash-card-radius': `${resolveDashCardRadiusPx(radiusId)}px`,
-    '--dash-title': tokens.title,
+    '--dash-title': theme.heading.color,
     '--dash-content-color': theme.text.strong,
     '--dash-content-muted': theme.text.muted,
-    '--dash-surface-mode': theme.mode,
-    '--dash-accent': tokens.accent,
-    '--dash-border': tokens.border,
-    '--dash-btn-bg': tokens.btnBg,
+    '--dash-accent': theme.primary.base,
+    '--dash-border': theme.border.light,
     '--dash-card-blur': 'none',
     '--dash-card-shadow': theme.shadow.panel,
     '--dash-btn-shadow': 'none',
@@ -151,7 +107,6 @@ export function dashChromeVars(id?: string): Record<string, string> {
     '--dash-content-muted': chrome.text.muted,
     '--dash-accent': chrome.primary.base,
     '--dash-border': chrome.border.light,
-    '--dash-btn-bg': chrome.surface.panel,
   }
 }
 

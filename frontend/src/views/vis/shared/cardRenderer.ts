@@ -427,7 +427,6 @@ function pieIndicatorItem(
     fitStrategy: 'inscribed' as const,
     style: {
       fontSize: 12,
-      fill: LIGHT_THEME.text.regular,
       text,
     },
   }
@@ -467,7 +466,6 @@ function pieIndicatorSpec(
       style: {
         fontSize: 14,
         fontWeight: 500,
-        fill: LIGHT_THEME.text.strong,
         text: (datum?: Record<string, unknown>) =>
           isPieIndicatorSlice(datum, categoryField)
             ? String(datum![categoryField])

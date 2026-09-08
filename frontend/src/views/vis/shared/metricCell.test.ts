@@ -71,7 +71,7 @@ describe('metric cell progress', () => {
 
   it('adapts default progress fills to the table surface while preserving explicit colors', () => {
     const light = metricProgressVTableConfig(progressVisual(), query(), '完成率')
-    const dark = metricProgressVTableConfig(progressVisual(), query(), '完成率', true)
+    const dark = metricProgressVTableConfig(progressVisual(), query(), '完成率', DARK_THEME)
 
     expect(light?.style.barColor).toBe(METRIC_PROGRESS_DEFAULT_COLOR)
     expect(dark?.style.barColor).toBe(alphaColor(DARK_THEME.chart.series[0], 0.26))

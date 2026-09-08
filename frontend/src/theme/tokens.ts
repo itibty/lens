@@ -67,8 +67,6 @@ export interface LensTheme extends ThemeColors {
   chrome: ThemeColors
 }
 
-export type ThemeInput = ThemeColors | boolean
-
 function paintColor(base: string, mode: ThemeMode, panel: string, page: string): ThemePaint {
   const dark = mode === 'dark'
   return {
@@ -128,11 +126,6 @@ export function createTheme(mode: ThemeMode = 'light', accent?: string, page?: s
 
 export const LIGHT_THEME = createTheme()
 export const DARK_THEME = createTheme('dark')
-
-/** 兼容独立卡片原有的明暗参数，嵌入看板时消费完整主题。 */
-export function resolveThemeColors(input: ThemeInput = false): ThemeColors {
-  return typeof input === 'boolean' ? input ? DARK_THEME : LIGHT_THEME : input
-}
 
 interface ColorRecipe {
   mode?: ThemeMode
@@ -221,16 +214,8 @@ function classicTheme(recipe: ColorRecipe, chrome?: {
 }
 
 export const THEME_PRESETS = {
-  default: classicTheme({
-    accent: '#2563EB',
-    page: '#F3F4F6',
-    panel: '#FFFFFF',
-    heading: '#FFFFFF',
-    ink: '#20242B',
-    muted: '#626A76',
-    border: '#E4E7EC',
-    series: [...DATA_SERIES],
-  }),
+  // 默认看板直接沿用卡片设计页的基础样式，避免 DOM 和 Canvas 各自维护一套浅色。
+  default: LIGHT_THEME,
   navy: classicTheme({
     accent: '#245AA5',
     page: '#E6EDF5',

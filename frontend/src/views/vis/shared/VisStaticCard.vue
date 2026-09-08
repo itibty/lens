@@ -4,6 +4,7 @@
 <script setup lang="ts">
 import type { VisVisualConfig } from './types'
 import { FONT_SANS } from '@/core/fonts'
+import { LIGHT_THEME } from '@/theme/tokens'
 import { sanitizeRichText } from './sanitizeRichText'
 import { hasStaticContent, resolveStaticUrl } from './staticCard'
 import {
@@ -69,7 +70,7 @@ const stack = computed(() => resolveStaticModules(props.visual).map((mod, index)
 function srcdocOf(html: string) {
   if (/<html[\s>]/i.test(html))
     return html
-  return `<!doctype html><html><head><meta charset="utf-8"><style>html,body{margin:0;padding:8px;box-sizing:border-box;font:13px/1.55 ${FONT_SANS};color:#303133;}</style></head><body>${html}</body></html>`
+  return `<!doctype html><html><head><meta charset="utf-8"><style>html,body{margin:0;padding:8px;box-sizing:border-box;font:13px/1.55 ${FONT_SANS};color:${LIGHT_THEME.text.strong};}</style></head><body>${html}</body></html>`
 }
 </script>
 
@@ -156,7 +157,7 @@ function srcdocOf(html: string) {
   &__html {
     min-width: 0;
     font: 13px / 1.55 var(--na-font-sans);
-    color: var(--vis-content-color, #303133);
+    color: var(--vis-content-color, var(--el-text-color-primary));
 
     :deep(p) {
       margin: 0 0 0.6em;

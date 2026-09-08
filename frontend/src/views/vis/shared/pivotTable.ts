@@ -1,7 +1,8 @@
 import type { IHeaderTreeDefine, PivotTableConstructorOptions } from '@visactor/vtable'
 import type { VisQueryConfig, VisVisualConfig } from './types'
-import type { ThemeInput } from '@/theme/tokens'
+import type { ThemeColors } from '@/theme/tokens'
 import { TYPES } from '@visactor/vtable'
+import { LIGHT_THEME } from '@/theme/tokens'
 import { formatMetricField } from './fieldStyle'
 import { metricProgressVTableConfig } from './metricCell'
 import { bindMarkColumnStyle, prepareTableMarks } from './tableMark'
@@ -394,7 +395,7 @@ export function buildPivotTableOption(
   visual?: VisVisualConfig,
   query?: VisQueryConfig,
   sortState?: PivotHeaderSortState | null,
-  theme: ThemeInput = false,
+  theme: ThemeColors = LIGHT_THEME,
 ): PivotTableConstructorOptions | null {
   const { metrics, rowFields, colFields } = resolvePivotSchema(data, query)
   if (!metrics.length)

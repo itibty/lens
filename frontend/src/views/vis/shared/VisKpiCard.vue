@@ -113,12 +113,13 @@ function onRowClick(record: Record<string, unknown>, event: MouseEvent) {
               class="vis-kpi-card__fill"
               :style="{
                 width: `${play * row.fillRatio * 100}%`,
-                background: paint.fillGradient,
+                background: paint.fill,
               }"
             >
               <span
                 v-if="options.showPercent"
-                class="vis-kpi-card__bar-percent is-on-fill"
+                class="vis-kpi-card__bar-percent"
+                :style="{ color: paint.onFill }"
               >
                 {{ row.percentText }}
               </span>
@@ -255,10 +256,6 @@ function onRowClick(record: Record<string, unknown>, event: MouseEvent) {
   white-space: nowrap;
   color: var(--vis-content-color, var(--na-text-strong));
   pointer-events: none;
-
-  &.is-on-fill {
-    color: var(--na-on-primary);
-  }
 }
 
 .vis-kpi-card__pace-slot {

@@ -1,9 +1,9 @@
 import type { TYPES } from '@visactor/vtable'
 import type { VisChartThemeId, VisVisualConfig } from './types'
-import type { ThemeColors, ThemeInput } from '@/theme/tokens'
+import type { ThemeColors } from '@/theme/tokens'
 import { themes } from '@visactor/vtable'
 import { FONT_SANS } from '@/core/fonts'
-import { alphaColor, LIGHT_THEME, resolveThemeColors } from '@/theme/tokens'
+import { alphaColor, LIGHT_THEME } from '@/theme/tokens'
 import { resolveChartThemeId } from './chartPalette'
 import { resolveTableStyle } from './tableStyle'
 
@@ -60,12 +60,12 @@ export const VTABLE_EMPTY_TIP = {
   },
 } as const
 
-export function resolveVTableEmptyTip(input: ThemeInput = false) {
+export function resolveVTableEmptyTip(theme: ThemeColors = LIGHT_THEME) {
   return {
     ...VTABLE_EMPTY_TIP,
     textStyle: {
       ...VTABLE_EMPTY_TIP.textStyle,
-      color: resolveThemeColors(input).text.muted,
+      color: theme.text.muted,
     },
   }
 }
@@ -110,7 +110,6 @@ function tableChrome(theme: ThemeColors): TableChrome {
 
 /** 显式色板保留；默认和暗色表面共用公共语义适配。 */
 const TABLE_CHROME: Partial<Record<VisChartThemeId, TableChrome>> = {
-  DEFAULT: tableChrome(LIGHT_THEME),
   CONTRAST: {
     headerBg: '#4E79A7',
     headerColor: '#FFFFFF',
@@ -186,19 +185,18 @@ function resolveTableChrome(visual: VisVisualConfig | undefined, theme: ThemeCol
     : TABLE_CHROME[id] ?? tableChrome(theme)
 }
 
-export function resolveTableHeaderIconColor(visual?: VisVisualConfig, input: ThemeInput = false) {
-  return resolveTableChrome(visual, resolveThemeColors(input)).headerColor
+export function resolveTableHeaderIconColor(visual?: VisVisualConfig, theme: ThemeColors = LIGHT_THEME) {
+  return resolveTableChrome(visual, theme).headerColor
 }
 
 /** 数据条轨道跟随所在表面，显式进度填充仍优先。 */
-export function resolveVTableProgressTrackColor(input: ThemeInput = false) {
-  return resolveThemeColors(input).chart.track
+export function resolveVTableProgressTrackColor(theme: ThemeColors = LIGHT_THEME) {
+  return theme.chart.track
 }
 
 /** 字体、表面、选区统一适配，显式图表色板仍优先。 */
-export function resolveVTableTheme(visual?: VisVisualConfig, input: ThemeInput = false): ITableThemeDefine {
+export function resolveVTableTheme(visual?: VisVisualConfig, theme: ThemeColors = LIGHT_THEME): ITableThemeDefine {
   const striped = resolveTableStyle(visual).striped
-  const theme = resolveThemeColors(input)
   const chrome = resolveTableChrome(visual, theme)
 
   const headerHover = {

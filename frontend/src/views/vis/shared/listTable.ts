@@ -1,8 +1,9 @@
 import type { ListTableConstructorOptions } from '@visactor/vtable'
 import type { VisVisualConfig } from './types'
-import type { ThemeInput } from '@/theme/tokens'
+import type { ThemeColors } from '@/theme/tokens'
 import { TYPES } from '@visactor/vtable'
 import { FilterPlugin } from '@visactor/vtable-plugins'
+import { LIGHT_THEME } from '@/theme/tokens'
 import { contrastPeriodDescription, findContrastInfo } from './contrastExp'
 import { formatMetricField } from './fieldStyle'
 import { metricProgressVTableConfig } from './metricCell'
@@ -11,7 +12,7 @@ import { resolveTableStyle } from './tableStyle'
 import { dimensionAlias, metricAlias } from './types'
 import { resolveTableHeaderIconColor, resolveVTableEmptyTip, resolveVTableLayout, resolveVTableTheme } from './vtableTheme'
 
-function contrastPeriodHeaderIcon(tip: string, visual?: VisVisualConfig, theme: ThemeInput = false) {
+function contrastPeriodHeaderIcon(tip: string, visual?: VisVisualConfig, theme: ThemeColors = LIGHT_THEME) {
   const color = resolveTableHeaderIconColor(visual, theme)
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="${color}" stroke-width="1.7"/><path d="M12 11.2V17" stroke="${color}" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="8.2" r="1.15" fill="${color}"/></svg>`
   return {
@@ -56,7 +57,7 @@ export function listTableColumns(
   data: VIS.QueryDataResponse,
   sortable: boolean,
   visual?: VisVisualConfig,
-  theme: ThemeInput = false,
+  theme: ThemeColors = LIGHT_THEME,
 ): NonNullable<ListTableConstructorOptions['columns']> {
   const metricKeys = new Set((query.metrics ?? []).map(metricAlias))
   const dimensionKeys = new Set((query.dimensions ?? []).map(dimensionAlias))
@@ -103,7 +104,7 @@ export function buildListTableOption(
   query: VIS.QueryConfig,
   data: VIS.QueryDataResponse,
   visual: VisVisualConfig,
-  theme: ThemeInput = false,
+  theme: ThemeColors = LIGHT_THEME,
 ): ListTableConstructorOptions | null {
   const tableStyle = resolveTableStyle(visual)
   const columns = listTableColumns(query, data, tableStyle.sortable, visual, theme)

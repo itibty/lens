@@ -1,10 +1,12 @@
 import type { ISpec } from '@visactor/vchart'
 import type { VisVisualConfig } from '@/views/vis/shared/types'
 import { describe, expect, it } from 'vitest'
+import { CHART_TYPES, isVChartType } from '@/views/vis/charts/catalog'
 import { DASH_THEME_PRESETS, dashChromeVars, dashOverlayVars, dashThemeVars, resolveDashTheme, resolveDashThemeId } from '@/views/vis/dashboards/dashTheme'
 import { buildVChartSpec } from '@/views/vis/shared/cardRenderer'
 import { resolveCardChrome } from '@/views/vis/shared/cardTheme'
 import { CHART_SERIES_PALETTES, resolveChartSeriesColors } from '@/views/vis/shared/chartPalette'
+import { resolveKpiPaint } from '@/views/vis/shared/kpiCard'
 import { resolveProgressPaint } from '@/views/vis/shared/progressCard'
 import { resolveVTableTheme } from '@/views/vis/shared/vtableTheme'
 import { themeCssVars } from './cssVars'
@@ -25,6 +27,37 @@ function contrast(a: string, b: string) {
 }
 
 describe('lens theme contract', () => {
+  it('shares the card designer baseline with default and legacy t1 dashboards', () => {
+    for (const id of [undefined, 't1', 'unknown']) {
+      const preset = resolveDashTheme(id)
+      expect(preset.name).toBe('默认')
+      expect(preset.theme).toBe(LIGHT_THEME)
+      expect(dashThemeVars(id)).toMatchObject(themeCssVars(LIGHT_THEME))
+    }
+    for (const chartType of ['table', 'pivot'] as const) {
+      const design = resolveVTableTheme({ chartType })
+      const dashboard = resolveVTableTheme({ chartType }, resolveDashTheme().theme)
+      expect(dashboard.headerStyle).toEqual(design.headerStyle)
+      expect(dashboard.bodyStyle).toEqual(design.bodyStyle)
+    }
+  })
+
+  it.each(CHART_TYPES.filter(isVChartType))('%s keeps its default appearance from design to dashboard', (chartType) => {
+    const dimensions = [{ field: 'month' }, ...(chartType === 'heatmap' ? [{ field: 'channel' }] : [])]
+    const metrics = [{ field: 'value' }, ...(['combo', 'scatter', 'tornado'].includes(chartType) ? [{ field: 'target' }] : [])]
+    const query = { datasetId: 'preview', dimensions, metrics }
+    const data = {
+      columns: ['month', 'channel', 'value', 'target'],
+      rows: [{ month: '1月', channel: '线上', value: 120, target: 150 }, { month: '2月', channel: '线下', value: 140, target: 180 }],
+      total: 2,
+      truncated: false,
+    }
+    const spec = buildVChartSpec(chartType, query, data, { chartType })
+    expect(spec).not.toBeNull()
+    expect(withChartTheme(spec!, resolveDashTheme().theme, true))
+      .toEqual(withChartTheme(spec!, LIGHT_THEME, true))
+  })
+
   it.each(Object.entries(THEME_PRESETS))('%s keeps reading text and action labels legible', (_name, theme) => {
     for (const colors of [theme, theme.chrome]) {
       for (const background of [colors.surface.page, colors.surface.panel, colors.surface.elevated, colors.heading.background]) {
@@ -46,7 +79,7 @@ describe('lens theme contract', () => {
     for (const preset of DASH_THEME_PRESETS) {
       const theme = resolveDashTheme(preset.id).theme
       expect(theme.chart.series).toHaveLength(DATA_SERIES.length)
-      expect(dashThemeVars(preset.id)['--dash-card-header-bg']).toBe(theme.heading.background)
+      expect(dashThemeVars(preset.id)['--dash-card-bg']).toBe(theme.surface.panel)
       expect(dashThemeVars(preset.id)['--dash-chrome-bg']).toBe(theme.chrome.surface.panel)
     }
     expect(THEME_PRESETS.navy.chrome.mode).toBe('dark')
@@ -81,17 +114,20 @@ describe('lens theme contract', () => {
     expect(resolveProgressPaint(visual)).toEqual({ fill: '#52C41A', track: '#F6FFED' })
     expect(JSON.stringify(visual)).toBe(before)
     expect(resolveProgressPaint()).toEqual({ fill: 'var(--na-chart-accent)', track: 'var(--na-chart-track)' })
+    expect(resolveKpiPaint({ chartType: 'kpi', kpi: { color: '#0052D9' } }))
+      .toMatchObject({ fill: '#0052D9', onFill: '#FFFFFF' })
+    expect(resolveKpiPaint().onFill).toBe('var(--na-on-primary)')
   })
 
   it('adapts default charts to dark surfaces and restores light colors without modifying source specs', () => {
     const spec = { type: 'bar', color: [...DATA_SERIES] } as ISpec
-    const dark = withChartTheme(spec, true)
-    const light = withChartTheme(spec)
+    const dark = withChartTheme(spec, DARK_THEME, true)
+    const light = withChartTheme(spec, LIGHT_THEME, true)
     expect(dark.color).toEqual(DARK_THEME.chart.series)
     expect(light.color).toEqual(DATA_SERIES)
     expect(spec).toEqual({ type: 'bar', color: DATA_SERIES })
     const colors = ['#123456', '#ABCDEF']
-    const custom = withChartTheme({ type: 'bar', color: colors } as ISpec, true)
+    const custom = withChartTheme({ type: 'bar', color: colors } as ISpec, DARK_THEME)
     expect(custom.color).toEqual(colors)
   })
 
@@ -103,7 +139,7 @@ describe('lens theme contract', () => {
     for (const id of ['CONTRAST', 'COLORBLIND'] as const) {
       const palette = CHART_SERIES_PALETTES.find(item => item.id === id)!.palette
       expect(resolveChartSeriesColors({ chartTheme: id })).toEqual(palette)
-      expect(withChartTheme({ type: 'bar', color: palette } as ISpec, true).color).toEqual(palette)
+      expect(withChartTheme({ type: 'bar', color: palette } as ISpec, DARK_THEME).color).toEqual(palette)
       expect(withChartTheme({ type: 'bar', color: palette } as ISpec, THEME_PRESETS.paper, false).color).toEqual(palette)
     }
   })
@@ -147,6 +183,24 @@ describe('lens theme contract', () => {
     expect(JSON.stringify(spec)).toBe(before)
   })
 
+  it('fills missing indicator colors without mistaking an explicit light color for a default', () => {
+    const spec = {
+      type: 'pie',
+      indicator: {
+        title: { style: { text: '总计' } },
+        content: [{ style: { text: '128' } }, { style: { text: '指定颜色', fill: LIGHT_THEME.text.regular } }],
+      },
+    } as ISpec
+    const before = JSON.stringify(spec)
+    expect(withChartTheme(spec, DARK_THEME)).toMatchObject({
+      indicator: {
+        title: { style: { fill: DARK_THEME.text.strong } },
+        content: [{ style: { fill: DARK_THEME.text.regular } }, { style: { fill: LIGHT_THEME.text.regular } }],
+      },
+    })
+    expect(JSON.stringify(spec)).toBe(before)
+  })
+
   it('retains categorical encoding and readable stacked labels with the shared chart palette', () => {
     const query = { datasetId: 'preview', dimensions: [{ field: 'month' }], metrics: [{ field: 'online' }, { field: 'direct' }] }
     const data = {
@@ -164,7 +218,7 @@ describe('lens theme contract', () => {
 
   it('uses the same readable table surfaces as the surrounding application', () => {
     const light = resolveVTableTheme({ chartType: 'table' })
-    const dark = resolveVTableTheme({ chartType: 'table' }, true)
+    const dark = resolveVTableTheme({ chartType: 'table' }, DARK_THEME)
     expect(light.bodyStyle?.color).toBe(LIGHT_THEME.text.strong)
     expect(light.bodyStyle?.bgColor).toBe(LIGHT_THEME.surface.panel)
     expect(dark.bodyStyle?.color).toBe(DARK_THEME.text.strong)

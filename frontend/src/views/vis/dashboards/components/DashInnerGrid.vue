@@ -285,6 +285,12 @@ onBeforeUnmount(() => {
   @include dash.vgl-canvas;
   @include dash.vgl-fill;
 
+  // 分组内部按自己的可用宽度折列，避免沿用外层看板宽度挤压指标。
+  &.is-flow {
+    container-type: inline-size;
+    container-name: dash-flow;
+  }
+
   &.is-editable,
   &.is-resizing {
     user-select: none;

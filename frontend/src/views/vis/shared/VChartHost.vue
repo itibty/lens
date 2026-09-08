@@ -18,8 +18,7 @@ const props = withDefaults(defineProps<{
   interactive?: boolean
   /** 明细菜单打开时压住提示，避免盖住菜单 */
   lockTooltip?: boolean
-  /** 看板专属暗色 surface；不影响卡片设计页和全局主题 */
-  dark?: boolean
+  /** 所在表面的完整颜色；独立卡片省略时使用应用默认主题。 */
   theme?: ThemeColors
   themePalette?: boolean
 }>(), {
@@ -28,7 +27,6 @@ const props = withDefaults(defineProps<{
   emptyText: '暂无数据',
   interactive: false,
   lockTooltip: false,
-  dark: false,
   themePalette: false,
 })
 
@@ -259,7 +257,7 @@ function syncChart() {
     destroyChart()
     return
   }
-  const spec = withChartTheme(projectChartPresentation(props.spec, presentationMode.value), props.theme ?? props.dark, props.themePalette)
+  const spec = withChartTheme(projectChartPresentation(props.spec, presentationMode.value), props.theme, props.themePalette)
   if (!chart) {
     createChart(spec)
     return
@@ -314,7 +312,7 @@ watch(
 )
 
 watch(
-  [() => props.dark, () => props.theme, () => props.themePalette],
+  [() => props.theme, () => props.themePalette],
   () => {
     destroyChart()
     nextTick(syncChart)

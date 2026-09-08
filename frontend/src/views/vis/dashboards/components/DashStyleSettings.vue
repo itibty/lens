@@ -81,7 +81,7 @@ const autoRefreshSecValue = computed({
         >
           <span
             class="style-settings__swatch"
-            :style="{ background: item.tokens.canvas }"
+            :style="{ background: item.theme.surface.page }"
           >
             <span
               class="style-settings__card"
@@ -89,7 +89,7 @@ const autoRefreshSecValue = computed({
             >
               <i
                 class="style-settings__accent"
-                :style="{ background: item.tokens.accent }"
+                :style="{ background: item.theme.primary.base }"
               />
             </span>
           </span>

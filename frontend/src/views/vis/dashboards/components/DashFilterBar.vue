@@ -306,7 +306,7 @@ watch(mobile, (enabled) => {
                 >
                   <span
                     class="dash-tools__swatch"
-                    :style="{ background: item.tokens.canvas }"
+                    :style="{ background: item.theme.surface.page }"
                   >
                     <i :style="dashThemeSwatchStyle(item)" />
                   </span>

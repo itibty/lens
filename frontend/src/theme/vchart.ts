@@ -1,8 +1,8 @@
 import type { ISpec } from '@visactor/vchart'
-import type { ThemeInput } from './tokens'
+import type { ThemeColors } from './tokens'
 import { darkTheme, lightTheme } from '@visactor/vchart'
 import { FONT_SANS } from '@/core/fonts'
-import { DATA_SERIES, LIGHT_THEME, mixColor, resolveThemeColors } from './tokens'
+import { LIGHT_THEME, mixColor } from './tokens'
 
 function record(value: unknown): Record<string, unknown> {
   return value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {}
@@ -31,8 +31,7 @@ function chartMarks(base: unknown, current: unknown) {
 }
 
 /** VChart 原生颜色槽适配：坐标轴、图例、提示层统一随表面切换，业务 spec 的显式主题仍优先。 */
-export function withChartTheme(spec: ISpec, input: ThemeInput = false, useThemePalette?: boolean): ISpec {
-  const lens = resolveThemeColors(input)
+export function withChartTheme(spec: ISpec, lens: ThemeColors = LIGHT_THEME, useThemePalette = false): ISpec {
   const dark = lens.mode === 'dark'
   const base = (dark ? darkTheme : lightTheme) as unknown as Record<string, unknown>
   const source = spec as unknown as Record<string, unknown>
@@ -76,10 +75,8 @@ export function withChartTheme(spec: ISpec, input: ThemeInput = false, useThemeP
       markByName: chartMarks(base.markByName, current.markByName),
     },
   }
-  // 卡片显式声明默认色板时才跟随主题；独立调用兼容旧的默认系列数组。
-  const defaultSeries = Array.isArray(source.color) && source.color.length === DATA_SERIES.length
-    && source.color.every((color, index) => color === DATA_SERIES[index])
-  if (useThemePalette ?? defaultSeries) {
+  // 是否跟随主题由卡片配置显式决定，不按颜色相等猜测。
+  if (useThemePalette) {
     if (source.type === 'heatmap') {
       result.color = {
         ...record(source.color),
@@ -98,9 +95,7 @@ export function withChartTheme(spec: ISpec, input: ThemeInput = false, useThemeP
     const textBlock = (value: unknown, fallback: string) => {
       const block = record(value)
       const style = record(block.style)
-      const fill = style.fill === LIGHT_THEME.text.strong || style.fill === LIGHT_THEME.text.regular
-        ? fallback
-        : style.fill ?? fallback
+      const fill = style.fill ?? fallback
       return { ...block, style: { ...style, fill } }
     }
     result.indicator = {

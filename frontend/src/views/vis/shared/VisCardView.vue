@@ -133,11 +133,11 @@ const hasCardBg = computed(() => !!chrome.value.bg)
 const hasCardColor = computed(() => !!chrome.value.color)
 const scopedTheme = inject(LENS_THEME_KEY, null)
 const followsDashSurface = computed(() => props.embedded && !!scopedTheme && !hasCardBg.value)
-const renderTheme = computed(() => followsDashSurface.value ? scopedTheme!.value : LIGHT_THEME)
+const renderTheme = computed(() => followsDashSurface.value ? scopedTheme?.value ?? LIGHT_THEME : LIGHT_THEME)
 const useThemePalette = computed(() => resolveChartThemeId(props.visual) === 'DEFAULT')
 // 自定义背景维持原有的独立浅色卡片语义；显式文字色仍由内容样式覆盖。
 const surfaceThemeStyle = computed(() => hasCardBg.value ? themeCssVars(LIGHT_THEME) : undefined)
-const overlayThemeStyle = computed(() => themeCssVars(followsDashSurface.value ? scopedTheme!.value : LIGHT_THEME))
+const overlayThemeStyle = computed(() => themeCssVars(renderTheme.value))
 
 const hasHeaderText = computed(() => !!(cardTitle.value || cardRemark.value))
 const coarsePointer = useMediaQuery('(hover: none), (pointer: coarse)')
@@ -170,13 +170,6 @@ const contentThemeStyle = computed(() => {
       'color': chrome.value.color,
       '--vis-content-color': chrome.value.color,
       '--vis-muted-color': `color-mix(in srgb, ${chrome.value.color} 64%, transparent)`,
-    }
-  }
-  if (followsDashSurface.value) {
-    return {
-      'color': 'var(--dash-content-color)',
-      '--vis-content-color': 'var(--dash-content-color)',
-      '--vis-muted-color': 'var(--dash-content-muted)',
     }
   }
   return undefined
@@ -868,6 +861,10 @@ watch(allowDetail, (ok) => {
   }
 
   &__content {
+    --vis-content-color: var(--el-text-color-primary);
+    --vis-muted-color: var(--el-text-color-secondary);
+
+    color: var(--vis-content-color);
     flex: 1 1 0;
     min-height: 0;
     width: 100%;
