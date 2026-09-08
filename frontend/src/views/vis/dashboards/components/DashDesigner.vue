@@ -7,6 +7,7 @@ import type { DashFilterValues, DashSettingsDraft, VisDashFilterDef } from '../d
 import type { DashGroupDraft, DashWidget } from '../dashLayout'
 import type { DashCardRadiusId, DashThemeId } from '../dashTheme'
 import type { VisCard } from '@/views/vis/shared/types'
+import { useStorage } from '@vueuse/core'
 import vis from '@/apis/vis/index'
 import { useLeaveConfirm } from '@/hooks/leaveConfirm'
 import { useSwipeBackGuard } from '@/hooks/swipeBack'
@@ -48,6 +49,7 @@ import {
   DEFAULT_DASH_THEME,
   resolveDashTheme,
 } from '../dashTheme'
+import { provideDashGridGuides } from '../useDashGridGuides'
 import { useDashRefresh } from '../useDashRefresh'
 import CardPickerDialog from './CardPickerDialog.vue'
 import DashFilterBar from './DashFilterBar.vue'
@@ -99,6 +101,8 @@ const saveOpen = ref(false)
 const saveFormRef = ref<FormInstance>()
 const reloading = ref(false)
 const capturing = ref(false)
+const gridGuides = useStorage('lens:dash:grid-guides', true)
+provideDashGridGuides(computed(() => canWrite && gridGuides.value && !capturing.value))
 const canvasScrollbarRef = ref<ScrollbarInstance>()
 
 const states = reactive({
@@ -618,6 +622,7 @@ defineExpose<DashDesignerInstance>({
           <DashFilterBar
             v-model:values="filterValues"
             v-model:theme="theme"
+            v-model:grid-guides="gridGuides"
             :title="states.name"
             :desc="states.desc"
             :defs="filters"

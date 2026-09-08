@@ -60,6 +60,7 @@ const emit = defineEmits<{
 }>()
 const theme = defineModel<DashThemeId>('theme', { default: DEFAULT_DASH_THEME })
 const values = defineModel<DashFilterValues>('values', { required: true })
+const gridGuides = defineModel<boolean>('gridGuides', { default: true })
 const themeOpen = ref(false)
 const mobileToolsOpen = ref(false)
 const mobileFiltersOpen = ref(false)
@@ -264,6 +265,17 @@ watch(mobile, (enabled) => {
           <template v-if="showDesign">
             <i class="dash-mobile-tools__sep" />
             <span class="dash-mobile-tools__label">设计</span>
+            <button
+              type="button"
+              class="dash-mobile-tools__action"
+              :class="{ 'is-primary': gridGuides }"
+              :aria-pressed="gridGuides"
+              :disabled="screenshotting"
+              @click="gridGuides = !gridGuides"
+            >
+              <span class="i-mingcute-grid-line" />
+              <span>辅助线</span>
+            </button>
             <div class="dash-mobile-tools__design-grid">
               <button
                 type="button"
@@ -446,6 +458,18 @@ watch(mobile, (enabled) => {
       <i class="filter-dock__tools-sep" />
       <div class="filter-dock__design">
         <template v-if="showDesign">
+          <el-tooltip :content="gridGuides ? '隐藏辅助线' : '显示辅助线'" placement="bottom" :show-after="200">
+            <VisActionButton
+              size="regular" variant="outline" label="辅助线"
+              class="filter-dock__btn"
+              :active="gridGuides"
+              :aria-pressed="gridGuides"
+              :disabled="screenshotting"
+              @click="gridGuides = !gridGuides"
+            >
+              <span class="i-mingcute-grid-line" />
+            </VisActionButton>
+          </el-tooltip>
           <el-dropdown
             trigger="hover"
             placement="bottom-end"

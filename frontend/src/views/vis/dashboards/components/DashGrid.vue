@@ -31,8 +31,10 @@ import {
   widgetMinSize,
 } from '../dashLayout'
 import { isDashFlowMode, projectDashFlowWidgets } from '../dashPresentation'
+import { useDashGridGuides } from '../useDashGridGuides'
 import { layoutMatches, stackLayout, useDashGridInteract } from '../useDashGridInteract'
 import DashCardTile from './DashCardTile.vue'
+import DashGridGuides from './DashGridGuides.vue'
 import DashGroupTile from './DashGroupTile.vue'
 import DashTextTile from './DashTextTile.vue'
 
@@ -136,6 +138,18 @@ const interact = useDashGridInteract({
   applyRect,
   commit: applyLayout,
 })
+
+const guides = useDashGridGuides({
+  layout,
+  resizingId: interact.resizingId,
+  editable: () => props.editable,
+  staticPresentation: () => staticPresentation.value,
+})
+
+function onItemMoved() {
+  guides.onMoveEnd()
+  applyLayout()
+}
 
 function syncLayoutFromWidgets() {
   if (interact.busy())
@@ -260,7 +274,9 @@ onBeforeUnmount(() => {
       'is-flow': flowing,
       'is-compact': presentationMode === 'compact',
     }"
+    @pointerdown.capture="guides.onPointerDown"
   >
+    <DashGridGuides v-if="guides.visible.value" :active-item="guides.activeItem.value" />
     <div v-if="!widgets.length" class="dash-grid__empty">
       {{ designActions ? '添加卡片、标注或分组，把内容放到看板上' : '看板上还没有内容' }}
     </div>
@@ -349,13 +365,15 @@ onBeforeUnmount(() => {
         :min-w="item.minW"
         :min-h="item.minH"
         :data-dash-widget-key="String(item.i)"
+        :data-dash-guide-id="String(item.i)"
         :static="!editable || stacked"
         :is-resizable="false"
         :drag-allow-from="widget.kind === 'group' ? '.dash-group__handle' : '.dash-tile__handle'"
         :drag-ignore-from="widget.kind === 'group'
           ? '.dash-group__body, .dash-group__actions, .dash-group__tab, .dash-group__cfg, .dash-group__chrome, .dash-group__dot, .dash-tile__body, .dash-tile__dot, .vis-card-view__actions, a'
           : '.vis-card-view__actions, .dash-text__actions, .dash-tile__body, .dash-tile__dot, a'"
-        @moved="applyLayout"
+        @move="guides.onMove"
+        @moved="onItemMoved"
       >
         <DashCardTile
           v-if="widget.kind === 'card'"
@@ -426,6 +444,7 @@ onBeforeUnmount(() => {
 @use '@/theme/presentation.scss' as ui;
 
 .dash-grid {
+  position: relative;
   min-height: 240px;
   @include dash.vgl-canvas;
   @include dash.vgl-fill(true);
