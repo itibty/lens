@@ -2,13 +2,17 @@
  * @Description: 功能 / 样式表单宿主 —— 按注册表挂载 FeatureForm 或 StyleForm
 -->
 <script setup lang="ts">
+import type { QueryIssue } from '../cardApi'
 import type { DatasetField, VisQueryConfig, VisVisualConfig } from '@/views/vis/shared/types'
 import { getChartDefinition } from '@/views/vis/charts'
+import { needsDataset } from '@/views/vis/shared/types'
+import DetailSettings from './DetailSettings.vue'
 
 const props = defineProps<{
   mode: 'feature' | 'style'
   query?: VisQueryConfig
   fields?: DatasetField[]
+  issues?: QueryIssue[]
 }>()
 
 const visual = defineModel<VisVisualConfig>('visual', { required: true })
@@ -27,7 +31,8 @@ const emptyText = computed(() =>
     : '当前图表暂无风格选项',
 )
 
-const showEmpty = computed(() => !Form.value)
+const showDetailSettings = computed(() => props.mode === 'feature' && needsDataset(visual.value.chartType))
+const showEmpty = computed(() => !Form.value && !showDetailSettings.value)
 </script>
 
 <template>
@@ -39,6 +44,7 @@ const showEmpty = computed(() => !Form.value)
       :query="query"
       :fields="fields"
     />
+    <DetailSettings v-if="showDetailSettings" v-model:visual="visual" :query="query" :fields="fields" :issues="issues" />
     <el-text
       v-if="showEmpty"
       type="info"

@@ -9,6 +9,7 @@ import { LENS_THEME_KEY } from '@/theme/context'
 import { themeCssVars } from '@/theme/cssVars'
 import { LIGHT_THEME } from '@/theme/tokens'
 import { showToast } from '@/utils/index'
+import { allowsViewData } from '@/views/vis/charts/catalog'
 import {
   contextFromChartDatum,
   contextFromPivotPaths,
@@ -30,7 +31,7 @@ import {
   resolveCardTitle,
 } from '@/views/vis/shared/cardTheme'
 import { resolveChartThemeId } from '@/views/vis/shared/chartPalette'
-import { allowsFullscreen, resolveVisStage } from '@/views/vis/shared/types'
+import { allowsFullscreen, metricAlias, resolveVisStage } from '@/views/vis/shared/types'
 import VChartHost from '@/views/vis/shared/VChartHost.vue'
 import VisActionButton from '@/views/vis/shared/VisActionButton.vue'
 import VisDataTable from '@/views/vis/shared/VisDataTable.vue'
@@ -41,6 +42,7 @@ import VisProgressCard from '@/views/vis/shared/VisProgressCard.vue'
 import VisRankCard from '@/views/vis/shared/VisRankCard.vue'
 import VisStaticCard from '@/views/vis/shared/VisStaticCard.vue'
 import VisTrendCard from '@/views/vis/shared/VisTrendCard.vue'
+import VisCardDataDialog from './VisCardDataDialog.vue'
 
 export interface VisCardMenuAction {
   key: string
@@ -205,6 +207,12 @@ const truncateHint = computed(() => {
 
 const allowDetail = computed(() => resolveAllowDetail(props.visual) && !queryError.value && !unavailableText.value)
 const allowDownload = computed(() => resolveAllowDownload(props.visual) && !queryError.value && !unavailableText.value)
+const allowViewData = computed(() => allowsViewData(props.visual.chartType) && !queryError.value && !unavailableText.value)
+const dataOpen = ref(false)
+watch(allowViewData, (allowed) => {
+  if (!allowed)
+    dataOpen.value = false
+})
 const hasMoreMenu = true
 const hasMenu = computed(() => true)
 const showFullscreen = computed(() =>
@@ -224,7 +232,15 @@ const pivotRef = ref<{ exportExcel: (fileName: string) => Promise<void> }>()
 const moreRef = ref<{ handleClose: () => void } | null>(null)
 const menuRef = ref<HTMLElement>()
 const menu = ref<DetailMenuPayload | null>(null)
-const menuLabel = computed(() => menu.value ? detailMenuLabel(menu.value.hit) : '')
+const menuHits = computed(() => {
+  const hit = menu.value?.hit
+  if (!hit)
+    return []
+  if (isNumber.value || hit.metric)
+    return [hit]
+  const metrics = (props.query.metrics ?? []).filter(item => !item.contrast)
+  return metrics.length ? metrics.map(item => ({ ...hit, metric: metricAlias(item) })) : [hit]
+})
 const DETAIL_MENU_VIEWPORT_GAP = 8
 
 function closeMenu() {
@@ -279,16 +295,11 @@ function openMenu(hit: DetailHit | null, clientX: number, clientY: number) {
   void nextTick().then(clampMenuToViewport)
 }
 
-function pickMenuDetail() {
+function pickMenuDetail(hit: DetailHit) {
   if (!menu.value)
     return
-  emit('openDetail', menu.value.hit)
+  emit('openDetail', hit)
   closeMenu()
-}
-
-function openAllDetail() {
-  closeMenu()
-  emit('openDetail', emptyDetailHit())
 }
 
 function onMenuCommand(command: string | number | object) {
@@ -297,8 +308,9 @@ function onMenuCommand(command: string | number | object) {
     emit('refresh')
     return
   }
-  if (key === 'detail') {
-    openAllDetail()
+  if (key === 'data') {
+    if (allowViewData.value && !props.loading)
+      dataOpen.value = true
     return
   }
   if (key === 'download') {
@@ -497,9 +509,9 @@ watch(allowDetail, (ok) => {
                   <span class="vis-card-more-popper__icon i-mingcute-refresh-2-line" />
                   刷新
                 </el-dropdown-item>
-                <el-dropdown-item v-if="allowDetail" command="detail">
+                <el-dropdown-item v-if="allowViewData" command="data" :disabled="loading">
                   <span class="vis-card-more-popper__icon i-mingcute-list-check-3-line" />
-                  明细
+                  数据
                 </el-dropdown-item>
                 <el-dropdown-item
                   v-if="allowDownload"
@@ -680,6 +692,16 @@ watch(allowDetail, (ok) => {
         <span class="vis-card-view__loading-icon i-svg-spinners-ring-resize" />
       </div>
     </div>
+    <VisCardDataDialog
+      v-model="dataOpen"
+      :title="cardTitle || title"
+      :query="query"
+      :visual="visual"
+      :data="data"
+      :allow-detail="allowDetail && !loading"
+      :allow-download="allowDownload"
+      @open-detail="emit('openDetail', $event)"
+    />
     <Teleport to="body">
       <div
         v-if="menu"
@@ -689,11 +711,13 @@ watch(allowDetail, (ok) => {
         @click.stop
       >
         <button
+          v-for="(hit, index) in menuHits"
+          :key="index"
           type="button"
           class="vis-detail-menu__item"
-          @click="pickMenuDetail"
+          @click="pickMenuDetail(hit)"
         >
-          {{ menuLabel }}
+          {{ detailMenuLabel(hit) }}
         </button>
       </div>
     </Teleport>

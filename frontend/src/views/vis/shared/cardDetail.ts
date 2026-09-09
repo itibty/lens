@@ -7,6 +7,7 @@ const PIVOT_SUBTOTAL_TOKEN = '__SUBTOTAL__'
 const PIVOT_TOTAL_TOKEN = '__TOTAL__'
 
 export interface DetailHit {
+  metric?: string
   filters: VIS.FilterItem[]
   labels: string[]
 }
@@ -23,8 +24,13 @@ export interface PivotPathMember {
   indicatorKey?: string
 }
 
+export function hasConfiguredDetailFields(visual?: VisVisualConfig) {
+  const fields = visual?.detail?.fields
+  return Array.isArray(fields) && fields.length > 0 && fields.every(field => typeof field === 'string' && !!field.trim())
+}
+
 export function resolveAllowDetail(visual?: VisVisualConfig) {
-  if (!visual?.allowDetail)
+  if (!visual?.allowDetail || !hasConfiguredDetailFields(visual))
     return false
   const type = String(visual.chartType || '').toLowerCase()
   return type !== 'richtext' && type !== 'url'
@@ -59,10 +65,12 @@ export function contextFromDims(
   const labels: string[] = []
   for (const dim of dims) {
     const alias = dimensionAlias(dim)
-    const raw = valuesByAlias[alias] ?? valuesByAlias[dim.field]
+    const raw = Object.hasOwn(valuesByAlias, alias) ? valuesByAlias[alias] : valuesByAlias[dim.field]
+    if (raw === undefined)
+      continue
     if (isPivotToken(raw))
       continue
-    if (raw == null || raw === '') {
+    if (raw == null) {
       const item: VIS.FilterItem = { field: dim.field, op: 'is_null' }
       if (dim.timeGrain)
         item.timeGrain = dim.timeGrain
@@ -106,7 +114,10 @@ export function contextFromTableRow(
     return null
   if (isContrastField(query, field, data))
     return null
-  return contextFromDims(query.dimensions ?? [], record)
+  const hit = contextFromDims(query.dimensions ?? [], record)
+  if ((query.metrics ?? []).some(item => metricAlias(item) === field))
+    hit.metric = field
+  return hit
 }
 
 function dimValueOnDatum(dim: VIS.DimensionItem, values: Record<string, unknown>) {
@@ -123,7 +134,7 @@ function fillDimsFromTreePath(
   if (dims.some(dim => dimValueOnDatum(dim, values) !== undefined))
     return values
   const raw = values[TREE_NAME] ?? values[TREE_LABEL]
-  if (raw == null || raw === '')
+  if (raw == null)
     return values
   const parts = String(raw).split(TREE_PATH_SEP)
   const next = { ...values }
@@ -175,6 +186,7 @@ export function buildDetailRequest(
   const grain = grainDimensions(query)
   const body: VIS.QueryConfig = {
     datasetId: query.datasetId,
+    metrics: query.metrics,
   }
   if (query.asOfDate)
     body.asOfDate = query.asOfDate
@@ -184,7 +196,7 @@ export function buildDetailRequest(
     body.params = query.params
   if (grain.length)
     body.dimensions = grain
-  const request: VIS.DetailQueryRequest = { query: body }
+  const request: VIS.DetailQueryRequest = { query: body, metric: hit?.metric }
   if (hit?.filters.length)
     request.contextFilters = hit.filters
   if (globals?.globalFilters?.length)
@@ -195,13 +207,10 @@ export function buildDetailRequest(
 }
 
 export function detailMenuLabel(hit: DetailHit) {
-  if (!hit.labels.length)
-    return '查看明细'
-  return `查看明细（${hit.labels.join(' · ')}）`
+  const labels = [...hit.labels, ...(hit.metric ? [hit.metric] : [])]
+  return labels.length ? `查看明细（${labels.join(' · ')}）` : '查看明细'
 }
 
 export function detailDrawerTitle(hit: DetailHit | null) {
-  if (!hit?.labels.length)
-    return '全部明细'
-  return '明细'
+  return hit?.labels.length ? '明细' : '当前范围明细'
 }

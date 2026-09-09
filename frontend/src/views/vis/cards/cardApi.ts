@@ -4,6 +4,7 @@ import { pruneAutoRefresh } from '@/views/vis/shared/cardRefresh'
 import { pruneCardChrome } from '@/views/vis/shared/cardTheme'
 import { pruneChartVisual } from '@/views/vis/shared/chartOptions'
 import { allowsChartTheme, DEFAULT_CHART_THEME, resolveChartThemeId } from '@/views/vis/shared/chartPalette'
+import { normalizeDetailConfig } from '@/views/vis/shared/detailConfig'
 import { normalizeMetricForSave, stripPillUid } from '@/views/vis/shared/dnd'
 import { pruneFieldStyles } from '@/views/vis/shared/fieldStyle'
 import { normalizeFilterItemForSave, normalizeHavingItemForSave, normalizeParamItemForSave } from '@/views/vis/shared/filterValue'
@@ -82,6 +83,7 @@ export function fromVisCardInfo(info: VIS.VisCardInfo): VisCard {
     query.datasetId = ''
   else
     query.datasetId = datasetId
+  visual.detail = normalizeDetailConfig(visual.detail)
   applyChartTheme(visual)
   pruneCardChrome(visual)
   pruneAutoRefresh(visual)
@@ -99,6 +101,7 @@ export function fromVisCardInfo(info: VIS.VisCardInfo): VisCard {
 
 function normalizeVisualForSave(visual: VisVisualConfig, query?: VisQueryConfig): VisVisualConfig {
   const next = pruneStaticVisual({ ...visual })
+  next.detail = needsDataset(next.chartType) ? normalizeDetailConfig(next.detail) : undefined
   pruneChartVisual(next, query)
   pruneCardChrome(next)
   pruneNumberVisual(next)

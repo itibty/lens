@@ -1,5 +1,5 @@
 import type { DetailHit } from '@/views/vis/shared/cardDetail'
-import type { VisQueryConfig, VisVisualConfig } from '@/views/vis/shared/types'
+import type { VisDetailConfig, VisQueryConfig, VisVisualConfig } from '@/views/vis/shared/types'
 import { queryCardDetail } from '@/apis/vis/query'
 import { buildDetailRequest, detailDrawerTitle, resolveAllowDetail } from '@/views/vis/shared/cardDetail'
 import { emptyQueryData } from '@/views/vis/shared/useVisCardQuery'
@@ -30,8 +30,9 @@ export function useVisCardDetail(getScope: () => VisCardDetailScope) {
   const open = ref(false)
   const loading = ref(false)
   const error = ref('')
-  const title = ref('全部明细')
+  const title = ref('明细')
   const tags = ref<string[]>([])
+  const detailConfig = ref<VisDetailConfig>()
   const data = ref<VIS.QueryDataResponse>(emptyQueryData())
   let seq = 0
 
@@ -43,12 +44,13 @@ export function useVisCardDetail(getScope: () => VisCardDetailScope) {
 
   async function openDetail(hit: DetailHit) {
     const scope = getScope()
-    if (!scope.query || (scope.visual && !resolveAllowDetail(scope.visual)))
+    if (!scope.query || !resolveAllowDetail(scope.visual))
       return
     const current = ++seq
+    detailConfig.value = scope.visual?.detail ? JSON.parse(JSON.stringify(scope.visual.detail)) : undefined
     open.value = true
     title.value = detailDrawerTitle(hit)
-    tags.value = hit.labels
+    tags.value = [...hit.labels, ...(hit.metric ? [hit.metric] : [])]
     loading.value = true
     error.value = ''
     try {
@@ -57,7 +59,7 @@ export function useVisCardDetail(getScope: () => VisCardDetailScope) {
           dashboardId: scope.dashboardId || '0',
           cardId: scope.cardId || '0',
         },
-        buildDetailRequest(scope.query, hit, scope.globals),
+        { ...buildDetailRequest(scope.query, hit, scope.globals), detail: scope.visual?.detail },
         visQueryOptions(scope.showSql),
       )
       if (current !== seq)
@@ -85,6 +87,7 @@ export function useVisCardDetail(getScope: () => VisCardDetailScope) {
     title,
     tags,
     data,
+    detailConfig,
     openDetail,
     closeDetail,
   }

@@ -273,7 +273,7 @@ function applyShapeIssues(issues: QueryIssue[]) {
   shapeIssues.value = issues
   if (!issues.length)
     return
-  states.centerTab = 'query'
+  states.centerTab = issues[0]?.shelf === 'detail' ? 'feature' : 'query'
   if (issues.some(item => item.shelf === 'having') && !states.advancedOpen.includes('advanced'))
     states.advancedOpen = [...states.advancedOpen, 'advanced']
 }
@@ -283,7 +283,7 @@ function onPreviewIssues(issues: QueryIssue[]) {
 }
 
 watch(
-  () => [states.card.visual.chartType, states.card.query, states.card.visual.richtext, states.card.visual.web, states.card.visual.progress, states.card.visual.kpi] as const,
+  () => [states.card.visual.chartType, states.card.query, states.card.visual.richtext, states.card.visual.web, states.card.visual.progress, states.card.visual.kpi, states.card.visual.detail, states.card.visual.allowDetail] as const,
   () => {
     if (!shapeIssues.value.length)
       return
@@ -359,7 +359,8 @@ function onChartTypeChange(next: ChartType) {
 
 function hasDatasetBoundVisual(visual: typeof states.card.visual) {
   return Boolean(
-    visual.table?.marks?.length
+    visual.detail?.fields?.length
+    || visual.table?.marks?.length
     || visual.chart?.lineFields?.length
     || visual.chart?.secondaryFields?.length,
   )
@@ -369,6 +370,7 @@ function applyDatasetChange() {
   shapeIssues.value = []
   resetQueryForDataset(states.card.query)
   const visual = states.card.visual
+  delete visual.detail
   if (visual.table?.marks) {
     delete visual.table.marks
     if (!Object.keys(visual.table).length)
@@ -406,7 +408,7 @@ watch(
       return
     }
     showConfirm(
-      '切换数据集将清空数据模型中的维度、指标、筛选、排序、结果过滤和模板参数，是否继续？',
+      '切换数据集将清空数据模型中的维度、指标、筛选、排序、结果过滤、模板参数和明细配置，是否继续？',
       '切换数据集',
       'warning',
       applyDatasetChange,
@@ -755,6 +757,7 @@ onBeforeRouteUpdate((to) => {
                     mode="feature"
                     :query="states.card.query"
                     :fields="datasetFields"
+                    :issues="shapeIssues"
                   />
                 </div>
               </el-scrollbar>

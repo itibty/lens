@@ -42,6 +42,7 @@ public class VisCardService {
     private final VisDashboardMapper visDashboardMapper;
     private final VisDashboardAccess dashboardAccess;
     private final VisDatasetMapper visDatasetMapper;
+    private final VisDetailRules detailRules;
 
     public PageResponse<VisCardInfo> query(QueryVisCardRequest request) {
         IPage<VisCardInfo> page = visCardMapper.selectPage(request.getPage().toIPage(), Wrappers.<VisCard>lambdaQuery()
@@ -105,6 +106,7 @@ public class VisCardService {
             }
             // query_json 只校验非空。日期维 + 同环比由设计器拦住，保存不二次语义检查。
         }
+        detailRules.validateSaved(request.getQueryJson(), request.getVisualJson());
         VisCard entity = BeanUtil.copyProperties(request, VisCard.class);
         entity.setChartType(type.getCode());
         entity.setCardName(entity.getCardName().trim());

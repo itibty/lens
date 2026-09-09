@@ -449,23 +449,19 @@ export function buildPivotTableOption(
       if (!progress) {
         return {
           ...common,
-          style: bindMarkColumnStyle(marks, metric, { textAlign: 'right' }),
+          style: bindMarkColumnStyle(marks, metric),
         }
       }
       return {
         ...common,
         ...progress.define,
-        style: bindMarkColumnStyle(marks, metric, {
-          textAlign: 'right',
-          ...progress.style,
-        }),
+        style: bindMarkColumnStyle(marks, metric, progress.style),
       }
     }),
     rowTree,
     columnTree,
     rowHierarchyType: treeDisplay ? 'tree' : 'grid',
     rowHierarchyIndent: treeDisplay ? PIVOT_TREE_INDENT : undefined,
-    rowHierarchyTextStartAlignment: treeDisplay || undefined,
     rowExpandLevel: treeDisplay ? rowFields.length : undefined,
     indicatorsAsCol: true,
     hideIndicatorName,

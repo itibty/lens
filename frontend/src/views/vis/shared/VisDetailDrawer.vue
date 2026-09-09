@@ -2,8 +2,11 @@
  * @Description: 卡片构成行（CustomDrawer；设计器可挂到预览容器）
 -->
 <script setup lang="ts">
-import type { VisVisualConfig } from '@/views/vis/shared/types'
+import type { VisDetailConfig, VisVisualConfig } from '@/views/vis/shared/types'
 import { useMediaQuery } from '@vueuse/core'
+import { LENS_THEME_KEY } from '@/theme/context'
+import { themeCssVars } from '@/theme/cssVars'
+import { LIGHT_THEME } from '@/theme/tokens'
 import VisDataTable from '@/views/vis/shared/VisDataTable.vue'
 
 const props = withDefaults(defineProps<{
@@ -12,6 +15,7 @@ const props = withDefaults(defineProps<{
   loading?: boolean
   error?: string
   data?: VIS.QueryDataResponse
+  config?: VisDetailConfig
   /** 设计器预览传入容器选择器；不传则全页弹出 */
   appendTo?: string
 }>(), {
@@ -22,6 +26,18 @@ const props = withDefaults(defineProps<{
 })
 
 const open = defineModel<boolean>('open', { default: false })
+
+const scopedTheme = inject(LENS_THEME_KEY, null)
+const theme = computed(() => scopedTheme?.value ?? LIGHT_THEME)
+// 抽屉可能 Teleport 到 body，显式携带看板主题及 CustomDrawer 标题栏样式。
+const themeStyle = computed(() => ({
+  ...themeCssVars(theme.value),
+  '--el-drawer-header-bg': theme.value.surface.panel,
+  '--el-drawer-bg-color': theme.value.surface.panel,
+  '--el-box-shadow-dark': theme.value.shadow.sheet,
+  'color-scheme': theme.value.mode,
+  'color': theme.value.text.regular,
+}))
 
 const contained = computed(() => !!props.appendTo)
 const mobileDrawer = useMediaQuery('(max-width: 767px), (pointer: coarse) and (max-width: 1024px)')
@@ -40,6 +56,7 @@ const truncate = computed(() => !!tableData.value.truncated)
     class="vis-detail-drawer-host"
     :class="{ 'is-contained': contained }"
     :title="title"
+    :style="themeStyle"
     direction="btt"
     :show-footer="false"
     header-border
@@ -81,6 +98,8 @@ const truncate = computed(() => !!tableData.value.truncated)
           :visual="tableVisual"
           :query="tableQuery"
           :data="tableData"
+          :field-options="config?.fieldOptions"
+          :theme="theme"
         />
         <div
           v-if="truncate && !error"

@@ -222,6 +222,7 @@ const {
   title: detailTitle,
   tags: detailTags,
   data: detailData,
+  detailConfig,
   openDetail,
   closeDetail,
 } = useVisCardDetail(() => ({
@@ -435,6 +436,7 @@ onBeforeUnmount(() => {
       :loading="detailLoading"
       :error="detailError"
       :data="detailData"
+      :config="detailConfig"
     />
   </div>
 </template>

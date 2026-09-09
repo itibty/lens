@@ -4,7 +4,7 @@
 <script setup lang="ts">
 import type { MousePointerCellEvent } from '@visactor/vtable'
 import type { ThemeColors } from '@/theme/tokens'
-import type { VisVisualConfig } from '@/views/vis/shared/types'
+import type { VisDetailFieldOptions, VisVisualConfig } from '@/views/vis/shared/types'
 import { ListTable, TABLE_EVENT_TYPE } from '@visactor/vtable'
 import { buildListTableOption, listTableColumns } from '@/views/vis/shared/listTable'
 import { animateMetricProgressBars } from '@/views/vis/shared/metricCell'
@@ -18,6 +18,7 @@ const props = withDefaults(defineProps<{
   emptyText?: string
   interactive?: boolean
   theme?: ThemeColors
+  fieldOptions?: Record<string, VisDetailFieldOptions>
 }>(), {
   emptyText: '暂无数据',
   interactive: false,
@@ -30,7 +31,7 @@ const emit = defineEmits<{
 const empty = computed(() => !listTableColumns(props.query, props.data, false).length)
 
 function createTable(el: HTMLElement, width: number, height: number) {
-  const option = buildListTableOption(props.query, props.data, props.visual, props.theme)
+  const option = buildListTableOption(props.query, props.data, props.visual, props.theme, props.fieldOptions)
   if (!option)
     return null
   const table = new ListTable(el, {
@@ -66,6 +67,6 @@ function createTable(el: HTMLElement, width: number, height: number) {
     :empty="empty"
     :empty-text="emptyText"
     :create="createTable"
-    :deps="() => [props.data, props.query, props.visual, props.interactive, props.theme]"
+    :deps="() => [props.data, props.query, props.visual, props.interactive, props.theme, props.fieldOptions]"
   />
 </template>

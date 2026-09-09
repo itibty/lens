@@ -14,7 +14,7 @@ import StyleFormLabel from './StyleFormLabel.vue'
 
 const visual = defineModel<VisVisualConfig>('visual', { required: true })
 const { showTitle, title, showDescription, description } = useVisualTitle(visual)
-const showDetailSwitch = computed(() => needsDataset(visual.value.chartType))
+const showDataFeatures = computed(() => needsDataset(visual.value.chartType))
 const autoRefresh = computed({
   get: () => sanitizeAutoRefreshSec(visual.value.autoRefreshSec) != null,
   set: (value: boolean) => {
@@ -32,15 +32,6 @@ const autoRefreshSec = computed({
       visual.value.autoRefreshSec = sec
     else
       delete visual.value.autoRefreshSec
-  },
-})
-const allowDetail = computed({
-  get: () => !!visual.value.allowDetail,
-  set: (value: boolean) => {
-    if (value)
-      visual.value.allowDetail = true
-    else
-      delete visual.value.allowDetail
   },
 })
 const allowDownload = computed({
@@ -97,17 +88,7 @@ const allowDownload = computed({
   </div>
 
   <div
-    v-if="showDetailSwitch"
-    class="vis-style-form__row"
-  >
-    <StyleFormLabel>
-      查看明细
-    </StyleFormLabel>
-    <el-switch v-model="allowDetail" size="small" />
-  </div>
-
-  <div
-    v-if="showDetailSwitch"
+    v-if="showDataFeatures"
     class="vis-style-form__row"
   >
     <StyleFormLabel>
@@ -117,7 +98,7 @@ const allowDownload = computed({
   </div>
 
   <div
-    v-if="showDetailSwitch"
+    v-if="showDataFeatures"
     class="vis-style-form__row"
   >
     <StyleFormLabel>
@@ -126,7 +107,7 @@ const allowDownload = computed({
     <el-switch v-model="autoRefresh" size="small" />
   </div>
   <div
-    v-if="showDetailSwitch && autoRefresh"
+    v-if="showDataFeatures && autoRefresh"
     class="vis-style-form__row"
   >
     <StyleFormLabel>

@@ -342,6 +342,19 @@ export interface VisNumberStyle extends VisNumberFormat {
   color?: string
 }
 
+/** 原始明细列的显示配置；不影响字段标识和查询范围。 */
+export interface VisDetailFieldOptions {
+  label?: string
+  format?: VisNumberFormat
+}
+
+export interface VisDetailConfig {
+  fields?: string[]
+  fieldOptions?: Record<string, VisDetailFieldOptions>
+  orderList?: VIS.OrderItem[]
+  limit?: number
+}
+
 /**
  * 本地视觉配置。
  * 普通查询 body.visual 只读 chartType；透视另带合计开关。完整样式写入 visualJson。
@@ -358,6 +371,7 @@ export interface VisVisualConfig {
   description?: string
   /** 允许查看构成行；默认关，关着不落库 */
   allowDetail?: boolean
+  detail?: VisDetailConfig
   /** 允许下载数据；默认关，关着不落库 */
   allowDownload?: boolean
   /** 自动刷新间隔（秒）；不写 = 关；仅查询类卡片 */
