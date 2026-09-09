@@ -35,6 +35,7 @@ import { visualizer } from 'rollup-plugin-visualizer'
 export default defineConfig(({ command, mode, isSsrBuild, isPreview }) => {
   const isBuild = command === 'build'
   const isServe = command === 'serve'
+  const analyze = process.env.ANALYZE === 'true'
   console.log(`[Vite] command=${command} mode=${mode} isSsrBuild=${isSsrBuild} isPreview=${isPreview}`)
 
   const env = loadEnv(mode, process.cwd(), '')
@@ -122,8 +123,8 @@ export default defineConfig(({ command, mode, isSsrBuild, isPreview }) => {
         outputDir: '.vite-inspect',
       }),
 
-      // bundle 分析报告（运行 build 后生成 stats.html）
-      isBuild && visualizer({
+      // 按需生成体积分析报告：pnpm build:analyze
+      isBuild && analyze && visualizer({
         filename: 'pkg-stats.html',
         open: false,
         gzipSize: true,
@@ -158,37 +159,32 @@ export default defineConfig(({ command, mode, isSsrBuild, isPreview }) => {
       // outDir: dist,
       // reportCompressedSize: false,  // 展示压缩后体积
       // sourcemap: false,             // 禁用sourcemap(仅调试时需要)
-      chunkSizeWarningLimit: 1000, // 体积过大警告阈值
-      rollupOptions: {
+      chunkSizeWarningLimit: 500, // 保留大文件告警，避免通过提高阈值掩盖问题
+      manifest: true, // 用于检查入口和路由的实际依赖
+      rolldownOptions: {
         output: {
           chunkFileNames: 'js/[name]-[hash].js', // 引入文件名的名称
           entryFileNames: 'js/[name]-[hash].js', // 包的入口文件名称
           assetFileNames: '[ext]/[name]-[hash].[ext]', // 资源文件像 字体，图片等
-          manualChunks: (id) => {
-            // 拆包优化（原则：非常用&大体积单独打包）
-            if (id.includes('node_modules')) {
-              if (id.includes('@visactor/vchart')) {
-                return 'vender-vchart'
-              }
-              else if (id.includes('codemirror') || id.includes('sql-formatter')) {
-                // codemirror 代码编辑器
-                return 'vender-code'
-              }
-              else if (id.includes('element-plus')) {
-                // element-plus UI库独立打包，提升缓存命中率
-                return 'vender-ep'
-              }
-              else {
-                // 剩余的
-                return 'venders'
-              }
-              // 最小化拆包
-              // return id
-              //   .toString()
-              //   .split("node_modules/")[1]
-              //   .split("/")[0]
-              //   .toString();
-            }
+          // 依赖按功能与引用入口分组，避免一个公共包把编辑器、图表带入首屏。
+          // 不递归吸收依赖，防止 Vue 等共享运行时被重型功能包吞并。
+          strictExecutionOrder: true,
+          codeSplitting: {
+            includeDependenciesRecursively: false,
+            // 按压缩前模块大小拆分；这是目标值，并非最终文件的硬上限。
+            maxSize: 800_000,
+            groups: [
+              // ExcelJS 发布的是单体 bundle，独立缓存；maxSize 无法拆开单个模块。
+              { name: 'vendor-excel', test: /node_modules\/exceljs\// },
+              { name: 'vendor-vrender', test: /node_modules\/@visactor\/vrender[^/]*\// },
+              { name: 'vendor-vchart', test: /node_modules\/@visactor\/vchart\// },
+              { name: 'vendor-vtable', test: /node_modules\/@visactor\/vtable(?:-plugins|-export)?\// },
+              { name: 'vendor-code', test: /node_modules\/(?:@codemirror|@lezer|codemirror|vue-codemirror)\// },
+              { name: 'vendor-sql', test: /node_modules\/sql-formatter\// },
+              { name: 'vendor-editor', test: /node_modules\/(?:@tiptap\/[^/]+|prosemirror-[^/]+)\// },
+              { name: 'vendor-ep', test: /node_modules\/(?:element-plus|@element-plus\/[^/]+)\// },
+            ].map(group => ({ ...group, entriesAware: true })),
+            // 其他依赖交给自动分包，保持路由懒加载边界。
           },
         },
       },

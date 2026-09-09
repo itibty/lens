@@ -40,7 +40,7 @@ pnpm install                        # install dependencies
 pnpm dev                            # dev server on :5173
 pnpm build                          # type-check + production build
 pnpm type-check                     # vue-tsc --noEmit
-pnpm lint / pnpm lint-fix           # eslint
+pnpm lint / pnpm lint --fix           # eslint
 pnpm generate-api                   # regenerate admin + vis API clients from OpenAPI
 ```
 
