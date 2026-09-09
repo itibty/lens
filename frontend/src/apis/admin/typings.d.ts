@@ -18,12 +18,46 @@ declare namespace ADMIN {
     functionCodes: string[];
   };
 
+  type DashboardRoleInfo = {
+    id?: string;
+    roleName?: string;
+    roleCode?: string;
+    status?: string;
+  };
+
+  type DashboardUserInfo = {
+    id?: string;
+    username?: string;
+    realName?: string;
+    status?: string;
+    roles?: DashboardUserRoleInfo[];
+  };
+
+  type DashboardUserRoleInfo = {
+    id?: string;
+    roleName?: string;
+    roleCode?: string;
+    status?: string;
+    startAt?: string;
+    endAt?: string;
+    validity?: "ACTIVE" | "PENDING" | "EXPIRED" | "DISABLED";
+  };
+
   type delMenuParams = {
     menuId: string;
   };
 
   type getRoleDetailParams = {
     roleId: string;
+  };
+
+  type listDashboardRolesParams = {
+    dashboardId: string;
+  };
+
+  type ListResponseDashboardRoleInfo = {
+    /** 列表 */
+    list: DashboardRoleInfo[];
   };
 
   type ListResponseMenuTree = {
@@ -89,6 +123,19 @@ declare namespace ADMIN {
     pageSize: number;
   };
 
+  type PageResponseDashboardUserInfo = {
+    /** 当前页 */
+    pageNumber: number;
+    /** 每页大小 */
+    pageSize: number;
+    /** 总条数 */
+    total: number;
+    /** 总页数 */
+    pages: number;
+    /** 记录 */
+    records: DashboardUserInfo[];
+  };
+
   type PageResponseRoleInfo = {
     /** 当前页 */
     pageNumber: number;
@@ -113,6 +160,13 @@ declare namespace ADMIN {
     pages: number;
     /** 记录 */
     records: UserInfo[];
+  };
+
+  type QueryDashboardUsersRequest = {
+    /** 分页 */
+    page: PageCondition;
+    dashboardId: string;
+    keyword?: string;
   };
 
   type QueryRoleRequest = {
@@ -163,6 +217,15 @@ declare namespace ADMIN {
     userId: string;
     /** 角色及生效区间 */
     roleInfos?: UserRoleInfo[];
+  };
+
+  type RListResponseDashboardRoleInfo = {
+    /** 200成功 */
+    code: number;
+    /** 提示 */
+    msg: string;
+    /** 数据 */
+    data?: ListResponseDashboardRoleInfo;
   };
 
   type RListResponseMenuTree = {
@@ -218,6 +281,15 @@ declare namespace ADMIN {
     dashboardIds: string[];
   };
 
+  type RPageResponseDashboardUserInfo = {
+    /** 200成功 */
+    code: number;
+    /** 提示 */
+    msg: string;
+    /** 数据 */
+    data?: PageResponseDashboardUserInfo;
+  };
+
   type RPageResponseRoleInfo = {
     /** 200成功 */
     code: number;
@@ -261,6 +333,15 @@ declare namespace ADMIN {
     msg: string;
     /** 数据 */
     data?: string;
+  };
+
+  type RVoid = {
+    /** 200成功 */
+    code: number;
+    /** 提示 */
+    msg: string;
+    /** 数据 */
+    data?: any;
   };
 
   type SaveMenuRequest = {
@@ -325,6 +406,11 @@ declare namespace ADMIN {
     userId: string;
   };
 
+  type UnlinkDashboardRoleRequest = {
+    dashboardId: string;
+    roleId: string;
+  };
+
   type UserInfo = {
     /** 用户 id */
     id: string;
@@ -364,9 +450,9 @@ declare namespace ADMIN {
     roleId: string;
     /** 角色名 */
     roleName?: string;
-    /** 生效开始时间，毫秒时间戳 */
+    /** 生效开始，毫秒。页面有效期须与 endAt 成对；只传一端兼容接口/脚本 */
     startAt?: string;
-    /** 生效结束时间，毫秒时间戳 */
+    /** 生效结束，毫秒。与 startAt 成对为闭区间；两端皆空=不限期 */
     endAt?: string;
   };
 }

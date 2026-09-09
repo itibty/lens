@@ -220,6 +220,11 @@ const showFullscreen = computed(() =>
 )
 const showHeader = computed(() => !props.hideTitle && (hasHeaderText.value || hasMenu.value))
 const exporting = ref(false)
+const capturing = ref(false)
+const rootRef = ref<HTMLElement>()
+const chartRef = ref<InstanceType<typeof VChartHost>>()
+const canScreenshot = computed(() => props.visual.chartType !== 'url'
+  && !props.loading && !queryError.value && !unavailableText.value && !capturing.value)
 const menuOpen = ref(false)
 const canDownload = computed(() => {
   if (!allowDownload.value || props.loading || empty.value || exporting.value)
@@ -317,7 +322,42 @@ function onMenuCommand(command: string | number | object) {
     void onDownload()
     return
   }
+  if (key === 'screenshot') {
+    void onScreenshot()
+    return
+  }
   emit('menuAction', key)
+}
+
+async function onScreenshot() {
+  const root = rootRef.value
+  if (!canScreenshot.value || !root)
+    return
+  capturing.value = true
+  closeFloatingMenus()
+  const data = props.data
+  const pivotData = props.pivotData
+  const title = props.title || cardTitle.value
+  try {
+    const { captureCard, saveCardScreenshot } = await import('./cardScreenshot')
+    await nextTick()
+    chartRef.value?.prepareScreenshot()
+    await new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve())))
+    const blob = await captureCard(root)
+    if (!root.isConnected)
+      return
+    if (props.loading || props.data !== data || props.pivotData !== pivotData)
+      throw new Error('卡片已更新，请重新截屏')
+    saveCardScreenshot(blob, title)
+    showToast('截屏已保存')
+  }
+  catch (error) {
+    if (root.isConnected)
+      showToast(exportErrorMessage(error, '截屏失败'), 'error')
+  }
+  finally {
+    capturing.value = false
+  }
 }
 
 async function onDownload() {
@@ -397,6 +437,7 @@ watch(allowDetail, (ok) => {
 
 <template>
   <div
+    ref="rootRef"
     class="vis-card-view h-full min-h-0 flex flex-col"
     :class="[stageClass, { 'is-menu-open': menuOpen, 'is-embedded': embedded, 'is-fullscreen': fullscreen, 'is-compact': compact }]"
     :style="surfaceThemeStyle"
@@ -464,7 +505,7 @@ watch(allowDetail, (ok) => {
         <div
           v-if="hasMenu"
           class="vis-card-view__actions"
-          :class="{ 'is-busy': exporting, 'is-open': menuOpen }"
+          :class="{ 'is-busy': exporting || capturing, 'is-open': menuOpen }"
           @pointerdown.stop
           @mousedown.stop
           @click.stop
@@ -493,7 +534,7 @@ watch(allowDetail, (ok) => {
           >
             <VisActionButton class="vis-card-view__more-btn" label="更多卡片操作">
               <span
-                :class="exporting ? 'i-svg-spinners-ring-resize' : 'i-mingcute-more-2-line'"
+                :class="exporting || capturing ? 'i-svg-spinners-ring-resize' : 'i-mingcute-more-2-line'"
                 class="vis-card-view__more-icon"
               />
             </VisActionButton>
@@ -512,6 +553,14 @@ watch(allowDetail, (ok) => {
                 <el-dropdown-item v-if="allowViewData" command="data" :disabled="loading">
                   <span class="vis-card-more-popper__icon i-mingcute-list-check-3-line" />
                   数据
+                </el-dropdown-item>
+                <el-dropdown-item
+                  command="screenshot"
+                  :disabled="!canScreenshot"
+                  :title="visual.chartType === 'url' ? '网页卡片暂不支持截屏' : undefined"
+                >
+                  <span class="vis-card-more-popper__icon i-mingcute-camera-line" />
+                  截屏
                 </el-dropdown-item>
                 <el-dropdown-item
                   v-if="allowDownload"
@@ -652,12 +701,13 @@ watch(allowDetail, (ok) => {
           class="vis-card-view__chart"
         >
           <VChartHost
+            ref="chartRef"
             :spec="chartSpec"
             :theme-palette="useThemePalette"
             :empty="chartEmpty"
             :empty-text="emptyText"
             :interactive="allowDetail"
-            :lock-tooltip="!!menu"
+            :lock-tooltip="!!menu || capturing"
             :theme="renderTheme"
             @mark-click="onMarkClick"
           />

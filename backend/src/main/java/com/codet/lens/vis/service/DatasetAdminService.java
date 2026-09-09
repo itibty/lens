@@ -51,6 +51,7 @@ public class DatasetAdminService {
     private final VisDatasetFieldMapper fieldMapper;
     private final VisDatasourceMapper datasourceMapper;
     private final VisCardMapper cardMapper;
+    private final DatasetReferenceService referenceService;
 
     public PageResponse<ConfSqlInfo> query(QueryConfSqlRequest req) {
         IPage<VisDataset> page = datasetMapper.selectPage(req.getPage().toIPage(), Wrappers.<VisDataset>lambdaQuery()
@@ -128,6 +129,7 @@ public class DatasetAdminService {
             throw ResultException.fail("数据集被 " + references.size()
                     + " 张卡片引用，请先处理卡片：" + names + suffix);
         }
+        referenceService.assertNoDashboardReferences(ids);
         for (VisDataset row : datasets) {
             row.setStatus(Status.DEL);
             row.modifyCallback();

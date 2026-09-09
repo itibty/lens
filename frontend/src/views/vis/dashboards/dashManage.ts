@@ -9,6 +9,7 @@ export type ExplorerCommand
     | 'move-dashboard'
     | 'toggle-dashboard'
     | 'delete-dashboard'
+    | 'related-users'
 
 /** 管理树虚拟根，与报表中心菜单根 id 对齐 */
 export const REPORT_CENTER_ID = '90'

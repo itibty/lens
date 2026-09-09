@@ -3,8 +3,8 @@
  *
  * 用法：
  *   pnpm generate-api
- *   pnpm generate-api -- --service=vis
- *   pnpm generate-api -- --service=admin,vis
+ *   pnpm generate-api --service=vis
+ *   pnpm generate-api --service=admin,vis
  *
  * 也可：node ./build/generate/openapi.config.cjs --service=admin,vis
  *
@@ -71,6 +71,7 @@ const services = {
       '用户': 'user',
       '角色': 'role',
       '菜单': 'menu',
+      '看板关联': 'dashboardRelation',
     },
   },
   vis: {

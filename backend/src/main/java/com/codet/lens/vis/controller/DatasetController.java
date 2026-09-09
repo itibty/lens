@@ -18,6 +18,8 @@ import com.codet.lens.vis.dto.dataset.DebugSqlResponse;
 import com.codet.lens.vis.dto.dataset.MetaInfo;
 import com.codet.lens.vis.dto.dataset.QueryConfSqlRequest;
 import com.codet.lens.vis.dto.dataset.VisCardRefInfo;
+import com.codet.lens.vis.dto.dataset.DatasetDashboardRefInfo;
+import com.codet.lens.vis.service.DatasetReferenceService;
 import com.codet.lens.vis.dto.dataset.VisDatasetInfo;
 import com.codet.lens.vis.entity.VisDatasource;
 import com.codet.lens.vis.mapper.VisDatasourceMapper;
@@ -51,6 +53,7 @@ public class DatasetController {
     private final DatasourceMetaService datasourceMetaService;
     private final DatasetAdminService datasetAdminService;
     private final VisDatasetService visDatasetService;
+    private final DatasetReferenceService datasetReferenceService;
 
     @Tag(name = "DATASOURCE")
     @Permission(VisPerms.VIS_DATASET_CONF)
@@ -146,6 +149,14 @@ public class DatasetController {
     @GetMapping("/datasets/cards")
     public R<ListResponse<VisCardRefInfo>> listDatasetCards(@NotNull Long datasetId) {
         return R.success(datasetAdminService.listRefCards(datasetId));
+    }
+
+    @Tag(name = "DATASET")
+    @Permission(VisPerms.VIS_DATASET_CONF)
+    @Operation(operationId = "listDatasetDashboards", summary = "数据集关联看板")
+    @GetMapping("/datasets/dashboards")
+    public R<ListResponse<DatasetDashboardRefInfo>> listDatasetDashboards(@NotNull Long datasetId) {
+        return R.success(datasetReferenceService.listDashboards(datasetId));
     }
 
     @Tag(name = "DATASET")

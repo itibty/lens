@@ -107,7 +107,7 @@ const extraActions = computed(() => {
   else if (props.canMoveToGroup) {
     actions.push({
       key: 'moveToGroup',
-      label: '移入分组',
+      label: '移入',
       icon: 'i-mingcute-layout-grid-line',
     })
   }

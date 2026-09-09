@@ -5,10 +5,12 @@
 import * as user from "./user";
 import * as role from "./role";
 import * as menu from "./menu";
+import * as dashboardRelation from "./dashboardRelation";
 import * as account from "./account";
 export default {
   user,
   role,
   menu,
+  dashboardRelation,
   account,
 };

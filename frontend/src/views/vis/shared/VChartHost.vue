@@ -222,6 +222,14 @@ function hideTooltip() {
   chart?.hideTooltip()
 }
 
+function prepareScreenshot() {
+  chart?.stopAnimation()
+  hideTooltip()
+  chart?.getStage()?.render()
+}
+
+defineExpose({ prepareScreenshot })
+
 function onTooltipShow() {
   if (props.lockTooltip)
     hideTooltip()

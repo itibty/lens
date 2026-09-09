@@ -18,6 +18,7 @@ import { isBlank } from '@/utils/validate'
 import BindFieldsDialog from './components/BindFieldsDialog.vue'
 import { FUNCTION_DATASET_CONF } from './components/config'
 import ConfSqlDialog from './components/ConfSqlDialog.vue'
+import DatasetRelationsDialog from './components/DatasetRelationsDialog.vue'
 
 interface IOption {
   name: string
@@ -63,6 +64,7 @@ const states = reactive<IStates>({
 })
 
 const confSqlDialogRef = ref<ConfSqlDialogInstance>()
+const relationsDialogRef = ref<InstanceType<typeof DatasetRelationsDialog>>()
 const bindFieldsDialogRef = ref<BindFieldsDialogInstance>()
 const viewingSqlId = ref('')
 const checkingDatasetId = ref('')
@@ -123,6 +125,13 @@ async function handleDelete(row: VIS.ConfSqlInfo) {
         `该数据集被 ${cards.length} 张卡片引用，请先处理卡片：${names}${suffix}`,
         '无法删除数据集',
       )
+      return
+    }
+    const dashboardRes = await vis.dataset.listDatasetDashboards({ datasetId: row.id })
+    const dashboards = dashboardRes.data?.list ?? []
+    if (dashboards.length) {
+      const names = dashboards.slice(0, 5).map(dashboard => dashboard.dashName).join('、')
+      showAlert(`该数据集被 ${dashboards.length} 个看板引用，请先处理看板：${names}${dashboards.length > 5 ? ' 等' : ''}`, '无法删除数据集')
       return
     }
     showConfirm('您确定要删除此数据集吗?', '删除确认', 'warning', () => {
@@ -232,7 +241,7 @@ onMounted(() => {
         </el-table-column>
         <el-table-column label="备注" prop="sqlDesc" show-overflow-tooltip />
         <!-- @vue-generic {VIS.ConfSqlInfo} -->
-        <el-table-column label="操作" width="240" fixed="right">
+        <el-table-column label="操作" width="310" fixed="right">
           <template #default="{ row }">
             <el-button
               v-if="states.permission.conf"
@@ -267,6 +276,15 @@ onMounted(() => {
               size="small"
               type="primary"
               link
+              @click="relationsDialogRef?.showDialog(row)"
+            >
+              查看关联
+            </el-button>
+            <el-button
+              v-if="states.permission.conf"
+              size="small"
+              type="primary"
+              link
               :loading="checkingDatasetId === row.id"
               @click="handleDelete(row)"
             >
@@ -277,6 +295,7 @@ onMounted(() => {
       </el-table>
       <ConfSqlDialog ref="confSqlDialogRef" @fetch-data="fetchData" />
       <BindFieldsDialog ref="bindFieldsDialogRef" />
+      <DatasetRelationsDialog ref="relationsDialogRef" />
     </template>
     <template #footer>
       <el-pagination

@@ -139,6 +139,19 @@ declare namespace VIS {
     descDashCount?: number;
   };
 
+  type DatasetDashboardReference = {
+    type?: "CARD" | "FILTER" | "OPTIONS";
+    name?: string;
+  };
+
+  type DatasetDashboardRefInfo = {
+    id?: string;
+    dashName?: string;
+    groupName?: string;
+    status?: string;
+    references?: DatasetDashboardReference[];
+  };
+
   type DatasetSourceChangeWarning = {
     /** 警告类型 */
     warningType: string;
@@ -431,6 +444,10 @@ declare namespace VIS {
     datasetId: string;
   };
 
+  type listDatasetDashboardsParams = {
+    datasetId: string;
+  };
+
   type listDatasetFieldsByIdParams = {
     datasetId: string;
   };
@@ -461,6 +478,11 @@ declare namespace VIS {
   type ListResponseDashGroupInfo = {
     /** 列表 */
     list: DashGroupInfo[];
+  };
+
+  type ListResponseDatasetDashboardRefInfo = {
+    /** 列表 */
+    list: DatasetDashboardRefInfo[];
   };
 
   type ListResponseDsOption = {
@@ -859,6 +881,15 @@ declare namespace VIS {
     msg: string;
     /** 数据 */
     data?: ListResponseDashGroupInfo;
+  };
+
+  type RListResponseDatasetDashboardRefInfo = {
+    /** 200成功 */
+    code: number;
+    /** 提示 */
+    msg: string;
+    /** 数据 */
+    data?: ListResponseDatasetDashboardRefInfo;
   };
 
   type RListResponseDsOption = {

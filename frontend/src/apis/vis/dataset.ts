@@ -38,6 +38,24 @@ export async function listDatasetCards(
   );
 }
 
+/** 数据集关联看板 GET /datasets/dashboards */
+export async function listDatasetDashboards(
+  // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
+  params: VIS.listDatasetDashboardsParams,
+  options?: { [key: string]: any }
+) {
+  return request<VIS.RListResponseDatasetDashboardRefInfo>(
+    `${VIS_BASE_PATH}/datasets/dashboards`,
+    {
+      method: "GET",
+      params: {
+        ...params,
+      },
+      ...(options || {}),
+    }
+  );
+}
+
 /** 调试数据集脚本 POST /datasets/debug */
 export async function debugDataset(
   body: VIS.DebugSqlRequest,

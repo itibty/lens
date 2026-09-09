@@ -32,8 +32,9 @@ class DatasetAdminServiceTest {
     private final VisDatasetFieldMapper fieldMapper = mock(VisDatasetFieldMapper.class);
     private final VisDatasourceMapper datasourceMapper = mock(VisDatasourceMapper.class);
     private final VisCardMapper cardMapper = mock(VisCardMapper.class);
+    private final DatasetReferenceService referenceService = mock(DatasetReferenceService.class);
     private final DatasetAdminService service =
-            new DatasetAdminService(datasetMapper, fieldMapper, datasourceMapper, cardMapper);
+            new DatasetAdminService(datasetMapper, fieldMapper, datasourceMapper, cardMapper, referenceService);
 
     @Test
     void blocksDeletingDatasetReferencedByActiveCards() {
@@ -48,6 +49,15 @@ class DatasetAdminServiceTest {
                 () -> service.delete(List.of(10L)));
 
         assertEquals("数据集被 1 张卡片引用，请先处理卡片：区域营收", error.getMsg());
+        verify(datasetMapper, never()).updateById(any(VisDataset.class));
+    }
+
+    @Test
+    void checksDashboardReferencesBeforeDeletingOtherwiseUnreferencedDataset() {
+        when(datasetMapper.selectById(10L)).thenReturn(new VisDataset().setStatus(Status.EBL));
+        org.mockito.Mockito.doThrow(ResultException.fail("仍被看板引用"))
+                .when(referenceService).assertNoDashboardReferences(List.of(10L));
+        assertThrows(ResultException.class, () -> service.delete(List.of(10L)));
         verify(datasetMapper, never()).updateById(any(VisDataset.class));
     }
 
