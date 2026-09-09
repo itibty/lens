@@ -1,5 +1,6 @@
 import type { DatasetField, VisQueryConfig, VisVisualConfig } from '@/views/vis/shared/types'
 import { getChartCatalogEntry } from '@/views/vis/charts/catalog'
+import { detailConfigIssue } from '@/views/vis/shared/detailConfig'
 import { incompleteFilterMessage } from '@/views/vis/shared/filterValue'
 import { hasKpiTarget } from '@/views/vis/shared/kpiCard'
 import { hasProgressTarget } from '@/views/vis/shared/progressCard'
@@ -19,7 +20,7 @@ export function listChartConstraints(chartType?: string): string[] {
   return [...(getChartCatalogEntry(chartType)?.constraints ?? ['请至少添加维度或指标'])]
 }
 
-export type QueryShelf = 'dataset' | 'dimensions' | 'rowDimensions' | 'colDimensions' | 'metrics' | 'filters' | 'having' | 'content'
+export type QueryShelf = 'dataset' | 'dimensions' | 'rowDimensions' | 'colDimensions' | 'metrics' | 'filters' | 'having' | 'content' | 'detail'
 
 export interface QueryIssue {
   message: string
@@ -314,6 +315,9 @@ export function collectQueryIssues(
   }
 
   pushQueryFilterIssues(issues, query)
+  const detailError = detailConfigIssue(visual, fields)
+  if (detailError)
+    issues.push(issue('detail', detailError.message, detailError.uid))
   return issues
 }
 

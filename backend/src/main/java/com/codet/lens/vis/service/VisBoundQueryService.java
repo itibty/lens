@@ -8,6 +8,7 @@ import com.codet.lens.vis.core.dash.VisDashFilters;
 import com.codet.lens.vis.dto.item.FilterItem;
 import com.codet.lens.vis.dto.pivot.PivotQueryConfig;
 import com.codet.lens.vis.dto.pivot.PivotQueryRequest;
+import com.codet.lens.vis.dto.query.DetailConfig;
 import com.codet.lens.vis.dto.query.DetailQueryRequest;
 import com.codet.lens.vis.dto.query.QueryConfig;
 import com.codet.lens.vis.dto.query.QueryRequest;
@@ -49,6 +50,7 @@ public class VisBoundQueryService {
     private final VisDashboardMapper dashboardMapper;
     private final VisDashboardCardMapper dashboardCardMapper;
     private final VisCardMapper cardMapper;
+    private final VisDetailRules detailRules;
 
     public QueryRequest bindData(Long dashboardId, Long cardId, QueryRequest request) {
         if (isDesignerPreview(dashboardId, cardId)) {
@@ -85,7 +87,7 @@ public class VisBoundQueryService {
     public DetailQueryRequest bindDetail(Long dashboardId, Long cardId, DetailQueryRequest request) {
         if (isDesignerPreview(dashboardId, cardId)) {
             dashboardAccess.assertCanQueryCard(0L);
-            return request == null ? new DetailQueryRequest() : request;
+            return detailRules.resolve(request == null ? new DetailQueryRequest() : request);
         }
         BoundCard boundCard = requireBoundCard(dashboardId, cardId);
         Map<String, Object> visual = readVisual(boundCard.card().getVisualJson());
@@ -93,15 +95,17 @@ public class VisBoundQueryService {
             throw ResultException.fail("卡片未开放明细");
         }
         DetailQueryRequest bound = new DetailQueryRequest();
-        bound.setQuery(readJson(boundCard.card().getQueryJson(), QueryConfig.class, "查询配置"));
+        bound.setQuery(VisDetailRules.readQuery(boundCard.card().getQueryJson()));
         if (request != null) {
             bound.setContextFilters(request.getContextFilters());
+            bound.setMetric(request.getMetric());
         }
         copyAllowedGlobals(boundCard.dashboard(), datasetIdOf(bound.getQuery()),
                 request == null ? null : request.getGlobalFilters(),
                 request == null ? null : request.getGlobalParams(),
                 bound::setGlobalFilters, bound::setGlobalParams);
-        return bound;
+        bound.setDetail(MAPPER.convertValue(visual.get("detail"), DetailConfig.class));
+        return detailRules.resolve(bound);
     }
 
     public String cardTitle(Long cardId) {

@@ -104,8 +104,8 @@ describe('metric cell progress', () => {
     expect(column.style).toMatchObject({
       barHeight: '100%',
       barPadding: [METRIC_PROGRESS_VERTICAL_GAP, 0],
-      textAlign: 'right',
     })
+    expect(column.style).not.toHaveProperty('textAlign')
     expect(column.fieldFormat?.({ 完成率: 42.5 })).toBe('42.5%')
   })
 
@@ -133,8 +133,8 @@ describe('metric cell progress', () => {
     expect(indicator.style).toMatchObject({
       barHeight: '100%',
       barPadding: [METRIC_PROGRESS_VERTICAL_GAP, 0],
-      textAlign: 'right',
     })
+    expect(indicator.style).not.toHaveProperty('textAlign')
     expect(indicator.format?.(88)).toBe('88%')
   })
 

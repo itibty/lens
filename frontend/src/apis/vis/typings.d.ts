@@ -223,9 +223,22 @@ declare namespace VIS {
     groupId: string;
   };
 
+  type DetailConfig = {
+    /** 明细字段及顺序，须至少配置一个有效字段 */
+    fields?: string[];
+    /** 明细独立排序，使用原始字段名 */
+    orderList?: OrderItem[];
+    /** 明细最大行数，默认 1000，最大 5000 */
+    limit?: number;
+  };
+
   type DetailQueryRequest = {
     /** 查询配置。只用数据集、过滤、参数、日期；维度仅用于补全点击维粒度 */
     query: QueryConfig;
+    /** 选中指标的别名 */
+    metric?: string;
+    /** 设计器预览明细规则；查看态使用已保存规则 */
+    detail?: DetailConfig;
     /** 点击维值，叠到行级过滤。不传则查当前卡片范围内的全部明细 */
     contextFilters?: FilterItem[];
     /** 看板全局行级过滤 */

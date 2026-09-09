@@ -13,6 +13,7 @@ const props = defineProps<{
   metrics: MetricPill[]
   /** 透视：有排序时行/列跟查询遇见序，没写则按维值正序 */
   forPivot?: boolean
+  emptyHint?: string
 }>()
 
 const orderList = defineModel<OrderPill[]>('orderList', { required: true })
@@ -53,7 +54,7 @@ function confirmDraft(element: OrderPill) {
   const draft = drafts[element._uid]
   if (!draft)
     return
-  element.dir = draft.dir
+  orderList.value = orderList.value.map(item => item._uid === element._uid ? { ...item, dir: draft.dir } : item)
   delete drafts[element._uid]
 }
 
@@ -74,7 +75,7 @@ function pillName(item: OrderPill) {
 }
 
 const emptyHint = computed(() =>
-  candidates.value.length ? '选择已投放的维度或指标' : '请先添加维度或指标',
+  props.emptyHint || (candidates.value.length ? '选择已投放的维度或指标' : '请先添加维度或指标'),
 )
 
 const tip = computed(() => props.forPivot

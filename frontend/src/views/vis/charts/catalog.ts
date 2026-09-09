@@ -49,6 +49,7 @@ export interface ChartCardinality {
 export interface ChartCatalogEntry {
   stage: Exclude<VisStageMode, 'unknown'>
   needsDataset: boolean
+  allowViewData: boolean
   allowFullscreen: boolean
   allowContrast: boolean
   usesChartTheme: boolean
@@ -64,6 +65,7 @@ function entry(
 ): ChartCatalogEntry {
   return {
     stage,
+    allowViewData: stage !== 'static' && stage !== 'table' && stage !== 'pivot',
     needsDataset: stage !== 'static',
     allowFullscreen: options.allowFullscreen ?? true,
     allowContrast: options.allowContrast ?? false,
@@ -273,4 +275,9 @@ export function resolveVisStage(chartType?: string): VisStageMode {
 export function hidesQueryDimensions(chartType?: string) {
   const stage = resolveVisStage(chartType)
   return stage === 'number' || stage === 'progress'
+}
+
+/** 查看数据是类型能力，不属于作者配置。 */
+export function allowsViewData(chartType?: string) {
+  return getChartCatalogEntry(chartType)?.allowViewData ?? false
 }

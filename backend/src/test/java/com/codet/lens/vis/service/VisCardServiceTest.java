@@ -29,7 +29,7 @@ class VisCardServiceTest {
     private final VisDashboardAccess dashboardAccess = mock(VisDashboardAccess.class);
     private final VisDatasetMapper datasetMapper = mock(VisDatasetMapper.class);
     private final VisCardService service = new VisCardService(
-            cardMapper, dashboardCardMapper, dashboardMapper, dashboardAccess, datasetMapper);
+            cardMapper, dashboardCardMapper, dashboardMapper, dashboardAccess, datasetMapper, mock(VisDetailRules.class));
 
     @Test
     void rejectsSavingDataCardAgainstDisabledDataset() {

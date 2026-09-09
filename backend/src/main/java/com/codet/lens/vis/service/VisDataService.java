@@ -80,16 +80,23 @@ public class VisDataService {
     }
 
     public QueryDataResponse queryDetail(DetailQueryRequest request) {
-        QueryContext ctx = new QueryContext(QUERY_MAX_ROWS, 1000);
+        int maxRows = request.getQuery().getLimit() == null ? VisDetailRules.DEFAULT_LIMIT : request.getQuery().getLimit();
+        QueryContext ctx = new QueryContext(maxRows, 1000);
         ctx.setShowSql(VisExecSql.showSql());
         QueryContextHolder.set(ctx);
         try {
+            if (CollUtil.isEmpty(request.getSelectFields())) {
+                throw ResultException.fail("请至少选择一个明细字段");
+            }
             VisQueryPrep.Prepared prepared = VisQueryPrep.prepareDetail(request);
             VisDatasetService.Ready dataset = openDataset(request.getQuery().getDatasetId(), request);
             SqlConf sqlConf = dataset.getSqlConf();
-            List<String> fields = detailFields(dataset.getFields());
-            QueryBO query = toDetailQuery(sqlConf, prepared, fields, request.getQuery().getLimit());
-            configureResultLimit(query, request.getQuery().getLimit());
+            List<String> fields = request.getSelectFields().stream().distinct().toList();
+            if (!detailFields(dataset.getFields()).containsAll(fields)) {
+                throw ResultException.fail("明细字段已不可用，请调整卡片明细配置");
+            }
+            QueryBO query = toDetailQuery(sqlConf, prepared, fields, maxRows);
+            query.setOrderList(request.getQuery().getOrderList());
             ctx.setNextSqlName("detail");
             SqlBuilder.SqlRet sqlRet = SqlBuilder.build(query);
             List<Map<String, Object>> rows = RdsUtil.selectList(
@@ -168,13 +175,14 @@ public class VisDataService {
     }
 
     private QueryBO toDetailQuery(SqlConf sqlConf, VisQueryPrep.Prepared prepared, List<String> fields,
-                                  Integer limit) {
+                                  int maxRows) {
         SqlTplRet tplRet = visDatasetService.resolveTpl(sqlConf, prepared.getEnjoyParams());
         QueryBO query = new QueryBO();
         query.setSelectFields(fields);
         query.setSkipHaving(true);
-        query.setSkipOrder(true);
-        query.setLimit(limit);
+        // 明细限量独立于来源卡片的 Top N，多读一行用于判断是否截断。
+        query.setMaxLimit(maxRows + 1);
+        query.setLimit(maxRows + 1);
         query.setInnerSql(tplRet.getSql());
         query.setInnerParams(tplRet.getParams());
         query.setFilters(prepared.getFilters());

@@ -94,7 +94,8 @@ public final class VisQueryPrep {
     }
 
     /**
-     * 明细：不校验图表形态 / 维度指标。忽略 having、结果列过滤、排序。
+     * 明细：不校验图表形态 / 指标。继承行级筛选，忽略 having 和结果列过滤。
+     * 展示字段、独立排序及行数上限由明细规则校验后交给查询服务。
      * 点击维值叠到行级过滤；未带 timeGrain 时从 query.dimensions 补。
      */
     public static Prepared prepareDetail(DetailQueryRequest request) {

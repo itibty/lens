@@ -1,15 +1,15 @@
 import type { ListTableConstructorOptions } from '@visactor/vtable'
-import type { VisVisualConfig } from './types'
+import type { VisDetailFieldOptions, VisVisualConfig } from './types'
 import type { ThemeColors } from '@/theme/tokens'
 import { TYPES } from '@visactor/vtable'
-import { FilterPlugin } from '@visactor/vtable-plugins'
 import { LIGHT_THEME } from '@/theme/tokens'
 import { contrastPeriodDescription, findContrastInfo } from './contrastExp'
-import { formatMetricField } from './fieldStyle'
+import { FIELD_FORMAT_DEFAULTS, formatFieldText, formatMetricField } from './fieldStyle'
 import { metricProgressVTableConfig } from './metricCell'
 import { bindMarkColumnStyle, prepareTableMarks } from './tableMark'
 import { resolveTableStyle } from './tableStyle'
 import { dimensionAlias, metricAlias } from './types'
+import { createVTableFilterPlugin } from './vtableFilter'
 import { resolveTableHeaderIconColor, resolveVTableEmptyTip, resolveVTableLayout, resolveVTableTheme } from './vtableTheme'
 
 function contrastPeriodHeaderIcon(tip: string, visual?: VisVisualConfig, theme: ThemeColors = LIGHT_THEME) {
@@ -32,7 +32,7 @@ function contrastPeriodHeaderIcon(tip: string, visual?: VisVisualConfig, theme: 
   }
 }
 
-function listTableFields(query: VIS.QueryConfig, data: VIS.QueryDataResponse) {
+export function listTableFields(query: VIS.QueryConfig, data: VIS.QueryDataResponse) {
   const preferred = [
     ...(query.dimensions ?? []).map(dimensionAlias),
     ...(query.metrics ?? []).map(metricAlias),
@@ -58,13 +58,14 @@ export function listTableColumns(
   sortable: boolean,
   visual?: VisVisualConfig,
   theme: ThemeColors = LIGHT_THEME,
+  fieldOptions?: Record<string, VisDetailFieldOptions>,
 ): NonNullable<ListTableConstructorOptions['columns']> {
   const metricKeys = new Set((query.metrics ?? []).map(metricAlias))
-  const dimensionKeys = new Set((query.dimensions ?? []).map(dimensionAlias))
   const marks = prepareTableMarks(visual, query.asOfDate)
   const mergeCell = resolveTableStyle(visual).mergeCell
 
   return listTableFields(query, data).map((field) => {
+    const options = fieldOptions?.[field]
     const isMetric = metricKeys.has(field)
     const periodTip = contrastPeriodDescription(findContrastInfo(data, field))
     const progress = isMetric
@@ -72,30 +73,28 @@ export function listTableColumns(
       : null
     const common = {
       field,
-      title: field,
+      title: options?.label || field,
       width: 'auto',
       sort: sortable,
       mergeCell,
       description: periodTip || undefined,
       headerIcon: periodTip ? contrastPeriodHeaderIcon(periodTip, visual, theme) : undefined,
-      fieldFormat: isMetric
-        ? (record: Record<string, unknown>) => formatMetricField(visual, query, field, record?.[field])
-        : undefined,
+      fieldFormat: options?.format
+        ? (record: Record<string, unknown>) => formatFieldText(record?.[field], { ...FIELD_FORMAT_DEFAULTS, ...options.format })
+        : isMetric
+          ? (record: Record<string, unknown>) => formatMetricField(visual, query, field, record?.[field])
+          : undefined,
     }
-    const textAlign = isMetric ? 'right' : dimensionKeys.has(field) ? 'left' : undefined
     if (!progress) {
       return {
         ...common,
-        style: bindMarkColumnStyle(marks, field, { textAlign }),
+        style: bindMarkColumnStyle(marks, field),
       }
     }
     return {
       ...common,
       ...progress.define,
-      style: bindMarkColumnStyle(marks, field, {
-        textAlign,
-        ...progress.style,
-      }),
+      style: bindMarkColumnStyle(marks, field, progress.style),
     }
   })
 }
@@ -105,9 +104,10 @@ export function buildListTableOption(
   data: VIS.QueryDataResponse,
   visual: VisVisualConfig,
   theme: ThemeColors = LIGHT_THEME,
+  fieldOptions?: Record<string, VisDetailFieldOptions>,
 ): ListTableConstructorOptions | null {
   const tableStyle = resolveTableStyle(visual)
-  const columns = listTableColumns(query, data, tableStyle.sortable, visual, theme)
+  const columns = listTableColumns(query, data, tableStyle.sortable, visual, theme, fieldOptions)
   if (!columns.length)
     return null
 
@@ -122,7 +122,7 @@ export function buildListTableOption(
       ? { title: '序号', width: 'auto', disableColumnResize: true }
       : undefined,
     plugins: tableStyle.showFilter
-      ? [new FilterPlugin({ filterModes: ['byValue', 'byCondition'] })]
+      ? [createVTableFilterPlugin(theme)]
       : undefined,
   }
 }
