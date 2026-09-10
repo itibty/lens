@@ -58,7 +58,7 @@ defineOptions({ name: 'VisDashboardView' })
   }
 
   :deep(.viewer:is(.is-compact, .is-medium) .viewer__chrome) {
-    background: color-mix(in srgb, var(--dash-card-bg, var(--el-bg-color)) 94%, transparent);
+    background: color-mix(in srgb, var(--dash-chrome-bg, var(--na-surface-bg)) 94%, transparent);
     backdrop-filter: blur(14px) saturate(1.06);
     -webkit-backdrop-filter: blur(14px) saturate(1.06);
   }

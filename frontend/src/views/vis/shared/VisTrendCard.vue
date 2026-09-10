@@ -21,10 +21,12 @@ const props = withDefaults(defineProps<{
   emptyText?: string
   interactive?: boolean
   fill?: boolean
+  autoHeight?: boolean
 }>(), {
   emptyText: '暂无数据',
   interactive: false,
   fill: false,
+  autoHeight: false,
 })
 
 const emit = defineEmits<{
@@ -87,7 +89,7 @@ function onValueClick(event: MouseEvent) {
     v-if="view"
     ref="rootRef"
     class="vis-trend-card"
-    :class="{ 'is-fill': fill, 'has-spark': fill && opt.showSparkline }"
+    :class="{ 'is-fill': fill, 'is-auto-height': autoHeight, 'has-spark': fill && opt.showSparkline }"
     :style="cardStyle"
   >
     <div class="vis-trend-card__hero">
@@ -203,6 +205,12 @@ function onValueClick(event: MouseEvent) {
     }
   }
 
+  &.is-fill.is-auto-height {
+    flex: 0 0 auto;
+    height: auto;
+    overflow: visible;
+  }
+
   &.is-empty {
     align-items: center;
     justify-content: center;
@@ -285,6 +293,12 @@ function onValueClick(event: MouseEvent) {
       flex: 1 1 0;
       min-height: 28px;
     }
+
+    .is-fill.is-auto-height & {
+      flex: 0 0 var(--vis-trend-spark-height, 64px);
+      height: var(--vis-trend-spark-height, 64px);
+      min-height: var(--vis-trend-spark-height, 64px);
+    }
   }
 
   &__spark {
@@ -316,6 +330,11 @@ function onValueClick(event: MouseEvent) {
   &__aux {
     padding-top: 8px;
     border-top: 1px solid var(--el-border-color-lighter);
+  }
+
+  &.is-auto-height &__aux {
+    min-height: auto;
+    overflow-y: visible;
   }
 }
 </style>

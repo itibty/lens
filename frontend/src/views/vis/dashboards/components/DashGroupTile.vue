@@ -158,6 +158,8 @@ function onResizePointerDown(corner: 'nw' | 'ne' | 'sw' | 'se', event: PointerEv
         <VisActionButton
           v-if="designActions"
           class="dash-group__cfg"
+          :class="{ 'is-borderless': !!flowMode }"
+          :variant="flowMode ? 'ghost' : 'outline'"
           label="分组配置"
           title="分组配置"
           @pointerdown.stop
@@ -405,6 +407,23 @@ function onResizePointerDown(corner: 'nw' | 'ne' | 'sw' | 'se', event: PointerEv
   min-width: 0;
 }
 
+.dash-group__cfg {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+
+  &.is-borderless {
+    min-width: var(--vis-control-compact);
+    min-height: var(--vis-control-compact);
+  }
+}
+
+.dash-group:hover .dash-group__cfg,
+.dash-group:focus-within .dash-group__cfg {
+  opacity: 1;
+  pointer-events: auto;
+}
+
 .dash-group__tabs {
   @include ui.segmented;
   min-width: 0;
@@ -418,6 +437,12 @@ function onResizePointerDown(corner: 'nw' | 'ne' | 'sw' | 'se', event: PointerEv
 }
 
 .dash-group.has-color {
+  .dash-group__cfg:not(.is-borderless) {
+    border-color: rgb(255 255 255 / 28%);
+    background: rgb(255 255 255 / 8%);
+    color: var(--dash-group-fg);
+  }
+
   .dash-group__tabs {
     background: rgb(255 255 255 / 14%);
   }

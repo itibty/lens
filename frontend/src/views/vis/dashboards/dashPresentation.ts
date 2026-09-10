@@ -13,21 +13,28 @@ export const DASH_PRESENTATION_MODE_KEY: InjectionKey<ComputedRef<DashPresentati
 export const DASH_EAGER_CARD_QUERIES_KEY: InjectionKey<Readonly<Ref<boolean>>>
   = Symbol('dash-eager-card-queries')
 
-export interface DashFlowWidgetProjection {
+interface DashFlowItemSizing {
+  height?: number
+  minHeight?: number
+  autoHeight?: boolean
+}
+
+export interface DashFlowWidgetProjection extends DashFlowItemSizing {
   key: string
   widget: DashWidget
   columnSpan: 1 | 2
-  height?: number
-  minHeight?: number
 }
 
-export interface DashFlowCardProjection {
+export interface DashFlowCardProjection extends DashFlowItemSizing {
   item: DashPageItem
   columnSpan: 1 | 2
-  height: number
 }
 
 const LIGHTWEIGHT_CHART_TYPES = new Set(['number', 'progress', 'trend'])
+
+function chartTypeKey(chartType?: string): string {
+  return String(chartType || '').trim().toLowerCase()
+}
 
 /** 独立预览使用容器宽度选择展示模式；嵌入式场景继续沿用 auto。 */
 export function resolveDashPresentationMode(width: number, standalone: boolean): DashPresentationMode {
@@ -59,15 +66,15 @@ export function sortByDashPosition<T extends Pick<DashLayoutRect, 'x' | 'y'>>(it
 }
 
 export function isLightweightDashCard(chartType?: string): boolean {
-  return LIGHTWEIGHT_CHART_TYPES.has(String(chartType || '').trim().toLowerCase())
+  return LIGHTWEIGHT_CHART_TYPES.has(chartTypeKey(chartType))
 }
 
 /**
- * 流式布局使用稳定的产品高度，而不是照搬桌面栅格的 h。
- * 表格留出更多纵向浏览空间，指标类则保持紧凑。
+ * 流式布局使用稳定的产品基准高度，而不是照搬桌面栅格的 h。
+ * 表格留出更多纵向浏览空间；趋势卡以此为下限，并允许辅助指标撑高。
  */
 export function dashFlowCardHeight(chartType?: string, mode: DashFlowMode = 'medium'): number {
-  switch (String(chartType || '').trim().toLowerCase()) {
+  switch (chartTypeKey(chartType)) {
     case 'number':
       return mode === 'compact' ? 156 : 176
     case 'progress':
@@ -90,14 +97,22 @@ export function dashFlowCardHeight(chartType?: string, mode: DashFlowMode = 'med
 }
 
 export function dashFlowColumnSpan(mode: DashFlowMode, chartType?: string): 1 | 2 {
-  const simpleMetric = String(chartType || '').trim().toLowerCase() === 'number'
-  return (mode === 'compact' ? simpleMetric : isLightweightDashCard(chartType)) ? 1 : 2
+  return mode === 'compact' || !isLightweightDashCard(chartType) ? 2 : 1
 }
 
-// 只配对相邻指标，保持阅读顺序；落单指标铺满一行，避免图表前留下半行空白。
-function pairCompactMetrics<T extends { columnSpan: 1 | 2 }>(items: T[], mode: DashFlowMode): T[] {
-  if (mode !== 'compact')
-    return items
+function dashFlowCardSizing(chartType: string | undefined, mode: DashFlowMode): DashFlowItemSizing {
+  const height = dashFlowCardHeight(chartType, mode)
+  if (chartTypeKey(chartType) === 'trend') {
+    return {
+      minHeight: height,
+      autoHeight: true,
+    }
+  }
+  return { height }
+}
+
+// 半宽指标只在相邻且能配成一行时保留半宽；落单时铺满，避免留下半行空白。
+function expandUnpairedCards<T extends { columnSpan: 1 | 2 }>(items: T[]): T[] {
   for (let index = 0; index < items.length; index++) {
     const item = items[index]!
     if (item.columnSpan !== 1)
@@ -115,14 +130,14 @@ export function projectDashFlowWidgets(
   mode: DashFlowMode,
   chartTypeOf: (cardId: string) => string | undefined,
 ): DashFlowWidgetProjection[] {
-  return pairCompactMetrics(sortByDashPosition(widgets).map((widget): DashFlowWidgetProjection => {
+  return expandUnpairedCards(sortByDashPosition(widgets).map((widget): DashFlowWidgetProjection => {
     if (widget.kind === 'card') {
       const chartType = chartTypeOf(widget.cardId)
       return {
         key: widgetKey(widget),
         widget,
         columnSpan: dashFlowColumnSpan(mode, chartType),
-        height: dashFlowCardHeight(chartType, mode),
+        ...dashFlowCardSizing(chartType, mode),
       }
     }
     if (widget.kind === 'text') {
@@ -139,7 +154,7 @@ export function projectDashFlowWidgets(
       columnSpan: 2,
       ...(widget.mode === 'tabs' ? { height: mode === 'compact' ? 380 : 420 } : { minHeight: 160 }),
     }
-  }), mode)
+  }))
 }
 
 export function projectDashFlowCards(
@@ -147,9 +162,12 @@ export function projectDashFlowCards(
   mode: DashFlowMode,
   chartTypeOf: (cardId: string) => string | undefined,
 ): DashFlowCardProjection[] {
-  return pairCompactMetrics(sortByDashPosition(items).map(item => ({
-    item,
-    columnSpan: dashFlowColumnSpan(mode, chartTypeOf(item.cardId)),
-    height: dashFlowCardHeight(chartTypeOf(item.cardId), mode),
-  })), mode)
+  return expandUnpairedCards(sortByDashPosition(items).map((item) => {
+    const chartType = chartTypeOf(item.cardId)
+    return {
+      item,
+      columnSpan: dashFlowColumnSpan(mode, chartType),
+      ...dashFlowCardSizing(chartType, mode),
+    }
+  }))
 }

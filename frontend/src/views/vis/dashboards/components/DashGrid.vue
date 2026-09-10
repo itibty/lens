@@ -290,6 +290,7 @@ onBeforeUnmount(() => {
         v-for="item in flowTiles"
         :key="item.key"
         class="dash-grid__flow-item"
+        :class="{ 'is-auto-height': item.autoHeight }"
         :data-dash-widget-key="item.key"
         :style="flowItemStyle(item)"
       >
@@ -301,6 +302,7 @@ onBeforeUnmount(() => {
           :globals="globalsOf(cardById[item.widget.cardId])"
           :editable="editable"
           :design-actions="designActions"
+          :auto-height="item.autoHeight"
           :can-move-to-group="canMoveToGroup"
           :allow-fullscreen="allowFullscreen"
           :show-sql="showSql"
@@ -529,9 +531,13 @@ onBeforeUnmount(() => {
   > :deep(.dash-group:not(.is-tabs)) {
     height: auto;
   }
+
+  &.is-auto-height {
+    @include dash.flow-auto-height-item;
+  }
 }
 
-@container dash-flow (max-width: 359px) {
+@container dash-flow (max-width: 419px) {
   .dash-grid__flow {
     grid-template-columns: minmax(0, 1fr);
     gap: 8px;

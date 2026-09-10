@@ -65,6 +65,7 @@ withDefaults(defineProps<{
   }
 
   &:hover:not(:disabled),
+  &:active:not(:disabled),
   &.is-active {
     background: var(--na-fill-color-light);
     color: var(--vis-content-color, var(--na-text-strong));
@@ -73,6 +74,10 @@ withDefaults(defineProps<{
   &.is-active {
     border-color: var(--na-color-primary-border);
     color: var(--na-color-primary);
+  }
+
+  &.is-ghost.is-active {
+    border-color: transparent;
   }
 
   &:disabled {

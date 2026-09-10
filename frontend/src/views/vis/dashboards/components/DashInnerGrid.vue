@@ -155,7 +155,8 @@ const flowTiles = computed(() => props.flowMode
 function flowItemStyle(item: (typeof flowTiles.value)[number]): CSSProperties {
   return {
     '--dash-flow-span': item.columnSpan,
-    'height': `${item.height}px`,
+    ...(item.height ? { height: `${item.height}px` } : {}),
+    ...(item.minHeight ? { minHeight: `${item.minHeight}px` } : {}),
   }
 }
 
@@ -199,6 +200,7 @@ onBeforeUnmount(() => {
         v-for="entry in flowTiles"
         :key="entry.item.cardId"
         class="dash-inner__flow-item"
+        :class="{ 'is-auto-height': entry.autoHeight }"
         :style="flowItemStyle(entry)"
       >
         <DashCardTile
@@ -208,6 +210,7 @@ onBeforeUnmount(() => {
           :globals="globalsOf(cards[entry.item.cardId])"
           :editable="editable"
           :design-actions="designActions"
+          :auto-height="entry.autoHeight"
           in-group
           :allow-fullscreen="allowFullscreen"
           :show-sql="showSql"
@@ -332,9 +335,13 @@ onBeforeUnmount(() => {
     width: 100%;
     height: 100%;
   }
+
+  &.is-auto-height {
+    @include dash.flow-auto-height-item;
+  }
 }
 
-@container dash-flow (max-width: 359px) {
+@container dash-flow (max-width: 419px) {
   .dash-inner__flow {
     grid-template-columns: minmax(0, 1fr);
   }

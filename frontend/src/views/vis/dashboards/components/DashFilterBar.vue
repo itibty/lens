@@ -188,7 +188,6 @@ watch(mobile, (enabled) => {
         </div>
       </div>
       <span v-if="loading" class="filter-dock__loading i-svg-spinners-ring-resize" />
-      <span v-if="dirty" class="filter-dock__dirty">未保存</span>
     </div>
 
     <div
@@ -200,7 +199,6 @@ watch(mobile, (enabled) => {
           {{ title }}
         </div>
         <span v-if="loading" class="filter-dock__loading i-svg-spinners-ring-resize" />
-        <span v-if="dirty" class="filter-dock__dirty">未保存</span>
       </div>
       <div v-if="descText" class="filter-dock__desc" :title="descText">
         {{ descText }}
@@ -227,7 +225,7 @@ watch(mobile, (enabled) => {
         </el-tooltip>
         <el-tooltip content="刷新数据" placement="bottom" :show-after="200" :disabled="mobile">
           <VisActionButton
-            :size="mobile ? 'touch' : 'regular'"
+            :size="mobile ? 'compact' : 'regular'"
             :variant="mobile ? 'ghost' : 'outline'"
             label="刷新数据"
             class="filter-dock__btn"
@@ -250,7 +248,7 @@ watch(mobile, (enabled) => {
         >
           <template #reference>
             <VisActionButton
-              :size="mobile ? 'touch' : 'regular'"
+              :size="mobile ? 'compact' : 'regular'"
               :variant="mobile ? 'ghost' : 'outline'"
               class="filter-dock__btn"
               :active="toolsOpen"
@@ -448,6 +446,7 @@ watch(mobile, (enabled) => {
           :disabled="saveDisabled"
           @click="emit('save')"
         >
+          <span v-if="dirty" class="filter-dock__save-dot" aria-hidden="true" />
           保存
         </el-button>
       </div>
@@ -616,14 +615,6 @@ watch(mobile, (enabled) => {
   white-space: nowrap;
 }
 
-.filter-dock.is-mobile .filter-dock__dirty {
-  padding: 3px 6px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--el-color-warning) 12%, transparent);
-  font-size: 11px;
-  line-height: 1;
-}
-
 .filter-dock.is-mobile .filter-dock__right {
   grid-area: mobile-actions;
   display: flex;
@@ -636,6 +627,11 @@ watch(mobile, (enabled) => {
 
 .filter-dock.is-mobile .filter-dock__view {
   gap: 0;
+
+  :deep(.vis-action-button) {
+    min-width: var(--vis-control-compact);
+    min-height: var(--vis-control-compact);
+  }
 }
 
 .filter-dock__mobile-filters {
@@ -751,12 +747,6 @@ watch(mobile, (enabled) => {
   color: var(--dash-title, var(--el-text-color-primary));
 }
 
-.filter-dock__dirty {
-  flex-shrink: 0;
-  color: var(--el-color-warning);
-  font-size: var(--vis-caption-size);
-}
-
 .filter-dock__loading {
   width: 16px;
   height: 16px;
@@ -811,6 +801,16 @@ watch(mobile, (enabled) => {
   margin-left: 2px;
   border-radius: var(--vis-radius-control);
   font-size: var(--vis-body-size);
+}
+
+.filter-dock__save-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 7px;
+  border-radius: 50%;
+  background: var(--el-color-warning);
+  box-shadow: 0 0 0 2px rgb(255 255 255 / 88%);
 }
 
 .filter-dock__add {

@@ -18,6 +18,7 @@ import { isVisDisabled } from '../dashApi'
 import {
   DASH_EAGER_CARD_QUERIES_KEY,
   DASH_PRESENTATION_MODE_KEY,
+  isDashFlowMode,
   shouldDeferDashCardQuery,
 } from '../dashPresentation'
 import { DASH_CARD_QUERY_TRACKER_KEY } from '../dashQueryTracker'
@@ -42,6 +43,8 @@ const props = withDefaults(defineProps<{
   /** 父页累加，强制重查出数 */
   dataTick?: number
   hideTitle?: boolean
+  /** 流式趋势卡以产品高度为下限，允许辅助指标自然撑高。 */
+  autoHeight?: boolean
 }>(), {
   globals: () => ({}),
   editable: false,
@@ -55,6 +58,7 @@ const props = withDefaults(defineProps<{
   locked: false,
   dataTick: undefined,
   hideTitle: false,
+  autoHeight: false,
 })
 
 const emit = defineEmits<{
@@ -259,6 +263,7 @@ function onMenuAction(key: string) {
         'is-locked': locked,
         'is-resizing': resizing,
         'is-full': isFull,
+        'is-auto-height': autoHeight && !isFull,
         'hide-resize-dots': editable && !designActions,
       }"
     >
@@ -296,6 +301,8 @@ function onMenuAction(key: string) {
           :allow-fullscreen="canFullscreen"
           :fullscreen="isFull"
           :compact="presentationMode === 'compact' && !isFull"
+          :auto-height="autoHeight && !isFull"
+          :action-variant="isDashFlowMode(presentationMode) ? 'ghost' : 'outline'"
           embedded
           @open-detail="onOpenDetail"
           @menu-action="onMenuAction"
@@ -327,6 +334,11 @@ function onMenuAction(key: string) {
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
   }
+
+  &.is-auto-height {
+    height: auto;
+    min-height: 100%;
+  }
 }
 
 .dash-tile__body {
@@ -336,6 +348,11 @@ function onMenuAction(key: string) {
   overflow: hidden;
   border-radius: inherit;
   background: inherit;
+
+  .dash-tile.is-auto-height & {
+    height: auto;
+    min-height: 100%;
+  }
 }
 
 .dash-tile.is-editable:not(.is-full):not(.is-locked):hover,

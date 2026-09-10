@@ -80,6 +80,9 @@ const props = withDefaults(defineProps<{
   fullscreen?: boolean
   hideTitle?: boolean
   compact?: boolean
+  /** 流式趋势卡允许内容撑高，避免辅助指标落入卡片内滚动区。 */
+  autoHeight?: boolean
+  actionVariant?: 'ghost' | 'outline'
 }>(), {
   title: '',
   description: '',
@@ -97,6 +100,8 @@ const props = withDefaults(defineProps<{
   fullscreen: false,
   hideTitle: false,
   compact: false,
+  autoHeight: false,
+  actionVariant: 'outline',
 })
 
 const emit = defineEmits<{
@@ -439,7 +444,17 @@ watch(allowDetail, (ok) => {
   <div
     ref="rootRef"
     class="vis-card-view h-full min-h-0 flex flex-col"
-    :class="[stageClass, { 'is-menu-open': menuOpen, 'is-embedded': embedded, 'is-fullscreen': fullscreen, 'is-compact': compact }]"
+    :class="[
+      stageClass,
+      {
+        'is-menu-open': menuOpen,
+        'is-embedded': embedded,
+        'is-fullscreen': fullscreen,
+        'is-compact': compact,
+        'is-auto-height': autoHeight,
+        'is-borderless-actions': actionVariant === 'ghost',
+      },
+    ]"
     :style="surfaceThemeStyle"
   >
     <div
@@ -513,6 +528,7 @@ watch(allowDetail, (ok) => {
           <VisActionButton
             v-if="showFullscreen"
             class="vis-card-view__full-btn"
+            :variant="actionVariant"
             :label="fullscreen ? '退出全屏' : '全屏查看'"
             :title="fullscreen ? '退出全屏' : '全屏查看'"
             @click="emit('toggleFullscreen')"
@@ -532,16 +548,20 @@ watch(allowDetail, (ok) => {
             @command="onMenuCommand"
             @visible-change="menuOpen = $event"
           >
-            <VisActionButton class="vis-card-view__more-btn" label="更多卡片操作">
+            <VisActionButton
+              class="vis-card-view__more-btn"
+              :variant="actionVariant"
+              :active="menuOpen"
+              label="更多卡片操作"
+            >
               <span
                 :class="exporting || capturing ? 'i-svg-spinners-ring-resize' : 'i-mingcute-more-2-line'"
                 class="vis-card-view__more-icon"
               />
             </VisActionButton>
             <template #dropdown>
-              <div v-if="compact && hasHeaderText" class="vis-card-more-popper__summary">
-                <strong v-if="cardTitle">{{ cardTitle }}</strong>
-                <p v-if="cardRemark">
+              <div v-if="compact && cardRemark" class="vis-card-more-popper__summary">
+                <p>
                   {{ cardRemark }}
                 </p>
               </div>
@@ -658,6 +678,7 @@ watch(allowDetail, (ok) => {
           :empty-text="emptyText"
           :interactive="allowDetail"
           :fill="embedded"
+          :auto-height="autoHeight"
           @detail-click="onKpiDetailClick"
         />
 
@@ -783,6 +804,17 @@ watch(allowDetail, (ok) => {
   height: 100%;
   box-sizing: border-box;
 
+  &.is-auto-height {
+    --vis-trend-spark-height: 64px;
+
+    height: auto;
+    min-height: 100%;
+
+    &.is-compact {
+      --vis-trend-spark-height: 56px;
+    }
+  }
+
   &:is(.is-number, .is-progress, .is-trend) {
     display: flex;
     align-items: center;
@@ -843,6 +875,21 @@ watch(allowDetail, (ok) => {
     }
   }
 
+  &.is-embedded.is-auto-height &__body.is-trend {
+    flex: 1 0 auto;
+    height: auto;
+    min-height: 100%;
+  }
+
+  &.is-embedded &__header:not(.is-ghost) {
+    padding-right: var(--vis-space-2);
+    padding-left: var(--vis-space-2);
+  }
+
+  &.is-embedded.is-borderless-actions &__header:not(.is-ghost) {
+    padding-right: var(--vis-space-1);
+  }
+
   &__header {
     flex-shrink: 0;
     display: flex;
@@ -884,7 +931,7 @@ watch(allowDetail, (ok) => {
     flex: 0 0 auto;
     display: flex;
     align-items: center;
-    gap: 2px;
+    gap: 6px;
     line-height: 1;
     opacity: 0;
     pointer-events: none;
@@ -893,6 +940,28 @@ watch(allowDetail, (ok) => {
     :deep(.el-tooltip__trigger) {
       display: inline-flex;
     }
+  }
+
+  &.is-borderless-actions &__actions {
+    gap: 0;
+    opacity: 1;
+    pointer-events: auto;
+
+    :deep(.vis-action-button) {
+      width: var(--vis-control-compact);
+      min-width: var(--vis-control-compact);
+      height: var(--vis-control-compact);
+      min-height: var(--vis-control-compact);
+    }
+  }
+
+  &.is-borderless-actions &__full-btn {
+    display: none;
+  }
+
+  &.is-borderless-actions &__body:hover &__full-btn,
+  &.is-borderless-actions &__body:focus-within &__full-btn {
+    display: inline-flex;
   }
 
   &__full-btn,
@@ -904,6 +973,14 @@ watch(allowDetail, (ok) => {
       &:hover {
         background: rgb(255 255 255 / 14%);
       }
+    }
+  }
+
+  &__full-btn,
+  &__more-btn {
+    .vis-card-view:not(.is-borderless-actions) .is-card-color & {
+      border-color: rgb(255 255 255 / 28%);
+      background: rgb(255 255 255 / 8%);
     }
   }
 
@@ -964,6 +1041,11 @@ watch(allowDetail, (ok) => {
       padding: var(--vis-space-2) var(--vis-card-inset) var(--vis-card-inset);
     }
 
+    .is-embedded.is-auto-height .is-trend & {
+      flex: 0 0 auto;
+      overflow: visible;
+    }
+
     .is-embedded :is(.is-number, .is-progress, .is-trend).is-headless & {
       padding: var(--vis-card-inset);
     }
@@ -992,6 +1074,10 @@ watch(allowDetail, (ok) => {
     .is-unavailable & {
       align-items: center;
       justify-content: center;
+    }
+
+    .vis-card-view.is-embedded .vis-card-view__body.is-headed & {
+      padding-top: 0;
     }
   }
 
@@ -1120,11 +1206,6 @@ watch(allowDetail, (ok) => {
         padding: var(--vis-space-1) var(--vis-card-inset);
       }
     }
-
-    &__actions {
-      opacity: 1;
-      pointer-events: auto;
-    }
   }
 }
 
@@ -1137,13 +1218,6 @@ watch(allowDetail, (ok) => {
 
   .vis-card-view__actions {
     gap: 0;
-    opacity: 1;
-    pointer-events: auto;
-
-    :deep(.vis-action-button) {
-      width: var(--vis-control-touch);
-      height: var(--vis-control-touch);
-    }
   }
 }
 </style>

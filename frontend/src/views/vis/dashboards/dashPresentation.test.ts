@@ -49,12 +49,12 @@ describe('dashboard flow projection', () => {
       .toEqual(['number-a', 'number-b', 'table', 'note'])
   })
 
-  it('pairs compact metrics while keeping tables and text across both columns', () => {
+  it('keeps compact cards full width and allows lightweight medium cards to pair', () => {
     const typeOf = (cardId: string) => chartTypes[cardId]
     const compact = projectDashFlowWidgets(widgets, 'compact', typeOf)
     const medium = projectDashFlowWidgets(widgets, 'medium', typeOf)
 
-    expect(compact.map(item => item.columnSpan)).toEqual([1, 1, 2, 2])
+    expect(compact.map(item => item.columnSpan)).toEqual([2, 2, 2, 2])
     expect(medium.map(item => item.columnSpan)).toEqual([1, 1, 2, 2])
   })
 
@@ -65,17 +65,19 @@ describe('dashboard flow projection', () => {
       { kind: 'card', cardId: 'number-b', x: 0, y: 10, w: 6, h: 5 },
       { kind: 'group', id: 'group', title: '分组', mode: 'tile', pages: [], x: 6, y: 10, w: 18, h: 10 },
     ]
-    const projected = projectDashFlowWidgets(list, 'compact', id => chartTypes[id] || 'line')
+    const projected = projectDashFlowWidgets(list, 'medium', id => chartTypes[id] || 'line')
     expect(projected.map(item => item.columnSpan)).toEqual([2, 2, 2, 2])
     expect(projected.map(item => item.widget)).toEqual(list)
   })
 
-  it('uses the same pairing rules inside a group and leaves a third metric full width', () => {
+  it('keeps compact metrics full width inside groups', () => {
     const items = ['a', 'b', 'c'].map((cardId, index) => ({ cardId, x: index * 6, y: 0, w: 6, h: 5 }))
     const compact = projectDashFlowCards(items, 'compact', () => 'number')
-    expect(compact.map(item => item.columnSpan)).toEqual([1, 1, 2])
+    const medium = projectDashFlowCards(items, 'medium', () => 'number')
+    expect(compact.map(item => item.columnSpan)).toEqual([2, 2, 2])
+    expect(medium.map(item => item.columnSpan)).toEqual([1, 1, 2])
     expect(compact.map(item => item.item.cardId)).toEqual(['a', 'b', 'c'])
-    expect(compact.every(item => item.height < dashFlowCardHeight('number', 'medium'))).toBe(true)
+    expect(compact.every(item => item.height === dashFlowCardHeight('number', 'compact'))).toBe(true)
     expect(projectDashFlowCards(items, 'compact', () => 'progress').map(item => item.columnSpan))
       .toEqual([2, 2, 2])
   })
@@ -83,5 +85,29 @@ describe('dashboard flow projection', () => {
   it('allocates more browsing height to tables than metric cards', () => {
     expect(dashFlowCardHeight('number')).toBeLessThan(dashFlowCardHeight('table'))
     expect(dashFlowCardHeight('pivot')).toBe(dashFlowCardHeight('table'))
+  })
+
+  it('uses the trend height as a minimum so auxiliary metrics can expand the card', () => {
+    const [trend] = projectDashFlowWidgets(
+      [{ kind: 'card', cardId: 'trend', x: 0, y: 0, w: 6, h: 5 }],
+      'compact',
+      () => 'trend',
+    )
+    const [groupedTrend] = projectDashFlowCards(
+      [{ cardId: 'trend', x: 0, y: 0, w: 6, h: 5 }],
+      'medium',
+      () => 'trend',
+    )
+
+    expect(trend?.height).toBeUndefined()
+    expect(trend).toMatchObject({
+      minHeight: dashFlowCardHeight('trend', 'compact'),
+      autoHeight: true,
+    })
+    expect(groupedTrend?.height).toBeUndefined()
+    expect(groupedTrend).toMatchObject({
+      minHeight: dashFlowCardHeight('trend', 'medium'),
+      autoHeight: true,
+    })
   })
 })
