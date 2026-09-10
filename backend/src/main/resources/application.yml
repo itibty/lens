@@ -31,6 +31,18 @@ spring:
       port: ${LENS_REDIS_PORT:6379}
       password: ${LENS_REDIS_PASSWORD:Aa123456}
       timeout: 3s
+  mail:
+    host: ${LENS_MAIL_HOST:}
+    port: ${LENS_MAIL_PORT:587}
+    username: ${LENS_MAIL_USERNAME:}
+    password: ${LENS_MAIL_PASSWORD:}
+    properties:
+      "[mail.smtp.auth]": ${LENS_MAIL_AUTH:true}
+      "[mail.smtp.starttls.enable]": ${LENS_MAIL_STARTTLS:true}
+      "[mail.smtp.ssl.enable]": ${LENS_MAIL_SSL:false}
+      "[mail.smtp.connectiontimeout]": ${LENS_MAIL_CONNECTION_TIMEOUT_MS:5000}
+      "[mail.smtp.timeout]": ${LENS_MAIL_TIMEOUT_MS:10000}
+      "[mail.smtp.writetimeout]": ${LENS_MAIL_WRITE_TIMEOUT_MS:10000}
 
 mybatis-plus:
   mapper-locations: classpath*:/mapper/**/*.xml
@@ -42,6 +54,15 @@ mybatis-plus:
 lens:
   jwt-secret: ${LENS_JWT_SECRET:lens-dev-token-secret-change-me}
   jwt-ttl-ms: ${LENS_JWT_TTL_MS:43200000}
+  subscription:
+    enabled: ${LENS_SUBSCRIPTION_ENABLED:false}
+    public-base-url: ${LENS_PUBLIC_BASE_URL:http://127.0.0.1:8080}
+    mail-from: ${LENS_MAIL_FROM:}
+    poll-interval-ms: ${LENS_SUBSCRIPTION_POLL_INTERVAL_MS:30000}
+    screenshot-timeout-ms: ${LENS_SCREENSHOT_TIMEOUT_MS:60000}
+    max-screenshot-bytes: ${LENS_MAX_SCREENSHOT_BYTES:10485760}
+    browser-channel: ${LENS_BROWSER_CHANNEL:}
+    browser-executable-path: ${LENS_BROWSER_EXECUTABLE_PATH:}
 
 springdoc:
   api-docs:

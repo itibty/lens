@@ -57,6 +57,27 @@ class UserAdminServiceTest {
     }
 
     @Test
+    void updatesEmailAndInvalidatesExistingLogin() {
+        SysUser user = new SysUser();
+        user.setId(10L);
+        user.setUsername("user");
+        user.setRealName("用户");
+        user.setEmail("old@example.com");
+        user.setStatus(Status.EBL);
+        when(userMapper.selectById(10L)).thenReturn(user);
+        SaveUserRequest request = new SaveUserRequest();
+        request.setId(10L);
+        request.setUsername("user");
+        request.setRealName("用户");
+        request.setEmail(" new@example.com ");
+
+        service.save(request);
+
+        assertEquals("new@example.com", user.getEmail());
+        verify(tokenInvalidateService).invalidate(10L);
+    }
+
+    @Test
     void rejectsMissingRoleBeforeReplacingUserRoles() {
         SysUser user = new SysUser();
         user.setId(10L);

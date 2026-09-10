@@ -26,6 +26,9 @@ class ApplicationConfigurationTest {
         assertEquals("Aa123456", resolver.getProperty("spring.data.redis.password"));
         assertEquals("lens-dev-token-secret-change-me", resolver.getProperty("lens.jwt-secret"));
         assertEquals("43200000", resolver.getProperty("lens.jwt-ttl-ms"));
+        assertEquals("false", resolver.getProperty("lens.subscription.enabled"));
+        assertEquals("http://127.0.0.1:8080", resolver.getProperty("lens.subscription.public-base-url"));
+        assertEquals("30000", resolver.getProperty("lens.subscription.poll-interval-ms"));
     }
 
     @Test

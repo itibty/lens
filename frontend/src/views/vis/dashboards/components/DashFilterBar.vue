@@ -26,6 +26,7 @@ const props = withDefaults(defineProps<{
   desc?: string
   previewDisabled?: boolean
   showPreview?: boolean
+  showSubscription?: boolean
   screenshotting?: boolean
   /** 设计页且有编辑权限：第二组整组出现 */
   showDesign?: boolean
@@ -41,6 +42,7 @@ const props = withDefaults(defineProps<{
   desc: '',
   previewDisabled: false,
   showPreview: true,
+  showSubscription: false,
   screenshotting: false,
   showDesign: false,
   adding: false,
@@ -56,6 +58,7 @@ const emit = defineEmits<{
   reloadCards: []
   preview: []
   screenshot: []
+  subscription: []
   addCard: []
   addText: []
   addGroup: []
@@ -117,7 +120,7 @@ function closeTools() {
   toolsOpen.value = false
 }
 
-function emitToolAction(action: 'preview' | 'screenshot' | 'settings' | 'reloadCards' | 'save') {
+function emitToolAction(action: 'preview' | 'screenshot' | 'subscription' | 'settings' | 'reloadCards' | 'save') {
   closeTools()
   switch (action) {
     case 'preview':
@@ -125,6 +128,9 @@ function emitToolAction(action: 'preview' | 'screenshot' | 'settings' | 'reloadC
       break
     case 'screenshot':
       emit('screenshot')
+      break
+    case 'subscription':
+      emit('subscription')
       break
     case 'settings':
       emit('settings')
@@ -249,6 +255,7 @@ watch(mobile, (enabled) => {
         >
           <template #reference>
             <VisActionButton
+              data-dashboard-tools-trigger
               :size="mobile ? 'compact' : 'regular'"
               :variant="mobile ? 'ghost' : 'outline'"
               class="filter-dock__btn"
@@ -280,6 +287,7 @@ watch(mobile, (enabled) => {
             </button>
 
             <button
+              data-dashboard-screenshot-action
               type="button"
               class="dash-tools__action"
               :disabled="loading || screenshotting"
@@ -287,6 +295,16 @@ watch(mobile, (enabled) => {
             >
               <span :class="screenshotting ? 'i-svg-spinners-ring-resize' : 'i-mingcute-camera-2-line'" />
               <span>{{ screenshotting ? '正在截屏…' : '一键截屏' }}</span>
+            </button>
+
+            <button
+              v-if="showSubscription"
+              type="button"
+              class="dash-tools__action"
+              @click="emitToolAction('subscription')"
+            >
+              <span class="i-mingcute-mail-send-line" />
+              <span>邮件订阅</span>
             </button>
 
             <div class="dash-tools__themes">

@@ -10,6 +10,7 @@ import { withChartTheme } from '@/theme/vchart'
 import { DASH_PRESENTATION_MODE_KEY } from '@/views/vis/dashboards/dashPresentation'
 import { unwrapChartDatum } from '@/views/vis/shared/chartDatum'
 import { projectChartPresentation } from '@/views/vis/shared/chartPresentation'
+import { PREPARE_CHART_SCREENSHOT_EVENT } from '@/views/vis/shared/chartScreenshot'
 import { VIS_EMPTY_TEXT } from '@/views/vis/shared/emptyState'
 
 const props = withDefaults(defineProps<{
@@ -294,6 +295,7 @@ function fitChart() {
 }
 
 onMounted(() => {
+  containerRef.value?.addEventListener(PREPARE_CHART_SCREENSHOT_EVENT, prepareScreenshot)
   nextTick(syncChart)
 })
 
@@ -337,11 +339,14 @@ watch(presentationMode, () => {
 useResizeObserver(containerRef, fitChart)
 useResizeObserver(chartWrapRef, fitChart)
 
-onUnmounted(destroyChart)
+onUnmounted(() => {
+  containerRef.value?.removeEventListener(PREPARE_CHART_SCREENSHOT_EVENT, prepareScreenshot)
+  destroyChart()
+})
 </script>
 
 <template>
-  <div ref="containerRef" class="vis-vchart">
+  <div ref="containerRef" class="vis-vchart" data-vis-chart>
     <div
       v-show="!empty"
       ref="chartWrapRef"

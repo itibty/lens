@@ -24,6 +24,7 @@
         <hutool.version>5.8.38</hutool.version>
         <activerecord.version>5.2.2</activerecord.version>
         <easyexcel.version>4.0.3</easyexcel.version>
+        <playwright.version>1.62.0</playwright.version>
         <owasp-html-sanitizer.version>20260313.1</owasp-html-sanitizer.version>
     </properties>
 
@@ -51,6 +52,15 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-jdbc</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-mail</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.microsoft.playwright</groupId>
+            <artifactId>playwright</artifactId>
+            <version>${playwright.version}</version>
         </dependency>
         <dependency>
             <groupId>com.baomidou</groupId>

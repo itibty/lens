@@ -37,6 +37,7 @@ import {
 } from '../dashTheme'
 import { useDashChromeScroll } from '../useDashChromeScroll'
 import { useDashRefresh } from '../useDashRefresh'
+import DashboardSubscriptionDrawer from './DashboardSubscriptionDrawer.vue'
 import DashFilterBar from './DashFilterBar.vue'
 import DashGrid from './DashGrid.vue'
 
@@ -85,6 +86,12 @@ const { pauseFilterUrl, applyFilterQuery } = useDashFilterUrl(
   () => !dashDisabled.value && !emptyText.value,
 )
 const capturing = ref(false)
+const subscriptionDrawerRef = ref<InstanceType<typeof DashboardSubscriptionDrawer>>()
+
+function openSubscription() {
+  if (dashboardId.value && !dashDisabled.value)
+    subscriptionDrawerRef.value?.open()
+}
 
 async function waitForCardQueries(timeoutMs = 15_000) {
   await nextTick()
@@ -265,10 +272,12 @@ watch(
           :presentation-mode="presentationMode"
           :preview-disabled="!dashboardId"
           :show-preview="!standalone"
+          :show-subscription="!!dashboardId && !dashDisabled"
           :loading="loading"
           :screenshotting="capturing"
           @refresh="refreshCards"
           @screenshot="onScreenshot"
+          @subscription="openSubscription"
           @preview="openPreview"
         />
       </div>
@@ -296,6 +305,11 @@ watch(
       </div>
     </el-scrollbar>
   </div>
+  <DashboardSubscriptionDrawer
+    ref="subscriptionDrawerRef"
+    :dashboard-id="dashboardId"
+    :dashboard-name="name"
+  />
 </template>
 
 <style scoped lang="scss">

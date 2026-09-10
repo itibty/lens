@@ -29,6 +29,7 @@ const emits = defineEmits<{
 const defaultForm: ADMIN.SaveUserRequest = {
   username: '',
   realName: '',
+  email: '',
   password: 'Aa123456',
   status: 'EBL',
 }
@@ -44,6 +45,7 @@ const states = reactive<IStates>({
       },
     ],
     realName: [{ required: true, trigger: 'blur', message: '请输入姓名' }],
+    email: [{ type: 'email', trigger: 'blur', message: '请输入正确的邮箱地址' }],
     password: [{ required: true, trigger: 'blur', message: '请输入密码' }],
   },
 })
@@ -131,6 +133,15 @@ defineExpose({
             clearable
             placeholder="请输入真实姓名"
             autocomplete="off"
+          />
+        </el-form-item>
+        <el-form-item label="邮箱" prop="email">
+          <el-input
+            v-model.trim="states.form.email"
+            maxlength="200"
+            clearable
+            placeholder="用于接收看板订阅"
+            autocomplete="email"
           />
         </el-form-item>
         <el-form-item label="密码" prop="password">

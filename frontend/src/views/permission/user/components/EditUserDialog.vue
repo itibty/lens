@@ -30,12 +30,14 @@ const defaultForm: ADMIN.SaveUserRequest = {
   id: '',
   username: '',
   realName: '',
+  email: '',
   status: 'EBL',
 }
 const states = reactive<IStates>({
   form: { ...defaultForm },
   rules: {
     realName: [{ required: true, trigger: 'blur', message: '请输入姓名' }],
+    email: [{ type: 'email', trigger: 'blur', message: '请输入正确的邮箱地址' }],
   },
 })
 
@@ -71,7 +73,7 @@ function doSubmit() {
     if (valid) {
       const body: unknown = pickBy(
         states.form,
-        value => typeof value != 'string' || !isBlank(value),
+        (value, key) => key === 'email' || typeof value != 'string' || !isBlank(value),
       )
       dialog.confirmLoading = true
       editUser(body as ADMIN.SaveUserRequest)
@@ -114,6 +116,15 @@ defineExpose({
             clearable
             placeholder="请输入真实姓名"
             autocomplete="off"
+          />
+        </el-form-item>
+        <el-form-item label="邮箱" prop="email">
+          <el-input
+            v-model.trim="states.form.email"
+            maxlength="200"
+            clearable
+            placeholder="用于接收看板订阅"
+            autocomplete="email"
           />
         </el-form-item>
         <el-form-item label="状态" prop="status">

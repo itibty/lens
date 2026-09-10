@@ -22,6 +22,9 @@ public class UserInfo {
     @Schema(description = "姓名", requiredMode = Schema.RequiredMode.REQUIRED)
     private String realName;
 
+    @Schema(description = "邮箱")
+    private String email;
+
     @Schema(description = "状态", allowableValues = {Status.EBL, Status.DBL},
             requiredMode = Schema.RequiredMode.REQUIRED)
     private String status;

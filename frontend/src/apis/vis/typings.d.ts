@@ -124,6 +124,45 @@ declare namespace VIS {
     end: string;
   };
 
+  type DashboardSubscriptionInfo = {
+    id?: string;
+    dashboardId?: string;
+    dashboardName?: string;
+    subscriptionName?: string;
+    scheduleType?: string;
+    schedule?: DashboardSubscriptionSchedule;
+    timezone?: string;
+    channelType?: string;
+    recipientEmail?: string;
+    status?: string;
+    nextFireAt?: string;
+    lastFireAt?: string;
+    lastRunStatus?: string;
+    lastErrorMessage?: string;
+  };
+
+  type DashboardSubscriptionRunInfo = {
+    id?: string;
+    subscriptionId?: string;
+    triggerType?: string;
+    runStatus?: string;
+    attemptCount?: number;
+    screenshotBytes?: string;
+    errorMessage?: string;
+    scheduledAt?: string;
+    startedAt?: string;
+    finishedAt?: string;
+  };
+
+  type DashboardSubscriptionSchedule = {
+    /** 订阅时区中的发送时间 */
+    time: string;
+    /** ISO星期：1为周一，7为周日 */
+    dayOfWeek?: number;
+    /** 月中日期，首版限制1到28 */
+    dayOfMonth?: number;
+  };
+
   type DashGroupInfo = {
     /** id */
     id: string;
@@ -234,6 +273,10 @@ declare namespace VIS {
 
   type delDashGroupParams = {
     groupId: string;
+  };
+
+  type deleteDashboardSubscriptionParams = {
+    subscriptionId: string;
   };
 
   type DetailConfig = {
@@ -440,6 +483,14 @@ declare namespace VIS {
     filterUid: string;
   };
 
+  type listDashboardSubscriptionRunsParams = {
+    subscriptionId: string;
+  };
+
+  type listDashboardSubscriptionsParams = {
+    dashboardId: string;
+  };
+
   type listDatasetCardsParams = {
     datasetId: string;
   };
@@ -473,6 +524,16 @@ declare namespace VIS {
   type ListResponseAssignNode = {
     /** 列表 */
     list: AssignNode[];
+  };
+
+  type ListResponseDashboardSubscriptionInfo = {
+    /** 列表 */
+    list: DashboardSubscriptionInfo[];
+  };
+
+  type ListResponseDashboardSubscriptionRunInfo = {
+    /** 列表 */
+    list: DashboardSubscriptionRunInfo[];
   };
 
   type ListResponseDashGroupInfo = {
@@ -874,6 +935,24 @@ declare namespace VIS {
     data?: ListResponseAssignNode;
   };
 
+  type RListResponseDashboardSubscriptionInfo = {
+    /** 200成功 */
+    code: number;
+    /** 提示 */
+    msg: string;
+    /** 数据 */
+    data?: ListResponseDashboardSubscriptionInfo;
+  };
+
+  type RListResponseDashboardSubscriptionRunInfo = {
+    /** 200成功 */
+    code: number;
+    /** 提示 */
+    msg: string;
+    /** 数据 */
+    data?: ListResponseDashboardSubscriptionRunInfo;
+  };
+
   type RListResponseDashGroupInfo = {
     /** 200成功 */
     code: number;
@@ -1063,6 +1142,16 @@ declare namespace VIS {
     data?: any;
   };
 
+  type SaveDashboardSubscriptionRequest = {
+    /** 订阅id。新增不传 */
+    id?: string;
+    dashboardId: string;
+    subscriptionName: string;
+    scheduleType: string;
+    schedule: DashboardSubscriptionSchedule;
+    timezone: string;
+  };
+
   type SaveDashGroupRequest = {
     id?: string;
     pid?: string;
@@ -1098,12 +1187,20 @@ declare namespace VIS {
     indexInfos?: IndexInfo[];
   };
 
+  type testDashboardSubscriptionParams = {
+    subscriptionId: string;
+  };
+
   type toggleCardStatusParams = {
     cardId: string;
   };
 
   type toggleDashboardStatusParams = {
     dashboardId: string;
+  };
+
+  type toggleDashboardSubscriptionParams = {
+    subscriptionId: string;
   };
 
   type toggleDashGroupStatusParams = {

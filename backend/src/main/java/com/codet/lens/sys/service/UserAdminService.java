@@ -59,6 +59,7 @@ public class UserAdminService {
             info.setId(row.getId());
             info.setUsername(row.getUsername());
             info.setRealName(row.getRealName());
+            info.setEmail(row.getEmail());
             info.setStatus(row.getStatus());
             info.setLastLoginAt(row.getLastLoginAt());
             List<SysUserRole> links = roleMap.getOrDefault(row.getId(), List.of());
@@ -82,11 +83,15 @@ public class UserAdminService {
     public Long save(SaveUserRequest req) {
         SysUser user = req.getId() == null ? new SysUser() : require(req.getId());
         String previousStatus = user.getStatus();
+        String previousEmail = user.getEmail();
         String nextStatus = StrUtil.isBlank(req.getStatus())
                 ? (req.getId() == null ? Status.EBL : previousStatus)
                 : req.getStatus();
         user.setUsername(req.getUsername());
         user.setRealName(req.getRealName());
+        if (req.getId() == null || req.getEmail() != null) {
+            user.setEmail(StrUtil.blankToDefault(StrUtil.trim(req.getEmail()), null));
+        }
         user.setStatus(nextStatus);
         if (req.getId() == null) {
             if (StrUtil.isBlank(req.getPassword())) {
@@ -101,7 +106,9 @@ public class UserAdminService {
             }
             user.modifyCallback();
             userMapper.updateById(user);
-            if (StrUtil.isNotBlank(req.getPassword()) || !Objects.equals(previousStatus, nextStatus)) {
+            if (StrUtil.isNotBlank(req.getPassword())
+                    || !Objects.equals(previousStatus, nextStatus)
+                    || !Objects.equals(previousEmail, user.getEmail())) {
                 tokenInvalidateService.invalidate(user.getId());
             }
         }

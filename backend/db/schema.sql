@@ -3,6 +3,8 @@
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
+DROP TABLE IF EXISTS `vis_dashboard_subscription_run`;
+DROP TABLE IF EXISTS `vis_dashboard_subscription`;
 DROP TABLE IF EXISTS `sys_role_dashboard`;
 DROP TABLE IF EXISTS `sys_role_menu`;
 DROP TABLE IF EXISTS `sys_user_role`;
@@ -22,6 +24,7 @@ CREATE TABLE `sys_user` (
   `username` varchar(100) NOT NULL,
   `password` varchar(100) NOT NULL,
   `real_name` varchar(50) NOT NULL,
+  `email` varchar(200) DEFAULT NULL,
   `status` char(3) NOT NULL DEFAULT 'EBL' COMMENT 'EBL启用 DBL禁用',
   `last_login_at` bigint DEFAULT NULL,
   `create_at` bigint DEFAULT NULL,
@@ -29,7 +32,8 @@ CREATE TABLE `sys_user` (
   `modify_at` bigint DEFAULT NULL,
   `modify_by` bigint DEFAULT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_username` (`username`)
+  UNIQUE KEY `uk_username` (`username`),
+  UNIQUE KEY `uk_user_email` (`email`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='用户';
 
 CREATE TABLE `sys_role` (
@@ -206,6 +210,46 @@ CREATE TABLE `vis_dashboard_card` (
   UNIQUE KEY `uk_dash_card` (`dashboard_id`, `card_id`),
   KEY `idx_card` (`card_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='看板卡片索引';
+
+CREATE TABLE `vis_dashboard_subscription` (
+  `id` bigint NOT NULL,
+  `dashboard_id` bigint NOT NULL,
+  `owner_id` bigint UNSIGNED NOT NULL,
+  `subscription_name` varchar(100) NOT NULL,
+  `schedule_type` varchar(16) NOT NULL COMMENT 'DAILY|WEEKDAY|WEEKLY|MONTHLY',
+  `schedule_json` json NOT NULL,
+  `timezone` varchar(64) NOT NULL DEFAULT 'Asia/Shanghai',
+  `channel_type` varchar(16) NOT NULL DEFAULT 'EMAIL',
+  `target_json` json NOT NULL,
+  `next_fire_at` bigint NOT NULL,
+  `last_fire_at` bigint DEFAULT NULL,
+  `status` char(3) NOT NULL DEFAULT 'EBL',
+  `create_at` bigint DEFAULT NULL,
+  `create_by` bigint DEFAULT NULL,
+  `modify_at` bigint DEFAULT NULL,
+  `modify_by` bigint DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_subscription_due` (`status`, `next_fire_at`),
+  KEY `idx_subscription_owner_dash` (`owner_id`, `dashboard_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='看板定时订阅';
+
+CREATE TABLE `vis_dashboard_subscription_run` (
+  `id` bigint NOT NULL,
+  `subscription_id` bigint NOT NULL,
+  `scheduled_at` bigint NOT NULL,
+  `trigger_type` varchar(16) NOT NULL COMMENT 'SCHEDULED|MANUAL',
+  `run_status` varchar(16) NOT NULL COMMENT 'RUNNING|SUCCESS|FAILED|SKIPPED',
+  `attempt_count` int NOT NULL DEFAULT 0,
+  `screenshot_bytes` bigint DEFAULT NULL,
+  `error_message` varchar(500) DEFAULT NULL,
+  `started_at` bigint DEFAULT NULL,
+  `finished_at` bigint DEFAULT NULL,
+  `create_at` bigint DEFAULT NULL,
+  `create_by` bigint DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_subscription_run` (`subscription_id`, `scheduled_at`, `trigger_type`),
+  KEY `idx_subscription_run_history` (`subscription_id`, `create_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='看板订阅执行记录';
 
 -- 菜单 id 对齐路由 meta.menuId。报表中心是虚拟根，不入库。
 -- 角色只关联 FUNC；有任意功能点才露出上级 MENU。

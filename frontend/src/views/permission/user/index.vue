@@ -185,6 +185,7 @@ onMounted(() => {
       >
         <el-table-column label="用户名" prop="username" />
         <el-table-column label="姓名" prop="realName" />
+        <el-table-column label="邮箱" prop="email" min-width="180" show-overflow-tooltip />
         <!-- @vue-generic {ADMIN.UserInfo} -->
         <el-table-column label="状态" prop="status">
           <template #default="{ row }">

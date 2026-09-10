@@ -121,7 +121,7 @@ public class AccountService {
         info.setRealName(user.getRealName());
         info.setStatus(user.getStatus());
         info.setPhone("");
-        info.setEmail("");
+        info.setEmail(user.getEmail());
         info.setRoleCodes(roles);
         info.setFunctionCodes(perms);
         return info;

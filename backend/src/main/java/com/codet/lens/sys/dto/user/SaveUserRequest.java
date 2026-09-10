@@ -4,7 +4,9 @@ import com.codet.lens.common.base.EnumValue;
 import com.codet.lens.common.base.Status;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
@@ -24,6 +26,11 @@ public class SaveUserRequest {
     @Schema(description = "姓名", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotBlank
     private String realName;
+
+    @Schema(description = "邮箱。看板邮件订阅使用")
+    @Email(message = "邮箱格式不正确")
+    @Size(max = 200, message = "邮箱不能超过200个字符")
+    private String email;
 
     @Schema(description = "状态", allowableValues = {Status.EBL, Status.DBL})
     @EnumValue(strValues = {Status.EBL, Status.DBL})

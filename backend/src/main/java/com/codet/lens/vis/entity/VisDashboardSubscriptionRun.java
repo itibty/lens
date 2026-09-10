@@ -1,0 +1,28 @@
+package com.codet.lens.vis.entity;
+
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.experimental.Accessors;
+
+@TableName("vis_dashboard_subscription_run")
+@Getter
+@Setter
+@Accessors(chain = true)
+public class VisDashboardSubscriptionRun {
+    @TableId(value = "id", type = IdType.ASSIGN_ID)
+    private Long id;
+    private Long subscriptionId;
+    private Long scheduledAt;
+    private String triggerType;
+    private String runStatus;
+    private Integer attemptCount;
+    private Long screenshotBytes;
+    private String errorMessage;
+    private Long startedAt;
+    private Long finishedAt;
+    private Long createAt;
+    private Long createBy;
+}

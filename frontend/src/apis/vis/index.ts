@@ -6,11 +6,13 @@ import * as query from "./query";
 import * as datasource from "./datasource";
 import * as dataset from "./dataset";
 import * as dashboard from "./dashboard";
+import * as dashboardSubscription from "./dashboardSubscription";
 import * as card from "./card";
 export default {
   query,
   datasource,
   dataset,
   dashboard,
+  dashboardSubscription,
   card,
 };

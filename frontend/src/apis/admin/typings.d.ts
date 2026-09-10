@@ -385,6 +385,8 @@ declare namespace ADMIN {
     username: string;
     /** 姓名 */
     realName: string;
+    /** 邮箱。看板邮件订阅使用 */
+    email?: string;
     /** 状态 */
     status?: "EBL" | "DBL";
     /** 密码。编辑时可空 */
@@ -418,6 +420,8 @@ declare namespace ADMIN {
     username: string;
     /** 姓名 */
     realName: string;
+    /** 邮箱 */
+    email?: string;
     /** 状态 */
     status: "EBL" | "DBL";
     /** 最近登录时间 */

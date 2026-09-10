@@ -86,6 +86,7 @@ const services = {
       DATASET: 'dataset',
       CARD: 'card',
       DASHBOARD: 'dashboard',
+      DASHBOARD_SUBSCRIPTION: 'dashboardSubscription',
       DASH_GROUP: 'dashboard',
       QUERY: 'query',
       EXPORT: 'dataExport',

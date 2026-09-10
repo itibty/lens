@@ -1,6 +1,7 @@
 import dayjs from 'dayjs'
 import { domToBlob } from 'modern-screenshot'
 import { sanitizeFileName, saveBlobFile } from '@/views/vis/shared/cardExport'
+import { prepareChartsForScreenshot } from '@/views/vis/shared/chartScreenshot'
 
 const EXPAND_SEL = [
   '.el-scrollbar',
@@ -94,6 +95,7 @@ export function dashScreenshotFileName(title: string) {
 /** 浏览器不能静默截当前页；用 DOM 出图才能一键，并带上画布图表。 */
 export async function captureDashPreview(root: HTMLElement): Promise<Blob> {
   await document.fonts.ready
+  await prepareChartsForScreenshot(root)
   const bg = getComputedStyle(root).backgroundColor || '#f5f6f7'
   const { width, height } = measureCaptureSize(root)
   const blob = await domToBlob(root, {
