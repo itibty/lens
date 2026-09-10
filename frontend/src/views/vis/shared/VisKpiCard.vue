@@ -3,6 +3,7 @@
 -->
 <script setup lang="ts">
 import type { VisVisualConfig } from '@/views/vis/shared/types'
+import { VIS_EMPTY_TEXT } from '@/views/vis/shared/emptyState'
 import {
   kpiSizeVars,
   resolveKpiOptions,
@@ -19,7 +20,7 @@ const props = withDefaults(defineProps<{
   emptyText?: string
   interactive?: boolean
 }>(), {
-  emptyText: '暂无数据',
+  emptyText: VIS_EMPTY_TEXT,
   interactive: false,
 })
 
@@ -179,7 +180,7 @@ function onRowClick(record: Record<string, unknown>, event: MouseEvent) {
     justify-content: center;
     min-height: 72px;
     font-size: 13px;
-    color: var(--vis-content-color, var(--el-text-color-placeholder));
+    color: var(--vis-empty-color, var(--el-text-color-placeholder));
   }
 }
 

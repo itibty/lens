@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -55,11 +56,13 @@ public class VisDataService {
                 ctx.setNextSqlName("main");
             }
 
-            List<Map<String, Object>> rows = RdsUtil.selectList(
+            List<Map<String, Object>> rawRows = RdsUtil.selectList(
                     new SqlTplRet(null, sqlConf.getDsName(), sqlRet.getSql(), sqlRet.getParams())
             );
 
-            List<String> columns = deriveColumns(rows, query);
+            List<String> columns = deriveColumns(rawRows, query);
+            List<Map<String, Object>> rows = normalizeCardRows(
+                    rawRows, CollUtil.isEmpty(query.getDimensions()));
 
             QueryDataResponse result = new QueryDataResponse();
             result.setColumns(columns);
@@ -197,6 +200,16 @@ public class VisDataService {
         query.setLimit(requestedLimit == null || requestedLimit >= QUERY_MAX_ROWS
                 ? QUERY_PROBE_ROWS
                 : requestedLimit);
+    }
+
+    /** 无维度聚合在无匹配记录时会返回一行全 NULL；分组结果中的 NULL 行仍是合法数据。 */
+    static List<Map<String, Object>> normalizeCardRows(List<Map<String, Object>> rows, boolean scalarAggregate) {
+        if (!scalarAggregate) {
+            return CollUtil.emptyIfNull(rows);
+        }
+        return CollUtil.emptyIfNull(rows).stream()
+                .filter(row -> row != null && row.values().stream().anyMatch(Objects::nonNull))
+                .toList();
     }
 
     private List<String> detailFields(List<ConfSqlFieldInfo> saved) {

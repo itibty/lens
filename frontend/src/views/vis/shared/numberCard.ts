@@ -111,10 +111,12 @@ export function resolveNumberView(
   query: VIS.QueryConfig,
   data: VIS.QueryDataResponse,
   visual: VisVisualConfig,
-): NumberView {
+): NumberView | null {
   const primary = pickPrimaryMetric(query)
   const format = resolveMetricFormat(visual, primary)
   const parts = formatMetricNumber(pickNumberValue(query, data), format)
+  if (parts.empty)
+    return null
   const auxiliaries = pickNumberAuxiliaries(query, data).map(item => ({
     ...item,
     text: formatMetricField(visual, query, item.label, item.value, {
@@ -123,10 +125,10 @@ export function resolveNumberView(
   }))
   return {
     label: pickNumberMetricLabel(query),
-    prefix: parts.empty ? '' : format.prefix,
+    prefix: format.prefix,
     body: parts.body,
     compactSuffix: parts.compactSuffix,
-    suffix: parts.empty ? '' : format.suffix,
+    suffix: format.suffix,
     periodTitle: pickNumberPeriodTitle(data),
     auxiliaries,
   }

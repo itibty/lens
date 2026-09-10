@@ -10,6 +10,7 @@ import { withChartTheme } from '@/theme/vchart'
 import { DASH_PRESENTATION_MODE_KEY } from '@/views/vis/dashboards/dashPresentation'
 import { unwrapChartDatum } from '@/views/vis/shared/chartDatum'
 import { projectChartPresentation } from '@/views/vis/shared/chartPresentation'
+import { VIS_EMPTY_TEXT } from '@/views/vis/shared/emptyState'
 
 const props = withDefaults(defineProps<{
   spec?: ISpec | null
@@ -24,7 +25,7 @@ const props = withDefaults(defineProps<{
 }>(), {
   spec: null,
   empty: false,
-  emptyText: '暂无数据',
+  emptyText: VIS_EMPTY_TEXT,
   interactive: false,
   lockTooltip: false,
   themePalette: false,
@@ -384,7 +385,7 @@ onUnmounted(destroyChart)
     align-items: center;
     justify-content: center;
     font-size: 13px;
-    color: var(--vis-content-color, var(--el-text-color-secondary));
+    color: var(--vis-empty-color, var(--el-text-color-placeholder));
   }
 }
 </style>

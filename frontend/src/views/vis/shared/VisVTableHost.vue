@@ -76,7 +76,7 @@ defineExpose({
     align-items: center;
     justify-content: center;
     font-size: 13px;
-    color: var(--vis-content-color, var(--el-text-color-secondary));
+    color: var(--vis-empty-color, var(--el-text-color-placeholder));
   }
 }
 </style>

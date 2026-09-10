@@ -4,6 +4,7 @@
 <script setup lang="ts">
 import type { RankItemView } from '@/views/vis/shared/rankCard'
 import type { VisVisualConfig } from '@/views/vis/shared/types'
+import { VIS_EMPTY_TEXT } from '@/views/vis/shared/emptyState'
 import {
   rankSizeVars,
   resolveRankBarColor,
@@ -19,7 +20,7 @@ const props = withDefaults(defineProps<{
   emptyText?: string
   interactive?: boolean
 }>(), {
-  emptyText: '暂无数据',
+  emptyText: VIS_EMPTY_TEXT,
   interactive: false,
 })
 
@@ -161,7 +162,7 @@ function onRowClick(item: { record: Record<string, unknown> }, event: MouseEvent
     justify-content: center;
     min-height: 80px;
     font-size: 13px;
-    color: var(--vis-muted-color, var(--el-text-color-secondary));
+    color: var(--vis-empty-color, var(--el-text-color-placeholder));
   }
 
   &__podium {

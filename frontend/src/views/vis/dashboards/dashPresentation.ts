@@ -10,6 +10,8 @@ export type DashFlowMode = Extract<DashPresentationMode, 'compact' | 'medium'>
 
 export const DASH_PRESENTATION_MODE_KEY: InjectionKey<ComputedRef<DashPresentationMode>>
   = Symbol('dash-presentation-mode')
+export const DASH_LAZY_CARD_QUERIES_KEY: InjectionKey<boolean>
+  = Symbol('dash-lazy-card-queries')
 export const DASH_EAGER_CARD_QUERIES_KEY: InjectionKey<Readonly<Ref<boolean>>>
   = Symbol('dash-eager-card-queries')
 
@@ -52,9 +54,9 @@ export function isDashFlowMode(mode: DashPresentationMode): mode is DashFlowMode
   return mode === 'compact' || mode === 'medium'
 }
 
-/** 只在独立预览的流式展示里延迟查询；设计态和通用嵌入页保持原行为。 */
-export function shouldDeferDashCardQuery(mode: DashPresentationMode, editable: boolean): boolean {
-  return !editable && isDashFlowMode(mode)
+/** 查看页按可视区延迟查询；截图等场景可临时强制全量查询。 */
+export function shouldDeferDashCardQuery(lazy: boolean, eager: boolean): boolean {
+  return lazy && !eager
 }
 
 /** 位置相同的节点保持配置里的原始顺序，避免移动投影在重渲染时跳动。 */

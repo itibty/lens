@@ -22,6 +22,7 @@ import {
 import { useDashFilterUrl } from '../dashFilterQuery'
 import {
   DASH_EAGER_CARD_QUERIES_KEY,
+  DASH_LAZY_CARD_QUERIES_KEY,
   DASH_PRESENTATION_MODE_KEY,
   resolveDashPresentationMode,
 } from '../dashPresentation'
@@ -55,6 +56,7 @@ const initialViewerWidth = typeof window === 'undefined' ? 1024 : window.innerWi
 const { width: viewerWidth } = useElementSize(viewerRef, { width: initialViewerWidth, height: 0 })
 const presentationMode = computed(() => resolveDashPresentationMode(viewerWidth.value, props.standalone))
 provide(DASH_PRESENTATION_MODE_KEY, presentationMode)
+provide(DASH_LAZY_CARD_QUERIES_KEY, true)
 const eagerCardQueries = ref(false)
 provide(DASH_EAGER_CARD_QUERIES_KEY, readonly(eagerCardQueries))
 const cardQueryTracker = createDashCardQueryTracker()

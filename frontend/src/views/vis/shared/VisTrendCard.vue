@@ -4,6 +4,7 @@
 <script setup lang="ts">
 import type { VisVisualConfig } from '@/views/vis/shared/types'
 import { useResizeObserver } from '@vueuse/core'
+import { VIS_EMPTY_TEXT } from '@/views/vis/shared/emptyState'
 import { scaleNumberPx, useNumberFit } from '@/views/vis/shared/numberFit'
 import {
   resolveNumberStyle,
@@ -23,7 +24,7 @@ const props = withDefaults(defineProps<{
   fill?: boolean
   autoHeight?: boolean
 }>(), {
-  emptyText: '暂无数据',
+  emptyText: VIS_EMPTY_TEXT,
   interactive: false,
   fill: false,
   autoHeight: false,
@@ -216,7 +217,7 @@ function onValueClick(event: MouseEvent) {
     justify-content: center;
     min-height: 80px;
     font-size: 13px;
-    color: var(--vis-muted-color, var(--el-text-color-secondary));
+    color: var(--vis-empty-color, var(--el-text-color-placeholder));
   }
 
   &__name {

@@ -270,6 +270,13 @@ watch(open, (visible) => {
 }
 
 .mobile-filter-sheet__fields {
+  --mobile-filter-field-bg: var(--dash-mobile-soft, var(--el-fill-color-light));
+  --mobile-filter-field-focus-bg: color-mix(
+    in srgb,
+    var(--dash-mobile-accent, var(--el-color-primary)) 7%,
+    var(--mobile-filter-field-bg)
+  );
+
   :deep(.el-form-item__label) {
     display: none;
   }
@@ -280,6 +287,23 @@ watch(open, (visible) => {
   :deep(.el-date-editor.el-input__wrapper) {
     min-height: 44px;
     border-radius: 8px;
+    outline: 2px solid transparent;
+    outline-offset: 0;
+    background: var(--mobile-filter-field-bg) !important;
+    box-shadow: none !important;
+    transition:
+      background-color 0.15s ease,
+      outline-color 0.15s ease;
+  }
+
+  :deep(.el-input__wrapper:focus-within),
+  :deep(.el-select__wrapper:focus-within),
+  :deep(.el-select__wrapper.is-focused),
+  :deep(.el-input-tag__wrapper:focus-within),
+  :deep(.el-date-editor.el-input__wrapper:focus-within) {
+    outline-color: color-mix(in srgb, var(--dash-mobile-accent, var(--el-color-primary)) 34%, transparent);
+    background: var(--mobile-filter-field-focus-bg) !important;
+    box-shadow: none !important;
   }
 }
 

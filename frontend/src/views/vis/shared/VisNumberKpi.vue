@@ -3,6 +3,7 @@
 -->
 <script setup lang="ts">
 import type { VisVisualConfig } from '@/views/vis/shared/types'
+import { VIS_EMPTY_TEXT } from '@/views/vis/shared/emptyState'
 import { resolveNumberView } from '@/views/vis/shared/numberCard'
 import { useNumberFit } from '@/views/vis/shared/numberFit'
 import {
@@ -17,10 +18,12 @@ const props = withDefaults(defineProps<{
   visual: VisVisualConfig
   query: VIS.QueryConfig
   data: VIS.QueryDataResponse
+  emptyText?: string
   interactive?: boolean
   /** 铺满格子并按区域缩放字号；设计器预览不要开 */
   fill?: boolean
 }>(), {
+  emptyText: VIS_EMPTY_TEXT,
   interactive: false,
   fill: false,
 })
@@ -44,6 +47,7 @@ const { vars: cardStyle } = useNumberFit(rootRef, () => props.fill)
 
 <template>
   <div
+    v-if="view"
     ref="rootRef"
     class="vis-number-kpi"
     :class="{ 'has-aux': view.auxiliaries.length, 'is-fill': fill }"
@@ -80,6 +84,14 @@ const { vars: cardStyle } = useNumberFit(rootRef, () => props.fill)
       :show-label="style.showAuxLabel"
     />
   </div>
+  <div
+    v-else
+    ref="rootRef"
+    class="vis-number-kpi is-empty"
+    :class="{ 'is-fill': fill }"
+  >
+    {{ emptyText }}
+  </div>
 </template>
 
 <style scoped lang="scss">
@@ -101,6 +113,13 @@ const { vars: cardStyle } = useNumberFit(rootRef, () => props.fill)
     &.has-aux {
       justify-content: flex-start;
     }
+  }
+
+  &.is-empty {
+    align-items: center;
+    min-height: 72px;
+    color: var(--vis-empty-color, var(--el-text-color-placeholder));
+    font-size: 13px;
   }
 
   &__hero {

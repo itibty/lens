@@ -6,6 +6,7 @@ import type { MousePointerCellEvent } from '@visactor/vtable'
 import type { ThemeColors } from '@/theme/tokens'
 import type { VisDetailFieldOptions, VisVisualConfig } from '@/views/vis/shared/types'
 import { ListTable, TABLE_EVENT_TYPE } from '@visactor/vtable'
+import { VIS_EMPTY_TEXT } from '@/views/vis/shared/emptyState'
 import { buildListTableOption, listTableColumns } from '@/views/vis/shared/listTable'
 import { animateMetricProgressBars } from '@/views/vis/shared/metricCell'
 import { asVTableHost } from '@/views/vis/shared/useVTableMount'
@@ -20,7 +21,7 @@ const props = withDefaults(defineProps<{
   theme?: ThemeColors
   fieldOptions?: Record<string, VisDetailFieldOptions>
 }>(), {
-  emptyText: '暂无数据',
+  emptyText: VIS_EMPTY_TEXT,
   interactive: false,
 })
 

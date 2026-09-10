@@ -31,6 +31,7 @@ import {
   resolveCardTitle,
 } from '@/views/vis/shared/cardTheme'
 import { resolveChartThemeId } from '@/views/vis/shared/chartPalette'
+import { VIS_EMPTY_TEXT } from '@/views/vis/shared/emptyState'
 import { allowsFullscreen, metricAlias, resolveVisStage } from '@/views/vis/shared/types'
 import VChartHost from '@/views/vis/shared/VChartHost.vue'
 import VisActionButton from '@/views/vis/shared/VisActionButton.vue'
@@ -87,7 +88,7 @@ const props = withDefaults(defineProps<{
   title: '',
   description: '',
   loading: false,
-  emptyText: '暂无数据',
+  emptyText: VIS_EMPTY_TEXT,
   error: '',
   unavailable: '',
   dashboardId: '',
@@ -643,6 +644,7 @@ watch(allowDetail, (ok) => {
           :visual="visual"
           :query="query"
           :data="data"
+          :empty-text="emptyText"
           :interactive="allowDetail"
           :fill="embedded"
           @detail-click="onPlainDetailClick"
@@ -738,7 +740,6 @@ watch(allowDetail, (ok) => {
           v-else-if="isStatic"
           class="vis-card-view__static"
           :visual="visual"
-          :empty-text="emptyText"
         />
 
         <el-empty
@@ -1014,6 +1015,7 @@ watch(allowDetail, (ok) => {
   &__content {
     --vis-content-color: var(--el-text-color-primary);
     --vis-muted-color: var(--el-text-color-secondary);
+    --vis-empty-color: color-mix(in srgb, var(--vis-muted-color) 76%, transparent);
 
     color: var(--vis-content-color);
     flex: 1 1 0;

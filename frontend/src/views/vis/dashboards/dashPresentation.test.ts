@@ -22,12 +22,10 @@ describe('dashboard presentation mode', () => {
     expect(resolveDashPresentationMode(1024, true)).toBe('wide')
   })
 
-  it('only defers card queries in non-editable flow previews', () => {
-    expect(shouldDeferDashCardQuery('compact', false)).toBe(true)
-    expect(shouldDeferDashCardQuery('medium', false)).toBe(true)
-    expect(shouldDeferDashCardQuery('wide', false)).toBe(false)
-    expect(shouldDeferDashCardQuery('auto', false)).toBe(false)
-    expect(shouldDeferDashCardQuery('compact', true)).toBe(false)
+  it('defers viewer card queries unless a caller temporarily forces eager loading', () => {
+    expect(shouldDeferDashCardQuery(true, false)).toBe(true)
+    expect(shouldDeferDashCardQuery(true, true)).toBe(false)
+    expect(shouldDeferDashCardQuery(false, false)).toBe(false)
   })
 })
 

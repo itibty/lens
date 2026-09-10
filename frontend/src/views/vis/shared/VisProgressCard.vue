@@ -5,6 +5,7 @@
 import type { ProgressView } from '@/views/vis/shared/progressCard'
 import type { VisVisualConfig } from '@/views/vis/shared/types'
 import { useResizeObserver } from '@vueuse/core'
+import { VIS_EMPTY_TEXT } from '@/views/vis/shared/emptyState'
 import {
   isProgressArc,
   progressRingGeom,
@@ -31,7 +32,7 @@ const props = withDefaults(defineProps<{
   /** 铺满格子：字号、条高与环径随卡片走；设计器小预览不要开 */
   fill?: boolean
 }>(), {
-  emptyText: '暂无数据',
+  emptyText: VIS_EMPTY_TEXT,
   interactive: false,
   fill: false,
 })
@@ -272,7 +273,7 @@ watch(
     justify-content: center;
     min-height: 72px;
     font-size: 13px;
-    color: var(--vis-content-color, var(--el-text-color-placeholder));
+    color: var(--vis-empty-color, var(--el-text-color-placeholder));
   }
 
   &.is-interactive {

@@ -8,6 +8,7 @@ import { LIGHT_THEME } from '@/theme/tokens'
 import { showToast } from '@/utils/index'
 import { contextFromTableRow, isContrastField } from './cardDetail'
 import { cardExportFileName, saveBlobFile } from './cardExport'
+import { VIS_EMPTY_TEXT } from './emptyState'
 import { formatMetricField } from './fieldStyle'
 import { listTableFields } from './listTable'
 import { metricAlias } from './types'
@@ -119,7 +120,7 @@ function downloadData() {
           </el-button>
         </div>
       </div>
-      <el-table class="data-table" :data="pageRows" :tooltip-options="tooltipOptions" stripe border max-height="55vh" empty-text="暂无数据">
+      <el-table class="data-table" :data="pageRows" :tooltip-options="tooltipOptions" stripe border max-height="55vh" :empty-text="VIS_EMPTY_TEXT">
         <el-table-column
           v-for="field in fields"
           :key="field"

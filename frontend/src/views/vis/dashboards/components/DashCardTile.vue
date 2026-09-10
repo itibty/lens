@@ -10,6 +10,7 @@ import { useIntersectionObserver } from '@vueuse/core'
 import { useAccountStore } from '@/stores/modules/account'
 import { FUNCTION_CARD_CONF } from '@/views/vis/cards/config'
 import { resolveAutoRefreshSec, useCardAutoRefresh } from '@/views/vis/shared/cardRefresh'
+import { VIS_EMPTY_TEXT } from '@/views/vis/shared/emptyState'
 import { allowsFullscreen, needsDataset } from '@/views/vis/shared/types'
 import { useVisCardQuery } from '@/views/vis/shared/useVisCardQuery'
 import VisCardView from '@/views/vis/shared/VisCardView.vue'
@@ -17,6 +18,7 @@ import VisFullWrap from '@/views/vis/shared/VisFullWrap.vue'
 import { isVisDisabled } from '../dashApi'
 import {
   DASH_EAGER_CARD_QUERIES_KEY,
+  DASH_LAZY_CARD_QUERIES_KEY,
   DASH_PRESENTATION_MODE_KEY,
   isDashFlowMode,
   shouldDeferDashCardQuery,
@@ -75,10 +77,11 @@ const router = useRouter()
 const canEditCard = hasFunction(FUNCTION_CARD_CONF)
 const disabled = computed(() => isVisDisabled(props.card.status))
 const presentationMode = inject(DASH_PRESENTATION_MODE_KEY, computed(() => 'auto' as const))
+const lazyCardQueries = inject(DASH_LAZY_CARD_QUERIES_KEY, false)
 const eagerCardQueries = inject(DASH_EAGER_CARD_QUERIES_KEY, readonly(ref(false)))
 const queryTracker = inject(DASH_CARD_QUERY_TRACKER_KEY, null)
 const deferQuery = computed(() =>
-  !eagerCardQueries.value && shouldDeferDashCardQuery(presentationMode.value, props.editable),
+  shouldDeferDashCardQuery(lazyCardQueries, eagerCardQueries.value),
 )
 const intersectionSupported = typeof IntersectionObserver !== 'undefined'
 const tileRef = ref<HTMLElement | null>(null)
@@ -143,7 +146,7 @@ const displayQuery = computed(() => appliedQuery.value ?? props.card.query)
 const emptyText = computed(() => {
   if (disabled.value)
     return '卡片已禁用'
-  return '暂无数据'
+  return VIS_EMPTY_TEXT
 })
 
 function onOpenDetail(hit: DetailHit) {
@@ -160,6 +163,8 @@ function onOpenDetail(hit: DetailHit) {
 }
 
 const queryFp = computed(() => JSON.stringify({
+  dashboardId: props.dashboardId,
+  cardId: props.cardId,
   id: props.card.id,
   status: props.card.status,
   updatedAt: props.card.updatedAt,

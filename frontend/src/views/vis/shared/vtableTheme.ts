@@ -5,6 +5,7 @@ import { themes } from '@visactor/vtable'
 import { FONT_SANS } from '@/core/fonts'
 import { alphaColor, LIGHT_THEME } from '@/theme/tokens'
 import { resolveChartThemeId } from './chartPalette'
+import { VIS_EMPTY_TEXT } from './emptyState'
 import { resolveTableStyle } from './tableStyle'
 
 type ITableThemeDefine = TYPES.ITableThemeDefine
@@ -42,7 +43,7 @@ export function resolveVTableLayout(emptyBody = false) {
 }
 
 /** 官方 emptyTip：无 records 时保留表头，表体提示 */
-export const VTABLE_EMPTY_TEXT = '暂无数据'
+export const VTABLE_EMPTY_TEXT = VIS_EMPTY_TEXT
 
 export const VTABLE_EMPTY_TIP = {
   text: VTABLE_EMPTY_TEXT,
@@ -65,7 +66,7 @@ export function resolveVTableEmptyTip(theme: ThemeColors = LIGHT_THEME) {
     ...VTABLE_EMPTY_TIP,
     textStyle: {
       ...VTABLE_EMPTY_TIP.textStyle,
-      color: theme.text.muted,
+      color: theme.text.disabled,
     },
   }
 }
