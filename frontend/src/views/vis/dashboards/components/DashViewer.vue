@@ -31,6 +31,7 @@ import {
   dashThemeVars,
   DEFAULT_DASH_CARD_RADIUS,
   DEFAULT_DASH_THEME,
+  isDashGlassTheme,
   resolveDashTheme,
 } from '../dashTheme'
 import { useDashChromeScroll } from '../useDashChromeScroll'
@@ -72,6 +73,7 @@ const theme = ref<DashThemeId>(DEFAULT_DASH_THEME)
 const cardRadius = ref<DashCardRadiusId>(DEFAULT_DASH_CARD_RADIUS)
 const autoRefreshSec = ref<number>()
 const themeStyle = computed(() => dashThemeVars(theme.value, cardRadius.value))
+const glassTheme = computed(() => isDashGlassTheme(theme.value))
 provide(LENS_THEME_KEY, computed(() => resolveDashTheme(theme.value).theme))
 const { refreshCards, refreshTick } = useDashRefresh()
 const { chromeHidden, onCanvasScroll, revealChrome } = useDashChromeScroll()
@@ -240,6 +242,7 @@ watch(
     class="viewer"
     :class="`is-${presentationMode}`"
     :style="themeStyle"
+    :data-dash-glass="glassTheme ? 'true' : undefined"
   >
     <el-scrollbar
       class="viewer__canvas"

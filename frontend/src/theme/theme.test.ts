@@ -2,7 +2,7 @@ import type { ISpec } from '@visactor/vchart'
 import type { VisVisualConfig } from '@/views/vis/shared/types'
 import { describe, expect, it } from 'vitest'
 import { CHART_TYPES, isVChartType } from '@/views/vis/charts/catalog'
-import { DASH_THEME_PRESETS, dashChromeVars, dashOverlayVars, dashThemeVars, resolveDashTheme, resolveDashThemeId } from '@/views/vis/dashboards/dashTheme'
+import { DASH_THEME_PRESETS, dashChromeVars, dashOverlayVars, dashThemeVars, isDashGlassTheme, resolveDashTheme, resolveDashThemeId } from '@/views/vis/dashboards/dashTheme'
 import { buildVChartSpec } from '@/views/vis/shared/cardRenderer'
 import { resolveCardChrome } from '@/views/vis/shared/cardTheme'
 import { CHART_SERIES_PALETTES, resolveChartSeriesColors } from '@/views/vis/shared/chartPalette'
@@ -73,18 +73,31 @@ describe('lens theme contract', () => {
   })
 
   it('keeps saved theme IDs while distinguishing classic surfaces and category palettes', () => {
-    expect(DASH_THEME_PRESETS.map(preset => preset.id)).toEqual(['t1', 't2', 't3', 't4', 't5', 't6'])
-    expect(new Set(Object.values(THEME_PRESETS).map(theme => theme.chrome.surface.panel)).size).toBe(6)
-    expect(new Set(Object.values(THEME_PRESETS).map(theme => theme.chart.series[0])).size).toBe(6)
+    expect(DASH_THEME_PRESETS.map(preset => preset.id)).toEqual(['t1', 't2', 't3', 't4', 't5', 't6', 't7', 't8'])
+    expect(new Set(Object.values(THEME_PRESETS).map(theme => theme.chrome.surface.panel)).size).toBe(8)
+    expect(new Set(Object.values(THEME_PRESETS).map(theme => theme.chart.series[0])).size).toBe(8)
     for (const preset of DASH_THEME_PRESETS) {
       const theme = resolveDashTheme(preset.id).theme
       expect(theme.chart.series).toHaveLength(DATA_SERIES.length)
-      expect(dashThemeVars(preset.id)['--dash-card-bg']).toBe(theme.surface.panel)
-      expect(dashThemeVars(preset.id)['--dash-chrome-bg']).toBe(theme.chrome.surface.panel)
+      if (preset.material) {
+        expect(dashThemeVars(preset.id)['--dash-canvas-bg']).toBe(theme.surface.page)
+        expect(dashThemeVars(preset.id)['--dash-card-bg']).toContain('%')
+        expect(dashThemeVars(preset.id)['--dash-card-glaze']).toContain('radial-gradient')
+        expect(dashThemeVars(preset.id)['--dash-card-blur']).toContain('blur(')
+        expect(dashThemeVars(preset.id)['--vis-card-border']).toContain('1px solid')
+      }
+      else {
+        expect(dashThemeVars(preset.id)['--dash-card-bg']).toBe(theme.surface.panel)
+        expect(dashThemeVars(preset.id)['--dash-chrome-bg']).toBe(theme.chrome.surface.panel)
+      }
     }
     expect(THEME_PRESETS.navy.chrome.mode).toBe('dark')
     expect(THEME_PRESETS.navy.mode).toBe('light')
     expect(THEME_PRESETS.paper.surface.panel).not.toBe(LIGHT_THEME.surface.panel)
+    expect(isDashGlassTheme('t7')).toBe(true)
+    expect(isDashGlassTheme('t8')).toBe(true)
+    expect(isDashGlassTheme('t1')).toBe(false)
+    expect(dashThemeVars('t8')['--dash-card-shadow']).toContain('0 10px 30px')
   })
 
   it('projects the same theme into page controls and teleported overlays without mutating the global default', () => {

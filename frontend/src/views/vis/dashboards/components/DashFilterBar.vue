@@ -11,6 +11,7 @@ import {
   DASH_THEME_PRESETS,
   dashChromeVars,
   dashOverlayVars,
+  dashThemeCanvasSwatchStyle,
   dashThemeSwatchStyle,
   DEFAULT_DASH_THEME,
 } from '../dashTheme'
@@ -289,7 +290,6 @@ watch(mobile, (enabled) => {
             </button>
 
             <div class="dash-tools__themes">
-              <span class="dash-tools__label">临时换肤</span>
               <div class="dash-tools__theme-grid">
                 <button
                   v-for="item in DASH_THEME_PRESETS"
@@ -304,7 +304,7 @@ watch(mobile, (enabled) => {
                 >
                   <span
                     class="dash-tools__swatch"
-                    :style="{ background: item.theme.surface.page }"
+                    :style="dashThemeCanvasSwatchStyle(item)"
                   >
                     <i :style="dashThemeSwatchStyle(item)" />
                   </span>

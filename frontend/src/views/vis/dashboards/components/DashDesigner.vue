@@ -47,6 +47,7 @@ import {
   dashThemeVars,
   DEFAULT_DASH_CARD_RADIUS,
   DEFAULT_DASH_THEME,
+  isDashGlassTheme,
   resolveDashTheme,
 } from '../dashTheme'
 import { provideDashGridGuides } from '../useDashGridGuides'
@@ -119,11 +120,19 @@ const filters = ref<VisDashFilterDef[]>([])
 const configExtra = ref<Record<string, unknown>>({})
 const filterValues = ref<DashFilterValues>({})
 const theme = ref<DashThemeId>(DEFAULT_DASH_THEME)
+const previewTheme = ref<DashThemeId>()
 const cardRadius = ref<DashCardRadiusId>(DEFAULT_DASH_CARD_RADIUS)
 const autoRefreshSec = ref<number>()
 const groupTree = ref<VIS.DashGroupInfo[]>([])
 const baselineSnapshot = ref('')
-provide(LENS_THEME_KEY, computed(() => resolveDashTheme(theme.value).theme))
+const effectiveTheme = computed(() => previewTheme.value ?? theme.value)
+const previewThemeModel = computed<DashThemeId>({
+  get: () => effectiveTheme.value,
+  set: (value) => {
+    previewTheme.value = value === theme.value ? undefined : value
+  },
+})
+provide(LENS_THEME_KEY, computed(() => resolveDashTheme(effectiveTheme.value).theme))
 
 const saveForm = reactive({
   name: '',
@@ -136,7 +145,8 @@ const saveRules: FormRules<typeof saveForm> = {
   name: [{ required: true, trigger: 'blur', message: '请填写看板名称' }],
 }
 
-const themeStyle = computed(() => dashThemeVars(theme.value, cardRadius.value))
+const themeStyle = computed(() => dashThemeVars(effectiveTheme.value, cardRadius.value))
+const glassTheme = computed(() => isDashGlassTheme(effectiveTheme.value))
 const { refreshCards, refreshTick } = useDashRefresh()
 const excludeIds = computed(() => collectCardIds(widgets.value))
 const cards = computed(() => Object.values(cardMap.value))
@@ -176,6 +186,7 @@ function resetEmpty() {
   filters.value = []
   configExtra.value = {}
   theme.value = DEFAULT_DASH_THEME
+  previewTheme.value = undefined
   cardRadius.value = DEFAULT_DASH_CARD_RADIUS
   autoRefreshSec.value = undefined
   filterValues.value = {}
@@ -188,6 +199,7 @@ let loadRequestId = 0
 async function loadDashboard() {
   const dashboardId = String(props.dashboardId || '')
   const currentRequestId = ++loadRequestId
+  previewTheme.value = undefined
   if (!dashboardId) {
     loading.value = false
     resetEmpty()
@@ -557,6 +569,7 @@ function onSettingsConfirm(draft: DashSettingsDraft) {
   filterValues.value = applyFilterDefaultsFromSettings(draft.filters, filters.value, filterValues.value)
   filters.value = draft.filters
   theme.value = draft.theme
+  previewTheme.value = undefined
   cardRadius.value = draft.cardRadius
   autoRefreshSec.value = draft.autoRefreshSec
 }
@@ -616,12 +629,16 @@ defineExpose<DashDesignerInstance>({
     class="designer"
     :class="{ 'is-loading': loading }"
   >
-    <div class="designer__stage" :style="themeStyle">
+    <div
+      class="designer__stage"
+      :style="themeStyle"
+      :data-dash-glass="glassTheme ? 'true' : undefined"
+    >
       <el-scrollbar ref="canvasScrollbarRef" class="designer__canvas">
         <div class="designer__chrome">
           <DashFilterBar
             v-model:values="filterValues"
-            v-model:theme="theme"
+            v-model:theme="previewThemeModel"
             v-model:grid-guides="gridGuides"
             :title="states.name"
             :desc="states.desc"

@@ -9,6 +9,7 @@ import type { VisCard } from '@/views/vis/shared/types'
 import type { VisCardDetailOpenPayload } from '@/views/vis/shared/useVisCardDetail'
 import VisActionButton from '@/views/vis/shared/VisActionButton.vue'
 import { createEmptyPage, groupEmptyHint } from '../dashLayout'
+import { trackDashGlassPointer } from '../dashTheme'
 import DashCardTile from './DashCardTile.vue'
 import DashInnerGrid from './DashInnerGrid.vue'
 
@@ -90,8 +91,10 @@ const emptyText = computed(() => groupEmptyHint(props.designActions))
 
 const groupStyle = computed(() => {
   const style: Record<string, string> = {}
-  if (props.widget.bg)
+  if (props.widget.bg) {
     style['--dash-group-bg'] = props.widget.bg
+    style['--dash-group-glaze'] = 'none'
+  }
   if (props.widget.color)
     style['--dash-group-fg'] = props.widget.color
   return style
@@ -117,6 +120,7 @@ function onResizePointerDown(corner: 'nw' | 'ne' | 'sw' | 'se', event: PointerEv
       'hide-resize-dots': editable && !designActions,
     }"
     :style="groupStyle"
+    @pointermove="trackDashGlassPointer"
   >
     <template v-if="editable">
       <div
@@ -233,7 +237,8 @@ function onResizePointerDown(corner: 'nw' | 'ne' | 'sw' | 'se', event: PointerEv
   min-height: 0;
   box-sizing: border-box;
   padding: 0;
-  background: var(--dash-group-bg, var(--dash-card-bg, var(--el-bg-color)));
+  background-color: var(--dash-group-bg, var(--dash-card-bg, var(--el-bg-color)));
+  background-image: var(--dash-group-glaze, var(--dash-card-glaze, none));
   border: var(--vis-card-border);
   border-radius: var(--dash-card-radius, 12px);
   @include page.frost(card);
@@ -488,10 +493,11 @@ function onResizePointerDown(corner: 'nw' | 'ne' | 'sw' | 'se', event: PointerEv
 }
 
 .dash-group.is-flow {
-  background: var(
+  background-color: var(
     --dash-group-bg,
     color-mix(in srgb, var(--dash-card-bg, var(--el-bg-color)) 94%, var(--dash-canvas-bg, transparent))
   );
+  background-image: var(--dash-group-glaze, var(--dash-card-glaze, none));
 
   .dash-group__chrome {
     min-height: 52px;
@@ -510,7 +516,8 @@ function onResizePointerDown(corner: 'nw' | 'ne' | 'sw' | 'se', event: PointerEv
 
   // 组内卡片靠表面和轻阴影表达嵌套关系，避免容器与内容层层描边。
   :deep(.dash-tile.is-in-group:not(.is-full)) {
-    background: var(--dash-card-bg, var(--el-bg-color));
+    background-color: var(--dash-card-bg, var(--el-bg-color));
+    background-image: var(--dash-card-glaze, none);
     box-shadow: 0 1px 2px color-mix(in srgb, var(--dash-title, var(--na-text-strong)) 6%, transparent);
   }
 }

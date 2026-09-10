@@ -7,6 +7,7 @@ import type { DashTextAppearance, DashTextWidget } from '../dashLayout'
 import type { DashFlowMode } from '../dashPresentation'
 import SimpleHtmlEditor from '@/views/vis/cards/components/SimpleHtmlEditor.vue'
 import { sanitizeRichText } from '@/views/vis/shared/sanitizeRichText'
+import { trackDashGlassPointer } from '../dashTheme'
 import DashTextSettings from './DashTextSettings.vue'
 
 const props = withDefaults(defineProps<{
@@ -37,7 +38,8 @@ const editorHtml = computed<string | undefined>({
 const tileStyle = computed<CSSProperties>(() => {
   const { appearance } = props.widget
   return {
-    background: appearance.bg || 'var(--dash-card-bg, var(--el-bg-color))',
+    backgroundColor: appearance.bg || 'var(--dash-card-bg, var(--el-bg-color))',
+    backgroundImage: appearance.bg ? 'none' : 'var(--dash-card-glaze, none)',
     color: appearance.color || 'var(--dash-content-color, var(--el-text-color-primary))',
   }
 })
@@ -63,6 +65,7 @@ function onResizePointerDown(corner: 'nw' | 'ne' | 'sw' | 'se', event: PointerEv
       },
     ]"
     :style="tileStyle"
+    @pointermove="trackDashGlassPointer"
   >
     <template v-if="editable">
       <div class="dash-tile__handle" title="拖动">
@@ -118,6 +121,7 @@ function onResizePointerDown(corner: 'nw' | 'ne' | 'sw' | 'se', event: PointerEv
   height: 100%;
   min-height: 0;
   box-sizing: border-box;
+  border: var(--vis-card-border);
   border-radius: var(--dash-card-radius, 12px);
 
   &.is-card {

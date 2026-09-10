@@ -22,6 +22,7 @@ import {
   shouldDeferDashCardQuery,
 } from '../dashPresentation'
 import { DASH_CARD_QUERY_TRACKER_KEY } from '../dashQueryTracker'
+import { trackDashGlassPointer } from '../dashTheme'
 import { DASH_REFRESH_TICK } from '../useDashRefresh'
 
 const props = withDefaults(defineProps<{
@@ -266,6 +267,7 @@ function onMenuAction(key: string) {
         'is-auto-height': autoHeight && !isFull,
         'hide-resize-dots': editable && !designActions,
       }"
+      @pointermove="trackDashGlassPointer"
     >
       <template v-if="editable && !isFull && !locked">
         <div
@@ -323,7 +325,8 @@ function onMenuAction(key: string) {
   height: 100%;
   min-height: 0;
   box-sizing: border-box;
-  background: var(--dash-card-bg, var(--el-bg-color));
+  background-color: var(--dash-card-bg, var(--el-bg-color));
+  background-image: var(--dash-card-glaze, none);
   border: var(--vis-card-border);
   border-radius: var(--dash-card-radius, 12px);
   @include page.frost(card);
@@ -347,7 +350,7 @@ function onMenuAction(key: string) {
   min-height: 0;
   overflow: hidden;
   border-radius: inherit;
-  background: inherit;
+  background: transparent;
 
   .dash-tile.is-auto-height & {
     height: auto;

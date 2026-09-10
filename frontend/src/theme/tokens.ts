@@ -267,6 +267,27 @@ export const THEME_PRESETS = {
     border: '#34404D',
     series: ['#86A4E8', '#74B9B1', '#D9B064', '#B6A0D8', '#78B3CF', '#D98FAC', '#9CA8BA', '#A9C57B'],
   }, { mode: 'dark', background: '#252E39', ink: '#F2F5F9', muted: '#A7B3C4', accent: '#8EAAE7' }),
+  glass: classicTheme({
+    accent: '#125EAE',
+    page: '#DDE5EE',
+    panel: '#F4F7FA',
+    heading: '#E9EFF5',
+    ink: '#172331',
+    muted: '#4D5C6C',
+    border: '#CBD6E2',
+    series: ['#2B6BE7', '#008EA3', '#07806F', '#6057C8', '#0077B6', '#4558A8', '#526E82', '#2F7F98'],
+  }, { mode: 'light', background: '#E3EAF1', ink: '#172331', muted: '#4D5C6C', accent: '#125EAE' }),
+  glassDeep: classicTheme({
+    mode: 'dark',
+    accent: '#72B5FF',
+    page: '#08131F',
+    panel: '#172536',
+    heading: '#1C2D40',
+    ink: '#F1F6FC',
+    muted: '#A9B8C9',
+    border: '#31465E',
+    series: ['#78A8FF', '#4AC6D7', '#55C7A6', '#A99BFF', '#4AB0E8', '#7D91D8', '#86A9BE', '#5DB8C5'],
+  }, { mode: 'dark', background: '#0D1B2A', ink: '#F1F6FC', muted: '#A9B8C9', accent: '#72B5FF' }),
 }
 
 export const NAVBAR_COLORS = {

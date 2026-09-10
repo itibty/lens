@@ -8,7 +8,12 @@ import {
   DEFAULT_AUTO_REFRESH_SEC,
   sanitizeAutoRefreshSec,
 } from '@/views/vis/shared/cardRefresh'
-import { DASH_CARD_RADIUS_PRESETS, DASH_THEME_PRESETS, dashThemeSwatchStyle } from '../dashTheme'
+import {
+  DASH_CARD_RADIUS_PRESETS,
+  DASH_THEME_PRESETS,
+  dashThemeCanvasSwatchStyle,
+  dashThemeSwatchStyle,
+} from '../dashTheme'
 
 const theme = defineModel<DashThemeId>('theme', { required: true })
 const cardRadius = defineModel<DashCardRadiusId>('cardRadius', { required: true })
@@ -81,7 +86,7 @@ const autoRefreshSecValue = computed({
         >
           <span
             class="style-settings__swatch"
-            :style="{ background: item.theme.surface.page }"
+            :style="dashThemeCanvasSwatchStyle(item)"
           >
             <span
               class="style-settings__card"
