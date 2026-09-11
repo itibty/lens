@@ -19,7 +19,6 @@ import com.codet.lens.vis.mapper.VisDashboardSubscriptionMapper;
 import com.codet.lens.vis.mapper.VisDashboardSubscriptionRunMapper;
 import com.codet.lens.vis.service.VisDashboardAccess;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -154,16 +153,16 @@ public class DashboardSubscriptionService {
         return row;
     }
 
-    /** 条件更新 next_fire_at 即领取；多个实例只有一个能更新成功。 */
+    /** 推进计划和写入待发送记录在同一个事务中提交；失败时整批回滚。 */
     @Transactional
-    public List<DueSubscription> claimDue(long now) {
+    public int claimDue(long now) {
         List<VisDashboardSubscription> due = subscriptionMapper.selectList(
                 Wrappers.<VisDashboardSubscription>lambdaQuery()
                         .eq(VisDashboardSubscription::getStatus, Status.EBL)
                         .le(VisDashboardSubscription::getNextFireAt, now)
                         .orderByAsc(VisDashboardSubscription::getNextFireAt)
                         .last("limit " + MAX_DUE_BATCH));
-        List<DueSubscription> claimed = new ArrayList<>();
+        int claimed = 0;
         for (VisDashboardSubscription row : due) {
             long scheduledAt = row.getNextFireAt();
             long next;
@@ -183,9 +182,8 @@ public class DashboardSubscriptionService {
                             .eq(VisDashboardSubscription::getStatus, Status.EBL)
                             .eq(VisDashboardSubscription::getNextFireAt, scheduledAt));
             if (updated == 1) {
-                row.setNextFireAt(next);
-                row.setLastFireAt(scheduledAt);
-                claimed.add(new DueSubscription(row, scheduledAt));
+                createQueuedRun(row, scheduledAt, "SCHEDULED");
+                claimed++;
             }
         }
         return claimed;
@@ -248,7 +246,7 @@ public class DashboardSubscriptionService {
         info.setTriggerType(row.getTriggerType());
         info.setRunStatus(row.getRunStatus());
         info.setAttemptCount(row.getAttemptCount());
-        info.setScreenshotBytes(row.getScreenshotBytes());
+        info.setScreenshotSize(row.getScreenshotSize());
         info.setErrorMessage(row.getErrorMessage());
         info.setStartedAt(row.getStartedAt());
         info.setFinishedAt(row.getFinishedAt());
@@ -293,6 +291,21 @@ public class DashboardSubscriptionService {
         return userId;
     }
 
-    public record DueSubscription(VisDashboardSubscription subscription, long scheduledAt) {
+    @Transactional
+    public Long queueManual(VisDashboardSubscription subscription) {
+        return createQueuedRun(subscription, System.currentTimeMillis(), "MANUAL");
+    }
+
+    private Long createQueuedRun(VisDashboardSubscription subscription, long scheduledAt, String triggerType) {
+        VisDashboardSubscriptionRun run = new VisDashboardSubscriptionRun()
+                .setSubscriptionId(subscription.getId())
+                .setScheduledAt(scheduledAt)
+                .setTriggerType(triggerType)
+                .setRunStatus("QUEUED")
+                .setAttemptCount(0)
+                .setCreateAt(System.currentTimeMillis())
+                .setCreateBy(subscription.getOwnerId());
+        runMapper.insert(run);
+        return run.getId();
     }
 }

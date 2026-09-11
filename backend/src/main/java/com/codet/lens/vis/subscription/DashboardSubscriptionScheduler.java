@@ -14,6 +14,15 @@ public class DashboardSubscriptionScheduler {
     private final DashboardSubscriptionJobService jobService;
     private final LensProperties properties;
 
+    @Scheduled(fixedDelay = 30_000)
+    public void heartbeat() {
+        try {
+            jobService.heartbeat();
+        } catch (Exception e) {
+            log.warn("dashboard subscription heartbeat failed: {}", DashboardSubscriptionJobService.safeError(e));
+        }
+    }
+
     @Scheduled(fixedDelayString = "${lens.subscription.poll-interval-ms:30000}")
     public void poll() {
         if (!properties.getSubscription().isEnabled()) {
@@ -21,12 +30,15 @@ public class DashboardSubscriptionScheduler {
         }
         try {
             jobService.recoverStaleRuns(System.currentTimeMillis());
-            for (DashboardSubscriptionService.DueSubscription due
-                    : subscriptionService.claimDue(System.currentTimeMillis())) {
-                jobService.queueScheduled(due);
-            }
         } catch (Exception e) {
-            log.warn("dashboard subscription poll failed", e);
+            log.warn("dashboard subscription recovery failed: {}", DashboardSubscriptionJobService.safeError(e));
         }
+        try {
+            subscriptionService.claimDue(System.currentTimeMillis());
+        } catch (Exception e) {
+            log.warn("dashboard subscription claim failed: {}", DashboardSubscriptionJobService.safeError(e));
+        }
+        // 领取失败不妨碍先前已提交的任务；重启后也从这里继续消费。
+        jobService.dispatchQueued();
     }
 }

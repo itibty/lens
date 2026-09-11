@@ -1,0 +1,16 @@
+# Copy to config/local.properties when running from backend/. Do not add quotes.
+# Environment variables override these local values.
+LENS_DB_URL=jdbc:mysql://127.0.0.1:3306/lens?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
+LENS_DB_USERNAME=root
+LENS_DB_PASSWORD=
+LENS_REDIS_HOST=127.0.0.1
+LENS_REDIS_PORT=6379
+LENS_REDIS_PASSWORD=
+LENS_SUBSCRIPTION_ENABLED=false
+LENS_PUBLIC_BASE_URL=http://127.0.0.1:8080
+LENS_BROWSER_CHANNEL=chrome
+LENS_MAIL_HOST=
+LENS_MAIL_PORT=587
+LENS_MAIL_USERNAME=
+LENS_MAIL_PASSWORD=
+LENS_MAIL_FROM=

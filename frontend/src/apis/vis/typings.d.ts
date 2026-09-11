@@ -147,7 +147,8 @@ declare namespace VIS {
     triggerType?: string;
     runStatus?: string;
     attemptCount?: number;
-    screenshotBytes?: string;
+    /** 截图大小，单位字节 */
+    screenshotSize?: string;
     errorMessage?: string;
     scheduledAt?: string;
     startedAt?: string;

@@ -19,9 +19,11 @@ public class VisDashboardSubscriptionRun {
     private String triggerType;
     private String runStatus;
     private Integer attemptCount;
-    private Long screenshotBytes;
+    /** 截图大小，单位字节。 */
+    private Long screenshotSize;
     private String errorMessage;
     private Long startedAt;
+    private Long heartbeatAt;
     private Long finishedAt;
     private Long createAt;
     private Long createBy;

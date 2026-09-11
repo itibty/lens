@@ -25,7 +25,7 @@ public class DashboardSubscriptionOwnerService {
     public OwnerSession prepare(Long ownerId, Long dashboardId) {
         SysUser user = requireEnabledUser(ownerId);
         if (user.getEmail() == null || user.getEmail().isBlank()) {
-            throw ResultException.fail("订阅用户尚未绑定邮箱");
+            throw new DashboardSubscriptionUnavailableException("订阅用户尚未绑定邮箱");
         }
         long now = System.currentTimeMillis();
         Set<String> roles = new HashSet<>(userMapper.findRoleCodes(ownerId, now));
@@ -40,6 +40,11 @@ public class DashboardSubscriptionOwnerService {
         AuthContext.set(auth);
         try {
             dashboardAccess.assertCanView(dashboardId);
+        } catch (ResultException e) {
+            if (Integer.valueOf(403).equals(e.getCode())) {
+                throw new DashboardSubscriptionUnavailableException(e.getMessage());
+            }
+            throw e;
         } finally {
             AuthContext.clear();
             if (previousUser != null) {
@@ -53,7 +58,7 @@ public class DashboardSubscriptionOwnerService {
         long expiresAt = Math.min(now + RENDER_TOKEN_TTL_MS,
                 roleEnd == null ? Long.MAX_VALUE : roleEnd);
         if (expiresAt <= now) {
-            throw ResultException.fail("订阅用户的看板权限已失效");
+            throw new DashboardSubscriptionUnavailableException("订阅用户的看板权限已失效");
         }
         String token = jwtService.createToken(ownerId.toString(), roles, perms, expiresAt);
         return new OwnerSession(user.getEmail().trim(), "Bearer " + token);
@@ -62,7 +67,7 @@ public class DashboardSubscriptionOwnerService {
     public SysUser requireEnabledUser(Long ownerId) {
         SysUser user = ownerId == null ? null : userMapper.selectById(ownerId);
         if (user == null || !Status.EBL.equals(user.getStatus())) {
-            throw ResultException.fail("订阅用户不存在或已禁用");
+            throw new DashboardSubscriptionUnavailableException("订阅用户不存在或已禁用");
         }
         return user;
     }

@@ -30,7 +30,8 @@ public class DashboardScreenshotService {
         long timeout = properties.getSubscription().getScreenshotTimeoutMs();
         String baseUrl = trimSlash(properties.getSubscription().getPublicBaseUrl());
         String url = baseUrl + "/vis/dashboards/view?id="
-                + URLEncoder.encode(dashboardId.toString(), StandardCharsets.UTF_8);
+                + URLEncoder.encode(dashboardId.toString(), StandardCharsets.UTF_8)
+                + "&subscriptionScreenshot=1";
         String executablePath = properties.getSubscription().getBrowserExecutablePath();
         String channel = properties.getSubscription().getBrowserChannel();
         boolean useInstalledBrowser = (executablePath != null && !executablePath.isBlank())
@@ -59,8 +60,19 @@ public class DashboardScreenshotService {
                         .setTimeout(timeout)
                         .setWaitUntil(WaitUntilState.DOMCONTENTLOADED));
                 page.locator("[data-dashboard-tools-trigger]").click();
-                Download download = page.waitForDownload(
-                        () -> page.locator("[data-dashboard-screenshot-action]").click());
+                Download download = page.waitForDownload(() -> {
+                    page.locator("[data-dashboard-screenshot-action]").click();
+                    page.waitForFunction("""
+                            () => ['success', 'failed'].includes(document.querySelector(
+                              '[data-dashboard-screenshot-status]')?.dataset.dashboardScreenshotStatus)
+                            """);
+                    String status = page.locator("[data-dashboard-screenshot-status]")
+                            .getAttribute("data-dashboard-screenshot-status");
+                    if ("failed".equals(status)) {
+                        throw ResultException.fail("看板截图失败: " + page.locator("[data-dashboard-screenshot-status]")
+                                .getAttribute("data-dashboard-screenshot-error"));
+                    }
+                });
                 Path path = download.path();
                 byte[] bytes = Files.readAllBytes(path);
                 if (bytes.length == 0) {

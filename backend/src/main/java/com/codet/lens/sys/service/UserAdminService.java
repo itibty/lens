@@ -106,6 +106,12 @@ public class UserAdminService {
             }
             user.modifyCallback();
             userMapper.updateById(user);
+            // updateById 默认忽略 null；显式清空邮箱必须写入 SQL NULL。
+            if (req.getEmail() != null && user.getEmail() == null) {
+                userMapper.update(null, Wrappers.<SysUser>lambdaUpdate()
+                        .set(SysUser::getEmail, null)
+                        .eq(SysUser::getId, user.getId()));
+            }
             if (StrUtil.isNotBlank(req.getPassword())
                     || !Objects.equals(previousStatus, nextStatus)
                     || !Objects.equals(previousEmail, user.getEmail())) {

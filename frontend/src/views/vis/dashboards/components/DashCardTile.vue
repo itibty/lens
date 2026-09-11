@@ -263,6 +263,7 @@ function onMenuAction(key: string) {
     <div
       ref="tileRef"
       class="dash-tile"
+      :data-dashboard-card-state="disabled ? 'unavailable' : error ? 'error' : loading || !queryRequested ? 'loading' : 'ready'"
       :class="{
         'is-editable': editable,
         'is-in-group': inGroup,

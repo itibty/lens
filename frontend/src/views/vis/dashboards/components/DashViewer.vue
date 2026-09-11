@@ -35,6 +35,7 @@ import {
   isDashGlassTheme,
   resolveDashTheme,
 } from '../dashTheme'
+import { assertSubscriptionScreenshotReady } from '../subscriptionScreenshot'
 import { useDashChromeScroll } from '../useDashChromeScroll'
 import { useDashRefresh } from '../useDashRefresh'
 import DashboardSubscriptionDrawer from './DashboardSubscriptionDrawer.vue'
@@ -86,6 +87,8 @@ const { pauseFilterUrl, applyFilterQuery } = useDashFilterUrl(
   () => !dashDisabled.value && !emptyText.value,
 )
 const capturing = ref(false)
+const screenshotStatus = ref('idle')
+const screenshotError = ref('')
 const subscriptionDrawerRef = ref<InstanceType<typeof DashboardSubscriptionDrawer>>()
 
 function openSubscription() {
@@ -217,16 +220,26 @@ async function onScreenshot() {
     return
   }
   capturing.value = true
+  screenshotStatus.value = 'running'
+  screenshotError.value = ''
   eagerCardQueries.value = true
   revealChrome()
   try {
     await waitForCardQueries()
+    if (route.query.subscriptionScreenshot === '1') {
+      if (emptyText.value || dashDisabled.value)
+        throw new Error(emptyText.value || '看板已禁用')
+      assertSubscriptionScreenshotReady(root)
+    }
     const blob = await captureDashPreview(root)
     saveDashScreenshot(blob, name.value)
+    screenshotStatus.value = 'success'
     showToast('截屏已保存')
   }
-  catch {
-    showToast('截屏失败', 'error')
+  catch (error) {
+    screenshotStatus.value = 'failed'
+    screenshotError.value = error instanceof Error ? error.message : '截屏失败'
+    showToast(screenshotError.value, 'error')
   }
   finally {
     eagerCardQueries.value = false
@@ -248,6 +261,8 @@ watch(
     :id="DASH_VIEWER_ID"
     ref="viewerRef"
     v-spinner="loading"
+    :data-dashboard-screenshot-status="screenshotStatus"
+    :data-dashboard-screenshot-error="screenshotError"
     class="viewer"
     :class="`is-${presentationMode}`"
     :style="themeStyle"

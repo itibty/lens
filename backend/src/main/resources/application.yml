@@ -5,6 +5,8 @@ server:
     min-response-size: 2KB
 
 spring:
+  config:
+    import: optional:file:./config/local.properties
   application:
     name: lens
   web:

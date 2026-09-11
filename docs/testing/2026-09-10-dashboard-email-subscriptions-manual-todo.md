@@ -2,11 +2,11 @@
 
 日期：2026-09-10
 
-用途：记录必须依赖真实 SMTP、Chromium、邮件客户端或人工视觉判断的验收项。自动化检查及其结果见实施计划。
+用途：记录必须依赖真实 SMTP、Chromium、邮件客户端或人工视觉判断的验收项。
 
 ## 验收前准备
 
-- [ ] 现有库执行 `backend/db/upgrade-20260910-dashboard-subscriptions.sql`；全新库只执行 `backend/db/schema.sql`。
+- [ ] 在测试库执行 `backend/db/schema.sql` 初始化应用结构和当前配置数据；验证示例看板时再导入 `backend/db/demo.sql` 的订单明细。两个脚本会重建各自的表。
 - [ ] 执行 `mvn exec:java -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install chromium"`；或者安装 Chrome 后设置 `LENS_BROWSER_CHANNEL=chrome`。
 - [ ] 构建前端并确认 `LENS_PUBLIC_BASE_URL` 能直接打开 Lens SPA 及看板路由。
 - [ ] 配置专用测试收件箱、`LENS_MAIL_*`、`LENS_MAIL_FROM` 和 `LENS_SUBSCRIPTION_ENABLED=true`。
@@ -35,10 +35,21 @@
 - [ ] 将 `next_fire_at` 改为数天前，确认只补发一次，新的下次发送时间直接落在当前时间之后，不连续追补历史周期。
 - [ ] 任务执行前撤销用户的看板授权，确认不发邮件、记录失败原因并自动停用订阅。
 - [ ] 禁用用户或看板，得到与撤权相同的安全结果。
-- [ ] 在截图期间重启应用，确认不会重复入队，超过恢复窗口后原 `RUNNING` 记录被标记为失败。
+- [ ] 在截图期间重启应用，确认不会重复入队，超过 5 分钟心跳窗口后原 `RUNNING` 记录被标记为失败；未开始的 `QUEUED` 继续执行。
 - [ ] 模拟“SMTP 已接收邮件但 Lens 未收到成功响应”，记录重试可能导致重复邮件的供应商行为。
 - [ ] 依次模拟 SMTP 拒绝、SMTP 超时、Chromium 缺失、页面超时和 PNG 超限，确认应用不崩溃，任务最多尝试两次并保留脱敏错误。
 - [ ] 关闭 `LENS_SUBSCRIPTION_ENABLED`，确认 Lens 其他功能正常，订阅 CRUD 可用，测试发送返回明确的“尚未启用”错误。
+
+## 2026-09-11 回归补充
+
+- [x] 真实 MySQL：清空邮箱落库为 NULL；省略邮箱字段保留原值。
+- [x] 真实 MySQL：任务插入失败时回滚 `next_fire_at`，重新领取后仅有一条 QUEUED 记录。
+- [x] 真实 MySQL：新工作线程继续处理已提交队列，后续扫描不重复发送；两个工作线程同时读到同一任务也只发送一次。
+- [x] 真实 MySQL：旧 QUEUED 和心跳正常的 RUNNING 保持原状态；失去心跳才标记失败。
+- [x] 单元测试：线程池拒绝后任务保留、临时失败不自动停用、截图失败不发邮件、SMTP 成功后落库失败不重发。
+- [x] 前端测试：持续轮询结果、关闭抽屉后停止、忽略过期响应、拒绝含加载或错误卡片的订阅截图。
+- [x] 真实 Chrome：收到 PNG 下载；前端报告卡片失败时立即返回失败原因，不等待下载超时。
+- [ ] 实际邮箱复验：截图完整、测试结果自动刷新、执行记录可展开。
 
 ## 验收记录
 

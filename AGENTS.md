@@ -21,8 +21,10 @@ Monorepo with two independent packages:
 ## Database Setup
 
 1. Create MySQL database `lens`
-2. Run `backend/db/schema.sql` (required)
-3. Optionally run `backend/db/demo.sql` (seed data)
+2. Run `backend/db/schema.sql` (application DDL and current data snapshot; rebuilds application tables)
+3. Run `backend/db/demo.sql` when example dashboards are needed (example order table DDL and data only)
+
+No incremental migration scripts are maintained. Dataset/card/dashboard configuration is already included in `schema.sql`.
 
 ## Commands
 

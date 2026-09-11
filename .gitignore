@@ -57,3 +57,6 @@ pkg-stats.html
 .codebuddy/
 .trae/
 openspec/
+
+# Local backend configuration (environment-style keys, no credentials in Git)
+/backend/config/local.properties

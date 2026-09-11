@@ -13,7 +13,8 @@ public class DashboardSubscriptionConfig {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         executor.setCorePoolSize(1);
         executor.setMaxPoolSize(1);
-        executor.setQueueCapacity(100);
+        // 待执行记录保存在数据库中，不在线程池中排队。
+        executor.setQueueCapacity(0);
         executor.setThreadNamePrefix("dashboard-subscription-");
         executor.setWaitForTasksToCompleteOnShutdown(false);
         executor.initialize();

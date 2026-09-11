@@ -3,6 +3,7 @@ import type { FormInstance, FormRules } from 'element-plus'
 import {
   deleteDashboardSubscription,
   editDashboardSubscription,
+  listDashboardSubscriptionRuns,
   listDashboardSubscriptions,
   testDashboardSubscription,
   toggleDashboardSubscription,
@@ -11,6 +12,7 @@ import CustomDrawer from '@/components/CustomDrawer.vue'
 import { useAccountStore } from '@/stores/modules/account'
 import { showConfirm, showToast } from '@/utils'
 import { formatTimeMs } from '@/utils/date'
+import { createSubscriptionPoller } from '../subscriptionPolling'
 
 const props = withDefaults(defineProps<{
   dashboardId?: string
@@ -25,6 +27,10 @@ const accountStore = useAccountStore()
 const loading = ref(false)
 const saving = ref(false)
 const testingId = ref('')
+const loadError = ref('')
+const pendingRuns = ref<Record<string, string>>({})
+const historyId = ref('')
+const history = ref<Record<string, VIS.DashboardSubscriptionRunInfo[]>>({})
 const rows = ref<VIS.DashboardSubscriptionInfo[]>([])
 const formRef = ref<FormInstance>()
 const editing = ref(false)
@@ -58,30 +64,87 @@ const weekdayOptions = [
   { label: '周日', value: 7 },
 ]
 
-async function fetchData() {
+let listRequest = 0
+async function fetchData(isCurrent: () => boolean = () => visible.value) {
   if (!props.dashboardId)
     return
-  loading.value = true
+  const request = ++listRequest
+  loading.value = !rows.value.length
   try {
     const res = await listDashboardSubscriptions(
       { dashboardId: props.dashboardId },
       { showErrorMessage: false },
     )
+    if (!isCurrent() || request !== listRequest)
+      return
     rows.value = res.data?.list || []
+    loadError.value = ''
   }
   catch (error) {
-    rows.value = []
-    showToast(errorMessage(error, '订阅加载失败'), 'error')
+    if (isCurrent() && request === listRequest)
+      loadError.value = errorMessage(error, '订阅加载失败，将自动重试')
   }
   finally {
-    loading.value = false
+    if (isCurrent() && request === listRequest)
+      loading.value = false
   }
 }
 
+async function fetchRuns(subscriptionId: string, isCurrent: () => boolean) {
+  try {
+    const res = await listDashboardSubscriptionRuns({ subscriptionId }, { showErrorMessage: false })
+    if (!isCurrent())
+      return
+    const runs = res.data?.list || []
+    history.value[subscriptionId] = runs
+    const run = runs.find(item => item.id === pendingRuns.value[subscriptionId])
+    if (run && !['QUEUED', 'RUNNING'].includes(run.runStatus || '')) {
+      delete pendingRuns.value[subscriptionId]
+      showToast(run.runStatus === 'SUCCESS' ? '测试邮件已发送' : run.errorMessage || '测试发送未完成', run.runStatus === 'SUCCESS' ? 'success' : 'warning')
+    }
+  }
+  catch (error) {
+    if (isCurrent())
+      loadError.value = errorMessage(error, '执行记录加载失败，将自动重试')
+  }
+}
+
+const poller = createSubscriptionPoller(async (isCurrent) => {
+  await fetchData(isCurrent)
+  if (!isCurrent())
+    return
+  const ids = new Set(Object.keys(pendingRuns.value))
+  if (historyId.value)
+    ids.add(historyId.value)
+  await Promise.all(Array.from(ids, id => fetchRuns(id, isCurrent)))
+})
+
+watch(visible, (opened) => {
+  if (opened)
+    poller.start()
+  else
+    poller.stop()
+}, { flush: 'sync' })
+watch(() => props.dashboardId, () => {
+  visible.value = false
+  rows.value = []
+  pendingRuns.value = {}
+  history.value = {}
+  historyId.value = ''
+})
+onBeforeUnmount(poller.stop)
+
 function open() {
-  visible.value = true
   formVisible.value = false
-  void fetchData()
+  visible.value = true
+}
+
+function toggleHistory(row: VIS.DashboardSubscriptionInfo) {
+  if (!row.id)
+    return
+  historyId.value = historyId.value === row.id ? '' : row.id
+  if (historyId.value)
+    poller.start()
 }
 
 function beginCreate() {
@@ -144,19 +207,25 @@ function remove(row: VIS.DashboardSubscriptionInfo) {
     return
   showConfirm(`确定删除订阅「${row.subscriptionName || ''}」吗？`, '删除订阅', 'warning', async () => {
     await deleteDashboardSubscription({ subscriptionId: row.id! })
+    delete pendingRuns.value[row.id!]
+    if (historyId.value === row.id)
+      historyId.value = ''
     showToast('订阅已删除')
     await fetchData()
   })
 }
 
 async function testSend(row: VIS.DashboardSubscriptionInfo) {
-  if (!row.id || testingId.value)
+  if (!row.id || testingId.value || pendingRuns.value[row.id])
     return
   testingId.value = row.id
   try {
-    await testDashboardSubscription({ subscriptionId: row.id })
+    const res = await testDashboardSubscription({ subscriptionId: row.id })
+    if (res.data)
+      pendingRuns.value[row.id] = res.data
     showToast('测试邮件已加入发送队列')
-    setTimeout(() => void fetchData(), 1200)
+    if (visible.value)
+      poller.start()
   }
   finally {
     testingId.value = ''
@@ -181,6 +250,10 @@ function runStatus(row: VIS.DashboardSubscriptionInfo) {
     return '上次成功'
   if (row.lastRunStatus === 'FAILED')
     return row.lastErrorMessage || '上次失败'
+  if (row.lastRunStatus === 'QUEUED')
+    return '等待发送'
+  if (row.lastRunStatus === 'SKIPPED')
+    return row.lastErrorMessage || '已跳过'
   if (row.lastRunStatus === 'RUNNING')
     return '发送中'
   return '尚未发送'
@@ -234,7 +307,9 @@ defineExpose({ open })
           show-icon
         />
 
-        <el-empty v-if="!loading && !rows.length && !formVisible" description="还没有看板订阅" />
+        <el-alert v-if="loadError" :title="loadError" type="error" :closable="false" show-icon />
+
+        <el-empty v-if="!loading && !loadError && !rows.length && !formVisible" description="还没有看板订阅" />
 
         <div v-if="rows.length && !formVisible" class="subscription-list">
           <article v-for="row in rows" :key="row.id" class="subscription-item">
@@ -277,11 +352,21 @@ defineExpose({ open })
             <el-button
               plain
               :loading="testingId === row.id"
-              :disabled="!recipientEmail || !!testingId"
+              :disabled="!recipientEmail || !!testingId || !!pendingRuns[row.id || '']"
               @click="testSend(row)"
             >
-              测试发送
+              {{ pendingRuns[row.id || ''] ? '等待测试结果' : '测试发送' }}
             </el-button>
+            <el-button text @click="toggleHistory(row)">
+              {{ historyId === row.id ? '收起记录' : '执行记录' }}
+            </el-button>
+            <div v-if="historyId === row.id" class="subscription-history">
+              <el-empty v-if="!history[row.id || '']?.length" description="暂无执行记录" :image-size="48" />
+              <div v-for="run in history[row.id || '']" :key="run.id" class="subscription-history__item">
+                <div>{{ formatFireAt(run.scheduledAt) }} · {{ run.triggerType === 'MANUAL' ? '测试' : '定时' }}</div>
+                <div>{{ runStatus({ lastRunStatus: run.runStatus, lastErrorMessage: run.errorMessage }) }} · 尝试 {{ run.attemptCount || 0 }} 次</div>
+              </div>
+            </div>
           </article>
         </div>
 
@@ -418,6 +503,20 @@ defineExpose({ open })
     text-overflow: ellipsis;
     white-space: nowrap;
   }
+}
+
+.subscription-history {
+  margin-top: 12px;
+  max-height: 300px;
+  overflow: auto;
+}
+
+.subscription-history__item {
+  padding: 8px 0;
+  border-top: 1px solid var(--el-border-color-lighter);
+  font-size: 12px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
 }
 
 .subscription-form__title {

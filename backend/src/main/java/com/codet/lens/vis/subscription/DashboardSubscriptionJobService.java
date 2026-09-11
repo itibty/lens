@@ -10,10 +10,11 @@ import com.codet.lens.vis.entity.VisDashboardSubscriptionRun;
 import com.codet.lens.vis.mapper.VisDashboardMapper;
 import com.codet.lens.vis.mapper.VisDashboardSubscriptionRunMapper;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.task.TaskExecutor;
-import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -21,6 +22,7 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class DashboardSubscriptionJobService {
     private static final int MAX_ATTEMPTS = 2;
+    private static final long STALE_AFTER_MS = 300_000L;
 
     private final VisDashboardSubscriptionRunMapper runMapper;
     private final VisDashboardMapper dashboardMapper;
@@ -30,97 +32,172 @@ public class DashboardSubscriptionJobService {
     private final List<DashboardSubscriptionSender> senders;
     private final TaskExecutor dashboardSubscriptionExecutor;
     private final LensProperties properties;
+    private final AtomicBoolean draining = new AtomicBoolean();
+    private final AtomicReference<Long> activeRun = new AtomicReference<>();
 
     public Long queueManual(VisDashboardSubscription subscription) {
         screenshotService.requireEnabled();
         sender(subscription.getChannelType()).validateAvailable();
         ownerService.prepare(subscription.getOwnerId(), subscription.getDashboardId());
-        return enqueue(subscription, System.currentTimeMillis(), "MANUAL");
+        // 独立事务已提交后再唤醒工作线程；拒绝执行或重启都不会丢失数据库中的任务。
+        Long runId = subscriptionService.queueManual(subscription);
+        dispatchQueued();
+        return runId;
     }
 
-    public void queueScheduled(DashboardSubscriptionService.DueSubscription due) {
-        enqueue(due.subscription(), due.scheduledAt(), "SCHEDULED");
-    }
-
-    private Long enqueue(VisDashboardSubscription subscription, long scheduledAt, String triggerType) {
-        VisDashboardSubscriptionRun run = new VisDashboardSubscriptionRun()
-                .setSubscriptionId(subscription.getId())
-                .setScheduledAt(scheduledAt)
-                .setTriggerType(triggerType)
-                .setRunStatus("RUNNING")
-                .setAttemptCount(0)
-                .setCreateAt(System.currentTimeMillis())
-                .setCreateBy(subscription.getOwnerId());
-        try {
-            runMapper.insert(run);
-        } catch (DuplicateKeyException duplicate) {
-            log.info("dashboard subscription run already queued subscriptionId={} scheduledAt={}",
-                    subscription.getId(), scheduledAt);
-            return null;
+    public void dispatchQueued() {
+        if (!properties.getSubscription().isEnabled() || !draining.compareAndSet(false, true)) {
+            return;
         }
         try {
-            boolean manual = "MANUAL".equals(triggerType);
-            dashboardSubscriptionExecutor.execute(() -> execute(run.getId(), subscription.getId(), manual));
+            dashboardSubscriptionExecutor.execute(() -> {
+                try {
+                    drainQueue();
+                } catch (Exception e) {
+                    log.warn("dashboard subscription worker failed: {}", safeError(e));
+                } finally {
+                    draining.set(false);
+                }
+            });
         } catch (RuntimeException e) {
-            fail(run.getId(), 0, e, System.currentTimeMillis());
-            throw ResultException.fail("订阅发送队列已满，请稍后重试");
+            draining.set(false);
+            log.warn("dashboard subscription worker unavailable; queued runs retained: {}", safeError(e));
         }
-        return run.getId();
+    }
+
+    private void drainQueue() {
+        while (properties.getSubscription().isEnabled() && !Thread.currentThread().isInterrupted()) {
+            List<VisDashboardSubscriptionRun> queued = runMapper.selectList(
+                    Wrappers.<VisDashboardSubscriptionRun>lambdaQuery()
+                            .eq(VisDashboardSubscriptionRun::getRunStatus, "QUEUED")
+                            .orderByAsc(VisDashboardSubscriptionRun::getCreateAt)
+                            .orderByAsc(VisDashboardSubscriptionRun::getId)
+                            .last("limit 20"));
+            if (queued.isEmpty()) {
+                return;
+            }
+            for (VisDashboardSubscriptionRun run : queued) {
+                if (!properties.getSubscription().isEnabled() || Thread.currentThread().isInterrupted()) {
+                    return;
+                }
+                long startedAt = System.currentTimeMillis();
+                int claimed = runMapper.update(null, Wrappers.<VisDashboardSubscriptionRun>lambdaUpdate()
+                        .set(VisDashboardSubscriptionRun::getRunStatus, "RUNNING")
+                        .set(VisDashboardSubscriptionRun::getStartedAt, startedAt)
+                        .set(VisDashboardSubscriptionRun::getHeartbeatAt, startedAt)
+                        .eq(VisDashboardSubscriptionRun::getId, run.getId())
+                        .eq(VisDashboardSubscriptionRun::getRunStatus, "QUEUED"));
+                if (claimed != 1) {
+                    continue;
+                }
+                activeRun.set(run.getId());
+                try {
+                    execute(run);
+                } catch (Exception e) {
+                    // 数据库异常等不能终止整批；未能落库的 RUNNING 由心跳恢复逻辑处理。
+                    log.warn("dashboard subscription run interrupted runId={} error={}", run.getId(), safeError(e));
+                } finally {
+                    activeRun.compareAndSet(run.getId(), null);
+                }
+            }
+        }
+    }
+
+    public void heartbeat() {
+        Long runId = activeRun.get();
+        if (runId != null) {
+            touch(runId);
+        }
     }
 
     public void recoverStaleRuns(long now) {
-        long staleAfter = Math.max(300_000L,
-                properties.getSubscription().getScreenshotTimeoutMs() * (MAX_ATTEMPTS + 1L));
         runMapper.update(null, Wrappers.<VisDashboardSubscriptionRun>lambdaUpdate()
                 .set(VisDashboardSubscriptionRun::getRunStatus, "FAILED")
-                .set(VisDashboardSubscriptionRun::getErrorMessage, "应用中断或任务超时")
+                .set(VisDashboardSubscriptionRun::getErrorMessage, "应用中断，发送结果可能未确认，请检查邮箱后再测试")
                 .set(VisDashboardSubscriptionRun::getFinishedAt, now)
                 .eq(VisDashboardSubscriptionRun::getRunStatus, "RUNNING")
-                .lt(VisDashboardSubscriptionRun::getCreateAt, now - staleAfter));
+                .lt(VisDashboardSubscriptionRun::getHeartbeatAt, now - STALE_AFTER_MS));
     }
 
-    private void execute(Long runId, Long subscriptionId, boolean manual) {
-        long startedAt = System.currentTimeMillis();
-        updateRun(runId, "RUNNING", 0, null, null, startedAt, null);
-        VisDashboardSubscription subscription;
-        DashboardSubscriptionOwnerService.OwnerSession owner;
-        VisDashboard dashboard;
-        try {
-            subscription = manual
-                    ? subscriptionService.requireExisting(subscriptionId)
-                    : subscriptionService.requireActive(subscriptionId);
-            dashboard = requireDashboard(subscription.getDashboardId());
-            owner = ownerService.prepare(subscription.getOwnerId(), subscription.getDashboardId());
-        } catch (Exception e) {
-            subscriptionService.disable(subscriptionId);
-            fail(runId, 0, e, startedAt);
-            return;
-        }
+    private boolean touch(Long runId) {
+        return runMapper.update(null, Wrappers.<VisDashboardSubscriptionRun>lambdaUpdate()
+                .set(VisDashboardSubscriptionRun::getHeartbeatAt, System.currentTimeMillis())
+                .eq(VisDashboardSubscriptionRun::getId, runId)
+                .eq(VisDashboardSubscriptionRun::getRunStatus, "RUNNING")) == 1;
+    }
 
-        Exception last = null;
-        byte[] image = null;
+    private void execute(VisDashboardSubscriptionRun run) {
+        Long subscriptionId = run.getSubscriptionId();
+        Long bytes = null;
         for (int attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+            boolean delivered = false;
             try {
+                if (!touch(run.getId())) {
+                    return;
+                }
+                VisDashboardSubscription subscription = availableSubscription(run);
+                if (subscription == null) {
+                    return;
+                }
+                requireDashboard(subscription.getDashboardId());
+                DashboardSubscriptionOwnerService.OwnerSession owner = ownerService.prepare(
+                        subscription.getOwnerId(), subscription.getDashboardId());
                 DashboardSubscriptionSender sender = sender(subscription.getChannelType());
                 sender.validateAvailable();
-                if (image == null) {
-                    image = screenshotService.capture(subscription.getDashboardId(), owner.authorization());
+                byte[] image = screenshotService.capture(subscription.getDashboardId(), owner.authorization());
+                bytes = (long) image.length;
+                // 截图期间可能停用、删除、改邮箱或撤权；发送前再次检查。
+                VisDashboardSubscription current = availableSubscription(run);
+                if (current == null) {
+                    return;
+                }
+                if (!current.getDashboardId().equals(subscription.getDashboardId())) {
+                    throw ResultException.fail("订阅看板已变更，请重新生成截图");
+                }
+                VisDashboard dashboard = requireDashboard(current.getDashboardId());
+                owner = ownerService.prepare(current.getOwnerId(), current.getDashboardId());
+                if (!touch(run.getId()) || Thread.currentThread().isInterrupted()) {
+                    return;
                 }
                 String dashboardUrl = trimSlash(properties.getSubscription().getPublicBaseUrl())
-                        + "/vis/dashboards/view?id=" + subscription.getDashboardId();
+                        + "/vis/dashboards/view?id=" + current.getDashboardId();
                 sender.send(new DashboardSubscriptionMessage(
-                        subscription.getSubscriptionName(), dashboard.getDashName(), owner.email(),
+                        current.getSubscriptionName(), dashboard.getDashName(), owner.email(),
                         dashboardUrl, System.currentTimeMillis(), image));
-                updateRun(runId, "SUCCESS", attempt, (long) image.length, null,
-                        startedAt, System.currentTimeMillis());
+                delivered = true;
+                finish(run.getId(), "SUCCESS", attempt, bytes, null);
+                return;
+            } catch (DashboardSubscriptionUnavailableException e) {
+                subscriptionService.disable(subscriptionId);
+                finish(run.getId(), "FAILED", attempt, bytes, safeError(e));
                 return;
             } catch (Exception e) {
-                last = e;
+                // SMTP 已成功返回后，状态写入失败不能再次发邮件。
+                if (delivered) {
+                    throw e;
+                }
                 log.warn("dashboard subscription delivery failed subscriptionId={} runId={} attempt={} error={}",
-                        subscriptionId, runId, attempt, safeError(e));
+                        subscriptionId, run.getId(), attempt, safeError(e));
+                if (attempt == MAX_ATTEMPTS) {
+                    finish(run.getId(), "FAILED", attempt, bytes, safeError(e));
+                }
             }
         }
-        fail(runId, MAX_ATTEMPTS, image == null ? null : (long) image.length, last, startedAt);
+    }
+
+    private VisDashboardSubscription availableSubscription(VisDashboardSubscriptionRun run) {
+        VisDashboardSubscription subscription;
+        try {
+            subscription = subscriptionService.requireExisting(run.getSubscriptionId());
+        } catch (ResultException e) {
+            finish(run.getId(), "SKIPPED", 0, null, safeError(e));
+            return null;
+        }
+        if ("SCHEDULED".equals(run.getTriggerType()) && !Status.EBL.equals(subscription.getStatus())) {
+            finish(run.getId(), "SKIPPED", 0, null, "订阅已停用");
+            return null;
+        }
+        return subscription;
     }
 
     private DashboardSubscriptionSender sender(String type) {
@@ -133,30 +210,20 @@ public class DashboardSubscriptionJobService {
     private VisDashboard requireDashboard(Long dashboardId) {
         VisDashboard row = dashboardMapper.selectById(dashboardId);
         if (row == null || !Status.EBL.equals(row.getStatus())) {
-            throw ResultException.fail("看板不存在或已禁用");
+            throw new DashboardSubscriptionUnavailableException("看板不存在或已禁用");
         }
         return row;
     }
 
-    private void fail(Long runId, int attempt, Exception error, long startedAt) {
-        fail(runId, attempt, null, error, startedAt);
-    }
-
-    private void fail(Long runId, int attempt, Long screenshotBytes, Exception error, long startedAt) {
-        updateRun(runId, "FAILED", attempt, screenshotBytes, safeError(error),
-                startedAt, System.currentTimeMillis());
-    }
-
-    private void updateRun(Long runId, String status, int attempts, Long bytes, String error,
-                           Long startedAt, Long finishedAt) {
+    private void finish(Long runId, String status, int attempts, Long bytes, String error) {
         runMapper.update(null, Wrappers.<VisDashboardSubscriptionRun>lambdaUpdate()
                 .set(VisDashboardSubscriptionRun::getRunStatus, status)
                 .set(VisDashboardSubscriptionRun::getAttemptCount, attempts)
-                .set(VisDashboardSubscriptionRun::getScreenshotBytes, bytes)
+                .set(VisDashboardSubscriptionRun::getScreenshotSize, bytes)
                 .set(VisDashboardSubscriptionRun::getErrorMessage, error)
-                .set(VisDashboardSubscriptionRun::getStartedAt, startedAt)
-                .set(VisDashboardSubscriptionRun::getFinishedAt, finishedAt)
-                .eq(VisDashboardSubscriptionRun::getId, runId));
+                .set(VisDashboardSubscriptionRun::getFinishedAt, System.currentTimeMillis())
+                .eq(VisDashboardSubscriptionRun::getId, runId)
+                .eq(VisDashboardSubscriptionRun::getRunStatus, "RUNNING"));
     }
 
     static String safeError(Exception error) {

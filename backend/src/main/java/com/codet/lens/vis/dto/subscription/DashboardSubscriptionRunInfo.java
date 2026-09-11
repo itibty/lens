@@ -1,9 +1,8 @@
 package com.codet.lens.vis.dto.subscription;
 
-import com.codet.lens.common.base.Long2DatetimeStr;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
-import tools.jackson.databind.annotation.JsonSerialize;
 
 @Getter
 @Setter
@@ -13,15 +12,13 @@ public class DashboardSubscriptionRunInfo {
     private String triggerType;
     private String runStatus;
     private Integer attemptCount;
-    private Long screenshotBytes;
+    @Schema(description = "截图大小，单位字节")
+    private Long screenshotSize;
     private String errorMessage;
 
-    @JsonSerialize(using = Long2DatetimeStr.class)
     private Long scheduledAt;
 
-    @JsonSerialize(using = Long2DatetimeStr.class)
     private Long startedAt;
 
-    @JsonSerialize(using = Long2DatetimeStr.class)
     private Long finishedAt;
 }

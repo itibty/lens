@@ -30,7 +30,9 @@ Lens 是一个轻量 BI 平台，用于配置数据集、设计卡片和看板�
 
 ## 本地开发
 
-创建 `lens` 数据库并执行 `backend/db/schema.sql`；如需演示数据，再执行 `backend/db/demo.sql`。
+创建 `lens` 数据库并执行 `backend/db/schema.sql`，导入当前应用表结构和数据快照，包括账号、权限、数据集、卡片、看板及订阅。需要查询示例看板时，再执行 `backend/db/demo.sql`，它仅包含示例订单表的结构和数据。
+
+两个脚本分别重建各自的表，无需执行增量变更脚本。
 
 ```shell
 cd backend && mvn -DskipTests spring-boot:run

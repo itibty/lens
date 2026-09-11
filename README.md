@@ -30,7 +30,9 @@ Product walkthrough: [docs/product.md](docs/product.md).
 
 ## Local development
 
-Create the `lens` database, then run `backend/db/schema.sql`. Optionally run `backend/db/demo.sql` for seed data.
+Create the `lens` database, then run `backend/db/schema.sql` to load the current application schema and data snapshot, including accounts, permissions, datasets, cards, dashboards, and subscriptions. To query the bundled example dashboards, also run `backend/db/demo.sql`; it contains only the example order table and its data.
+
+These scripts rebuild their respective tables. No incremental migration scripts are required.
 
 ```shell
 cd backend && mvn -DskipTests spring-boot:run
