@@ -29,12 +29,12 @@ flowchart LR
 [看看如何搭建：数据集 → 图表卡片 → 看板](docs/product.md#define-the-dataset)
 
 <details>
-<summary>更多展示：英文看板、暗色主题与移动端</summary>
+<summary>更多展示：亮暗主题与移动端</summary>
 
-英文示例看板、亮暗主题，以及方便随时查看指标的移动端布局。
+亮色与暗色主题，适配桌面和手机的看板布局，方便随时查看业务指标。
 
 <table>
-  <tr><th>英文看板 · 暗色主题</th><th>移动端 · 滑动查看</th></tr>
+  <tr><th>桌面端 · 暗色主题</th><th>移动端 · 滑动查看</th></tr>
   <tr>
     <td width="75%"><img src="docs/images/showcase-english-dark.jpg" alt="独立展示的英文暗色零售看板" width="720"></td>
     <td width="25%"><img src="docs/images/showcase-mobile-charts.jpg" alt="手机尺寸浏览器视口中的营收趋势与渠道结构" width="240"></td>

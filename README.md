@@ -29,12 +29,12 @@ Define dimensions and metrics in a dataset, turn them into reusable chart cards,
 [See the workflow: datasets → cards → dashboards](docs/product.md#define-the-dataset)
 
 <details>
-<summary>More views: English dashboards, dark theme, and mobile</summary>
+<summary>More views: light, dark, and mobile</summary>
 
-English dashboard examples, light and dark themes, and a responsive layout for checking metrics on the go.
+Explore Lens in light and dark themes, with responsive dashboards for desktop and mobile.
 
 <table>
-  <tr><th>English · Dark theme</th><th>Mobile · Scroll to explore</th></tr>
+  <tr><th>Desktop · Dark theme</th><th>Mobile · Scroll to explore</th></tr>
   <tr>
     <td width="75%"><img src="docs/images/showcase-english-dark.jpg" alt="Standalone English retail dashboard in the dark theme" width="720"></td>
     <td width="25%"><img src="docs/images/showcase-mobile-charts.jpg" alt="Revenue trend and channel mix in a mobile browser viewport" width="240"></td>
