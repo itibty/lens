@@ -2,91 +2,44 @@
 
 [English](README.md) | [中文](README.zh-CN.md)
 
-Lens is a lightweight BI platform for defining datasets, designing cards and dashboards, and sharing reports with business users by role.
+**Turn SQL into dashboards your team can use.**
 
-Product walkthrough: [docs/product.md](docs/product.md).
+Lens is a lightweight, open-source BI platform for sales, operations, and growth analysis. Bring your metrics together, explore what drives them, and share dashboards with your team.
 
-## Features
+[Get started](docs/getting-started.md) · [Explore the gallery](docs/product.md)
 
-- Connect data sources and define read-only datasets with SQL
-- Design cards (charts, tables, KPIs, and more)
-- Assemble cards into dashboards with groups, layouts, and global filters
-- View authorized dashboards by role
-- Manage accounts, roles, menus, and permissions
+![English retail dashboard with revenue, orders, sales trends, and regional rankings](docs/images/showcase-english-overview.jpg)
 
-## Repository
+## From data to decisions
 
-| Path | Description |
-|------|-------------|
-| `backend/` | Server. See [backend/README.md](backend/README.md) |
-| `frontend/` | Web app. See [frontend/README.md](frontend/README.md) |
+- **See the whole picture.** Bring KPIs, trends, rankings, and conversion funnels into one dashboard.
+- **Build around your questions.** Start with a SQL dataset, configure chart cards, and arrange them visually.
+- **Keep your team in the loop.** Share reports through role-based access and view them on desktop or mobile.
 
-## Prerequisites
+## A view for every screen
 
-- JDK 21 and Maven >= 3.6.3
-- Node.js >= 20.12.1 and **pnpm 10.5.0** (`preinstall` blocks npm/yarn)
-- MySQL database named `lens`
-- Redis (default `127.0.0.1:6379`, password `Aa123456`; used to invalidate login sessions)
+Light and dark themes, English dashboard examples, and a mobile layout that keeps charts within reach.
 
-## Local development
+<table>
+  <tr><th>English · Dark theme</th><th>Mobile · Scroll to explore</th></tr>
+  <tr>
+    <td width="75%"><img src="docs/images/showcase-english-dark.jpg" alt="Standalone English retail dashboard in the dark theme" width="720"></td>
+    <td width="25%"><img src="docs/images/showcase-mobile-charts.jpg" alt="Revenue trend and channel mix in a mobile browser viewport" width="240"></td>
+  </tr>
+</table>
 
-Create the `lens` database, then run `backend/db/schema.sql` to load the current application schema and data snapshot, including accounts, permissions, datasets, cards, dashboards, and subscriptions. To query the bundled example dashboards, also run `backend/db/demo.sql`; it contains only the example order table and its data.
+*Real Lens screenshots with synthetic demo data. Mobile view captured at a phone-sized browser viewport.*
 
-These scripts rebuild their respective tables. No incremental migration scripts are required.
+[See more: channel analysis, chart editing, and dashboard design →](docs/product.md)
 
-```shell
-cd backend && mvn -DskipTests spring-boot:run
-cd frontend && pnpm i && pnpm dev
-```
+## Make it yours
 
-MySQL default: `root` / `Aa123456`.  
-Redis default: `127.0.0.1:6379`, password `Aa123456`.
+Follow the **[getting started guide](docs/getting-started.md)** to run Lens locally. Load the [example dashboards](docs/examples/README.md) to explore and customize the views shown here.
 
-These defaults are for local development. Deployments can override them without editing the checked-in file:
+Building with Lens? See the [frontend](frontend/README.md) and [backend](backend/README.md) development docs.
 
-| Variable | Purpose |
-|----------|---------|
-| `LENS_DB_URL` | JDBC URL |
-| `LENS_DB_USERNAME` / `LENS_DB_PASSWORD` | Database credentials |
-| `LENS_REDIS_HOST` / `LENS_REDIS_PORT` / `LENS_REDIS_PASSWORD` | Redis connection |
-| `LENS_JWT_SECRET` / `LENS_JWT_TTL_MS` | JWT signing secret and lifetime |
+If Lens looks useful, give it a **Star** to follow the project. Ideas and feedback are welcome in Issues.
 
-Dev UI: `http://127.0.0.1:5173`  
-API / Swagger: `http://127.0.0.1:8080/swagger-ui.html`
+---
 
-## Build and run
-
-`build.sh` checks the build environment, builds frontend and backend, and writes the deploy layout under `app/`:
-
-```shell
-./build.sh           # build everything
-./build.sh frontend  # frontend only
-./build.sh backend   # backend only
-```
-
-`app.sh` manages the packaged app:
-
-```shell
-./app.sh start
-./app.sh status
-./app.sh restart
-./app.sh stop
-```
-
-After start, open `http://127.0.0.1:8080`. Logs are at `app/server/lens-server.log`.
-
-## Verify changes
-
-Run all backend tests and frontend lint, type checks, and tests from the repository root:
-
-```shell
-./verify.sh
-```
-
-The command expects dependencies to be installed and does not modify generated API clients.
-
-## License
-
-Copyright 2026 tibty.
-
-Licensed under the [Apache License 2.0](LICENSE).
+Copyright 2026 tibty · [Apache License 2.0](LICENSE)
