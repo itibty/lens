@@ -2,23 +2,36 @@
 
 [English](README.md) | [中文](README.zh-CN.md)
 
-**Turn SQL into dashboards your team can use.**
+**Turn SQL into interactive dashboards.**
 
-Lens is a lightweight, open-source BI platform for sales, operations, and growth analysis. Bring your metrics together, explore what drives them, and share dashboards with your team.
+Lens is a lightweight, open-source BI platform for developers and data teams. Build reusable charts from SQL, explore your metrics, and share dashboards for sales, operations, and growth analysis.
 
 [Get started](docs/getting-started.md) · [Explore the gallery](docs/product.md)
 
 ![English retail dashboard with revenue, orders, sales trends, and regional rankings](docs/images/showcase-english-overview.jpg)
 
-## From data to decisions
+*A retail dashboard built in Lens with synthetic demo data.*
 
-- **See the whole picture.** Bring KPIs, trends, rankings, and conversion funnels into one dashboard.
-- **Build around your questions.** Start with a SQL dataset, configure chart cards, and arrange them visually.
-- **Keep your team in the loop.** Share reports through role-based access and view them on desktop or mobile.
+## From SQL to dashboard
 
-## A view for every screen
+```mermaid
+flowchart LR
+    SQL --> Dataset --> Card --> Dashboard
+```
 
-Light and dark themes, English dashboard examples, and a mobile layout that keeps charts within reach.
+Define dimensions and metrics in a dataset, turn them into reusable chart cards, then arrange the cards into a dashboard.
+
+- **SQL-first datasets.** Use read-only SQL to query your data and define the fields for analysis.
+- **Flexible dashboards.** Combine KPIs, line and bar charts, rankings, tables, and funnels in a visual layout.
+- **Interactive analysis.** Apply dashboard filters and inspect the underlying records behind chart data points when detail viewing is enabled.
+- **Team access.** Organize dashboards into groups and control report access by role.
+
+[See the workflow: datasets → cards → dashboards](docs/product.md#define-the-dataset)
+
+<details>
+<summary>More views: English dashboards, dark theme, and mobile</summary>
+
+English dashboard examples, light and dark themes, and a responsive layout for checking metrics on the go.
 
 <table>
   <tr><th>English · Dark theme</th><th>Mobile · Scroll to explore</th></tr>
@@ -28,9 +41,11 @@ Light and dark themes, English dashboard examples, and a mobile layout that keep
   </tr>
 </table>
 
-*Real Lens screenshots with synthetic demo data. Mobile view captured at a phone-sized browser viewport.*
+*Mobile view captured at a phone-sized browser viewport.*
 
-[See more: channel analysis, chart editing, and dashboard design →](docs/product.md)
+</details>
+
+[Explore the full gallery →](docs/product.md)
 
 ## Make it yours
 

@@ -12,6 +12,34 @@ See revenue, order volume, gross margin, and average order value together. Daily
 
 ![Retail growth dashboard](images/showcase-retail-growth.jpg)
 
+## Channel growth and conversion
+
+Follow visitors through signup, activation, and payment. Compare daily paid-user growth, channel contribution, acquisition cost, and channel detail in one report. Funnel stages and KPI cards use the same daily acquisition data.
+
+![Channel growth and conversion dashboard](images/showcase-channel-growth.jpg)
+
+## Define the dataset
+
+Run a read-only SQL query, inspect its output, and bind fields as dimensions or metrics. The retail example uses business date, region, channel, and category as dimensions, with orders, revenue, and profit as metrics.
+
+![Retail dataset field binding](images/showcase-dataset.jpg)
+
+## Build the cards
+
+Choose a dataset and chart type, then drag dimensions and metrics into place. Here, the retail dataset supplies a daily revenue and gross-profit trend, filtered to August 2026. The preview is a real query result.
+
+![Card editor with retail data and trend preview](images/showcase-card-editor.jpg)
+
+## Arrange the dashboard
+
+Resize and position cards on a grid. The retail example combines KPI cards, a line chart, a donut chart, a bar chart, a ranking, and a treemap. The same saved cards appear in the report center.
+
+![Retail dashboard in the visual designer](images/showcase-dashboard-designer.jpg)
+
+## Filter and inspect
+
+Use dashboard filters to narrow the analysis across configured cards. When detail viewing is enabled, click a chart data point to inspect its underlying records; the detail query retains the card and dashboard filters along with the selected dimension values.
+
 ## English dashboard content
 
 The English retail dataset translates region, channel, and category names in SQL. Chart titles, legends, and metric labels are configured in English. Currency remains CNY: `k` denotes thousands and `M` denotes millions. The screenshot comes from the standalone dashboard viewer.
@@ -35,30 +63,6 @@ At a **390 × 844** browser viewport, the English overview changes to a vertical
     <td><img src="images/showcase-mobile-charts.jpg" alt="Mobile revenue trend and channel chart" width="300"></td>
   </tr>
 </table>
-
-## Channel growth and conversion
-
-Follow visitors through signup, activation, and payment. Compare daily paid-user growth, channel contribution, acquisition cost, and channel detail in one report. Funnel stages and KPI cards use the same daily acquisition data.
-
-![Channel growth and conversion dashboard](images/showcase-channel-growth.jpg)
-
-## Build the cards
-
-Choose a dataset and chart type, then drag dimensions and metrics into place. Here, the retail dataset supplies a daily revenue and gross-profit trend, filtered to August 2026. The preview is a real query result.
-
-![Card editor with retail data and trend preview](images/showcase-card-editor.jpg)
-
-## Arrange the dashboard
-
-Resize and position cards on a grid. The retail example combines KPI cards, a line chart, a donut chart, a bar chart, a ranking, and a treemap. The same saved cards appear in the report center.
-
-![Retail dashboard in the visual designer](images/showcase-dashboard-designer.jpg)
-
-## Define the dataset
-
-Run a read-only SQL query, inspect its output, and bind fields as dimensions or metrics. The retail example uses business date, region, channel, and category as dimensions, with orders, revenue, and profit as metrics.
-
-![Retail dataset field binding](images/showcase-dataset.jpg)
 
 ## Try these examples
 
