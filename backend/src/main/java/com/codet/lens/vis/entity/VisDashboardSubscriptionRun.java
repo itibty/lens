@@ -15,6 +15,11 @@ public class VisDashboardSubscriptionRun {
     @TableId(value = "id", type = IdType.ASSIGN_ID)
     private Long id;
     private Long subscriptionId;
+    private Long dashboardId;
+    private String viewStateJson;
+    private String viewBindingsJson;
+    private String viewTimezone;
+    private String asOfDate;
     private Long scheduledAt;
     private String triggerType;
     private String runStatus;

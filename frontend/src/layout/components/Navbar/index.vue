@@ -63,7 +63,7 @@ function switchRoot(root: MenuInfo) {
   rootPopoverVisible.value = false
   const wasSame = activeRootId.value === root.id
   menuStore.activateRoot(root.id)
-  const url = menuStore.findFirstLeafUrl(root.id)
+  const url = menuStore.resolveRootUrl(root.id)
   if (!url || url === route.fullPath || url === route.path)
     return
   if (root.id !== '90' && wasSame && menuStore.routeBelongsToRoot(route, root.id))

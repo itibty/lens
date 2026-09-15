@@ -27,6 +27,15 @@ import org.springframework.web.bind.annotation.RestController;
 public class DashboardSubscriptionController {
     private final DashboardSubscriptionService subscriptionService;
     private final DashboardSubscriptionJobService jobService;
+    private final com.codet.lens.vis.subscription.SubscriptionRunViewService runViews;
+
+    @GetMapping("/dashboards/{dashboardId}/subscription-runs/{runId}/view")
+    @Operation(operationId = "getSubscriptionRunView", summary = "恢复本次订阅运行的条件")
+    public R<com.codet.lens.vis.dto.dash.PersonalReportDtos.ResolvedView> runView(
+            @PathVariable Long dashboardId, @PathVariable Long runId) {
+        return R.success(runViews.resolve(runId, dashboardId));
+    }
+
 
     @Operation(operationId = "listDashboardSubscriptions", summary = "当前用户的看板订阅")
     @GetMapping("/dashboards/{dashboardId}/subscriptions")

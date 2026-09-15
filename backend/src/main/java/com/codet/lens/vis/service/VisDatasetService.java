@@ -115,6 +115,7 @@ public class VisDatasetService {
         conf.setSqlId(row.getId());
         conf.setSqlName(row.getDatasetName());
         conf.setSqlContent(row.getSqlContent());
+        conf.setDataTimeConfigJson(row.getDataTimeConfigJson());
         conf.setDsId(source.getId());
         conf.setDsName(source.getSourceName());
         conf.setDsType(source.getDbType());

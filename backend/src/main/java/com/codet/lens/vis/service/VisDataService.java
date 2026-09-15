@@ -28,6 +28,7 @@ import org.springframework.stereotype.Service;
 public class VisDataService {
 
     private final VisDatasetService visDatasetService;
+    private final DatasetDataTimeService dataTimeService;
 
     private static final int EXPORT_BATCH_SIZE = 1000;
     private static final int EXPORT_MAX_BATCHES = 200;
@@ -70,6 +71,7 @@ public class VisDataService {
             result.setTotal(rows.size());
             result.setTruncated(ctx.isTruncated());
             result.setExecSqls(VisExecSql.listOrNull(ctx));
+            result.setQueryMeta(dataTimeService.metadata(sqlConf));
             if (contrastRet != null) {
                 result.setAsOfDate(contrastRet.getAsOfDate());
                 result.setContrasts(contrastRet.getContrasts());
@@ -111,6 +113,7 @@ public class VisDataService {
             result.setTotal(rows.size());
             result.setTruncated(ctx.isTruncated());
             result.setExecSqls(VisExecSql.listOrNull(ctx));
+            result.setQueryMeta(dataTimeService.metadata(sqlConf));
             return result;
         } catch (Exception e) {
             throw VisExecSql.wrap(e, ctx);

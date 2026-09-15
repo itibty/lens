@@ -15,6 +15,7 @@ public class VisDataset extends BaseEntity {
     private String datasetName;
     private String datasetDesc;
     private String sqlContent;
+    private String dataTimeConfigJson;
     private String paramDemo;
     private String status;
 }

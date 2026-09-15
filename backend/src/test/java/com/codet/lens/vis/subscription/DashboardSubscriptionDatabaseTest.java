@@ -53,6 +53,8 @@ class DashboardSubscriptionDatabaseTest {
     @Autowired private DashboardSubscriptionService subscriptions;
     @Autowired private VisDashboardSubscriptionRunMapper runMapper;
     @Autowired private UserAdminService users;
+    @Autowired private SubscriptionRunViewService runViews;
+    @Autowired private com.codet.lens.vis.service.PersonalReportService personal;
     @MockitoBean private TokenInvalidateService invalidations;
     @MockitoBean private VisDashboardAccess access;
 
@@ -89,6 +91,10 @@ class DashboardSubscriptionDatabaseTest {
         jdbc.update("DELETE FROM vis_dashboard_subscription");
         jdbc.update("DELETE FROM sys_user WHERE id = 900");
         jdbc.update("INSERT INTO sys_user(id,username,password,real_name,email,status) VALUES(900,'review-user','unused','测试','old@example.com','EBL')");
+        jdbc.update("DELETE FROM vis_dashboard_user_pref WHERE user_id=900");
+        jdbc.update("DELETE FROM vis_dashboard_user_view WHERE user_id=900");
+        jdbc.update("DELETE FROM vis_dashboard WHERE id=900");
+        jdbc.update("INSERT INTO vis_dashboard(id,dash_name,status,config_json) VALUES(900,'测试','EBL','{\"filters\":[]}')");
         AuthContext.set(new AuthUser().setSubject("900"));
     }
 
@@ -172,6 +178,50 @@ class DashboardSubscriptionDatabaseTest {
         assertEquals(List.of("QUEUED", "RUNNING", "FAILED"), jdbc.queryForList("SELECT run_status FROM vis_dashboard_subscription_run ORDER BY id", String.class));
     }
 
+    @Test
+    void favoritesViewsAndDefaultsAreOwnedAndRevisionChecked() {
+        var request = new com.codet.lens.vis.dto.dash.PersonalReportDtos.SavePersonalViewRequest();
+        request.setDashboardId(900L); request.setViewName("我的筛选");
+        request.setStateJson("{\"schemaVersion\":1,\"filters\":{}}");
+        Long id = personal.saveView(request);
+        var pref = new com.codet.lens.vis.dto.dash.PersonalReportDtos.ReportPreferenceRequest();
+        pref.setDashboardId(900L); pref.setFavorite(true); pref.setDefaultViewId(id);
+        personal.favorite(pref); personal.defaultView(pref); personal.visit(900L);
+        assertEquals(id, personal.preference(900L).getDefaultViewId());
+        assertTrue(personal.preference(900L).getFavorite());
+        request.setId(id); request.setRevision(1); personal.saveView(request);
+        assertThrows(com.codet.lens.common.base.ResultException.class, () -> personal.saveView(request));
+        AuthContext.set(new AuthUser().setSubject("901"));
+        var resolve = new com.codet.lens.vis.dto.dash.PersonalReportDtos.ResolveViewRequest();
+        resolve.setDashboardId(900L); resolve.setViewId(id);
+        assertThrows(com.codet.lens.common.base.ResultException.class, () -> personal.resolve(resolve));
+        assertThrows(com.codet.lens.common.base.ResultException.class, () -> personal.deleteView(id));
+        AuthContext.set(new AuthUser().setSubject("900"));
+        personal.deleteView(id);
+        assertNull(personal.preference(900L).getDefaultViewId());
+        assertTrue(personal.preference(900L).getFavorite());
+    }
+
+    @Test
+    void queueFreezesViewAndFirstExecutionDateAndOwner() {
+        seedDue();
+        subscriptions.claimDue(System.currentTimeMillis());
+        var run = runMapper.selectList(null).getFirst();
+        assertNotNull(run.getViewStateJson());
+        assertNull(run.getAsOfDate());
+        jdbc.update("UPDATE vis_dashboard_subscription SET view_state_json='changed' WHERE id=900");
+        assertEquals(run.getViewStateJson(), runMapper.selectById(run.getId()).getViewStateJson());
+        runViews.freezeDate(run);
+        assertNotNull(run.getAsOfDate());
+        jdbc.update("UPDATE vis_dashboard_subscription_run SET as_of_date='2026-01-02' WHERE id=?", run.getId());
+        run.setAsOfDate(null);
+        runViews.freezeDate(run);
+        assertEquals("2026-01-02", run.getAsOfDate());
+        assertEquals("2026-01-02", runViews.resolve(run.getId(), 900L).getAsOfDate());
+        AuthContext.set(new AuthUser().setSubject("901"));
+        assertThrows(com.codet.lens.common.base.ResultException.class, () -> runViews.resolve(run.getId(), 900L));
+    }
+
     private long seedDue() {
         long due = System.currentTimeMillis() - 60_000;
         jdbc.update("""
@@ -193,10 +243,10 @@ class DashboardSubscriptionDatabaseTest {
         var owners = mock(DashboardSubscriptionOwnerService.class);
         when(owners.prepare(900L, 900L)).thenReturn(new DashboardSubscriptionOwnerService.OwnerSession("test@example.com", "test"));
         var screenshots = mock(DashboardScreenshotService.class);
-        when(screenshots.capture(900L, "test")).thenReturn(new byte[]{1});
+        when(screenshots.capture(eq(900L), eq("test"), anyLong())).thenReturn(new byte[]{1});
         var props = new LensProperties();
         props.getSubscription().setEnabled(true);
         return new DashboardSubscriptionJobService(mapper, dashboardMapper, subscriptions, owners,
-                screenshots, List.of(sender), Runnable::run, props);
+                screenshots, List.of(sender), Runnable::run, props, runViews);
     }
 }

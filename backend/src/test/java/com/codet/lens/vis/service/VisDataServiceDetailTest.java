@@ -13,7 +13,7 @@ class VisDataServiceDetailTest {
     @Test
     void missingSelectedFieldsDoesNotOpenDatasetOrQueryAllColumns() {
         var datasets = mock(VisDatasetService.class);
-        var service = new VisDataService(datasets);
+        var service = new VisDataService(datasets, org.mockito.Mockito.mock(DatasetDataTimeService.class));
         var request = new DetailQueryRequest();
         request.setQuery(VisDetailRules.readQuery("{\"datasetId\":10,\"metrics\":[{\"field\":\"amount\",\"agg\":\"SUM\"}]}"));
 

@@ -1,4 +1,5 @@
 import type { VisQueryConfig, VisVisualConfig } from '@/views/vis/shared/types'
+import { onScopeDispose, ref, toRaw } from 'vue'
 import { queryCardData, queryCardPivot } from '@/apis/vis/query'
 import { normalizeQueryForRequest, toPivotQuery } from '@/views/vis/cards/cardApi'
 import { isPivotChart, isStaticChart, toApiVisual } from '@/views/vis/shared/types'
@@ -88,66 +89,76 @@ export async function fetchVisCardData(input: FetchVisCardDataInput): Promise<Fe
 
 export function useVisCardQuery(getInput: () => FetchVisCardDataInput & { enabled?: boolean }) {
   const loading = ref(false)
+  const refreshing = ref(false)
   const error = ref('')
+  const refreshError = ref('')
   const data = ref<VIS.QueryDataResponse>(emptyQueryData())
   const pivotData = ref<VIS.PivotQueryResponse>(emptyPivotData())
   const appliedQuery = ref<VisQueryConfig | null>(null)
   const appliedVisual = ref<VisVisualConfig | null>(null)
   let seq = 0
+  let appliedFingerprint = ''
 
   function clear() {
     data.value = emptyQueryData()
     pivotData.value = emptyPivotData()
+    appliedQuery.value = null
+    appliedVisual.value = null
+    appliedFingerprint = ''
   }
 
   async function run(options?: { silent?: boolean }) {
-    const silent = !!options?.silent
-    if (silent && loading.value)
+    if (options?.silent && refreshing.value)
       return
     const input = getInput()
     const current = ++seq
     if (input.enabled === false) {
       clear()
       error.value = ''
-      appliedQuery.value = null
-      appliedVisual.value = null
+      refreshError.value = ''
+      loading.value = false
+      refreshing.value = false
       return
     }
     const query = normalizeQueryForRequest(JSON.parse(JSON.stringify(toRaw(input.query))), input.visual.chartType)
     const visual = { ...input.visual }
-    if (!silent) {
-      loading.value = true
-      error.value = ''
-    }
+    const fingerprint = JSON.stringify({ query, visual, dashboardId: input.dashboardId, cardId: input.cardId, filters: input.globalFilters, params: input.globalParams })
+    const keepPrevious = fingerprint === appliedFingerprint
+    if (!keepPrevious)
+      clear()
+    loading.value = !keepPrevious
+    refreshing.value = true
+    error.value = ''
+    refreshError.value = ''
     try {
-      const result = await fetchVisCardData({
-        ...input,
-        query,
-        visual,
-      })
+      const result = await fetchVisCardData({ ...input, query, visual })
       if (current !== seq)
         return
       data.value = result.data
       pivotData.value = result.pivotData
       appliedQuery.value = query
       appliedVisual.value = visual
-      error.value = ''
+      appliedFingerprint = fingerprint
     }
     catch (e) {
       if (current !== seq)
         return
-      if (silent)
-        return
-      error.value = apiErrorMessage(e, '查询失败')
-      clear()
-      appliedQuery.value = query
-      appliedVisual.value = visual
+      const message = apiErrorMessage(e, '查询失败')
+      if (keepPrevious)
+        refreshError.value = message
+      else
+        error.value = message
     }
     finally {
-      if (current === seq && !silent)
+      if (current === seq) {
         loading.value = false
+        refreshing.value = false
+      }
     }
   }
 
-  return { loading, error, data, pivotData, appliedQuery, appliedVisual, run }
+  onScopeDispose(() => {
+    seq++
+  })
+  return { loading, refreshing, error, refreshError, data, pivotData, appliedQuery, appliedVisual, run }
 }

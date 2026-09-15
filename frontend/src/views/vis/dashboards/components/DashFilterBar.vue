@@ -5,20 +5,19 @@
 import type { DashFilterValues, VisDashFilterDef } from '../dashApi'
 import type { DashPresentationMode } from '../dashPresentation'
 import type { DashThemeId } from '../dashTheme'
+import type { DashToolAction } from './DashToolsMenu.vue'
 import { useEventListener } from '@vueuse/core'
 import VisActionButton from '@/views/vis/shared/VisActionButton.vue'
 import {
-  DASH_THEME_PRESETS,
   dashChromeVars,
   dashOverlayVars,
-  dashThemeCanvasSwatchStyle,
-  dashThemeSwatchStyle,
   DEFAULT_DASH_THEME,
 } from '../dashTheme'
 import { isDashPopperTarget, useDashFilterChips } from '../useDashFilterChips'
 import { useDashFilterLabels } from '../useDashFilterOptions'
 import DashFilterChipFields from './DashFilterChipFields.vue'
 import DashMobileFilterSheet from './DashMobileFilterSheet.vue'
+import DashToolsMenu from './DashToolsMenu.vue'
 
 const props = withDefaults(defineProps<{
   defs: VisDashFilterDef[]
@@ -27,6 +26,9 @@ const props = withDefaults(defineProps<{
   previewDisabled?: boolean
   showPreview?: boolean
   showSubscription?: boolean
+  showFavorite?: boolean
+  favorite?: boolean
+  favoriteBusy?: boolean
   screenshotting?: boolean
   /** 设计页且有编辑权限：第二组整组出现 */
   showDesign?: boolean
@@ -35,6 +37,8 @@ const props = withDefaults(defineProps<{
   saveLoading?: boolean
   saveDisabled?: boolean
   loading?: boolean
+  refreshing?: boolean
+  refreshFailed?: number
   filterOptionsDashboardId?: string
   presentationMode?: DashPresentationMode
 }>(), {
@@ -43,6 +47,9 @@ const props = withDefaults(defineProps<{
   previewDisabled: false,
   showPreview: true,
   showSubscription: false,
+  showFavorite: false,
+  favorite: false,
+  favoriteBusy: false,
   screenshotting: false,
   showDesign: false,
   adding: false,
@@ -50,6 +57,8 @@ const props = withDefaults(defineProps<{
   saveLoading: false,
   saveDisabled: false,
   loading: false,
+  refreshing: false,
+  refreshFailed: 0,
   filterOptionsDashboardId: '',
   presentationMode: 'wide',
 })
@@ -59,6 +68,7 @@ const emit = defineEmits<{
   preview: []
   screenshot: []
   subscription: []
+  favorite: []
   addCard: []
   addText: []
   addGroup: []
@@ -68,6 +78,8 @@ const emit = defineEmits<{
 const theme = defineModel<DashThemeId>('theme', { default: DEFAULT_DASH_THEME })
 const values = defineModel<DashFilterValues>('values', { required: true })
 const gridGuides = defineModel<boolean>('gridGuides', { default: true })
+const dockRef = ref<HTMLElement>()
+const touchActionsVisible = ref(false)
 const toolsOpen = ref(false)
 const mobileFiltersOpen = ref(false)
 const {
@@ -92,11 +104,6 @@ const { labelsOf } = useDashFilterLabels(
   () => props.filterOptionsDashboardId,
 )
 
-function pickTheme(id: DashThemeId) {
-  theme.value = id
-  toolsOpen.value = false
-}
-
 const descText = computed(() => props.desc.trim().replace(/\s+/g, ' '))
 const mobile = computed(() => props.presentationMode === 'compact' || props.presentationMode === 'medium')
 const filledFilterDefs = computed(() => props.defs.filter(isFilled))
@@ -120,48 +127,55 @@ function closeTools() {
   toolsOpen.value = false
 }
 
-function emitToolAction(action: 'preview' | 'screenshot' | 'subscription' | 'settings' | 'reloadCards' | 'save') {
-  closeTools()
-  switch (action) {
-    case 'preview':
-      emit('preview')
-      break
-    case 'screenshot':
-      emit('screenshot')
-      break
-    case 'subscription':
-      emit('subscription')
-      break
-    case 'settings':
-      emit('settings')
-      break
-    case 'reloadCards':
-      emit('reloadCards')
-      break
-    case 'save':
-      emit('save')
-      break
-  }
+const toolActions: Record<DashToolAction, () => void> = {
+  favorite: () => emit('favorite'),
+  preview: () => emit('preview'),
+  screenshot: () => emit('screenshot'),
+  subscription: () => emit('subscription'),
+  settings: () => emit('settings'),
+  reloadCards: () => emit('reloadCards'),
+  save: () => emit('save'),
+  addCard: () => onAddCommand('card'),
+  addText: () => onAddCommand('text'),
+  addGroup: () => onAddCommand('group'),
 }
 
-function onMenuAdd(command: 'card' | 'text' | 'group') {
+function onToolAction(action: DashToolAction) {
   closeTools()
-  onAddCommand(command)
+  toolActions[action]()
+}
+
+function onDockPointerDown(event: PointerEvent) {
+  touchActionsVisible.value = event.pointerType === 'touch' || event.pointerType === 'pen'
+}
+
+function isActionPopper(target: EventTarget | null) {
+  return target instanceof Element && !!target.closest('.dash-tools-popper, .personal-view-popper, .dash-add-popper')
+}
+
+function onPagePointerDown(event: PointerEvent) {
+  if (event.target instanceof Node && dockRef.value?.contains(event.target))
+    return
+  if (!isActionPopper(event.target))
+    touchActionsVisible.value = false
 }
 
 function onPageScroll(event: Event) {
   if (
     isDashPopperTarget(event.target)
+    || isActionPopper(event.target)
     || (event.target instanceof Element
-      && !!event.target.closest('.dash-tools-popper, .dash-mobile-filter-sheet'))
+      && !!event.target.closest('.dash-mobile-filter-sheet'))
   ) {
     return
   }
   if (openUid.value)
     discardChip()
   toolsOpen.value = false
+  touchActionsVisible.value = false
 }
 
+useEventListener(document, 'pointerdown', onPagePointerDown)
 useEventListener(window, 'scroll', onPageScroll, true)
 
 watch(mobile, (enabled) => {
@@ -174,13 +188,16 @@ watch(mobile, (enabled) => {
 
 <template>
   <div
+    ref="dockRef"
     class="filter-dock"
     :style="chromeStyle"
     :class="{
       'is-mobile': mobile,
       'is-compact': presentationMode === 'compact',
       'is-medium': presentationMode === 'medium',
+      'is-touch-active': touchActionsVisible,
     }"
+    @pointerdown="onDockPointerDown"
   >
     <div
       v-if="mobile && (title || descText)"
@@ -230,26 +247,29 @@ watch(mobile, (enabled) => {
             </VisActionButton>
           </span>
         </el-tooltip>
-        <el-tooltip content="刷新数据" placement="bottom" :show-after="200" :disabled="mobile">
+        <slot name="personal" />
+        <el-tooltip :content="refreshing ? '正在刷新' : refreshFailed ? `${refreshFailed} 张卡片刷新失败，点击重试` : '刷新数据'" placement="bottom" :show-after="200" :disabled="mobile">
           <VisActionButton
             :size="mobile ? 'compact' : 'regular'"
             :variant="mobile ? 'ghost' : 'outline'"
-            label="刷新数据"
-            class="filter-dock__btn"
-            :disabled="loading || screenshotting"
+            :label="refreshing ? '正在刷新' : refreshFailed ? `刷新数据，${refreshFailed} 张卡片失败` : '刷新数据'"
+            class="filter-dock__btn filter-dock__refresh"
+            :class="{ 'has-error': refreshFailed && !refreshing }"
+            :disabled="loading || refreshing || screenshotting"
             @click="emit('refresh')"
           >
-            <span class="i-mingcute-refresh-2-line" />
+            <span :class="refreshing ? 'i-svg-spinners-ring-resize' : 'i-mingcute-refresh-2-line'" />
+            <i v-if="refreshFailed && !refreshing" class="filter-dock__error-dot" aria-hidden="true" />
           </VisActionButton>
         </el-tooltip>
         <el-popover
           v-model:visible="toolsOpen"
           placement="bottom-end"
           trigger="click"
-          :width="268"
+          :width="320"
           :show-arrow="false"
           :persistent="false"
-          :popper-class="mobile ? 'dash-tools-popper is-touch' : 'dash-tools-popper'"
+          popper-class="dash-tools-popper"
           :popper-style="overlayStyle"
           role="dialog"
         >
@@ -269,120 +289,27 @@ watch(mobile, (enabled) => {
             </VisActionButton>
           </template>
 
-          <div class="dash-tools" @keydown.esc.stop="closeTools">
-            <div v-if="descText" class="dash-tools__desc">
-              <span>看板说明</span>
-              <p>{{ descText }}</p>
-            </div>
-
-            <button
-              v-if="!mobile && !showDesign && showPreview"
-              type="button"
-              class="dash-tools__action"
-              :disabled="previewDisabled"
-              @click="emitToolAction('preview')"
-            >
-              <span class="i-mingcute-eye-2-line" />
-              <span>独立预览</span>
-            </button>
-
-            <button
-              data-dashboard-screenshot-action
-              type="button"
-              class="dash-tools__action"
-              :disabled="loading || screenshotting"
-              @click="emitToolAction('screenshot')"
-            >
-              <span :class="screenshotting ? 'i-svg-spinners-ring-resize' : 'i-mingcute-camera-2-line'" />
-              <span>{{ screenshotting ? '正在截屏…' : '一键截屏' }}</span>
-            </button>
-
-            <button
-              v-if="showSubscription"
-              type="button"
-              class="dash-tools__action"
-              @click="emitToolAction('subscription')"
-            >
-              <span class="i-mingcute-mail-send-line" />
-              <span>邮件订阅</span>
-            </button>
-
-            <div class="dash-tools__themes">
-              <div class="dash-tools__theme-grid">
-                <button
-                  v-for="item in DASH_THEME_PRESETS"
-                  :key="item.id"
-                  type="button"
-                  class="dash-tools__theme"
-                  :class="{ 'is-active': theme === item.id }"
-                  :aria-label="`切换为${item.name}主题`"
-                  :aria-pressed="theme === item.id"
-                  :title="item.name"
-                  @click="pickTheme(item.id)"
-                >
-                  <span
-                    class="dash-tools__swatch"
-                    :style="dashThemeCanvasSwatchStyle(item)"
-                  >
-                    <i :style="dashThemeSwatchStyle(item)" />
-                  </span>
-                  <span class="dash-tools__theme-name">{{ item.name }}</span>
-                </button>
-              </div>
-            </div>
-
-            <template v-if="mobile && showDesign">
-              <i class="dash-tools__sep" />
-              <span class="dash-tools__label">设计</span>
-              <button
-                type="button"
-                class="dash-tools__action"
-                :class="{ 'is-primary': gridGuides }"
-                :aria-pressed="gridGuides"
-                :disabled="loading || screenshotting"
-                @click="gridGuides = !gridGuides"
-              >
-                <span class="i-mingcute-grid-line" />
-                <span>辅助线</span>
-              </button>
-              <div class="dash-tools__design-grid">
-                <button
-                  type="button"
-                  class="dash-tools__action"
-                  :disabled="adding"
-                  @click="onMenuAdd('card')"
-                >
-                  <span :class="adding ? 'i-svg-spinners-ring-resize' : 'i-mingcute-layout-grid-line'" />
-                  <span>添加卡片</span>
-                </button>
-                <button type="button" class="dash-tools__action" @click="onMenuAdd('text')">
-                  <span class="i-mingcute-paragraph-line" />
-                  <span>添加标注</span>
-                </button>
-                <button type="button" class="dash-tools__action" @click="onMenuAdd('group')">
-                  <span class="i-mingcute-new-folder-line" />
-                  <span>添加分组</span>
-                </button>
-                <button type="button" class="dash-tools__action" @click="emitToolAction('settings')">
-                  <span class="i-mingcute-settings-3-line" />
-                  <span>配置</span>
-                </button>
-                <button type="button" class="dash-tools__action" @click="emitToolAction('reloadCards')">
-                  <span class="i-mingcute-refresh-anticlockwise-1-line" />
-                  <span>重载看板</span>
-                </button>
-                <button
-                  type="button"
-                  class="dash-tools__action is-primary"
-                  :disabled="saveDisabled || saveLoading"
-                  @click="emitToolAction('save')"
-                >
-                  <span :class="saveLoading ? 'i-svg-spinners-ring-resize' : 'i-mingcute-save-2-line'" />
-                  <span>保存</span>
-                </button>
-              </div>
-            </template>
-          </div>
+          <DashToolsMenu
+            v-model:theme="theme"
+            v-model:grid-guides="gridGuides"
+            :desc="descText"
+            :mobile="mobile"
+            :show-design="showDesign"
+            :show-preview="showPreview"
+            :preview-disabled="previewDisabled"
+            :show-favorite="showFavorite"
+            :favorite="favorite"
+            :favorite-busy="favoriteBusy"
+            :show-subscription="showSubscription"
+            :loading="loading"
+            :screenshotting="screenshotting"
+            :adding="adding"
+            :save-loading="saveLoading"
+            :save-disabled="saveDisabled"
+            @action="onToolAction"
+            @update:theme="closeTools"
+            @keydown.esc.stop="closeTools"
+          />
         </el-popover>
       </div>
       <i v-if="!mobile && showDesign" class="filter-dock__tools-sep" />
@@ -402,6 +329,7 @@ watch(mobile, (enabled) => {
         <el-dropdown
           trigger="hover"
           placement="bottom-end"
+          popper-class="dash-add-popper"
           :show-timeout="100"
           :hide-timeout="100"
           :popper-style="overlayStyle"
@@ -469,97 +397,99 @@ watch(mobile, (enabled) => {
         </el-button>
       </div>
     </div>
-    <div v-if="mobile && defs.length" class="filter-dock__mobile-filters">
-      <button
-        type="button"
-        class="filter-dock__mobile-filter"
-        :aria-label="filledFilterCount ? `筛选，已启用 ${filledFilterCount} 项` : '筛选'"
-        aria-haspopup="dialog"
-        :aria-expanded="mobileFiltersOpen"
-        @click="mobileFiltersOpen = true"
-      >
-        <span class="filter-dock__mobile-filter-label" :class="{ 'is-on': filledFilterCount > 0 }">
-          <span class="i-mingcute-filter-2-line" />
-          筛选
-          <span v-if="filledFilterCount" class="filter-dock__mobile-filter-count">{{ filledFilterCount }}</span>
-        </span>
-      </button>
-      <div class="filter-dock__mobile-summary">
-        <span
-          v-for="def in filledFilterDefs"
-          :key="def.uid"
-          class="filter-dock__mobile-summary-item"
-          :title="`${chipLabel(def)}：${displayText(def, labelsOf(def.uid))}`"
+    <div v-if="defs.length" class="filter-dock__context">
+      <div v-if="mobile && defs.length" class="filter-dock__mobile-filters">
+        <button
+          type="button"
+          class="filter-dock__mobile-filter"
+          :aria-label="filledFilterCount ? `筛选，已启用 ${filledFilterCount} 项` : '筛选'"
+          aria-haspopup="dialog"
+          :aria-expanded="mobileFiltersOpen"
+          @click="mobileFiltersOpen = true"
         >
-          <span>{{ chipLabel(def) }}</span>
-          {{ displayText(def, labelsOf(def.uid)) }}
-        </span>
-        <span v-if="!filledFilterCount" class="filter-dock__mobile-summary-empty">全部数据</span>
-      </div>
-    </div>
-
-    <DashMobileFilterSheet
-      v-if="mobile"
-      v-model:open="mobileFiltersOpen"
-      v-model:values="values"
-      :defs="defs"
-      :dashboard-id="filterOptionsDashboardId"
-      :surface-style="overlayStyle"
-    />
-
-    <div
-      v-if="!mobile && defs.length"
-      ref="tagsRef"
-      class="filter-dock__tags"
-    >
-      <el-popover
-        v-for="def in defs"
-        :key="def.uid"
-        :visible="openUid === def.uid"
-        placement="bottom-start"
-        :width="popperWidth(def)"
-        :persistent="true"
-        :show-arrow="false"
-        popper-class="dash-filter-chip-popper"
-        :popper-style="overlayStyle"
-      >
-        <template #reference>
-          <button
-            type="button"
-            class="filter-chip"
-            :class="{ 'is-on': isFilled(def), 'is-open': openUid === def.uid }"
-            @click.stop="toggleChip(def.uid)"
+          <span class="filter-dock__mobile-filter-label" :class="{ 'is-on': filledFilterCount > 0 }">
+            <span class="i-mingcute-filter-2-line" />
+            筛选
+            <span v-if="filledFilterCount" class="filter-dock__mobile-filter-count">{{ filledFilterCount }}</span>
+          </span>
+        </button>
+        <div class="filter-dock__mobile-summary">
+          <span
+            v-for="def in filledFilterDefs"
+            :key="def.uid"
+            class="filter-dock__mobile-summary-item"
+            :title="`${chipLabel(def)}：${displayText(def, labelsOf(def.uid))}`"
           >
-            <span class="filter-chip__k">{{ chipLabel(def) }}：</span>
-            <span class="filter-chip__v">
-              <span class="filter-chip__value">{{ displayText(def, labelsOf(def.uid)) }}</span>
-              <span
-                v-if="isFilled(def)"
-                class="filter-chip__clear"
-                title="清除"
-                @click.stop="clearFilter(def.uid)"
-              >
-                <span class="i-mingcute-close-line" />
-              </span>
-            </span>
-          </button>
-        </template>
-        <DashFilterChipFields
-          :def="def"
-          :item="workingOf(def.uid)"
-          :op-label="opLabel(def)"
-          :dashboard-id="filterOptionsDashboardId"
-          @patch="(next) => patch(def.uid, next)"
-        />
-        <div class="dash-filter-chip-popper__footer">
-          <el-button size="small" @click.stop="resetChip">
-            清空
-          </el-button>
-          <el-button type="primary" size="small" @click.stop="confirmChip">
-            确认
-          </el-button>
+            <span>{{ chipLabel(def) }}</span>
+            {{ displayText(def, labelsOf(def.uid)) }}
+          </span>
+          <span v-if="!filledFilterCount" class="filter-dock__mobile-summary-empty">全部数据</span>
         </div>
-      </el-popover>
+      </div>
+
+      <DashMobileFilterSheet
+        v-if="mobile"
+        v-model:open="mobileFiltersOpen"
+        v-model:values="values"
+        :defs="defs"
+        :dashboard-id="filterOptionsDashboardId"
+        :surface-style="overlayStyle"
+      />
+
+      <div
+        v-if="!mobile && defs.length"
+        ref="tagsRef"
+        class="filter-dock__tags"
+      >
+        <el-popover
+          v-for="def in defs"
+          :key="def.uid"
+          :visible="openUid === def.uid"
+          placement="bottom-start"
+          :width="popperWidth(def)"
+          :persistent="true"
+          :show-arrow="false"
+          popper-class="dash-filter-chip-popper"
+          :popper-style="overlayStyle"
+        >
+          <template #reference>
+            <button
+              type="button"
+              class="filter-chip"
+              :class="{ 'is-on': isFilled(def), 'is-open': openUid === def.uid }"
+              @click.stop="toggleChip(def.uid)"
+            >
+              <span class="filter-chip__k">{{ chipLabel(def) }}：</span>
+              <span class="filter-chip__v">
+                <span class="filter-chip__value">{{ displayText(def, labelsOf(def.uid)) }}</span>
+                <span
+                  v-if="isFilled(def)"
+                  class="filter-chip__clear"
+                  title="清除"
+                  @click.stop="clearFilter(def.uid)"
+                >
+                  <span class="i-mingcute-close-line" />
+                </span>
+              </span>
+            </button>
+          </template>
+          <DashFilterChipFields
+            :def="def"
+            :item="workingOf(def.uid)"
+            :op-label="opLabel(def)"
+            :dashboard-id="filterOptionsDashboardId"
+            @patch="(next) => patch(def.uid, next)"
+          />
+          <div class="dash-filter-chip-popper__footer">
+            <el-button size="small" @click.stop="resetChip">
+              清空
+            </el-button>
+            <el-button type="primary" size="small" @click.stop="confirmChip">
+              确认
+            </el-button>
+          </div>
+        </el-popover>
+      </div>
     </div>
   </div>
 </template>
@@ -568,28 +498,62 @@ watch(mobile, (enabled) => {
 @use '@/theme/presentation.scss' as ui;
 
 .filter-dock {
+  container-type: inline-size;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   grid-template-areas: 'heading actions';
   column-gap: 16px;
   row-gap: var(--vis-space-2);
   align-items: center;
-  pointer-events: none;
+  pointer-events: auto;
 }
 
-.filter-dock:has(> .filter-dock__tags) {
+.filter-dock:has(> .filter-dock__context) {
   grid-template-areas:
     'heading actions'
-    'tags tags';
+    'context context';
 }
 
 .filter-dock.is-mobile {
   grid-template-columns: minmax(0, 1fr) auto;
   grid-template-areas:
     'mobile-heading mobile-actions'
-    'mobile-filter mobile-filter';
+    'context context';
   column-gap: 4px;
   row-gap: 0;
+}
+
+.filter-dock__context {
+  grid-area: context;
+  min-width: 0;
+  pointer-events: auto;
+}
+
+.filter-dock__context > .filter-dock__tags,
+.filter-dock__context > .filter-dock__mobile-filters {
+  min-width: 0;
+}
+
+.filter-dock__refresh {
+  position: relative;
+
+  &.has-error {
+    color: var(--el-color-warning);
+  }
+}
+
+.filter-dock__error-dot {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--el-color-warning);
+}
+
+.filter-dock.is-compact .filter-dock__context {
+  padding: 4px 0;
 }
 
 .filter-dock__mobile-heading {
@@ -640,7 +604,6 @@ watch(mobile, (enabled) => {
   justify-self: end;
   gap: 0;
   margin-right: -8px;
-  pointer-events: auto;
 }
 
 .filter-dock.is-mobile .filter-dock__view {
@@ -653,7 +616,6 @@ watch(mobile, (enabled) => {
 }
 
 .filter-dock__mobile-filters {
-  grid-area: mobile-filter;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -784,6 +746,28 @@ watch(mobile, (enabled) => {
   color: var(--dash-content-muted, var(--el-text-color-secondary));
 }
 
+@container (max-width: 560px) {
+  .filter-dock__desc {
+    display: none;
+  }
+
+  .filter-dock__heading:has(.filter-dock__desc) .filter-dock__title-row {
+    max-width: 100%;
+  }
+  .filter-dock__title {
+    font-size: 17px;
+    line-height: 24px;
+  }
+  .filter-dock .filter-dock__right,
+  .filter-dock .filter-dock__view {
+    gap: 4px;
+  }
+  .filter-dock__view :deep(.vis-action-button) {
+    width: 28px;
+    height: 28px;
+  }
+}
+
 .filter-dock__right {
   grid-area: actions;
   display: flex;
@@ -792,7 +776,29 @@ watch(mobile, (enabled) => {
   justify-self: end;
   gap: 8px;
   overflow: visible;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+
+.filter-dock.is-touch-active .filter-dock__right,
+.filter-dock:has(:focus-visible) .filter-dock__right,
+.filter-dock:has(.filter-dock__right [aria-expanded='true']) .filter-dock__right {
+  opacity: 1;
   pointer-events: auto;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .filter-dock:hover .filter-dock__right {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .filter-dock__right {
+    transition: none;
+  }
 }
 
 .filter-dock__view,
@@ -846,7 +852,6 @@ watch(mobile, (enabled) => {
 }
 
 .filter-dock__tags {
-  grid-area: tags;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -928,244 +933,5 @@ watch(mobile, (enabled) => {
     background: color-mix(in srgb, var(--dash-accent, var(--na-color-primary)) 14%, transparent);
     color: var(--dash-accent, var(--el-color-primary));
   }
-}
-</style>
-
-<style lang="scss">
-.dash-tools-popper {
-  --dash-tools-action-height: 36px;
-  --dash-tools-action-font: 13px;
-  --dash-tools-swatch-height: 40px;
-  box-sizing: border-box;
-  max-width: calc(100vw - 24px);
-  max-height: min(72dvh, 620px);
-  padding: 8px !important;
-  overflow-x: hidden;
-  overflow-y: auto;
-  border: 1px solid var(--dash-mobile-border, var(--el-border-color-light)) !important;
-  border-radius: 14px !important;
-  background: var(--dash-mobile-surface, var(--el-bg-color-overlay)) !important;
-  box-shadow: var(--dash-mobile-popper-shadow, 0 8px 24px rgb(15 23 42 / 10%)) !important;
-  color: var(--dash-mobile-content, var(--el-text-color-regular));
-  overscroll-behavior: contain;
-}
-
-.dash-tools-popper.is-touch {
-  --dash-tools-action-height: 44px;
-  --dash-tools-action-font: 14px;
-  --dash-tools-swatch-height: 48px;
-}
-
-.dash-tools {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  min-width: 0;
-}
-
-.dash-tools__desc {
-  padding: 6px 8px 9px;
-  border-bottom: 1px solid color-mix(in srgb, var(--dash-mobile-border, var(--el-border-color)) 56%, transparent);
-
-  > span,
-  p {
-    display: block;
-    margin: 0;
-  }
-
-  > span {
-    margin-bottom: 4px;
-    color: var(--dash-mobile-muted, var(--el-text-color-secondary));
-    font-size: 12px;
-  }
-
-  p {
-    color: var(--dash-mobile-content, var(--el-text-color-regular));
-    font-size: 13px;
-    line-height: 1.5;
-    overflow-wrap: anywhere;
-  }
-}
-
-.dash-tools__action {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  box-sizing: border-box;
-  width: 100%;
-  min-width: 0;
-  min-height: var(--dash-tools-action-height);
-  padding: 0 10px;
-  border: 1px solid transparent;
-  border-radius: 9px;
-  background: transparent;
-  color: var(--dash-mobile-content, var(--el-text-color-regular));
-  font-size: var(--dash-tools-action-font);
-  text-align: left;
-  cursor: pointer;
-
-  &:active {
-    background: var(--dash-mobile-soft, var(--el-fill-color-light));
-  }
-
-  &:focus-visible {
-    border-color: color-mix(in srgb, var(--dash-mobile-accent, var(--el-color-primary)) 48%, transparent);
-    outline: 2px solid color-mix(in srgb, var(--dash-mobile-accent, var(--el-color-primary)) 54%, transparent);
-    outline-offset: -2px;
-  }
-
-  &:disabled {
-    cursor: not-allowed;
-    opacity: 0.48;
-  }
-
-  &.is-primary {
-    background: color-mix(in srgb, var(--dash-mobile-accent, var(--el-color-primary)) 8%, transparent);
-    color: var(--dash-mobile-accent, var(--el-color-primary));
-  }
-
-  > span:first-child {
-    flex-shrink: 0;
-    width: 18px;
-    height: 18px;
-  }
-}
-
-.dash-tools__themes {
-  padding: 6px 8px 8px;
-}
-
-.dash-tools__label {
-  display: block;
-  padding: 0 2px 7px;
-  color: var(--dash-mobile-muted, var(--el-text-color-secondary));
-  font-size: var(--vis-caption-size);
-}
-
-.dash-tools__theme-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
-}
-
-.dash-tools__theme {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  box-sizing: border-box;
-  min-width: 0;
-  padding: 3px 3px 5px;
-  border: 2px solid transparent;
-  border-radius: 10px;
-  background: transparent;
-  color: var(--dash-mobile-content, var(--el-text-color-regular));
-  cursor: pointer;
-  outline: none;
-
-  &:active,
-  &.is-active {
-    border-color: var(--dash-mobile-accent, var(--el-color-primary));
-  }
-
-  &:focus-visible {
-    outline: 2px solid color-mix(in srgb, var(--dash-mobile-accent, var(--el-color-primary)) 58%, transparent);
-    outline-offset: 2px;
-  }
-}
-
-.dash-tools__swatch {
-  display: flex;
-  width: 100%;
-  height: var(--dash-tools-swatch-height);
-  padding: 5px;
-  box-sizing: border-box;
-  border-radius: 6px;
-
-  > i {
-    flex: 1;
-    min-width: 0;
-  }
-}
-
-.dash-tools__theme-name {
-  font-size: var(--vis-caption-size);
-  line-height: 1.3;
-}
-
-.dash-tools__sep {
-  display: block;
-  height: 1px;
-  margin: 2px 8px;
-  background: color-mix(in srgb, var(--dash-mobile-border, var(--el-border-color)) 52%, transparent);
-}
-
-.dash-tools__design-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 4px;
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .dash-tools__action:hover:not(:disabled) {
-    background: var(--dash-mobile-soft, var(--el-fill-color-light));
-  }
-
-  .dash-tools__theme:hover {
-    border-color: color-mix(in srgb, var(--dash-mobile-accent, var(--el-color-primary)) 54%, transparent);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .dash-tools-popper {
-    transition-duration: 0.01ms !important;
-    animation-duration: 0.01ms !important;
-  }
-}
-
-.dash-filter-chip-popper {
-  padding: 0 !important;
-
-  .el-form-item {
-    margin-bottom: 0;
-  }
-
-  .el-form-item__label {
-    margin-bottom: 0;
-    padding-bottom: 4px;
-    height: auto;
-    line-height: 1.2;
-    font-size: 12px;
-  }
-
-  .el-form-item,
-  .el-form-item__content,
-  .el-input,
-  .el-select,
-  .el-select__wrapper,
-  .el-input-number,
-  .el-input-tag,
-  .el-date-editor {
-    width: 100%;
-  }
-
-  .el-date-editor.el-input,
-  .el-date-editor.el-input__wrapper {
-    width: 100%;
-  }
-}
-
-.dash-filter-chip-popper__form {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 12px 12px 0;
-}
-
-.dash-filter-chip-popper__footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  padding: 12px;
 }
 </style>

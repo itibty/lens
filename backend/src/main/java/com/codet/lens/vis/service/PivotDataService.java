@@ -24,6 +24,7 @@ public class PivotDataService {
     public static final int MAX_LIMIT = 50000;
 
     private final VisDatasetService visDatasetService;
+    private final DatasetDataTimeService dataTimeService;
 
     public PivotQueryResponse query(PivotQueryRequest request) {
         QueryContext ctx = new QueryContext(DEFAULT_LIMIT, 1000);
@@ -79,6 +80,7 @@ public class PivotDataService {
             response.setColumnTruncated(assembled.columnTruncated);
             response.setTruncated(truncated);
             response.setExecSqls(VisExecSql.listOrNull(ctx));
+            response.setQueryMeta(dataTimeService.metadata(sqlConf));
             return response;
         } catch (Exception e) {
             throw VisExecSql.wrap(e, ctx);

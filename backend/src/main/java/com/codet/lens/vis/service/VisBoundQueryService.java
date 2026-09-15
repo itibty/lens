@@ -51,6 +51,7 @@ public class VisBoundQueryService {
     private final VisDashboardCardMapper dashboardCardMapper;
     private final VisCardMapper cardMapper;
     private final VisDetailRules detailRules;
+    private final com.codet.lens.vis.subscription.SubscriptionRunViewService runViews;
 
     public QueryRequest bindData(Long dashboardId, Long cardId, QueryRequest request) {
         if (isDesignerPreview(dashboardId, cardId)) {
@@ -60,11 +61,18 @@ public class VisBoundQueryService {
         BoundCard boundCard = requireBoundCard(dashboardId, cardId);
         QueryRequest bound = new QueryRequest();
         bound.setQuery(readJson(boundCard.card().getQueryJson(), QueryConfig.class, "查询配置"));
+        var runView = runView(dashboardId);
+        if (runView != null) bound.getQuery().setAsOfDate(runView.getAsOfDate());
         bound.setVisual(readVisual(boundCard.card().getVisualJson()));
         copyAllowedGlobals(boundCard.dashboard(), datasetIdOf(bound.getQuery()),
                 request == null ? null : request.getGlobalFilters(),
                 request == null ? null : request.getGlobalParams(),
                 bound::setGlobalFilters, bound::setGlobalParams);
+        if (runView != null) {
+            var globals = DashboardViewStateService.globals(boundCard.dashboard(), runView.getStateJson(), datasetIdOf(bound.getQuery()));
+            bound.setGlobalFilters(globals.filters());
+            bound.setGlobalParams(globals.params());
+        }
         return bound;
     }
 
@@ -76,11 +84,18 @@ public class VisBoundQueryService {
         BoundCard boundCard = requireBoundCard(dashboardId, cardId);
         PivotQueryRequest bound = new PivotQueryRequest();
         bound.setQuery(readJson(boundCard.card().getQueryJson(), PivotQueryConfig.class, "查询配置"));
+        var runView = runView(dashboardId);
+        if (runView != null) bound.getQuery().setAsOfDate(runView.getAsOfDate());
         bound.setVisual(readVisual(boundCard.card().getVisualJson()));
         copyAllowedGlobals(boundCard.dashboard(), datasetIdOf(bound.getQuery()),
                 request == null ? null : request.getGlobalFilters(),
                 request == null ? null : request.getGlobalParams(),
                 bound::setGlobalFilters, bound::setGlobalParams);
+        if (runView != null) {
+            var globals = DashboardViewStateService.globals(boundCard.dashboard(), runView.getStateJson(), datasetIdOf(bound.getQuery()));
+            bound.setGlobalFilters(globals.filters());
+            bound.setGlobalParams(globals.params());
+        }
         return bound;
     }
 
@@ -96,6 +111,8 @@ public class VisBoundQueryService {
         }
         DetailQueryRequest bound = new DetailQueryRequest();
         bound.setQuery(VisDetailRules.readQuery(boundCard.card().getQueryJson()));
+        var runView = runView(dashboardId);
+        if (runView != null) bound.getQuery().setAsOfDate(runView.getAsOfDate());
         if (request != null) {
             bound.setContextFilters(request.getContextFilters());
             bound.setMetric(request.getMetric());
@@ -104,8 +121,21 @@ public class VisBoundQueryService {
                 request == null ? null : request.getGlobalFilters(),
                 request == null ? null : request.getGlobalParams(),
                 bound::setGlobalFilters, bound::setGlobalParams);
+        if (runView != null) {
+            var globals = DashboardViewStateService.globals(boundCard.dashboard(), runView.getStateJson(), datasetIdOf(bound.getQuery()));
+            bound.setGlobalFilters(globals.filters());
+            bound.setGlobalParams(globals.params());
+        }
         bound.setDetail(MAPPER.convertValue(visual.get("detail"), DetailConfig.class));
         return detailRules.resolve(bound);
+    }
+
+    private com.codet.lens.vis.dto.dash.PersonalReportDtos.ResolvedView runView(Long dashboardId) {
+        var request = com.codet.lens.common.util.WebUtil.getServletRequest();
+        String raw = request == null ? null : request.getParameter("subscriptionRunId");
+        if (raw == null || raw.isBlank()) return null;
+        try { return runViews.resolve(Long.valueOf(raw), dashboardId); }
+        catch (NumberFormatException e) { throw ResultException.fail("订阅运行编号无效"); }
     }
 
     public String cardTitle(Long cardId) {

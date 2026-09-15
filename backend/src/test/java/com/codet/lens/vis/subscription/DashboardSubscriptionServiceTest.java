@@ -41,7 +41,7 @@ class DashboardSubscriptionServiceTest {
             dashboardMapper,
             userMapper,
             access,
-            new DashboardSubscriptionScheduleCalculator());
+            new DashboardSubscriptionScheduleCalculator(), mock(com.codet.lens.vis.service.DashboardViewStateService.class));
 
     @AfterEach
     void clearAuth() {

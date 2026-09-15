@@ -17,6 +17,7 @@ import { showToast } from '@/utils/index'
 import { createLogger } from '@/utils/logger'
 import BindFieldsDialog from './components/BindFieldsDialog.vue'
 import { FUNCTION_DATASET_CONF } from './components/config'
+import DataTimeDialog from './components/DataTimeDialog.vue'
 import DebugParamsDialog from './components/DebugParamsDialog.vue'
 import {
   buildOutputRun,
@@ -32,6 +33,7 @@ import SqlOutputPanel from './components/SqlOutputPanel.vue'
 import SqlRulePanel from './components/SqlRulePanel.vue'
 import SqlTemplateEditor from './components/SqlTemplateEditor.vue'
 
+const dataTimeDialogRef = ref<InstanceType<typeof DataTimeDialog>>()
 const logger = createLogger('DS_EDIT')
 const { hasFunction } = useAccountStore()
 const canWrite = hasFunction(FUNCTION_DATASET_CONF)
@@ -477,6 +479,9 @@ onBeforeRouteUpdate((to) => {
     class="noAutoSeg1"
   >
     <template #extra>
+      <el-button v-if="canWrite" :disabled="!states.info?.id" @click="dataTimeDialogRef?.open()">
+        数据更新时间
+      </el-button>
       <el-button
         v-if="canWrite"
         type="primary"
@@ -610,6 +615,7 @@ onBeforeRouteUpdate((to) => {
       </div>
     </template>
   </PageCard>
+  <DataTimeDialog ref="dataTimeDialogRef" :dataset-id="states.info?.id" />
 </template>
 
 <style lang="scss" scoped>

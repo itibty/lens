@@ -127,5 +127,10 @@ export function useDashFilterUrl(
     { deep: true },
   )
 
-  return { pauseFilterUrl, applyFilterQuery }
+  function resumeFilterUrl() {
+    ready.value = toValue(enabled)
+    if (ready.value)
+      syncFilterQuery(encodeFilterQuery(defs.value, values.value))
+  }
+  return { pauseFilterUrl, applyFilterQuery, resumeFilterUrl }
 }

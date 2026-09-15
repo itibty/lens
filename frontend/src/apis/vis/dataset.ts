@@ -3,6 +3,64 @@
 import request from "@/core/request";
 import { VIS_BASE_PATH } from "@/apis/config";
 
+/** 数据更新时间配置 GET /datasets/${param0}/data-time */
+export async function getDatasetDataTime(
+  // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
+  params: VIS.getDatasetDataTimeParams,
+  options?: { [key: string]: any }
+) {
+  const { datasetId: param0, ...queryParams } = params;
+  return request<VIS.RDataTimeConfig>(
+    `${VIS_BASE_PATH}/datasets/${param0}/data-time`,
+    {
+      method: "GET",
+      params: { ...queryParams },
+      ...(options || {}),
+    }
+  );
+}
+
+/** 保存数据更新时间配置 POST /datasets/${param0}/data-time */
+export async function saveDatasetDataTime(
+  // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
+  params: VIS.saveDatasetDataTimeParams,
+  body: VIS.DataTimeConfig,
+  options?: { [key: string]: any }
+) {
+  const { datasetId: param0, ...queryParams } = params;
+  return request<VIS.RVoid>(`${VIS_BASE_PATH}/datasets/${param0}/data-time`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    params: { ...queryParams },
+    data: body,
+    ...(options || {}),
+  });
+}
+
+/** 测试数据更新时间查询 POST /datasets/${param0}/data-time/test */
+export async function testDatasetDataTime(
+  // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
+  params: VIS.testDatasetDataTimeParams,
+  body: VIS.DataTimeConfig,
+  options?: { [key: string]: any }
+) {
+  const { datasetId: param0, ...queryParams } = params;
+  return request<VIS.RDataTime>(
+    `${VIS_BASE_PATH}/datasets/${param0}/data-time/test`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      params: { ...queryParams },
+      data: body,
+      ...(options || {}),
+    }
+  );
+}
+
 /** 数据集字段 GET /datasets/${param0}/fields */
 export async function listDatasetFieldsById(
   // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)

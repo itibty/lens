@@ -43,6 +43,7 @@ import VisProgressCard from '@/views/vis/shared/VisProgressCard.vue'
 import VisRankCard from '@/views/vis/shared/VisRankCard.vue'
 import VisStaticCard from '@/views/vis/shared/VisStaticCard.vue'
 import VisTrendCard from '@/views/vis/shared/VisTrendCard.vue'
+import { dataTimeText, formatQueryTime } from './queryTime'
 import VisCardDataDialog from './VisCardDataDialog.vue'
 
 export interface VisCardMenuAction {
@@ -67,6 +68,8 @@ const props = withDefaults(defineProps<{
   emptyText?: string
   /** 查询失败时只展示文案，不画表格 / 图表 / 指标 */
   error?: string
+  refreshError?: string
+  refreshing?: boolean
   /** 卡片不可用（如已禁用）时只展示缺省 */
   unavailable?: string
   /** 非透视下载走后端，设计器预览用占位 id */
@@ -90,6 +93,8 @@ const props = withDefaults(defineProps<{
   loading: false,
   emptyText: VIS_EMPTY_TEXT,
   error: '',
+  refreshError: '',
+  refreshing: false,
   unavailable: '',
   dashboardId: '',
   cardId: '',
@@ -111,6 +116,9 @@ const emit = defineEmits<{
   refresh: []
   toggleFullscreen: []
 }>()
+
+const queryMeta = computed(() => props.data.queryMeta || props.pivotData?.queryMeta)
+const timeOpen = ref(false)
 
 const emptyPivotData: VIS.PivotQueryResponse = {
   rowFields: [],
@@ -521,11 +529,28 @@ watch(allowDetail, (ok) => {
         <div
           v-if="hasMenu"
           class="vis-card-view__actions"
-          :class="{ 'is-busy': exporting || capturing, 'is-open': menuOpen }"
+          :class="{ 'is-busy': exporting || capturing, 'is-open': menuOpen || timeOpen }"
           @pointerdown.stop
           @mousedown.stop
           @click.stop
         >
+          <el-popover v-if="queryMeta" v-model:visible="timeOpen" :trigger="coarsePointer ? 'click' : ['hover', 'focus']" :show-after="150" width="280" placement="bottom-end" :popper-style="overlayThemeStyle">
+            <template #reference>
+              <button type="button" class="vis-card-view__time-icon" aria-label="数据时间" :aria-expanded="timeOpen">
+                <span :class="refreshing ? 'i-svg-spinners-ring-resize' : 'i-mingcute-time-line'" />
+              </button>
+            </template>
+            <div class="vis-card-time">
+              <div v-if="dataTimeText(queryMeta)" class="vis-card-time__data">
+                {{ dataTimeText(queryMeta) }}
+              </div>
+              <div class="vis-card-time__query">
+                <span>查询刷新</span><span>{{ formatQueryTime(queryMeta.resultGeneratedAt) }}</span>
+              </div>
+              <span v-if="refreshing" class="vis-card-time__status">刷新中</span>
+              <span v-else-if="refreshError" class="vis-card-time__error">刷新失败 · 保留上次结果</span>
+            </div>
+          </el-popover>
           <VisActionButton
             v-if="showFullscreen"
             class="vis-card-view__full-btn"
@@ -612,6 +637,12 @@ watch(allowDetail, (ok) => {
         </div>
       </div>
 
+      <div v-if="refreshError" class="vis-card-view__refresh-error" role="status">
+        <span :title="`最近刷新 ${formatQueryTime(queryMeta?.resultGeneratedAt)}`">刷新失败 · 保留上次结果</span>
+        <button @click="emit('refresh')">
+          重试
+        </button>
+      </div>
       <div
         class="vis-card-view__content"
         :class="{ 'is-card-color': hasCardColor }"
@@ -799,6 +830,44 @@ watch(allowDetail, (ok) => {
 <style scoped lang="scss">
 @use '@/theme/presentation.scss' as ui;
 
+.vis-card-time {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 2px;
+  font-size: 12px;
+}
+.vis-card-time__data {
+  color: var(--el-text-color-primary);
+}
+.vis-card-time__query {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--el-text-color-secondary);
+  font-variant-numeric: tabular-nums;
+}
+.vis-card-time__status {
+  color: var(--el-text-color-secondary);
+}
+.vis-card-time__error {
+  color: var(--el-color-warning);
+}
+
+.vis-card-view__refresh-error {
+  padding: 5px 12px;
+  color: var(--el-color-warning);
+  font-size: 12px;
+  flex-shrink: 0;
+}
+.vis-card-view__refresh-error button {
+  border: 0;
+  background: none;
+  color: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
 .vis-card-view {
   flex: 1;
   min-height: 0;
@@ -940,6 +1009,33 @@ watch(allowDetail, (ok) => {
 
     :deep(.el-tooltip__trigger) {
       display: inline-flex;
+    }
+  }
+
+  &__time-icon {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 28px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--vis-content-color, var(--el-text-color-secondary));
+    cursor: pointer;
+    opacity: 0.65;
+    @include ui.focus-ring;
+
+    > span {
+      width: 15px;
+      height: 15px;
+    }
+
+    &:hover,
+    &:focus-visible {
+      opacity: 1;
+      color: var(--vis-content-color, var(--el-color-primary));
     }
   }
 

@@ -11,6 +11,8 @@ import lombok.experimental.Accessors;
 @Setter
 @Accessors(chain = true)
 public class VisDashboardSubscription extends BaseEntity {
+    private String viewStateJson;
+    private String viewBindingsJson;
     private Long dashboardId;
     private Long ownerId;
     private String subscriptionName;

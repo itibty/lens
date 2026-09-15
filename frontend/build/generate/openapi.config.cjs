@@ -87,6 +87,7 @@ const services = {
       CARD: 'card',
       DASHBOARD: 'dashboard',
       DASHBOARD_SUBSCRIPTION: 'dashboardSubscription',
+      PERSONAL_REPORT: 'personalReport',
       DASH_GROUP: 'dashboard',
       QUERY: 'query',
       EXPORT: 'dataExport',

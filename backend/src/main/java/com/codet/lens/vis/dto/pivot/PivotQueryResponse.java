@@ -10,6 +10,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class PivotQueryResponse {
+    private com.codet.lens.vis.dto.query.QueryMeta queryMeta;
 
     @Schema(description = "行维字段", requiredMode = Schema.RequiredMode.REQUIRED)
     private List<String> rowFields;

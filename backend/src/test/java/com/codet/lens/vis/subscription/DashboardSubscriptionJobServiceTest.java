@@ -191,6 +191,6 @@ class DashboardSubscriptionJobServiceTest {
 
     private DashboardSubscriptionJobService jobs(TaskExecutor executor) {
         return new DashboardSubscriptionJobService(runMapper, dashboardMapper, subscriptions, owners,
-                screenshots, List.of(sender), executor, properties);
+                screenshots, List.of(sender), executor, properties, mock(SubscriptionRunViewService.class));
     }
 }

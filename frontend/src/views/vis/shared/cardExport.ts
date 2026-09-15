@@ -3,6 +3,7 @@ import type { FileDownloadResult } from '@/core/request'
 import dayjs from 'dayjs'
 import { exportCardData } from '@/apis/vis/query'
 import { needsDataset, toApiVisual } from './types'
+import { visQueryOptions } from './visRequest'
 
 export function resolveAllowDownload(visual?: VisVisualConfig) {
   if (!visual?.allowDownload)
@@ -70,6 +71,7 @@ export async function downloadCardExcel(options: {
     { dashboardId: options.dashboardId, cardId: options.cardId },
     body,
     {
+      ...visQueryOptions(),
       responseType: 'blob',
       timeout: 120000,
     },

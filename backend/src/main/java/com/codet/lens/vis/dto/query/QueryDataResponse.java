@@ -10,6 +10,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class QueryDataResponse {
+    private QueryMeta queryMeta;
 
     @Schema(description = "列名列表", requiredMode = Schema.RequiredMode.REQUIRED)
     private List<String> columns;

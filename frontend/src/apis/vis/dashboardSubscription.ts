@@ -3,6 +3,23 @@
 import request from "@/core/request";
 import { VIS_BASE_PATH } from "@/apis/config";
 
+/** 恢复本次订阅运行的条件 GET /dashboards/${param0}/subscription-runs/${param1}/view */
+export async function getSubscriptionRunView(
+  // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
+  params: VIS.getSubscriptionRunViewParams,
+  options?: { [key: string]: any }
+) {
+  const { dashboardId: param0, runId: param1, ...queryParams } = params;
+  return request<VIS.RResolvedView>(
+    `${VIS_BASE_PATH}/dashboards/${param0}/subscription-runs/${param1}/view`,
+    {
+      method: "GET",
+      params: { ...queryParams },
+      ...(options || {}),
+    }
+  );
+}
+
 /** 当前用户的看板订阅 GET /dashboards/${param0}/subscriptions */
 export async function listDashboardSubscriptions(
   // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)

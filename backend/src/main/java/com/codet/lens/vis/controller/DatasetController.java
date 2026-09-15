@@ -54,6 +54,35 @@ public class DatasetController {
     private final DatasetAdminService datasetAdminService;
     private final VisDatasetService visDatasetService;
     private final DatasetReferenceService datasetReferenceService;
+    private final com.codet.lens.vis.service.DatasetDataTimeService dataTimeService;
+
+    @Tag(name = "DATASET")
+    @Permission(VisPerms.VIS_DATASET_CONF)
+    @Operation(operationId = "getDatasetDataTime", summary = "数据更新时间配置")
+    @GetMapping("/datasets/{datasetId}/data-time")
+    public R<com.codet.lens.vis.dto.dataset.DataTimeConfig> getDataTime(@PathVariable Long datasetId) {
+        return R.success(dataTimeService.config(datasetId));
+    }
+
+    @Tag(name = "DATASET")
+    @Permission(VisPerms.VIS_DATASET_CONF)
+    @Operation(operationId = "saveDatasetDataTime", summary = "保存数据更新时间配置")
+    @PostMapping("/datasets/{datasetId}/data-time")
+    public R<Void> saveDataTime(@PathVariable Long datasetId,
+            @Validated @RequestBody com.codet.lens.vis.dto.dataset.DataTimeConfig config) {
+        dataTimeService.save(datasetId, config);
+        return R.success();
+    }
+
+    @Tag(name = "DATASET")
+    @Permission(VisPerms.VIS_DATASET_CONF)
+    @Operation(operationId = "testDatasetDataTime", summary = "测试数据更新时间查询")
+    @PostMapping("/datasets/{datasetId}/data-time/test")
+    public R<com.codet.lens.vis.dto.query.QueryMeta.DataTime> testDataTime(@PathVariable Long datasetId,
+            @Validated @RequestBody com.codet.lens.vis.dto.dataset.DataTimeConfig config) {
+        return R.success(dataTimeService.test(datasetId, config));
+    }
+
 
     @Tag(name = "DATASOURCE")
     @Permission(VisPerms.VIS_DATASET_CONF)

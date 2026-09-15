@@ -32,6 +32,7 @@ public class DashboardSubscriptionJobService {
     private final List<DashboardSubscriptionSender> senders;
     private final TaskExecutor dashboardSubscriptionExecutor;
     private final LensProperties properties;
+    private final SubscriptionRunViewService runViews;
     private final AtomicBoolean draining = new AtomicBoolean();
     private final AtomicReference<Long> activeRun = new AtomicReference<>();
 
@@ -144,7 +145,12 @@ public class DashboardSubscriptionJobService {
                         subscription.getOwnerId(), subscription.getDashboardId());
                 DashboardSubscriptionSender sender = sender(subscription.getChannelType());
                 sender.validateAvailable();
-                byte[] image = screenshotService.capture(subscription.getDashboardId(), owner.authorization());
+                if (run.getDashboardId() != null && !run.getDashboardId().equals(subscription.getDashboardId()))
+                    throw new DashboardSubscriptionUnavailableException("订阅看板已变更，请重新创建执行任务");
+                runViews.freezeDate(run);
+                byte[] image = run.getViewStateJson() == null
+                        ? screenshotService.capture(subscription.getDashboardId(), owner.authorization())
+                        : screenshotService.capture(subscription.getDashboardId(), owner.authorization(), run.getId());
                 bytes = (long) image.length;
                 // 截图期间可能停用、删除、改邮箱或撤权；发送前再次检查。
                 VisDashboardSubscription current = availableSubscription(run);
@@ -160,7 +166,8 @@ public class DashboardSubscriptionJobService {
                     return;
                 }
                 String dashboardUrl = trimSlash(properties.getSubscription().getPublicBaseUrl())
-                        + "/vis/dashboards/view?id=" + current.getDashboardId();
+                        + "/vis/dashboards/view?id=" + current.getDashboardId()
+                        + (run.getViewStateJson() == null ? "" : "&subscriptionRunId=" + run.getId());
                 sender.send(new DashboardSubscriptionMessage(
                         current.getSubscriptionName(), dashboard.getDashName(), owner.email(),
                         dashboardUrl, System.currentTimeMillis(), image));

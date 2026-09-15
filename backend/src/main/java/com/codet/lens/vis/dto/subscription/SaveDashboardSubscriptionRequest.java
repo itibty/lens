@@ -13,6 +13,9 @@ import lombok.Setter;
 @Getter
 @Setter
 public class SaveDashboardSubscriptionRequest {
+    @Schema(description = "筛选状态快照，省略时保留原订阅条件")
+    @Size(max = 32768, message = "订阅筛选状态过长")
+    private String viewStateJson;
     @Schema(description = "订阅id。新增不传")
     private Long id;
 

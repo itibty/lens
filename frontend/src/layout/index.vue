@@ -14,23 +14,9 @@ import Sidebar from './components/Sidebar/index.vue'
 const keepPageStore = useKeepPageStore()
 const menuStore = useMenuStore()
 const route = useRoute()
-const router = useRouter()
-
-function isReportShell(path: string) {
-  const p = path.length > 1 && path.endsWith('/') ? path.slice(0, -1) : path
-  return p === '/vis/report'
-}
-
 watch(
   () => route.fullPath,
-  async () => {
-    menuStore.syncActiveRootFromRoute(route)
-    if (!isReportShell(route.path))
-      return
-    const url = menuStore.findFirstLeafUrl(menuStore.activeRootId)
-    if (url && url !== route.path && url !== route.fullPath)
-      await router.push(url)
-  },
+  () => menuStore.syncActiveRootFromRoute(route),
 )
 </script>
 

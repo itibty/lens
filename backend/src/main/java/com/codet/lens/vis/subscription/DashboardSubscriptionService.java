@@ -37,6 +37,7 @@ public class DashboardSubscriptionService {
     private final SysUserMapper userMapper;
     private final VisDashboardAccess dashboardAccess;
     private final DashboardSubscriptionScheduleCalculator scheduleCalculator;
+    private final com.codet.lens.vis.service.DashboardViewStateService viewStates;
 
     public ListResponse<DashboardSubscriptionInfo> list(Long dashboardId) {
         Long ownerId = requireCurrentUser();
@@ -89,6 +90,13 @@ public class DashboardSubscriptionService {
             entity.modifyCallback();
         }
         entity.setDashboardId(request.getDashboardId());
+        if (request.getViewStateJson() != null) {
+            var snapshot = viewStates.snapshot(requireDashboard(request.getDashboardId()), request.getViewStateJson(), null);
+            entity.setViewStateJson(snapshot.stateJson());
+            entity.setViewBindingsJson(snapshot.bindingsJson());
+        } else if (entity.getViewStateJson() != null) {
+            viewStates.snapshot(requireDashboard(request.getDashboardId()), entity.getViewStateJson(), entity.getViewBindingsJson());
+        }
         entity.setSubscriptionName(request.getSubscriptionName().trim());
         entity.setScheduleType(request.getScheduleType());
         entity.setScheduleJson(writeSchedule(request.getSchedule()));
@@ -182,8 +190,18 @@ public class DashboardSubscriptionService {
                             .eq(VisDashboardSubscription::getStatus, Status.EBL)
                             .eq(VisDashboardSubscription::getNextFireAt, scheduledAt));
             if (updated == 1) {
-                createQueuedRun(row, scheduledAt, "SCHEDULED");
-                claimed++;
+                try {
+                    createQueuedRun(row, scheduledAt, "SCHEDULED");
+                    claimed++;
+                } catch (ResultException e) {
+                    disable(row.getId());
+                    VisDashboardSubscriptionRun failed = new VisDashboardSubscriptionRun()
+                            .setSubscriptionId(row.getId()).setDashboardId(row.getDashboardId())
+                            .setScheduledAt(scheduledAt).setTriggerType("SCHEDULED").setRunStatus("FAILED")
+                            .setAttemptCount(0).setCreateAt(now).setFinishedAt(now).setCreateBy(row.getOwnerId())
+                            .setErrorMessage("订阅条件需要更新：" + e.getMessage());
+                    runMapper.insert(failed);
+                }
             }
         }
         return claimed;
@@ -218,6 +236,7 @@ public class DashboardSubscriptionService {
         info.setDashboardId(row.getDashboardId());
         info.setDashboardName(dashboard == null ? null : dashboard.getDashName());
         info.setSubscriptionName(row.getSubscriptionName());
+        info.setViewStateJson(row.getViewStateJson());
         info.setScheduleType(row.getScheduleType());
         info.setSchedule(readSchedule(row.getScheduleJson()));
         info.setTimezone(row.getTimezone());
@@ -245,6 +264,8 @@ public class DashboardSubscriptionService {
         info.setScheduledAt(row.getScheduledAt());
         info.setTriggerType(row.getTriggerType());
         info.setRunStatus(row.getRunStatus());
+        info.setAsOfDate(row.getAsOfDate());
+        info.setViewStateJson(row.getViewStateJson());
         info.setAttemptCount(row.getAttemptCount());
         info.setScreenshotSize(row.getScreenshotSize());
         info.setErrorMessage(row.getErrorMessage());
@@ -305,6 +326,12 @@ public class DashboardSubscriptionService {
                 .setAttemptCount(0)
                 .setCreateAt(System.currentTimeMillis())
                 .setCreateBy(subscription.getOwnerId());
+        var snapshot = viewStates.snapshot(requireDashboard(subscription.getDashboardId()),
+                subscription.getViewStateJson(), subscription.getViewBindingsJson());
+        run.setDashboardId(subscription.getDashboardId());
+        run.setViewStateJson(snapshot.stateJson());
+        run.setViewBindingsJson(snapshot.bindingsJson());
+        run.setViewTimezone(subscription.getTimezone());
         runMapper.insert(run);
         return run.getId();
     }

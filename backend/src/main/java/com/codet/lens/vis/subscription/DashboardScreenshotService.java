@@ -26,12 +26,17 @@ public class DashboardScreenshotService {
     private final LensProperties properties;
 
     public byte[] capture(Long dashboardId, String authorization) {
+        return capture(dashboardId, authorization, null);
+    }
+
+    public byte[] capture(Long dashboardId, String authorization, Long runId) {
         requireEnabled();
         long timeout = properties.getSubscription().getScreenshotTimeoutMs();
         String baseUrl = trimSlash(properties.getSubscription().getPublicBaseUrl());
         String url = baseUrl + "/vis/dashboards/view?id="
                 + URLEncoder.encode(dashboardId.toString(), StandardCharsets.UTF_8)
-                + "&subscriptionScreenshot=1";
+                + "&subscriptionScreenshot=1"
+                + (runId == null ? "" : "&subscriptionRunId=" + runId);
         String executablePath = properties.getSubscription().getBrowserExecutablePath();
         String channel = properties.getSubscription().getBrowserChannel();
         boolean useInstalledBrowser = (executablePath != null && !executablePath.isBlank())
@@ -59,6 +64,13 @@ public class DashboardScreenshotService {
                 page.navigate(url, new Page.NavigateOptions()
                         .setTimeout(timeout)
                         .setWaitUntil(WaitUntilState.DOMCONTENTLOADED));
+                if (runId != null) {
+                    page.waitForFunction("() => ['ready','failed'].includes(document.querySelector('[data-dashboard-view-state]')?.dataset.dashboardViewState)");
+                    var state = page.locator("[data-dashboard-view-state]");
+                    if ("failed".equals(state.getAttribute("data-dashboard-view-state")))
+                        throw new DashboardSubscriptionUnavailableException("订阅条件需要更新：" + state.getAttribute("data-dashboard-view-error"));
+                }
+                page.locator(".filter-dock").hover();
                 page.locator("[data-dashboard-tools-trigger]").click();
                 Download download = page.waitForDownload(() -> {
                     page.locator("[data-dashboard-screenshot-action]").click();
@@ -83,6 +95,8 @@ public class DashboardScreenshotService {
                 }
                 return bytes;
             }
+        } catch (DashboardSubscriptionUnavailableException e) {
+            throw e;
         } catch (ResultException e) {
             throw e;
         } catch (Exception e) {

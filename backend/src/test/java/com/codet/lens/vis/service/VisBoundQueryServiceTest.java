@@ -25,9 +25,10 @@ class VisBoundQueryServiceTest {
     private final VisDashboardCardMapper dashboardCardMapper = mock(VisDashboardCardMapper.class);
     private final VisCardMapper cardMapper = mock(VisCardMapper.class);
     private final VisDatasetService datasets = mock(VisDatasetService.class);
+    private final com.codet.lens.vis.subscription.SubscriptionRunViewService runViews = mock(com.codet.lens.vis.subscription.SubscriptionRunViewService.class);
     private final VisBoundQueryService service = new VisBoundQueryService(
             dashboardAccess, dashboardMapper, dashboardCardMapper, cardMapper,
-            new VisDetailRules(datasets));
+            new VisDetailRules(datasets), runViews);
 
     @Test
     void rejectsSavedCardDetailWhenAllowDetailIsFalse() {
@@ -86,6 +87,32 @@ class VisBoundQueryServiceTest {
         config.setFields(java.util.List.of("private_column"));
         request.setDetail(config);
         assertEquals(java.util.List.of("order_id"), service.bindDetail(1L, 2L, request).getSelectFields());
+    }
+
+    @Test
+    void subscriptionRunOverridesStoredDateAndClientFiltersForEveryQueryPath() {
+        mockBoundCard("{\"allowDetail\":true,\"detail\":{\"fields\":[\"order_id\"]}}");
+        when(dashboardMapper.selectById(1L)).thenReturn(new VisDashboard().setStatus(Status.EBL).setConfigJson(
+                "{\"filters\":[{\"uid\":\"region\",\"datasetId\":\"10\",\"field\":\"region\",\"formType\":\"select\"}]}"));
+        var run = new com.codet.lens.vis.dto.dash.PersonalReportDtos.ResolvedView();
+        run.setAsOfDate("2026-01-02");
+        run.setStateJson("{\"schemaVersion\":1,\"filters\":{\"region\":{\"value\":[\"华东\"]}}}");
+        when(runViews.resolve(20L, 1L)).thenReturn(run);
+        var http = new org.springframework.mock.web.MockHttpServletRequest();
+        http.setParameter("subscriptionRunId", "20");
+        org.springframework.web.context.request.RequestContextHolder.setRequestAttributes(
+                new org.springframework.web.context.request.ServletRequestAttributes(http));
+        try {
+            var data = service.bindData(1L, 2L, null);
+            var pivot = service.bindPivot(1L, 2L, null);
+            var detail = service.bindDetail(1L, 2L, null);
+            assertEquals("2026-01-02", data.getQuery().getAsOfDate());
+            assertEquals("2026-01-02", pivot.getQuery().getAsOfDate());
+            assertEquals("2026-01-02", detail.getQuery().getAsOfDate());
+            assertEquals("华东", data.getGlobalFilters().getFirst().getValue()[0]);
+            assertEquals("华东", pivot.getGlobalFilters().getFirst().getValue()[0]);
+            assertEquals("华东", detail.getGlobalFilters().getFirst().getValue()[0]);
+        } finally { org.springframework.web.context.request.RequestContextHolder.resetRequestAttributes(); }
     }
 
     private void mockBoundCard(String visualJson) {

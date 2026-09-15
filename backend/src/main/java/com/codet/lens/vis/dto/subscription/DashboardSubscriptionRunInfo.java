@@ -7,6 +7,8 @@ import lombok.Setter;
 @Getter
 @Setter
 public class DashboardSubscriptionRunInfo {
+    private String asOfDate;
+    private String viewStateJson;
     private Long id;
     private Long subscriptionId;
     private String triggerType;

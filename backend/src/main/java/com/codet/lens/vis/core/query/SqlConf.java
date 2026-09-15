@@ -9,6 +9,7 @@ public class SqlConf {
     private Long sqlId;
     private String sqlName;
     private String sqlContent;
+    private String dataTimeConfigJson;
 
     private Long dsId;
     private String dsName;

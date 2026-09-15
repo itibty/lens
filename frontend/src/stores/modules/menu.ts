@@ -43,10 +43,14 @@ function isHomePath(path: string) {
   return p === '/' || p === '/index'
 }
 
-/** 带 menuId 且有子路由的布局壳，例如 /vis、/sys、/vis/report。叶子页不在此列。 */
+function hasIndexPage(route?: RouteRecordRaw) {
+  return route?.children?.some(child => child.path === '' && !!child.component && !child.redirect) ?? false
+}
+
+/** 没有首页内容的布局壳才需要跳转到叶子页。 */
 function collectShellPaths(routeList: RouteRecordRaw[], acc: Set<string> = new Set()) {
   for (const route of routeList) {
-    if (route.meta?.menuId && route.children?.length)
+    if (route.meta?.menuId && route.children?.length && !hasIndexPage(route))
       acc.add(normalizePath(route.path))
     if (route.children?.length)
       collectShellPaths(route.children, acc)
@@ -221,14 +225,17 @@ export const useMenuStore = defineStore('menu', () => {
     }
   }
 
-  const findFirstLeafUrl = (rootId: string) => {
+  const resolveRootUrl = (rootId: string) => {
     const root = allMenus.value.find(menu => menu.id === rootId)
+    const route = allMenuIdRoute[rootId]
+    if (root && hasIndexPage(route))
+      return route.path
     return root ? firstVisibleLeafUrl(root) : undefined
   }
 
   const resolveHomeUrl = () => {
     for (const root of rootMenus.value) {
-      const url = firstVisibleLeafUrl(root)
+      const url = resolveRootUrl(root.id)
       if (url)
         return url
     }
@@ -303,7 +310,7 @@ export const useMenuStore = defineStore('menu', () => {
     fetchUserMenus,
     filterMenus,
     activateRoot,
-    findFirstLeafUrl,
+    resolveRootUrl,
     resolveHomeUrl,
     resolveLandingUrl,
     routeBelongsToRoot,

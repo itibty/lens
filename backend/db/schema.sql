@@ -294,6 +294,8 @@ DROP TABLE IF EXISTS `vis_dashboard_subscription`;
 CREATE TABLE `vis_dashboard_subscription` (
   `id` bigint NOT NULL,
   `dashboard_id` bigint NOT NULL,
+  `view_state_json` mediumtext DEFAULT NULL COMMENT '订阅查看状态快照',
+  `view_bindings_json` mediumtext DEFAULT NULL COMMENT '筛选字段绑定快照',
   `owner_id` bigint unsigned NOT NULL COMMENT '订阅所属用户，发送到其当前绑定邮箱',
   `subscription_name` varchar(100) NOT NULL,
   `schedule_type` varchar(16) NOT NULL COMMENT 'DAILY每天 WEEKDAY周一至周五 WEEKLY每周 MONTHLY每月',
@@ -319,6 +321,11 @@ DROP TABLE IF EXISTS `vis_dashboard_subscription_run`;
 CREATE TABLE `vis_dashboard_subscription_run` (
   `id` bigint NOT NULL,
   `subscription_id` bigint NOT NULL,
+  `dashboard_id` bigint DEFAULT NULL,
+  `view_state_json` mediumtext DEFAULT NULL,
+  `view_bindings_json` mediumtext DEFAULT NULL,
+  `view_timezone` varchar(64) DEFAULT NULL,
+  `as_of_date` varchar(10) DEFAULT NULL COMMENT '相对日期计算基准',
   `scheduled_at` bigint NOT NULL COMMENT '计划触发时间，手动测试为入队时间；毫秒时间戳',
   `trigger_type` varchar(16) NOT NULL COMMENT 'SCHEDULED定时 MANUAL手动测试',
   `run_status` varchar(16) NOT NULL COMMENT 'QUEUED待执行 RUNNING执行中 SUCCESS发送成功 FAILED失败 SKIPPED跳过',
@@ -350,6 +357,7 @@ DROP TABLE IF EXISTS `vis_dataset`;
 CREATE TABLE `vis_dataset` (
   `id` bigint NOT NULL,
   `source_id` bigint NOT NULL,
+  `data_time_config_json` text DEFAULT NULL COMMENT '业务数据时间 SQL 配置',
   `dataset_name` varchar(50) NOT NULL,
   `dataset_desc` varchar(200) DEFAULT NULL,
   `sql_content` text NOT NULL,
@@ -362,7 +370,7 @@ CREATE TABLE `vis_dataset` (
   PRIMARY KEY (`id`),
   KEY `idx_source` (`source_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='只读数据集';
-INSERT INTO `vis_dataset` (`id`, `source_id`, `dataset_name`, `dataset_desc`, `sql_content`, `param_demo`, `status`, `create_at`, `create_by`, `modify_at`, `modify_by`) VALUES (9101,1,'零售订单明细','启明零售全渠道订单，含大区、城市、渠道、门店、会员与履约状态','SELECT * FROM dwd_retail_order','{}','EBL',1787832902000,1,1787832902000,1);
+INSERT INTO `vis_dataset` (`id`, `source_id`, `dataset_name`, `dataset_desc`, `sql_content`, `param_demo`, `status`, `create_at`, `create_by`, `modify_at`, `modify_by`, `data_time_config_json`) VALUES (9101,1,'零售订单明细','启明零售全渠道订单，含大区、城市、渠道、门店、会员与履约状态','SELECT * FROM dwd_retail_order','{}','EBL',1787832902000,1,1787832902000,1,'{"enabled":true,"kind":"coverageEnd","precision":"date","timezone":"Asia/Shanghai","sql":"SELECT MAX(order_date) FROM dwd_retail_order"}');
 INSERT INTO `vis_dataset` (`id`, `source_id`, `dataset_name`, `dataset_desc`, `sql_content`, `param_demo`, `status`, `create_at`, `create_by`, `modify_at`, `modify_by`) VALUES (9102,1,'零售订单（区域渠道可筛）','同一订单明细，SQL 按大区、渠道、下单日过滤，供区域专题使用','SELECT * FROM dwd_retail_order\nWHERE 1 = 1\n#if(region && !region.isEmpty())\n  AND region IN #para(region, \'in\')\n#end\n#if(channel && !channel.isEmpty())\n  AND channel IN #para(channel, \'in\')\n#end\n#if(order_date && order_date.size() >= 2)\n  AND order_date >= #para(order_date.get(0))\n  AND order_date <= #para(order_date.get(1))\n#end','{\"region\":[\"华东\",\"华南\"],\"channel\":[\"线上\"]}','EBL',1787832902000,1,1787832902000,1);
 
 -- vis_dataset_field：当前数据 32 条
@@ -434,6 +442,42 @@ CREATE TABLE `vis_datasource` (
   UNIQUE KEY `uk_source_name` (`source_name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='可视化数据源';
 INSERT INTO `vis_datasource` (`id`, `source_name`, `db_type`, `jdbc_url`, `username`, `password`, `status`, `create_at`, `create_by`, `modify_at`, `modify_by`) VALUES (1,'零售经营库','MYSQL','jdbc:mysql://127.0.0.1:3306/lens?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai','root','Aa123456','EBL',1787646081946,0,1787646081946,0);
+
+-- 用户报表偏好
+DROP TABLE IF EXISTS `vis_dashboard_user_pref`;
+CREATE TABLE `vis_dashboard_user_pref` (
+  `id` bigint NOT NULL,
+  `user_id` bigint NOT NULL,
+  `dashboard_id` bigint NOT NULL,
+  `favorite` tinyint(1) NOT NULL DEFAULT 0,
+  `last_viewed_at` bigint DEFAULT NULL,
+  `default_view_id` bigint DEFAULT NULL,
+  `create_at` bigint DEFAULT NULL,
+  `create_by` bigint DEFAULT NULL,
+  `modify_at` bigint DEFAULT NULL,
+  `modify_by` bigint DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_user_dashboard` (`user_id`,`dashboard_id`),
+  KEY `idx_recent` (`user_id`,`last_viewed_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- 用户个人视图
+DROP TABLE IF EXISTS `vis_dashboard_user_view`;
+CREATE TABLE `vis_dashboard_user_view` (
+  `id` bigint NOT NULL,
+  `user_id` bigint NOT NULL,
+  `dashboard_id` bigint NOT NULL,
+  `view_name` varchar(80) NOT NULL,
+  `state_json` mediumtext NOT NULL,
+  `bindings_json` mediumtext NOT NULL,
+  `revision` int NOT NULL DEFAULT 1,
+  `create_at` bigint DEFAULT NULL,
+  `create_by` bigint DEFAULT NULL,
+  `modify_at` bigint DEFAULT NULL,
+  `modify_by` bigint DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_user_dashboard` (`user_id`,`dashboard_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 SET FOREIGN_KEY_CHECKS = @LENS_OLD_FOREIGN_KEY_CHECKS;
 SET TIME_ZONE = @LENS_OLD_TIME_ZONE;

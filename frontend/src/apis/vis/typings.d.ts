@@ -125,6 +125,7 @@ declare namespace VIS {
   };
 
   type DashboardSubscriptionInfo = {
+    viewStateJson?: string;
     id?: string;
     dashboardId?: string;
     dashboardName?: string;
@@ -142,6 +143,8 @@ declare namespace VIS {
   };
 
   type DashboardSubscriptionRunInfo = {
+    asOfDate?: string;
+    viewStateJson?: string;
     id?: string;
     subscriptionId?: string;
     triggerType?: string;
@@ -199,6 +202,24 @@ declare namespace VIS {
     referenceCount: number;
     /** 受影响的部分卡片，最多返回 5 张 */
     cards: VisCardRefInfo[];
+  };
+
+  type DataTime = {
+    status?: string;
+    kind?: string;
+    precision?: string;
+    timezone?: string;
+    value?: string;
+    checkedAt?: string;
+    message?: string;
+  };
+
+  type DataTimeConfig = {
+    enabled?: boolean;
+    kind: string;
+    precision: string;
+    timezone: string;
+    sql?: string;
   };
 
   type DateWindowRequest = {
@@ -278,6 +299,10 @@ declare namespace VIS {
 
   type deleteDashboardSubscriptionParams = {
     subscriptionId: string;
+  };
+
+  type deletePersonalViewParams = {
+    viewId: string;
   };
 
   type DetailConfig = {
@@ -408,6 +433,10 @@ declare namespace VIS {
     dashboardId: string;
   };
 
+  type getDatasetDataTimeParams = {
+    datasetId: string;
+  };
+
   type getDatasetDetailParams = {
     sqlId: string;
   };
@@ -415,6 +444,15 @@ declare namespace VIS {
   type getDatasourceMetaTreeParams = {
     sourceName: string;
     tables?: string;
+  };
+
+  type getReportPreferenceParams = {
+    dashboardId: string;
+  };
+
+  type getSubscriptionRunViewParams = {
+    dashboardId: string;
+    runId: string;
   };
 
   type HavingFilterItem = {
@@ -522,6 +560,10 @@ declare namespace VIS {
     sourceName: string;
   };
 
+  type listPersonalViewsParams = {
+    dashboardId: string;
+  };
+
   type ListResponseAssignNode = {
     /** 列表 */
     list: AssignNode[];
@@ -560,6 +602,16 @@ declare namespace VIS {
   type ListResponseNameValue = {
     /** 列表 */
     list: NameValue[];
+  };
+
+  type ListResponsePersonalReportInfo = {
+    /** 列表 */
+    list: PersonalReportInfo[];
+  };
+
+  type ListResponsePersonalViewInfo = {
+    /** 列表 */
+    list: PersonalViewInfo[];
   };
 
   type ListResponseReportNode = {
@@ -683,6 +735,24 @@ declare namespace VIS {
     records: VisDashboardInfo[];
   };
 
+  type PersonalReportInfo = {
+    dashboardId?: string;
+    dashboardName?: string;
+    description?: string;
+    icon?: string;
+    favorite?: boolean;
+    lastViewedAt?: string;
+    defaultViewId?: string;
+  };
+
+  type PersonalViewInfo = {
+    id?: string;
+    dashboardId?: string;
+    viewName?: string;
+    stateJson?: string;
+    revision?: number;
+  };
+
   type PivotColumn = {
     /** 列 id */
     id: string;
@@ -727,6 +797,7 @@ declare namespace VIS {
   };
 
   type PivotQueryResponse = {
+    queryMeta?: QueryMeta;
     /** 行维字段 */
     rowFields: string[];
     /** 列维字段 */
@@ -812,6 +883,7 @@ declare namespace VIS {
   };
 
   type QueryDataResponse = {
+    queryMeta?: QueryMeta;
     /** 列名列表 */
     columns: string[];
     /** 数据行 */
@@ -826,6 +898,13 @@ declare namespace VIS {
     contrasts?: ContrastInfo[];
     /** 实际执行的 SQL */
     execSqls?: ExecSqlInfo[];
+  };
+
+  type QueryMeta = {
+    resultGeneratedAt?: string;
+    datasetId?: string;
+    datasetName?: string;
+    dataTime?: DataTime;
   };
 
   type QueryRequest = {
@@ -887,6 +966,24 @@ declare namespace VIS {
     data?: DatasetSourceChangeWarning;
   };
 
+  type RDataTime = {
+    /** 200成功 */
+    code: number;
+    /** 提示 */
+    msg: string;
+    /** 数据 */
+    data?: DataTime;
+  };
+
+  type RDataTimeConfig = {
+    /** 200成功 */
+    code: number;
+    /** 提示 */
+    msg: string;
+    /** 数据 */
+    data?: DataTimeConfig;
+  };
+
   type RDateWindowResponse = {
     /** 200成功 */
     code: number;
@@ -905,6 +1002,10 @@ declare namespace VIS {
     data?: DebugSqlResponse;
   };
 
+  type recordReportVisitParams = {
+    dashboardId: string;
+  };
+
   type ReportNode = {
     /** id */
     id: string;
@@ -916,6 +1017,27 @@ declare namespace VIS {
     icon?: string;
     url?: string;
     nodeType?: string;
+  };
+
+  type ReportPreferenceRequest = {
+    dashboardId: string;
+    favorite?: boolean;
+    defaultViewId?: string;
+  };
+
+  type ResolvedView = {
+    viewId?: string;
+    viewName?: string;
+    stateJson?: string;
+    summary?: string;
+    revision?: number;
+    asOfDate?: string;
+  };
+
+  type ResolveViewRequest = {
+    dashboardId: string;
+    viewId?: string;
+    stateJson?: string;
   };
 
   type RListConfSqlFieldInfo = {
@@ -999,6 +1121,24 @@ declare namespace VIS {
     data?: ListResponseNameValue;
   };
 
+  type RListResponsePersonalReportInfo = {
+    /** 200成功 */
+    code: number;
+    /** 提示 */
+    msg: string;
+    /** 数据 */
+    data?: ListResponsePersonalReportInfo;
+  };
+
+  type RListResponsePersonalViewInfo = {
+    /** 200成功 */
+    code: number;
+    /** 提示 */
+    msg: string;
+    /** 数据 */
+    data?: ListResponsePersonalViewInfo;
+  };
+
   type RListResponseReportNode = {
     /** 200成功 */
     code: number;
@@ -1080,6 +1220,15 @@ declare namespace VIS {
     data?: PageResponseVisDashboardInfo;
   };
 
+  type RPersonalReportInfo = {
+    /** 200成功 */
+    code: number;
+    /** 提示 */
+    msg: string;
+    /** 数据 */
+    data?: PersonalReportInfo;
+  };
+
   type RPivotQueryResponse = {
     /** 200成功 */
     code: number;
@@ -1096,6 +1245,15 @@ declare namespace VIS {
     msg: string;
     /** 数据 */
     data?: QueryDataResponse;
+  };
+
+  type RResolvedView = {
+    /** 200成功 */
+    code: number;
+    /** 提示 */
+    msg: string;
+    /** 数据 */
+    data?: ResolvedView;
   };
 
   type RString = {
@@ -1144,6 +1302,8 @@ declare namespace VIS {
   };
 
   type SaveDashboardSubscriptionRequest = {
+    /** 筛选状态快照，省略时保留原订阅条件 */
+    viewStateJson?: string;
     /** 订阅id。新增不传 */
     id?: string;
     dashboardId: string;
@@ -1160,6 +1320,18 @@ declare namespace VIS {
     icon?: string;
     sortNum?: number;
     status?: string;
+  };
+
+  type saveDatasetDataTimeParams = {
+    datasetId: string;
+  };
+
+  type SavePersonalViewRequest = {
+    id?: string;
+    dashboardId: string;
+    viewName: string;
+    stateJson: string;
+    revision?: number;
   };
 
   type SchemaInfo = {
@@ -1190,6 +1362,10 @@ declare namespace VIS {
 
   type testDashboardSubscriptionParams = {
     subscriptionId: string;
+  };
+
+  type testDatasetDataTimeParams = {
+    datasetId: string;
   };
 
   type toggleCardStatusParams = {

@@ -23,6 +23,7 @@ import {
   isDashFlowMode,
   shouldDeferDashCardQuery,
 } from '../dashPresentation'
+import { DASH_QUERY_STATUS_KEY } from '../dashQueryStatus'
 import { DASH_CARD_QUERY_TRACKER_KEY } from '../dashQueryTracker'
 import { trackDashGlassPointer } from '../dashTheme'
 import { DASH_REFRESH_TICK } from '../useDashRefresh'
@@ -131,7 +132,7 @@ const datasetId = computed(() => {
   const id = String(props.card.query.datasetId || '')
   return id && id !== '0' ? id : ''
 })
-const { loading, error, data, pivotData, appliedQuery, run } = useVisCardQuery(() => ({
+const { loading, refreshing, error, refreshError, data, pivotData, appliedQuery, run } = useVisCardQuery(() => ({
   query: props.card.query,
   visual: props.card.visual,
   dashboardId: props.dashboardId || '0',
@@ -141,6 +142,21 @@ const { loading, error, data, pivotData, appliedQuery, run } = useVisCardQuery((
   showSql: props.showSql,
   enabled: !disabled.value && (needsDataset(props.card.visual.chartType) ? !!datasetId.value : true),
 }))
+
+const queryStatus = inject(DASH_QUERY_STATUS_KEY, undefined)
+watchEffect((onCleanup) => {
+  const cardId = props.cardId
+  onCleanup(() => queryStatus?.remove(cardId))
+  if (needsDataset(props.card.visual.chartType)) {
+    queryStatus?.update({
+      cardId: props.cardId,
+      name: props.card.name,
+      loading: refreshing.value,
+      error: error.value || refreshError.value,
+      meta: data.value.queryMeta || pivotData.value.queryMeta,
+    })
+  }
+})
 
 const displayQuery = computed(() => appliedQuery.value ?? props.card.query)
 const emptyText = computed(() => {
@@ -263,7 +279,7 @@ function onMenuAction(key: string) {
     <div
       ref="tileRef"
       class="dash-tile"
-      :data-dashboard-card-state="disabled ? 'unavailable' : error ? 'error' : loading || !queryRequested ? 'loading' : 'ready'"
+      :data-dashboard-card-state="disabled ? 'unavailable' : error || refreshError ? 'error' : refreshing || !queryRequested ? 'loading' : 'ready'"
       :class="{
         'is-editable': editable,
         'is-in-group': inGroup,
@@ -299,6 +315,8 @@ function onMenuAction(key: string) {
           :hide-title="hideTitle"
           :loading="loading || (deferQuery && !queryRequested)"
           :error="disabled ? '' : error"
+          :refresh-error="refreshError"
+          :refreshing="refreshing"
           :unavailable="disabled ? emptyText : ''"
           :empty-text="emptyText"
           :dashboard-id="dashboardId"

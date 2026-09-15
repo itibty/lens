@@ -3,19 +3,23 @@
 -->
 <script setup lang="ts">
 import DashViewer from '@/views/vis/dashboards/components/DashViewer.vue'
+import PersonalReports from './PersonalReports.vue'
 
 defineOptions({ name: 'ReportView' })
+
+const route = useRoute()
 </script>
 
 <template>
   <div class="report-page">
-    <DashViewer />
+    <DashViewer v-if="route.params.id" />
+    <PersonalReports v-else />
   </div>
 </template>
 
 <style scoped lang="scss">
 .report-page {
   height: 100%;
-  overflow: hidden;
+  overflow: auto;
 }
 </style>

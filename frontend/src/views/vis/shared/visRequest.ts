@@ -3,9 +3,13 @@ export const VIS_SHOW_SQL = { params: { SHOW_SQL: true } } as const
 
 /** 可视化查数：错误画在卡片上，不走全局 toast */
 export function visQueryOptions(showSql?: boolean) {
+  const runId = typeof window === 'undefined' ? null : new URL(window.location.href).searchParams.get('subscriptionRunId')
   return {
     showErrorMessage: false,
-    ...(showSql ? VIS_SHOW_SQL : {}),
+    params: {
+      ...(showSql ? { SHOW_SQL: true } : {}),
+      ...(runId ? { subscriptionRunId: runId } : {}),
+    },
   }
 }
 
