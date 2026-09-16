@@ -16,6 +16,7 @@ public final class PersonalReportDtos {
         @NotBlank @Size(max = 80) private String viewName;
         @NotBlank @Size(max = 32768) private String stateJson;
         private Integer revision;
+        @Size(max = 32768) private String bindingsJson;
     }
 
     @Getter @Setter
@@ -50,10 +51,12 @@ public final class PersonalReportDtos {
         @NotNull private Long dashboardId;
         private Long viewId;
         @Size(max = 32768) private String stateJson;
+        @Size(max = 32768) private String bindingsJson;
     }
 
     @Getter @Setter
     public static class ResolvedView {
+        private String bindingsJson;
         private Long viewId;
         private String viewName;
         private String stateJson;

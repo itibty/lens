@@ -43,6 +43,7 @@ public class SubscriptionRunViewService {
         var snapshot = states.snapshot(dashboard, run.getViewStateJson(), run.getViewBindingsJson());
         ResolvedView result = new ResolvedView();
         result.setStateJson(snapshot.stateJson());
+        result.setBindingsJson(snapshot.bindingsJson());
         result.setViewName("订阅运行视图");
         result.setAsOfDate(run.getAsOfDate());
         StringBuilder summary = new StringBuilder(snapshot.summary());

@@ -9,6 +9,7 @@ import lombok.Setter;
 @Setter
 public class DashboardSubscriptionInfo {
     private String viewStateJson;
+    private String viewBindingsJson;
     private Long id;
     private Long dashboardId;
     private String dashboardName;

@@ -147,7 +147,7 @@ function moveFocus(event: KeyboardEvent, offset: number) {
                   取消默认
                 </el-dropdown-item>
                 <el-dropdown-item command="share" divided>
-                  复制筛选链接
+                  复制视图链接
                 </el-dropdown-item>
                 <el-dropdown-item command="delete" divided class="personal-view-menu__delete">
                   删除视图

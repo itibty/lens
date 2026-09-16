@@ -91,7 +91,7 @@ public class DashboardSubscriptionService {
         }
         entity.setDashboardId(request.getDashboardId());
         if (request.getViewStateJson() != null) {
-            var snapshot = viewStates.snapshot(requireDashboard(request.getDashboardId()), request.getViewStateJson(), null);
+            var snapshot = viewStates.snapshot(requireDashboard(request.getDashboardId()), request.getViewStateJson(), request.getViewBindingsJson());
             entity.setViewStateJson(snapshot.stateJson());
             entity.setViewBindingsJson(snapshot.bindingsJson());
         } else if (entity.getViewStateJson() != null) {
@@ -237,6 +237,7 @@ public class DashboardSubscriptionService {
         info.setDashboardName(dashboard == null ? null : dashboard.getDashName());
         info.setSubscriptionName(row.getSubscriptionName());
         info.setViewStateJson(row.getViewStateJson());
+        info.setViewBindingsJson(row.getViewBindingsJson());
         info.setScheduleType(row.getScheduleType());
         info.setSchedule(readSchedule(row.getScheduleJson()));
         info.setTimezone(row.getTimezone());

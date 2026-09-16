@@ -1,7 +1,8 @@
 import type { InjectionKey } from 'vue'
 
 export interface DashCardQueryTracker {
-  track: <T>(task: Promise<T>) => Promise<T>
+  track: <T>(task: Promise<T>, owner?: symbol) => Promise<T>
+  forget: (owner: symbol) => void
   waitForIdle: (timeoutMs?: number) => Promise<void>
 }
 
@@ -9,32 +10,43 @@ export const DASH_CARD_QUERY_TRACKER_KEY: InjectionKey<DashCardQueryTracker>
   = Symbol('dash-card-query-tracker')
 
 export function createDashCardQueryTracker(): DashCardQueryTracker {
-  const pending = new Set<Promise<unknown>>()
+  const pending = new Map<symbol, { settled: Promise<void>, release: () => void }>()
 
-  function track<T>(task: Promise<T>): Promise<T> {
-    const tracked = task as Promise<unknown>
-    pending.add(tracked)
-    void tracked.then(
-      () => pending.delete(tracked),
-      () => pending.delete(tracked),
-    )
+  function forget(owner: symbol) {
+    pending.get(owner)?.release()
+  }
+
+  function track<T>(task: Promise<T>, owner = Symbol('card-query')): Promise<T> {
+    forget(owner)
+    let done!: () => void
+    const settled = new Promise<void>((resolve) => {
+      done = resolve
+    })
+    const entry = {
+      settled,
+      release: () => {
+        if (pending.get(owner) === entry)
+          pending.delete(owner)
+        done()
+      },
+    }
+    pending.set(owner, entry)
+    void task.then(entry.release, entry.release)
     return task
   }
 
   async function waitForIdle(timeoutMs = 15_000): Promise<void> {
     const timeout = Number.isFinite(timeoutMs) && timeoutMs > 0 ? timeoutMs : 15_000
     const deadline = Date.now() + timeout
-
-    // 让本轮响应式 watcher 先有机会注册查询。
     await Promise.resolve()
     while (pending.size) {
       const remaining = deadline - Date.now()
       if (remaining <= 0)
         throw new Error('等待看板数据超时')
-      const batch = Array.from(pending)
+      const batch = Array.from(pending.values(), entry => entry.settled)
       await new Promise<void>((resolve, reject) => {
         const timer = setTimeout(() => reject(new Error('等待看板数据超时')), remaining)
-        void Promise.allSettled(batch).then(() => {
+        void Promise.all(batch).then(() => {
           clearTimeout(timer)
           resolve()
         })
@@ -43,5 +55,5 @@ export function createDashCardQueryTracker(): DashCardQueryTracker {
     }
   }
 
-  return { track, waitForIdle }
+  return { track, forget, waitForIdle }
 }

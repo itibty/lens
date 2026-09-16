@@ -25,6 +25,7 @@ const props = withDefaults(defineProps<{
   dashboardId?: string
   dashboardName?: string
   viewStateJson?: string
+  viewBindingsJson?: string
   personalViews?: VIS.PersonalViewInfo[]
 }>(), {
   dashboardId: '',
@@ -382,6 +383,7 @@ defineExpose({ open })
     :dashboard-name="dashboardName"
     :recipient-email="recipientEmail"
     :current-state-json="viewStateJson"
+    :current-bindings-json="viewBindingsJson"
     :personal-views="personalViews"
     @saved="refresh"
   />

@@ -16,6 +16,8 @@ import DashInnerGrid from './DashInnerGrid.vue'
 const props = withDefaults(defineProps<{
   widget: DashGroupWidget
   cards: Record<string, VisCard>
+  activeTab?: string
+  tabsDisabled?: boolean
   dashboardId?: string
   editable?: boolean
   designActions?: boolean
@@ -29,6 +31,8 @@ const props = withDefaults(defineProps<{
   globalsOf?: (card: VisCard) => DashCardGlobals
 }>(), {
   dashboardId: '',
+  activeTab: undefined,
+  tabsDisabled: false,
   editable: false,
   designActions: false,
   resizing: false,
@@ -42,6 +46,7 @@ const props = withDefaults(defineProps<{
 })
 
 const emit = defineEmits<{
+  'selectTab': [cardId: string]
   'update:widget': [widget: DashGroupWidget]
   'configure': []
   'removeCard': [cardId: string]
@@ -54,25 +59,28 @@ const tabItems = computed(() =>
   props.widget.pages.flatMap((page) => {
     const cardId = page.items[0]?.cardId
     const card = cardId ? props.cards[cardId] : undefined
-    if (!cardId || !card)
+    if (!cardId)
       return []
     return [{
       cardId,
-      title: page.title?.trim() || card.name || cardId,
+      title: page.title?.trim() || card?.name || '卡片不可用',
     }]
   }),
 )
 
-const activeCardId = ref(tabItems.value[0]?.cardId ?? '')
-
-watch(
-  tabItems,
-  (tabs) => {
-    if (!tabs.some(tab => tab.cardId === activeCardId.value))
-      activeCardId.value = tabs[0]?.cardId ?? ''
+const localTab = ref('')
+const activeCardId = computed({
+  get: () => {
+    const selected = props.activeTab ?? localTab.value
+    return tabItems.value.some(tab => tab.cardId === selected) ? selected : tabItems.value[0]?.cardId ?? ''
   },
-  { immediate: true },
-)
+  set: (cardId: string) => {
+    if (props.tabsDisabled)
+      return
+    localTab.value = cardId
+    emit('selectTab', cardId)
+  },
+})
 
 const activeCard = computed(() => props.cards[activeCardId.value])
 
@@ -153,6 +161,7 @@ function onResizePointerDown(corner: 'nw' | 'ne' | 'sw' | 'se', event: PointerEv
             :class="{ 'is-active': activeCardId === tab.cardId }"
             :title="tab.title"
             :aria-pressed="activeCardId === tab.cardId"
+            :disabled="tabsDisabled"
             @pointerdown.stop
             @click="activeCardId = tab.cardId"
           >
@@ -176,6 +185,7 @@ function onResizePointerDown(corner: 'nw' | 'ne' | 'sw' | 'se', event: PointerEv
     <div class="dash-group__body" :class="{ 'is-tab': widget.mode === 'tabs' }">
       <DashCardTile
         v-if="widget.mode === 'tabs' && activeCard"
+        :key="activeCardId"
         :card="activeCard"
         :dashboard-id="dashboardId"
         :card-id="activeCardId"
@@ -196,8 +206,9 @@ function onResizePointerDown(corner: 'nw' | 'ne' | 'sw' | 'se', event: PointerEv
       <div
         v-else-if="widget.mode === 'tabs'"
         class="dash-group__empty"
+        :data-dashboard-card-state="activeCardId ? 'unavailable' : undefined"
       >
-        {{ emptyText }}
+        {{ activeCardId ? '卡片暂不可用' : emptyText }}
       </div>
       <DashInnerGrid
         v-else

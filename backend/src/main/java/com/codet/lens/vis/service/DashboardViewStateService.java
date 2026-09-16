@@ -5,6 +5,7 @@ import com.codet.lens.common.base.Status;
 import com.codet.lens.vis.entity.VisDashboard;
 import com.codet.lens.vis.dto.item.FilterItem;
 import com.codet.lens.vis.mapper.VisDatasetMapper;
+import com.codet.lens.vis.mapper.VisCardMapper;
 import com.codet.lens.vis.mapper.VisDatasetFieldMapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.codet.lens.vis.entity.VisDatasetField;
@@ -22,40 +23,47 @@ import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-/** 查看状态只允许当前看板定义内的筛选值；绑定含义改变时拒绝悄悄放宽条件。 */
+/** 按当前报表定义恢复查看状态，失效项逐项使用公共缺省。 */
 @Service
 @RequiredArgsConstructor
 public class DashboardViewStateService {
     private static final ObjectMapper JSON = new ObjectMapper();
     private final VisDatasetMapper datasets;
     private final VisDatasetFieldMapper fields;
+    private final VisCardMapper cards;
     public record Snapshot(String stateJson, String bindingsJson, String summary) {}
 
     public Snapshot snapshot(VisDashboard dashboard, String stateJson, String bindingsJson) {
-        ObjectNode state = stateJson == null ? JSON.createObjectNode().put("schemaVersion", 1) : object(stateJson);
-        if (!state.path("schemaVersion").isIntegralNumber() || state.path("schemaVersion").asInt() != 1) throw ResultException.fail("暂不支持此版本的个人视图");
+        ObjectNode state = stateJson == null ? JSON.createObjectNode().put("schemaVersion", 2) : object(stateJson);
+        int version = state.path("schemaVersion").asInt();
+        if (!state.path("schemaVersion").isIntegralNumber() || (version != 1 && version != 2))
+            throw ResultException.fail("暂不支持此版本的个人视图");
         state.fieldNames().forEachRemaining(key -> {
-            if (!Set.of("schemaVersion", "filters").contains(key)) throw ResultException.fail("视图包含暂不支持的状态");
+            if (!(version == 1 ? Set.of("schemaVersion", "filters") : Set.of("schemaVersion", "filters", "tabs")).contains(key))
+                throw ResultException.fail("视图包含暂不支持的状态");
         });
         JsonNode requested = state.path("filters");
         if (!requested.isMissingNode() && !requested.isObject()) throw ResultException.fail("筛选状态必须是对象");
-        Map<String, JsonNode> defs = definitions(dashboard);
-        requested.fieldNames().forEachRemaining(uid -> {
-            if (!defs.containsKey(uid)) throw ResultException.fail("视图需要更新：筛选器已删除");
-        });
+        JsonNode requestedTabs = state.path("tabs");
+        if (!requestedTabs.isMissingNode() && !requestedTabs.isObject()) throw ResultException.fail("Tab 状态必须是对象");
         ObjectNode bindings = JSON.createObjectNode();
         ObjectNode values = JSON.createObjectNode();
         ObjectNode savedBindings = bindingsJson == null ? null : object(bindingsJson);
         List<String> summary = new ArrayList<>();
-        for (var entry : defs.entrySet()) {
+        for (var entry : definitions(dashboard).entrySet()) {
             String uid = entry.getKey();
             JsonNode def = entry.getValue();
             ObjectNode signature = signature(def);
+            // 不可用的筛选不能继续生成查询条件；签名保留失效标记，恢复可用时再取默认值。
+            if (signature == null) {
+                bindings.putObject(uid).put("unavailable", true);
+                values.set(uid, emptyValue());
+                continue;
+            }
             bindings.set(uid, signature);
-            if (savedBindings != null && savedBindings.has(uid) && !signature.equals(savedBindings.get(uid)))
-                throw ResultException.fail("视图需要更新：" + label(def) + "的字段或类型已改变");
-            JsonNode value = requested.has(uid) ? requested.get(uid) : def.path("defaultValue");
-            ObjectNode normalized = normalize(def, value);
+            boolean compatible = savedBindings == null || !savedBindings.has(uid) || signature.equals(savedBindings.get(uid));
+            JsonNode value = compatible && requested.has(uid) ? requested.get(uid) : def.path("defaultValue");
+            ObjectNode normalized = normalizeOrDefault(def, value);
             values.set(uid, normalized);
             if (normalized.hasNonNull("valueExp")) summary.add(label(def) + "：" + expressionLabel(normalized));
             else if (!normalized.path("value").isEmpty()) {
@@ -64,12 +72,54 @@ public class DashboardViewStateService {
                 summary.add(label(def) + "：" + String.join("、", items));
             }
         }
-        if (savedBindings != null) savedBindings.fieldNames().forEachRemaining(uid -> {
-            if (!defs.containsKey(uid)) throw ResultException.fail("视图需要更新：筛选器已删除");
-        });
-        ObjectNode result = JSON.createObjectNode().put("schemaVersion", 1);
+        ObjectNode result = JSON.createObjectNode().put("schemaVersion", 2);
         result.set("filters", values);
-        return new Snapshot(result.toString(), bindings.toString(), summary.isEmpty() ? "未设置额外筛选" : String.join("；", summary));
+        result.set("tabs", resolveTabs(dashboard, requestedTabs, summary));
+        return new Snapshot(result.toString(), bindings.toString(), summary.isEmpty() ? "报表默认" : String.join("；", summary));
+    }
+
+    private static ObjectNode emptyValue() {
+        ObjectNode value = JSON.createObjectNode();
+        value.putArray("value");
+        return value;
+    }
+
+    private static ObjectNode normalizeOrDefault(JsonNode def, JsonNode raw) {
+        try { return normalize(def, raw.isNull() ? def.path("defaultValue") : raw); }
+        catch (ResultException invalidValue) {
+            try { return normalize(def, def.path("defaultValue")); }
+            catch (ResultException invalidDefault) { return emptyValue(); }
+        }
+    }
+
+    private ObjectNode resolveTabs(VisDashboard dashboard, JsonNode requested, List<String> summary) {
+        ObjectNode tabs = JSON.createObjectNode();
+        for (JsonNode widget : configuration(dashboard).path("widgets")) {
+            if (!"group".equals(widget.path("kind").asText()) || !"tabs".equals(widget.path("mode").asText())) continue;
+            String groupId = widget.path("id").asText();
+            if (groupId.isBlank()) continue;
+            Map<String, JsonNode> members = new LinkedHashMap<>();
+            for (JsonNode page : widget.path("pages")) {
+                String id = page.path("items").path(0).path("cardId").asText();
+                if (!id.matches("[1-9][0-9]{0,18}")) continue;
+                try { members.put(String.valueOf(Long.parseLong(id)), page); }
+                catch (NumberFormatException ignored) { /* 非法成员不参与恢复。 */ }
+            }
+            // 只读选中卡片；失效后依次尝试默认项，避免每次订阅查询都读取所有未展示 Tab。
+            var candidates = new java.util.LinkedHashSet<String>();
+            String selected = requested.path(groupId).path("activeCardId").asText();
+            if (members.containsKey(selected)) candidates.add(selected);
+            candidates.addAll(members.keySet());
+            for (String candidate : candidates) {
+                var card = cards.selectById(Long.parseLong(candidate));
+                if (card == null || Status.DEL.equals(card.getStatus())) continue;
+                tabs.putObject(groupId).put("activeCardId", candidate);
+                String title = members.get(candidate).path("title").asText("").trim();
+                summary.add(widget.path("title").asText("分组") + "：" + (title.isEmpty() ? card.getCardName() : title));
+                break;
+            }
+        }
+        return tabs;
     }
 
     public record Globals(List<FilterItem> filters, List<FilterItem> params) {}
@@ -108,13 +158,13 @@ public class DashboardViewStateService {
             result.put(key, def.path(key).asText(""));
         long datasetId = def.path("datasetId").asLong();
         var dataset = datasets.selectById(datasetId);
-        if (dataset == null || !Status.EBL.equals(dataset.getStatus())) throw ResultException.fail("筛选数据集不可用");
+        if (dataset == null || !Status.EBL.equals(dataset.getStatus())) return null;
         result.put("sourceId", String.valueOf(dataset.getSourceId()));
         var field = fields.selectOne(Wrappers.<VisDatasetField>lambdaQuery()
                 .eq(VisDatasetField::getDatasetId, datasetId).eq(VisDatasetField::getField, def.path("field").asText())
                 .eq(VisDatasetField::getStatus, Status.EBL).last("limit 1"));
         // 模板参数不一定是输出字段，但数据集来源仍必须一致。
-        if (field == null && !"param".equals(def.path("applyAs").asText())) throw ResultException.fail("筛选字段已不可用");
+        if (field == null && !"param".equals(def.path("applyAs").asText())) return null;
         result.put("dataType", field == null ? "PARAM" : field.getDataType());
         return result;
     }
@@ -176,16 +226,21 @@ public class DashboardViewStateService {
     private static String label(JsonNode def) { return def.path("label").asText(def.path("field").asText()); }
     static Map<String, JsonNode> definitions(VisDashboard dashboard) {
         Map<String, JsonNode> result = new LinkedHashMap<>();
-        JsonNode root;
-        try { root = JSON.readTree(dashboard.getConfigJson()); }
-        catch (Exception e) { throw ResultException.fail("看板配置格式无效"); }
-        if (root == null || !root.isObject()) throw ResultException.fail("看板配置格式无效");
+        JsonNode root = configuration(dashboard);
         for (JsonNode def : root.path("filters")) {
             String uid = def.path("uid").asText();
             if (uid.isBlank() || result.putIfAbsent(uid, def) != null) throw ResultException.fail("看板筛选定义无效");
         }
         return result;
     }
+    private static JsonNode configuration(VisDashboard dashboard) {
+        JsonNode root;
+        try { root = JSON.readTree(dashboard.getConfigJson()); }
+        catch (Exception e) { throw ResultException.fail("看板配置格式无效"); }
+        if (root == null || !root.isObject()) throw ResultException.fail("看板配置格式无效");
+        return root;
+    }
+
     public static ObjectNode object(String json) {
         try {
             if (json == null || json.length() > 32768) throw new IllegalArgumentException();

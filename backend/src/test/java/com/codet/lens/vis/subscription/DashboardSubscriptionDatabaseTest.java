@@ -222,6 +222,70 @@ class DashboardSubscriptionDatabaseTest {
         assertThrows(com.codet.lens.common.base.ResultException.class, () -> runViews.resolve(run.getId(), 900L));
     }
 
+    @Test
+    void savedTabsAndSubscriptionRunsUseDefaultsAfterRemovalWithoutRewritingOriginalState() throws Exception {
+        seedTabDashboard();
+        String state = """
+                {"schemaVersion":2,"filters":{"deleted-filter":{"value":["old"]}},"tabs":{"g":{"activeCardId":"990002"}}}
+                """;
+        var request = new com.codet.lens.vis.dto.dash.PersonalReportDtos.SavePersonalViewRequest();
+        request.setDashboardId(900L); request.setViewName("利润"); request.setStateJson(state);
+        Long viewId = personal.saveView(request);
+        String stored = jdbc.queryForObject("SELECT state_json FROM vis_dashboard_user_view WHERE id=?", String.class, viewId);
+        var resolve = new com.codet.lens.vis.dto.dash.PersonalReportDtos.ResolveViewRequest();
+        resolve.setDashboardId(900L); resolve.setViewId(viewId);
+        var json = new com.fasterxml.jackson.databind.ObjectMapper();
+        assertEquals("990002", json.readTree(personal.resolve(resolve).getStateJson()).at("/tabs/g/activeCardId").asText());
+        seedDue();
+        jdbc.update("UPDATE vis_dashboard_subscription SET view_state_json=?,view_bindings_json='{}' WHERE id=900", stored);
+        assertEquals(1, subscriptions.claimDue(System.currentTimeMillis()));
+        var run = runMapper.selectList(null).getFirst();
+        assertEquals("990002", json.readTree(run.getViewStateJson()).at("/tabs/g/activeCardId").asText());
+        jdbc.update("DELETE FROM vis_card WHERE id=990002");
+        var fallback = personal.resolve(resolve);
+        assertEquals("990001", json.readTree(fallback.getStateJson()).at("/tabs/g/activeCardId").asText());
+        assertEquals(stored, jdbc.queryForObject("SELECT state_json FROM vis_dashboard_user_view WHERE id=?", String.class, viewId));
+        assertEquals(1, jdbc.queryForObject("SELECT revision FROM vis_dashboard_user_view WHERE id=?", Integer.class, viewId));
+        runViews.freezeDate(run);
+        assertEquals("990001", json.readTree(runViews.resolve(run.getId(), 900L).getStateJson()).at("/tabs/g/activeCardId").asText());
+        assertEquals("EBL", jdbc.queryForObject("SELECT status FROM vis_dashboard_subscription WHERE id=900", String.class));
+        assertEquals(run.getViewStateJson(), runMapper.selectById(run.getId()).getViewStateJson());
+    }
+
+    @Test
+    void editingScheduleKeepsLegacyContentButUpdatingContentSavesSelectedTabs() throws Exception {
+        seedTabDashboard();
+        seedDue();
+        String legacy = "{\"schemaVersion\":1,\"filters\":{}}";
+        jdbc.update("UPDATE vis_dashboard_subscription SET view_state_json=?,view_bindings_json='{}' WHERE id=900", legacy);
+        String original = jdbc.queryForObject("SELECT view_state_json FROM vis_dashboard_subscription WHERE id=900", String.class);
+        var request = new com.codet.lens.vis.dto.subscription.SaveDashboardSubscriptionRequest();
+        request.setId(900L); request.setDashboardId(900L); request.setSubscriptionName("新计划");
+        request.setScheduleType("DAILY");
+        var schedule = new com.codet.lens.vis.dto.subscription.DashboardSubscriptionSchedule();
+        schedule.setTime("10:00"); request.setSchedule(schedule);
+        subscriptions.save(request);
+        assertEquals(original, jdbc.queryForObject("SELECT view_state_json FROM vis_dashboard_subscription WHERE id=900", String.class));
+        request.setViewStateJson("""
+                {"schemaVersion":2,"filters":{},"tabs":{"g":{"activeCardId":"990002"}}}
+                """);
+        request.setViewBindingsJson("{}");
+        subscriptions.save(request);
+        var json = new com.fasterxml.jackson.databind.ObjectMapper();
+        var stored = json.readTree(jdbc.queryForObject("SELECT view_state_json FROM vis_dashboard_subscription WHERE id=900", String.class));
+        assertEquals(2, stored.path("schemaVersion").asInt());
+        assertEquals("990002", stored.at("/tabs/g/activeCardId").asText());
+    }
+
+    private void seedTabDashboard() {
+        jdbc.update("DELETE FROM vis_card WHERE id IN (990001,990002)");
+        jdbc.update("INSERT INTO vis_card(id,card_name,chart_type,query_json,visual_json) VALUES(990001,'营收','number','{}','{}'),(990002,'利润','number','{}','{}')");
+        jdbc.update("UPDATE vis_dashboard SET config_json=? WHERE id=900", """
+                {"filters":[],"widgets":[{"kind":"group","id":"g","title":"经营","mode":"tabs","pages":[
+                  {"id":"p1","items":[{"cardId":"990001"}]},{"id":"p2","items":[{"cardId":"990002"}]}]}]}
+                """);
+    }
+
     private long seedDue() {
         long due = System.currentTimeMillis() - 60_000;
         jdbc.update("""

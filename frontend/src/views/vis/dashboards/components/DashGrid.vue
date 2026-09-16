@@ -5,6 +5,7 @@
 import type { Layout } from 'grid-layout-plus'
 import type { CSSProperties } from 'vue'
 import type { DashCardGlobals } from '../dashApi'
+import type { DashTabValues } from '../dashboardViewState'
 import type {
   DashGroupWidget,
   DashLayoutRect,
@@ -39,6 +40,8 @@ import DashGroupTile from './DashGroupTile.vue'
 import DashTextTile from './DashTextTile.vue'
 
 const props = withDefaults(defineProps<{
+  tabs?: DashTabValues
+  tabsDisabled?: boolean
   cards: Record<string, VisCard>
   dashboardId?: string
   editable?: boolean
@@ -51,6 +54,8 @@ const props = withDefaults(defineProps<{
   globalsOf?: (card: VisCard) => DashCardGlobals
 }>(), {
   dashboardId: '',
+  tabs: undefined,
+  tabsDisabled: false,
   editable: false,
   designActions: false,
   allowFullscreen: false,
@@ -62,6 +67,7 @@ const props = withDefaults(defineProps<{
 })
 
 const emit = defineEmits<{
+  selectTab: [groupId: string, cardId: string]
   remove: [cardId: string]
   detach: [cardId: string]
   moveToGroup: [cardId: string]
@@ -315,6 +321,8 @@ onBeforeUnmount(() => {
         <DashGroupTile
           v-else-if="item.widget.kind === 'group'"
           :widget="item.widget"
+          :active-tab="tabs?.[item.widget.id]?.activeCardId"
+          :tabs-disabled="tabsDisabled"
           :cards="cards"
           :dashboard-id="dashboardId"
           :editable="editable"
@@ -325,6 +333,7 @@ onBeforeUnmount(() => {
           :data-tick="dataTick"
           :flow-mode="flowMode"
           :globals-of="globalsOf"
+          @select-tab="emit('selectTab', item.widget.id, $event)"
           @update:widget="onUpdateGroup"
           @configure="emit('configureGroup', item.widget.id)"
           @remove-card="emit('remove', $event)"
@@ -400,6 +409,8 @@ onBeforeUnmount(() => {
         <DashGroupTile
           v-else-if="widget.kind === 'group'"
           :widget="widget"
+          :active-tab="tabs?.[widget.id]?.activeCardId"
+          :tabs-disabled="tabsDisabled"
           :cards="cards"
           :dashboard-id="dashboardId"
           :editable="editable"
@@ -411,6 +422,7 @@ onBeforeUnmount(() => {
           :stacked="stacked"
           :globals-of="globalsOf"
           :resizing="interact.resizingId.value === String(item.i)"
+          @select-tab="emit('selectTab', widget.id, $event)"
           @update:widget="onUpdateGroup"
           @configure="emit('configureGroup', widget.id)"
           @remove-card="emit('remove', $event)"

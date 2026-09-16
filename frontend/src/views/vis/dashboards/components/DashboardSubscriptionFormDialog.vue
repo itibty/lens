@@ -11,6 +11,7 @@ const props = withDefaults(defineProps<{
   dashboardName?: string
   recipientEmail?: string
   currentStateJson?: string
+  currentBindingsJson?: string
   personalViews?: VIS.PersonalViewInfo[]
 }>(), {
   dashboardId: '',
@@ -28,10 +29,12 @@ const editing = ref(false)
 const saveError = ref('')
 const contentMode = ref('current')
 const contentState = ref<string>()
+const contentBindings = ref<string>()
 const contentSummary = ref('')
 const contentError = ref('')
 const contentLoading = ref(false)
 const currentSnapshot = ref<string>()
+const currentBindings = ref<string>()
 let contentRequest = 0
 
 const formRef = ref<FormInstance>()
@@ -54,28 +57,35 @@ async function previewContent() {
   contentLoading.value = true
   contentError.value = ''
   contentState.value = undefined
+  contentBindings.value = undefined
   if (contentMode.value === 'keep' && !form.value.viewStateJson) {
-    contentSummary.value = '报表默认筛选'
+    contentSummary.value = '报表默认视图'
     contentLoading.value = false
     return
   }
   try {
     const payload: VIS.ResolveViewRequest = { dashboardId: props.dashboardId }
-    if (contentMode.value === 'keep')
+    if (contentMode.value === 'keep') {
       payload.stateJson = form.value.viewStateJson
-    else if (contentMode.value === 'current')
+      payload.bindingsJson = form.value.viewBindingsJson
+    }
+    else if (contentMode.value === 'current') {
       payload.stateJson = currentSnapshot.value
-    else if (contentMode.value.startsWith('view:'))
+      payload.bindingsJson = currentBindings.value
+    }
+    else if (contentMode.value.startsWith('view:')) {
       payload.viewId = contentMode.value.slice(5)
+    }
     const response = await resolvePersonalView(payload, { showErrorMessage: false })
     if (request === contentRequest && currentSession === session) {
       contentState.value = response.data?.stateJson
+      contentBindings.value = response.data?.bindingsJson
       contentSummary.value = response.data?.summary || '报表默认条件'
     }
   }
   catch (e) {
     if (request === contentRequest && currentSession === session)
-      contentError.value = subscriptionErrorMessage(e, '筛选条件不可用，请重新选择')
+      contentError.value = subscriptionErrorMessage(e, '视图暂不可用，请重试')
   }
   finally {
     if (request === contentRequest && currentSession === session)
@@ -103,12 +113,14 @@ function showDialog(row?: VIS.DashboardSubscriptionInfo) {
   saving.value = false
   saveError.value = ''
   currentSnapshot.value = props.currentStateJson
+  currentBindings.value = props.currentBindingsJson
   contentMode.value = row?.id ? 'keep' : 'current'
   if (row?.id) {
     editing.value = true
     form.value = {
       id: row.id,
       viewStateJson: row.viewStateJson,
+      viewBindingsJson: row.viewBindingsJson,
       dashboardId: row.dashboardId || props.dashboardId,
       subscriptionName: row.subscriptionName || defaultForm().subscriptionName,
       scheduleType: row.scheduleType || 'DAILY',
@@ -151,6 +163,7 @@ async function submit() {
     const payload = {
       ...form.value,
       viewStateJson: contentMode.value === 'keep' ? undefined : contentState.value,
+      viewBindingsJson: contentMode.value === 'keep' ? undefined : contentBindings.value,
       subscriptionName: form.value.subscriptionName.trim(),
       schedule: { ...form.value.schedule },
     }
@@ -214,14 +227,14 @@ defineExpose({ showDialog, close })
         <el-form-item label="订阅内容">
           <template #label>
             <span class="subscription-form-label">订阅内容
-              <el-tooltip :content="contentMode === 'keep' && !form.viewStateJson ? '跟随报表的默认筛选，随报表配置变化。' : '订阅会保存所选筛选，修改个人视图不会影响订阅。相对日期按发送当天计算。'" placement="top" :popper-style="{ maxWidth: '280px' }">
+              <el-tooltip :content="contentMode === 'keep' && !form.viewStateJson ? '跟随报表默认视图。' : '保存筛选和 Tab；相对日期按发送当天计算。'" placement="top" :popper-style="{ maxWidth: '280px' }">
                 <button type="button" class="subscription-form-help" aria-label="订阅内容说明"><span class="i-mingcute-question-line" /></button>
               </el-tooltip>
             </span>
           </template>
           <el-select v-model="contentMode" @change="previewContent">
-            <el-option v-if="editing" :label="form.viewStateJson ? '已保存的筛选' : '跟随默认视图'" value="keep" />
-            <el-option label="当前筛选" value="current" />
+            <el-option v-if="editing" :label="form.viewStateJson ? '已保存的内容' : '跟随默认视图'" value="keep" />
+            <el-option label="当前视图" value="current" />
             <el-option label="默认视图" value="default" />
             <el-option-group v-if="personalViews?.length" label="我的视图">
               <el-option v-for="view in personalViews" :key="view.id" :label="view.viewName" :value="`view:${view.id}`" />

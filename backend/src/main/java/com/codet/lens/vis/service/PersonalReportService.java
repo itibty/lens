@@ -78,7 +78,8 @@ public class PersonalReportService {
         // 同一用户/报表的视图写入使用偏好行串行化，保证数量上限和默认引用一致。
         ensure(dashboard.getId());
         VisDashboardUserView view = request.getId() == null ? new VisDashboardUserView() : lockOwned(request.getId(), dashboard.getId());
-        String bindings = java.util.Objects.equals(request.getStateJson(), view.getStateJson()) ? view.getBindingsJson() : null;
+        String bindings = java.util.Objects.equals(request.getStateJson(), view.getStateJson()) || request.getBindingsJson() == null
+                ? view.getBindingsJson() : request.getBindingsJson();
         var snapshot = states.snapshot(dashboard, request.getStateJson(), bindings);
         view.setUserId(user());
         view.setDashboardId(dashboard.getId());
@@ -127,9 +128,10 @@ public class PersonalReportService {
         VisDashboard dashboard = requireDashboard(request.getDashboardId());
         VisDashboardUserView view = request.getViewId() == null ? null : owned(request.getViewId(), dashboard.getId());
         var snapshot = states.snapshot(dashboard, view == null ? request.getStateJson() : view.getStateJson(),
-                view == null ? null : view.getBindingsJson());
+                view == null ? request.getBindingsJson() : view.getBindingsJson());
         ResolvedView result = new ResolvedView();
         result.setStateJson(snapshot.stateJson());
+        result.setBindingsJson(snapshot.bindingsJson());
         result.setSummary(snapshot.summary());
         if (view != null) {
             result.setViewId(view.getId()); result.setViewName(view.getViewName()); result.setRevision(view.getRevision());

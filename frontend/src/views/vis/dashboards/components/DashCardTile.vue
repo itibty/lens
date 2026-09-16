@@ -81,6 +81,8 @@ const presentationMode = inject(DASH_PRESENTATION_MODE_KEY, computed(() => 'auto
 const lazyCardQueries = inject(DASH_LAZY_CARD_QUERIES_KEY, false)
 const eagerCardQueries = inject(DASH_EAGER_CARD_QUERIES_KEY, readonly(ref(false)))
 const queryTracker = inject(DASH_CARD_QUERY_TRACKER_KEY, null)
+const queryOwner = Symbol('card-query')
+onScopeDispose(() => queryTracker?.forget(queryOwner))
 const deferQuery = computed(() =>
   shouldDeferDashCardQuery(lazyCardQueries, eagerCardQueries.value),
 )
@@ -201,7 +203,7 @@ async function runWhenReady(options?: { silent?: boolean }) {
   queryPending.value = false
   queryRequested.value = true
   const task = run(options)
-  await (queryTracker?.track(task) ?? task)
+  await (queryTracker?.track(task, queryOwner) ?? task)
 }
 
 watch([queryFp, refreshTick], () => {

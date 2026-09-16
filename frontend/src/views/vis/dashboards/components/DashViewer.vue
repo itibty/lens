@@ -19,7 +19,6 @@ import {
   isVisDisabled,
   loadDashboardWidgets,
 } from '../dashApi'
-import { useDashFilterUrl } from '../dashFilterQuery'
 import {
   DASH_EAGER_CARD_QUERIES_KEY,
   DASH_LAZY_CARD_QUERIES_KEY,
@@ -37,6 +36,7 @@ import {
   isDashGlassTheme,
   resolveDashTheme,
 } from '../dashTheme'
+import { useDashViewUrl } from '../dashViewQuery'
 import { assertSubscriptionScreenshotReady } from '../subscriptionScreenshot'
 import { useDashboardViewState } from '../useDashboardViewState'
 import { useDashChromeScroll } from '../useDashChromeScroll'
@@ -88,19 +88,16 @@ const glassTheme = computed(() => isDashGlassTheme(theme.value))
 provide(LENS_THEME_KEY, computed(() => resolveDashTheme(theme.value).theme))
 const { refreshCards, refreshTick } = useDashRefresh()
 const { chromeHidden, onCanvasScroll, revealChrome } = useDashChromeScroll()
-const personal = reactive(useDashboardViewState(filters, filterValues))
-const { pauseFilterUrl, resumeFilterUrl } = useDashFilterUrl(
-  filters,
-  filterValues,
-  () => !dashDisabled.value && !emptyText.value,
-)
+const viewState = useDashboardViewState(filters, filterValues, widgets)
+const personal = reactive(viewState)
+const { pause: pauseViewUrl, resume: resumeViewUrl } = useDashViewUrl(viewState.stateJson, viewState.bindingsJson)
 const capturing = ref(false)
 const generatedAt = ref('')
 const refreshing = computed(() => Object.values(queryStatus.cards.value).some(card => card.loading))
 const refreshFailed = computed(() => Object.values(queryStatus.cards.value).filter(card => card.error).length)
-watch(() => personal.ready, (ready) => {
+watch(() => [personal.ready, personal.runDate] as const, ([ready]) => {
   if (ready)
-    resumeFilterUrl()
+    resumeViewUrl()
 })
 const screenshotStatus = ref('idle')
 const screenshotError = ref('')
@@ -122,7 +119,7 @@ async function shareCurrentView() {
   try {
     await nextTick()
     await navigator.clipboard.writeText(window.location.href)
-    showToast('已复制当前筛选链接')
+    showToast('已复制当前视图链接')
   }
   catch { showToast('复制失败，请复制浏览器地址栏链接', 'error') }
 }
@@ -178,7 +175,7 @@ let loadRequestId = 0
 async function loadDashboard(id: string) {
   const currentRequestId = ++loadRequestId
   if (!id) {
-    pauseFilterUrl()
+    pauseViewUrl()
     resetViewer()
     emptyText.value = '请从左侧选择报表'
     loading.value = false
@@ -188,7 +185,7 @@ async function loadDashboard(id: string) {
   loading.value = true
   personal.ready = false
   queryStatus.cards.value = {}
-  pauseFilterUrl()
+  pauseViewUrl()
   try {
     const res = await vis.query.getDashboardDetail({ dashboardId: id })
     if (currentRequestId !== loadRequestId)
@@ -227,7 +224,7 @@ async function loadDashboard(id: string) {
       if (currentRequestId !== loadRequestId)
         return
       if (personal.ready)
-        resumeFilterUrl()
+        resumeViewUrl()
     }
     applyPageTitle()
   }
@@ -286,7 +283,7 @@ async function onScreenshot() {
 }
 
 watch(
-  () => [routeDashboardId(), route.query.f, route.query.viewId, route.query.subscriptionRunId],
+  () => [routeDashboardId(), route.query.f, route.query.vs, route.query.viewId, route.query.subscriptionRunId],
   () => {
     void loadDashboard(routeDashboardId())
   },
@@ -315,6 +312,7 @@ watch(
       <div
         v-if="!emptyText"
         class="viewer__chrome"
+        :inert="capturing"
         :class="{ 'is-off': chromeHidden }"
       >
         <DashFilterBar
@@ -358,7 +356,7 @@ watch(
           </el-button>
         </div>
         <div v-if="personal.runDate" class="viewer__run-info">
-          <el-tooltip content="使用本次订阅的筛选和日期重新查询当前数据" :disabled="capturing">
+          <el-tooltip content="使用本次订阅的视图和日期重新查询当前数据" :disabled="capturing">
             <span class="viewer__run-label">订阅视图</span>
           </el-tooltip>
           <span>{{ personal.summary }}</span>
@@ -383,12 +381,15 @@ watch(
           v-else-if="personal.ready && !loading"
           v-model:widgets="widgets"
           :cards="cardMap"
+          :tabs="personal.tabs"
+          :tabs-disabled="capturing || personal.busy || !!personal.runDate"
           :dashboard-id="dashboardId"
           :globals-of="globalsOf"
           :data-tick="refreshTick"
           :presentation-mode="presentationMode"
           allow-fullscreen
           auto-refresh
+          @select-tab="(groupId, cardId) => personal.tabs[groupId] = { activeCardId: cardId }"
         />
       </div>
     </el-scrollbar>
@@ -398,6 +399,7 @@ watch(
     :dashboard-id="dashboardId"
     :dashboard-name="name"
     :view-state-json="personal.stateJson"
+    :view-bindings-json="personal.bindingsJson"
     :personal-views="personal.views"
   />
 </template>

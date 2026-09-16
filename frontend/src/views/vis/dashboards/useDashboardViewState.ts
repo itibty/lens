@@ -1,14 +1,17 @@
 import type { Ref } from 'vue'
 import type { LocationQuery } from 'vue-router'
 import type { DashFilterValues, VisDashFilterDef } from './dashApi'
+import type { DashTabValues } from './dashboardViewState'
+import type { DashWidget } from './dashLayout'
 import { computed, onScopeDispose, ref } from 'vue'
 import { getSubscriptionRunView } from '@/apis/vis/dashboardSubscription'
 import * as api from '@/apis/vis/personalReport'
-import { s2o, showToast } from '@/utils'
+import { showToast } from '@/utils'
 import { apiErrorMessage } from '@/views/vis/shared/visRequest'
-import { captureViewState, parseViewState } from './dashboardViewState'
+import { captureViewState, parseViewState, resolveTabValues } from './dashboardViewState'
+import { explicitViewRequest } from './dashViewQuery'
 
-export function useDashboardViewState(defs: Ref<VisDashFilterDef[]>, values: Ref<DashFilterValues>) {
+export function useDashboardViewState(defs: Ref<VisDashFilterDef[]>, values: Ref<DashFilterValues>, widgets: Ref<DashWidget[]> = ref([])) {
   const dashboardId = ref('')
   const preference = ref<VIS.PersonalReportInfo>({})
   const views = ref<VIS.PersonalViewInfo[]>([])
@@ -20,8 +23,10 @@ export function useDashboardViewState(defs: Ref<VisDashFilterDef[]>, values: Ref
   const ready = ref(false)
   const busy = ref(false)
   const baseline = ref('')
+  const tabs = ref<DashTabValues>({})
+  const bindingsJson = ref('{}')
   let session = 0
-  const stateJson = computed(() => JSON.stringify(captureViewState(defs.value, values.value)))
+  const stateJson = computed(() => JSON.stringify(captureViewState(defs.value, values.value, resolveTabValues(widgets.value, tabs.value))))
   const dirty = computed(() => ready.value && stateJson.value !== baseline.value)
   const selected = computed(() => views.value.find(view => view.id === selectedId.value))
   const options = { showErrorMessage: false }
@@ -29,7 +34,10 @@ export function useDashboardViewState(defs: Ref<VisDashFilterDef[]>, values: Ref
   function apply(result: VIS.ResolvedView) {
     if (!result.stateJson)
       throw new Error('没有可恢复的查看状态')
-    values.value = parseViewState(result.stateJson).filters
+    const state = parseViewState(result.stateJson)
+    values.value = state.filters
+    tabs.value = resolveTabValues(widgets.value, state.tabs)
+    bindingsJson.value = result.bindingsJson || '{}'
     selectedId.value = result.viewId || ''
     linked.value = false
     summary.value = result.summary || ''
@@ -67,11 +75,9 @@ export function useDashboardViewState(defs: Ref<VisDashFilterDef[]>, values: Ref
         preference.value = pref.data || {}
         views.value = list.data?.list || []
         const request: VIS.ResolveViewRequest = { dashboardId: id }
-        if (queryString('f')) {
-          const filters = s2o(queryString('f'))
-          if (!filters || typeof filters !== 'object' || Array.isArray(filters))
-            throw new Error('链接中的筛选条件无效')
-          request.stateJson = JSON.stringify({ schemaVersion: 1, filters })
+        const explicit = explicitViewRequest(query)
+        if (explicit) {
+          Object.assign(request, explicit)
         }
         else if (queryString('viewId')) {
           request.viewId = queryString('viewId')
@@ -84,7 +90,7 @@ export function useDashboardViewState(defs: Ref<VisDashFilterDef[]>, values: Ref
       if (current !== session)
         return
       apply(response.data || {})
-      linked.value = !queryString('subscriptionRunId') && !!queryString('f')
+      linked.value = !queryString('subscriptionRunId') && !!(queryString('vs') || queryString('f'))
       if (queryString('subscriptionScreenshot') !== '1')
         void api.recordReportVisit({ dashboardId: id }, options).catch(() => {})
     }
@@ -143,6 +149,7 @@ export function useDashboardViewState(defs: Ref<VisDashFilterDef[]>, values: Ref
         dashboardId: id,
         viewName: name,
         stateJson: saved,
+        bindingsJson: bindingsJson.value,
         id: old?.id,
         revision: old?.revision,
       }, options)
@@ -208,5 +215,5 @@ export function useDashboardViewState(defs: Ref<VisDashFilterDef[]>, values: Ref
   }
 
   onScopeDispose(() => session++)
-  return { preference, views, selectedId, selected, linked, summary, runDate, ready, busy, error, dirty, stateJson, load, choose, save, rename, remove, setDefault, favorite }
+  return { preference, views, selectedId, selected, linked, summary, runDate, ready, busy, error, dirty, stateJson, tabs, bindingsJson, load, choose, save, rename, remove, setDefault, favorite }
 }

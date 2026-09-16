@@ -126,6 +126,7 @@ declare namespace VIS {
 
   type DashboardSubscriptionInfo = {
     viewStateJson?: string;
+    viewBindingsJson?: string;
     id?: string;
     dashboardId?: string;
     dashboardName?: string;
@@ -1026,6 +1027,7 @@ declare namespace VIS {
   };
 
   type ResolvedView = {
+    bindingsJson?: string;
     viewId?: string;
     viewName?: string;
     stateJson?: string;
@@ -1038,6 +1040,7 @@ declare namespace VIS {
     dashboardId: string;
     viewId?: string;
     stateJson?: string;
+    bindingsJson?: string;
   };
 
   type RListConfSqlFieldInfo = {
@@ -1302,8 +1305,9 @@ declare namespace VIS {
   };
 
   type SaveDashboardSubscriptionRequest = {
-    /** 筛选状态快照，省略时保留原订阅条件 */
+    /** 筛选与 Tab 状态快照，省略时保留原订阅内容 */
     viewStateJson?: string;
+    viewBindingsJson?: string;
     /** 订阅id。新增不传 */
     id?: string;
     dashboardId: string;
@@ -1332,6 +1336,7 @@ declare namespace VIS {
     viewName: string;
     stateJson: string;
     revision?: number;
+    bindingsJson?: string;
   };
 
   type SchemaInfo = {
