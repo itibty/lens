@@ -6,6 +6,7 @@ import type { QueryIssue } from '../cardApi'
 import type { DragFieldPayload, MetricPill } from '@/views/vis/shared/dnd'
 import type { DatasetField, VisVisualConfig } from '@/views/vis/shared/types'
 import draggable from 'vuedraggable'
+import { remapSeriesAlias } from '@/views/vis/shared/chartSeriesStyle'
 import {
   contrastDisplayLabel,
   contrastMethodOptions,
@@ -179,9 +180,11 @@ function confirmDraft(element: MetricPill) {
     delete element.label
   else
     element.label = text
-  if (props.visual)
+  if (props.visual) {
     remapTableMarkAliases(props.visual, prevAlias, metricAlias(element))
-  if (props.allowContrast && draft.contrastEnabled) {
+    remapSeriesAlias(props.visual, prevAlias, metricAlias(element))
+  }
+  if ((props.allowContrast || element.contrast) && draft.contrastEnabled) {
     const contrast: VIS.ContrastConfig = {
       timeField: defaultTimeField(draft.timeField),
       calcMethod: syncContrastMethod(draft.valueExp, draft.calcMethod),
@@ -251,7 +254,7 @@ function pillError(uid: string) {
             tone="metric"
 
             drag-handle block
-            :popover-width="allowContrast ? 360 : 312"
+            :popover-width="allowContrast || element.contrast ? 360 : 312"
             @open="openDraft(element)"
             @confirm="confirmDraft(element)"
             @remove="removeAt(index)"
@@ -291,7 +294,7 @@ function pillError(uid: string) {
                   />
                 </el-form-item>
                 <el-form-item
-                  v-if="!allowContrast || !drafts[element._uid].contrastEnabled"
+                  v-if="!(allowContrast || element.contrast) || !drafts[element._uid].contrastEnabled"
                   :label="labelRequired(element._uid) ? '显示名' : '显示名（可选）'"
                 >
                   <el-input
@@ -300,7 +303,7 @@ function pillError(uid: string) {
                     :placeholder="labelRequired(element._uid) ? '必填' : '不填则使用字段名'"
                   />
                 </el-form-item>
-                <div v-if="allowContrast" class="contrast-group">
+                <div v-if="allowContrast || element.contrast" class="contrast-group">
                   <div class="contrast-group__head">
                     <span class="contrast-group__title">同比 / 环比</span>
                     <el-switch

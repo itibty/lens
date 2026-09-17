@@ -86,7 +86,10 @@ export function withChartTheme(spec: ISpec, lens: ThemeColors = LIGHT_THEME, use
       result.cell = { ...cell, style: { ...record(cell.style), stroke: lens.surface.panel } }
     }
     else {
-      result.color = [...lens.chart.series]
+      const sourceColor = record(source.color)
+      result.color = sourceColor.type === 'ordinal'
+        ? { ...sourceColor, range: [...lens.chart.series] }
+        : [...lens.chart.series]
     }
   }
 

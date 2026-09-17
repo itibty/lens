@@ -110,6 +110,11 @@ function handleEdit(row: VIS.VisCardInfo) {
   })
 }
 
+function handleCopy(row: VIS.VisCardInfo) {
+  if (row.id)
+    router.push({ name: 'VisCardEdit', query: { copyFrom: row.id } })
+}
+
 function handleViewRefs(row: VIS.VisCardInfo) {
   if (!row.id)
     return
@@ -243,7 +248,7 @@ onMounted(() => {
           </el-table-column>
           <el-table-column label="修改时间" prop="modifyAt" width="180" show-overflow-tooltip />
           <!-- @vue-generic {VIS.VisCardInfo} -->
-          <el-table-column label="操作" width="220" fixed="right">
+          <el-table-column label="操作" width="260" fixed="right">
             <template #default="{ row }">
               <el-button
                 size="small"
@@ -252,6 +257,9 @@ onMounted(() => {
                 @click="handleEdit(row)"
               >
                 编辑
+              </el-button>
+              <el-button v-if="states.permission.write" size="small" type="primary" link @click="handleCopy(row)">
+                复制
               </el-button>
               <el-button
                 v-if="states.permission.write"

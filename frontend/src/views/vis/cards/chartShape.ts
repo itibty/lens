@@ -1,5 +1,8 @@
-import type { DatasetField, VisQueryConfig, VisVisualConfig } from '@/views/vis/shared/types'
+import type { ChartType, DatasetField, VisQueryConfig, VisVisualConfig } from '@/views/vis/shared/types'
 import { getChartCatalogEntry } from '@/views/vis/charts/catalog'
+import { axisBoundsIssue } from '@/views/vis/shared/chartAxes'
+import { chartMetricAliases, isDualAxisEnabled, resolveSecondaryFields } from '@/views/vis/shared/chartOptions'
+import { supportsSeriesStyle } from '@/views/vis/shared/chartSeriesStyle'
 import { detailConfigIssue } from '@/views/vis/shared/detailConfig'
 import { incompleteFilterMessage } from '@/views/vis/shared/filterValue'
 import { hasKpiTarget } from '@/views/vis/shared/kpiCard'
@@ -11,7 +14,17 @@ function chartTypeOf(chartType?: string) {
   return String(chartType || 'table').toLowerCase()
 }
 
-/** 表格、指标卡可配同比/环比；其余图会在切换时清掉 */
+export function canPreserveChartQuery(from: string, to: string) {
+  return [from, to].every(type => ['bar', 'line', 'table'].includes(chartTypeOf(type)))
+}
+
+export function changeCardChartType(card: { query: VisQueryConfig, visual: VisVisualConfig }, next: ChartType) {
+  if (!canPreserveChartQuery(card.visual.chartType, next))
+    resetQueryShelves(card.query)
+  card.visual.chartType = next
+}
+
+/** 表格、指标卡可配同比/环比；其他图保留配置并报形状问题。 */
 export function allowContrastForChart(chartType?: string) {
   return getChartCatalogEntry(chartType)?.allowContrast ?? false
 }
@@ -20,7 +33,7 @@ export function listChartConstraints(chartType?: string): string[] {
   return [...(getChartCatalogEntry(chartType)?.constraints ?? ['请至少添加维度或指标'])]
 }
 
-export type QueryShelf = 'dataset' | 'dimensions' | 'rowDimensions' | 'colDimensions' | 'metrics' | 'filters' | 'having' | 'content' | 'detail'
+export type QueryShelf = 'dataset' | 'dimensions' | 'rowDimensions' | 'colDimensions' | 'metrics' | 'filters' | 'having' | 'content' | 'detail' | 'appearance'
 
 export interface QueryIssue {
   message: string
@@ -132,6 +145,20 @@ export function collectQueryIssues(
   const issues: QueryIssue[] = []
   const type = chartTypeOf(chartType)
 
+  if (supportsSeriesStyle(type)) {
+    const aliases = chartMetricAliases(query)
+    const dual = isDualAxisEnabled(visual, type, aliases)
+    const percent = type === 'bar' && visual?.chart?.stacked && visual.chart.percent && !dual
+    const secondary = dual ? resolveSecondaryFields(visual, aliases, type) : []
+    for (const role of ['primary', 'secondary'] as const) {
+      if (percent || (role === 'secondary' ? !secondary.length : secondary.length === aliases.length))
+        continue
+      const message = axisBoundsIssue(visual?.chart?.axes?.[role])
+      if (message)
+        issues.push(issue('appearance', `${role === 'primary' ? '主' : '副'}数值轴：${message}`))
+    }
+  }
+
   if (isStaticChart(type)) {
     const message = staticContentError(type, visual)
     if (message)
@@ -215,6 +242,8 @@ export function collectQueryIssues(
     const label = type === 'bar' ? '柱状图' : '折线图'
     if (dims.length < cardinality.dimensions.min)
       issues.push(issue('dimensions', `${label}至少需要 1 个维度`))
+    if (dims.length > 2)
+      markExtras(issues, 'dimensions', `${label}最多支持 2 个维度`, dims.slice(2) as Array<{ _uid?: string }>)
     if (regulars.length < cardinality.metrics.min)
       issues.push(issue('metrics', `${label}至少需要 1 个指标`))
     if (regulars.length > 1 && dims.length > 1)

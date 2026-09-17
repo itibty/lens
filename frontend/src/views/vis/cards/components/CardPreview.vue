@@ -26,6 +26,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   issues: [QueryIssue[]]
+  rows: [Record<string, unknown>[]]
 }>()
 /** 设计器预览占位：path 为 Long，服务层不使用 */
 const PREVIEW_DASHBOARD_ID = '0'
@@ -150,6 +151,7 @@ function onFeatureStyleFocusOut() {
 }
 
 function clearPreviewData() {
+  emit('rows', [])
   response.value = emptyQueryData()
   pivotResponse.value = emptyPivotData()
   execSqls.value = []
@@ -278,6 +280,7 @@ async function runPreview() {
     if (seq !== previewSeq)
       return
     response.value = result.data
+    emit('rows', result.data.rows ?? [])
     pivotResponse.value = result.pivotData
     execSqls.value = result.execSqls
     applyPreviewSnapshot(snapshotQuery, snapshotVisual)

@@ -12,12 +12,14 @@ import { useResizablePanel } from '@/hooks/resizablePanel'
 import { useAccountStore } from '@/stores/modules/account'
 import { showConfirm, showToast } from '@/utils/index'
 import MenuIconPicker from '@/views/permission/menu/components/MenuIconPicker.vue'
+import { copyName } from '@/views/vis/shared/copyName'
 import { apiErrorMessage } from '@/views/vis/shared/visRequest'
 import DashboardUsersDialog from './components/DashboardUsersDialog.vue'
 import DashDesigner from './components/DashDesigner.vue'
 import DashExplorerTree from './components/DashExplorerTree.vue'
 import DashGroupTreeSelect from './components/DashGroupTreeSelect.vue'
 import { FUNCTION_DASHBOARD_CONF } from './config'
+import { copyDashboard, saveDashboard } from './dashboardRepository'
 import { normalizeDashManageNodes, REPORT_CENTER_ID, ROOT_GROUP_ID, toStoreGroupId } from './dashManage'
 
 defineOptions({ name: 'VisDashboards' })
@@ -64,7 +66,9 @@ const groupRules: FormRules<VIS.SaveDashGroupRequest> = {
 }
 
 const dashboardDialogOpen = ref(false)
-const dashboardDialogMode = ref<'create' | 'edit'>('create')
+const dashboardDialogMode = ref<'create' | 'edit' | 'copy'>('create')
+const dashboardDialogTitle = computed(() => ({ create: '新增看板', edit: '编辑看板信息', copy: '复制看板' })[dashboardDialogMode.value])
+const dashboardConfirmText = computed(() => ({ create: '创建', edit: '保存', copy: '复制' })[dashboardDialogMode.value])
 const dashboardFormRef = ref<FormInstance>()
 const dashboardForm = reactive({
   id: '',
@@ -75,7 +79,7 @@ const dashboardForm = reactive({
   groupId: ROOT_GROUP_ID,
 })
 const dashboardRules: FormRules<typeof dashboardForm> = {
-  dashName: [{ required: true, trigger: 'blur', message: '请输入看板名称' }],
+  dashName: [{ required: true, whitespace: true, trigger: 'blur', message: '请输入看板名称' }],
 }
 
 const moveDialogOpen = ref(false)
@@ -278,16 +282,17 @@ function openCreateDashboard(groupId = ROOT_GROUP_ID) {
   dashboardDialogOpen.value = true
 }
 
-async function openEditDashboard(node: DashManageNode) {
+async function openDashboardDialog(node: DashManageNode, mode: 'edit' | 'copy') {
   const currentRequestId = ++detailRequestId
   actionLoading.value = true
   try {
     const res = await vis.query.getDashboardDetail({ dashboardId: node.id })
     if (currentRequestId !== detailRequestId || !res.data)
       return
-    dashboardDialogMode.value = 'edit'
+    dashboardDialogMode.value = mode
     dashboardForm.id = node.id
-    dashboardForm.dashName = res.data.dashName || node.name
+    const name = res.data.dashName || node.name
+    dashboardForm.dashName = mode === 'copy' ? copyName(name) : name
     dashboardForm.dashDesc = res.data.dashDesc || ''
     dashboardForm.icon = res.data.icon || node.icon || ''
     dashboardForm.status = res.data.status === 'DBL' ? 'DBL' : 'EBL'
@@ -303,63 +308,60 @@ async function openEditDashboard(node: DashManageNode) {
   }
 }
 
-function submitDashboard() {
-  dashboardFormRef.value?.validate(async (valid) => {
+async function submitDashboard() {
+  const form = dashboardFormRef.value
+  if (actionLoading.value || !canWrite || !form)
+    return
+  actionLoading.value = true
+  try {
+    const valid = await form.validate().catch(() => false)
     if (!valid)
       return
-    if (dashboardDialogMode.value === 'create') {
-      const canSwitch = !designerRef.value || await designerRef.value.beforeSwitch()
-      if (!canSwitch)
-        return
+    const mode = dashboardDialogMode.value
+    if (mode !== 'edit' && designerRef.value && !(await designerRef.value.beforeSwitch()))
+      return
+    const metadata = {
+      name: dashboardForm.dashName.trim(),
+      desc: dashboardForm.dashDesc.trim(),
+      icon: dashboardForm.icon || undefined,
+      status: dashboardForm.status,
+      groupId: toStoreGroupId(dashboardForm.groupId),
     }
-    actionLoading.value = true
-    try {
-      const groupId = toStoreGroupId(dashboardForm.groupId)
-      if (dashboardDialogMode.value === 'create') {
-        const res = await vis.dashboard.editDashboard({
-          dashName: dashboardForm.dashName.trim(),
-          dashDesc: dashboardForm.dashDesc.trim(),
-          icon: dashboardForm.icon || undefined,
-          status: dashboardForm.status,
-          groupId,
-          configJson: JSON.stringify({ widgets: [] }),
-          cards: [],
+    if (mode !== 'edit') {
+      const newId = mode === 'copy'
+        ? await copyDashboard(dashboardForm.id, metadata)
+        : await saveDashboard({ ...metadata, filters: [], widgets: [] })
+      dashboardDialogOpen.value = false
+      showToast(mode === 'copy' ? '复制成功' : '创建成功', 'success')
+      await refreshTree(newId, [], true)
+    }
+    else {
+      await vis.dashboard.editDashboardMeta({
+        id: dashboardForm.id,
+        dashName: metadata.name,
+        dashDesc: metadata.desc,
+        icon: metadata.icon,
+        groupId: metadata.groupId,
+      })
+      dashboardDialogOpen.value = false
+      if (dashboardForm.id === selectedId.value) {
+        designerRef.value?.updateMeta({
+          name: metadata.name,
+          desc: metadata.desc,
+          icon: metadata.icon || '',
+          groupId: metadata.groupId,
         })
-        const newId = res.data != null ? String(res.data) : ''
-        if (!newId)
-          throw new Error('创建看板失败')
-        dashboardDialogOpen.value = false
-        showToast(res.msg || '创建成功', 'success')
-        await refreshTree(newId, [], true)
       }
-      else {
-        await vis.dashboard.editDashboardMeta({
-          id: dashboardForm.id,
-          dashName: dashboardForm.dashName.trim(),
-          dashDesc: dashboardForm.dashDesc.trim(),
-          icon: dashboardForm.icon || undefined,
-          groupId,
-        })
-        dashboardDialogOpen.value = false
-        if (dashboardForm.id === selectedId.value) {
-          designerRef.value?.updateMeta({
-            name: dashboardForm.dashName.trim(),
-            desc: dashboardForm.dashDesc.trim(),
-            icon: dashboardForm.icon || '',
-            groupId,
-          })
-        }
-        showToast('保存成功', 'success')
-        await refreshTree(selectedId.value)
-      }
+      showToast('保存成功', 'success')
+      await refreshTree(selectedId.value)
     }
-    catch (e) {
-      showToast(apiErrorMessage(e, dashboardDialogMode.value === 'create' ? '创建看板失败' : '保存看板信息失败'), 'error')
-    }
-    finally {
-      actionLoading.value = false
-    }
-  })
+  }
+  catch (e) {
+    showToast(apiErrorMessage(e, dashboardDialogMode.value === 'copy' ? '复制看板失败' : '保存看板失败'), 'error')
+  }
+  finally {
+    actionLoading.value = false
+  }
 }
 
 function openMoveDashboard(node: DashManageNode) {
@@ -487,7 +489,9 @@ function onTreeCommand(command: ExplorerCommand, node: DashManageNode) {
   else if (command === 'delete-group')
     deleteGroup(node)
   else if (command === 'edit-dashboard')
-    void openEditDashboard(node)
+    void openDashboardDialog(node, 'edit')
+  else if (command === 'copy-dashboard')
+    void openDashboardDialog(node, 'copy')
   else if (command === 'move-dashboard')
     openMoveDashboard(node)
   else if (command === 'toggle-dashboard')
@@ -635,20 +639,27 @@ onMounted(() => {
 
     <CustomDialog
       v-model:visible="dashboardDialogOpen"
-      :title="dashboardDialogMode === 'create' ? '新增看板' : '编辑看板信息'"
+      :title="dashboardDialogTitle"
       size="mini"
       append-to-body
       cancel-text="取消"
-      :confirm-text="dashboardDialogMode === 'create' ? '创建' : '保存'"
+      :confirm-text="dashboardConfirmText"
       :confirm-loading="actionLoading"
-      :handler-cancel="() => dashboardDialogOpen = false"
+      :show-close="!actionLoading"
+      :close-on-click-modal="!actionLoading"
+      :close-on-press-escape="!actionLoading"
+      :handler-cancel="() => { if (!actionLoading) dashboardDialogOpen = false }"
       :handler-confirm="submitDashboard"
       @closed="dashboardFormRef?.clearValidate()"
     >
       <template #custom-dialog-body>
+        <p v-if="dashboardDialogMode === 'copy'" class="dashboard-copy-hint">
+          复制已保存的配置，复用原卡片；卡片修改同步生效。
+        </p>
         <el-form
           ref="dashboardFormRef"
           :model="dashboardForm"
+          :disabled="actionLoading"
           :rules="dashboardRules"
           label-position="top"
         >
@@ -675,7 +686,7 @@ onMounted(() => {
               show-word-limit
             />
           </el-form-item>
-          <el-form-item v-if="dashboardDialogMode === 'create'" label="状态">
+          <el-form-item v-if="dashboardDialogMode !== 'edit'" label="状态">
             <el-switch
               v-model="dashboardForm.status"
               inline-prompt
@@ -717,6 +728,12 @@ onMounted(() => {
 </template>
 
 <style scoped lang="scss">
+.dashboard-copy-hint {
+  margin: 0 0 16px;
+  color: var(--el-text-color-secondary);
+  font-size: 13px;
+}
+
 .dashboards-route {
   height: 100%;
   min-height: 0;

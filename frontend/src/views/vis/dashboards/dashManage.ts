@@ -6,6 +6,7 @@ export type ExplorerCommand
     | 'toggle-group'
     | 'delete-group'
     | 'edit-dashboard'
+    | 'copy-dashboard'
     | 'move-dashboard'
     | 'toggle-dashboard'
     | 'delete-dashboard'

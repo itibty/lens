@@ -6,6 +6,8 @@ import type {
   VisQueryConfig,
   VisVisualConfig,
 } from './types'
+import { sanitizeAxes } from './chartAxes'
+import { sanitizeSeriesStyles, supportsSeriesStyle } from './chartSeriesStyle'
 import { sanitizeMarkLines } from './markLine'
 import { isVChartType, metricAlias, regularMetrics } from './types'
 
@@ -374,7 +376,7 @@ export function isDualAxisEnabled(
 /** 落库时丢掉当前类型用不到的字段 / 空对象 */
 export function pruneChartVisual(
   visual: VisVisualConfig,
-  query?: Pick<VisQueryConfig, 'metrics'>,
+  query?: VisQueryConfig,
 ) {
   if (!isVChartType(visual.chartType) || !visual.chart) {
     delete visual.chart
@@ -382,6 +384,20 @@ export function pruneChartVisual(
   }
   const caps = chartCaps(visual.chartType)
   const next: VisChartOptions = { ...visual.chart }
+  if (supportsSeriesStyle(visual.chartType)) {
+    const rules = sanitizeSeriesStyles(next.seriesStyles, query)
+    if (rules.length)
+      next.seriesStyles = rules
+    else
+      delete next.seriesStyles
+    next.axes = sanitizeAxes(next.axes)
+    if (!next.axes)
+      delete next.axes
+  }
+  else {
+    delete next.seriesStyles
+    delete next.axes
+  }
   for (const [cap, fields] of Object.entries(CAP_FIELDS) as Array<[keyof ChartCaps, Array<keyof VisChartOptions>]>) {
     if (caps[cap])
       continue

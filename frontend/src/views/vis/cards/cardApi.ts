@@ -1,5 +1,6 @@
 import type { DimensionPill, FilterPill, MetricPill, OrderPill, ParamPill } from '@/views/vis/shared/dnd'
 import type { DatasetField, DatasetFieldDataType, VisCard, VisQueryConfig, VisVisualConfig } from '@/views/vis/shared/types'
+import { cloneDeep } from 'lodash-es'
 import { pruneAutoRefresh } from '@/views/vis/shared/cardRefresh'
 import { pruneCardChrome } from '@/views/vis/shared/cardTheme'
 import { pruneChartVisual } from '@/views/vis/shared/chartOptions'
@@ -100,7 +101,7 @@ export function fromVisCardInfo(info: VIS.VisCardInfo): VisCard {
 }
 
 function normalizeVisualForSave(visual: VisVisualConfig, query?: VisQueryConfig): VisVisualConfig {
-  const next = pruneStaticVisual({ ...visual })
+  const next = pruneStaticVisual(cloneDeep(visual))
   next.detail = needsDataset(next.chartType) ? normalizeDetailConfig(next.detail) : undefined
   pruneChartVisual(next, query)
   pruneCardChrome(next)

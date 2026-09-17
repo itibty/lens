@@ -10,6 +10,7 @@ import DetailSettings from './DetailSettings.vue'
 
 const props = defineProps<{
   mode: 'feature' | 'style'
+  rows?: Record<string, unknown>[]
   query?: VisQueryConfig
   fields?: DatasetField[]
   issues?: QueryIssue[]
@@ -42,6 +43,7 @@ const showEmpty = computed(() => !Form.value && !showDetailSettings.value)
       v-if="Form"
       v-model:visual="visual"
       :query="query"
+      :rows="rows"
       :fields="fields"
     />
     <DetailSettings v-if="showDetailSettings" v-model:visual="visual" :query="query" :fields="fields" :issues="issues" />

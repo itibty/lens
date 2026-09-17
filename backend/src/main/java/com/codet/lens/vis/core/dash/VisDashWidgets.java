@@ -70,6 +70,7 @@ public final class VisDashWidgets {
         for (JsonNode widget : widgets) {
             walkWidget(widget, ids, seen);
         }
+        validateCardDisplayOverrides(root.get("cardDisplayOverrides"), seen);
         try {
             return new PreparedConfig(MAPPER.writeValueAsString(root), List.copyOf(ids));
         } catch (JsonProcessingException e) {
@@ -104,6 +105,42 @@ public final class VisDashWidgets {
             return;
         }
         throw fail("不支持的布局节点: " + (kind.isEmpty() ? "(空)" : kind));
+    }
+
+    private static void validateCardDisplayOverrides(JsonNode overrides, Set<Long> cardIds) {
+        if (overrides == null) {
+            return;
+        }
+        if (!overrides.isObject()) {
+            throw fail("卡片显示设置必须是对象");
+        }
+        Set<String> members = new HashSet<>();
+        cardIds.forEach(id -> members.add(id.toString()));
+        overrides.fields().forEachRemaining(entry -> {
+            if (!members.contains(entry.getKey())) {
+                throw fail("卡片显示设置引用了看板外的卡片");
+            }
+            JsonNode display = entry.getValue();
+            if (!display.isObject()) {
+                throw fail("卡片显示设置必须是对象");
+            }
+            validateDisplayText(display, "title", 50);
+            validateDisplayText(display, "description", 200);
+        });
+    }
+
+    private static void validateDisplayText(JsonNode display, String field, int maxLength) {
+        JsonNode value = display.get(field);
+        if (value == null || value.isNull()) {
+            return;
+        }
+        if (!value.isTextual() || value.asText().isBlank()) {
+            throw fail("卡片显示设置 " + field + " 必须是非空字符串或 null");
+        }
+        if (value.asText().length() > maxLength) {
+            throw fail("卡片显示设置 " + field + " 不能超过 " + maxLength + " 个字符");
+        }
+        ((ObjectNode) display).put(field, value.asText().trim());
     }
 
     private static void sanitizeTextWidget(JsonNode widget) {

@@ -159,6 +159,14 @@ function waterfallLegendKey(spec: ISpec | null | undefined) {
   return names?.increase || ''
 }
 
+/** 数值轴的 domain 缓存在 scale 中，手动范围与自动范围切换时重建。 */
+function axisRangeKey(spec: ISpec | null | undefined) {
+  const axes = specRec(spec)?.axes
+  if (!Array.isArray(axes))
+    return ''
+  return JSON.stringify(axes.map(axis => [axis.orient, axis.type, axis.seriesId, axis.min, axis.max, axis.zero, axis.nice]))
+}
+
 /** updateSpec 清不掉的形态变化；新组件开关往这里加一项 */
 function remountKey(spec: ISpec | null | undefined) {
   if (!spec)
@@ -168,6 +176,7 @@ function remountKey(spec: ISpec | null | undefined) {
     tooltipVisible(spec) ? '1' : '0',
     lineCurveType(spec),
     stackSignature(spec),
+    axisRangeKey(spec),
     hasComponent(spec, 'scrollBar') ? 's' : '',
     hasComponent(spec, 'crosshair') ? 'c' : '',
     markLineKey(spec),

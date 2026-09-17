@@ -1,6 +1,7 @@
 import type { ISpec } from '@visactor/vchart'
 import type { VisVisualConfig } from './types'
 import { LIGHT_THEME, NEUTRAL } from '@/theme/tokens'
+import { applyAxisOptions } from './chartAxes'
 import {
   joinTreePath,
   TREE_CHILDREN,
@@ -19,6 +20,8 @@ import {
   resolveSecondaryFields,
 } from './chartOptions'
 import { isValueGradientTheme, pieGradientOrdinal, resolveChartSeriesColors, resolveChartThemeId, resolveHeatmapColorRange } from './chartPalette'
+import { supportsSeriesStyle } from './chartSeriesStyle'
+import { applySeriesStyleSpec } from './chartStyleSpec'
 import { formatMetricField } from './fieldStyle'
 import {
   defaultMarkLineField,
@@ -827,7 +830,7 @@ function applyChartLook(
 
   if (caps.dataLabel) {
     spec.label = { ...plainRecord(spec.label), visible: opt.dataLabel }
-    if (opt.dataLabel && opt.stacked)
+    if ((opt.dataLabel || visual?.chart?.seriesStyles?.some(rule => rule.style.dataLabel)) && opt.stacked)
       applyStackedBarInsideLabel(spec, isHorizontalBar(chartType, opt.orientation))
   }
 
@@ -840,7 +843,7 @@ function applyChartLook(
 
   if (!spec.percent && !SKIP_METRIC_LABEL.has(chartType)) {
     const valueField = inferSpecValueField(spec)
-    if (caps.dataLabel && opt.dataLabel && valueField && !plainRecord(spec.label)?.formatMethod)
+    if (caps.dataLabel && valueField && !plainRecord(spec.label)?.formatMethod)
       applyDefaultMetricLabel(spec, visual, query, valueField)
     const aliases = chartMetricAliases(query)
     const horizontal = isHorizontalBar(chartType, opt.orientation)
@@ -857,6 +860,19 @@ function applyChartLook(
     }
   }
 
+  if (supportsSeriesStyle(chartType)) {
+    const aliases = chartMetricAliases(query)
+    const secondary = isDualAxisEnabled(visual, chartType, aliases) ? resolveSecondaryFields(visual, aliases, chartType) : []
+    spec.axes = applyAxisOptions(spec.axes as Record<string, unknown>[], visual?.chart?.axes, isHorizontalBar(chartType, opt.orientation), {
+      category: query.dimensions?.[0] ? dimensionAlias(query.dimensions[0]) : '',
+      primary: aliases.filter(alias => !secondary.includes(alias)).join(' / '),
+      secondary: secondary.join(' / '),
+    }, spec.percent === true)
+    const hasBounds = (spec.axes as Record<string, unknown>[]).some(axis => axis.min != null || axis.max != null)
+    if (hasBounds)
+      spec.region = [{ clip: true }]
+    applySeriesStyleSpec(spec, visual, query, opt.dataLabel)
+  }
   return spec
 }
 
@@ -1046,9 +1062,8 @@ function buildCartesianSpec(
     spec.stack = !!opt.stacked
     spec.tooltip = cartesianSeriesTooltipSpec(xField, series, y, visual, query)
   }
-  const looked = applyChartLook(spec, visual, type, query) as Record<string, unknown>
-  applyLineShapeToChart(looked, opt.area, opt.smooth)
-  return asSpec(looked)
+  applyLineShapeToChart(spec, opt.area, opt.smooth)
+  return asSpec(applyChartLook(spec, visual, type, query))
 }
 
 function buildComboSpec(

@@ -1,3 +1,4 @@
+import type { DashCardDisplayOverrides } from './dashCardDisplay'
 import type { VisDashFilterDef } from './dashFilterModel'
 import type { DashWidget } from './dashLayout'
 import type { DashCardRadiusId, DashThemeId } from './dashTheme'
@@ -46,14 +47,46 @@ export async function loadDashboardWidgets(info: VIS.VisDashboardInfo) {
     .map(item => String(item.cardId || ''))
     .filter(Boolean)
   return {
-    filters: config.filters,
-    extra: config.extra,
-    theme: config.theme,
-    cardRadius: config.cardRadius,
-    autoRefreshSec: config.autoRefreshSec,
+    ...config,
     widgets: dropMissingCards(config.widgets, activeCardIds),
     cardMap,
   }
+}
+
+export interface DashboardCopyMetadata {
+  name: string
+  desc?: string
+  icon?: string
+  status: 'EBL' | 'DBL'
+  groupId: string
+}
+
+/** 复制保存的配置与成员引用；实体及用户关系由正常新增流程建立。 */
+export async function copyDashboard(sourceId: string, metadata: DashboardCopyMetadata) {
+  const { data: source } = await vis.query.getDashboardDetail({ dashboardId: sourceId })
+  if (!source)
+    throw new Error('源看板不存在')
+  // 复制时不把损坏的配置降级为空看板。
+  let decoded: unknown
+  try {
+    decoded = JSON.parse(source.configJson || '')
+  }
+  catch {
+    throw new Error('源看板配置无效')
+  }
+  if (!decoded || typeof decoded !== 'object' || !Array.isArray((decoded as { widgets?: unknown }).widgets))
+    throw new Error('源看板配置无效')
+  const config = parseDashConfig(source.configJson)
+  const widgets = dropMissingCards(config.widgets, (source.cards ?? []).map(card => String(card.cardId)))
+  return saveDashboard({
+    ...config,
+    widgets,
+    name: metadata.name,
+    desc: metadata.desc,
+    icon: metadata.icon,
+    status: metadata.status,
+    groupId: metadata.groupId,
+  })
 }
 
 function toDashSaveCards(cardIds: string[]): VIS.VisDashboardLayoutItem[] {
@@ -73,6 +106,7 @@ export async function saveDashboard(input: {
   filters: VisDashFilterDef[]
   theme?: DashThemeId
   cardRadius?: DashCardRadiusId
+  cardDisplayOverrides?: DashCardDisplayOverrides
   autoRefreshSec?: number
   extra?: Record<string, unknown>
   widgets: DashWidget[]
@@ -91,6 +125,7 @@ export async function saveDashboard(input: {
       input.theme,
       input.cardRadius,
       input.autoRefreshSec,
+      input.cardDisplayOverrides,
     ),
     cards: toDashSaveCards(collectCardIds(widgets)),
   }

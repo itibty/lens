@@ -35,11 +35,33 @@ export type VisChartThemeId
 export type VisChartLegendPosition = 'top' | 'bottom' | 'left' | 'right'
 export type VisChartOrientation = 'vertical' | 'horizontal'
 
+export interface VisSeriesStyle {
+  color?: string
+  lineStyle?: 'solid' | 'dashed' | 'dotted'
+  lineWidth?: 1 | 2 | 4
+  points?: boolean
+  dataLabel?: boolean
+}
+
+export type VisSeriesTarget = { metric: string } | { dimension: string, value: string | number | boolean }
+export type VisSeriesRule = VisSeriesTarget & { style: VisSeriesStyle }
+
+export interface VisAxisOptions {
+  showTitle?: boolean
+  title?: string
+  min?: number
+  max?: number
+  zero?: 'include' | 'data'
+}
+export type VisAxisRole = 'category' | 'primary' | 'secondary'
+
 /**
  * 几何图展示设置（挂在 visual.chart；产品语义，渲染侧译成 VChart）。
  * 字段均可缺省，未写 = 当前类型默认。
  */
 export interface VisChartOptions {
+  seriesStyles?: VisSeriesRule[]
+  axes?: Partial<Record<VisAxisRole, VisAxisOptions>>
   /** 图例；饼 / 热力默认开，漏斗 / 词云 / 矩形树图默认关，其余有系列才开 */
   legend?: boolean
   /** 图例位置；默认 bottom */

@@ -1,12 +1,15 @@
+import type { DashCardDisplayOverrides } from './dashCardDisplay'
 import type { VisDashFilterDef } from './dashFilterModel'
 import type { DashWidget } from './dashLayout'
 import type { DashCardRadiusId, DashThemeId } from './dashTheme'
 import { sanitizeAutoRefreshSec } from '@/views/vis/shared/cardRefresh'
+import { sanitizeCardDisplayOverrides } from './dashCardDisplay'
 import { normalizeFilterDef, persistFilterDef } from './dashFilterModel'
-import { sanitizeWidgets } from './dashLayout'
+import { collectCardIds, sanitizeWidgets } from './dashLayout'
 import { DEFAULT_DASH_CARD_RADIUS, DEFAULT_DASH_THEME, resolveDashCardRadiusId, resolveDashThemeId } from './dashTheme'
 
 export interface VisDashConfig {
+  cardDisplayOverrides: DashCardDisplayOverrides
   filters: VisDashFilterDef[]
   widgets: DashWidget[]
   theme: DashThemeId
@@ -59,9 +62,12 @@ export function parseDashConfig(raw?: string): VisDashConfig {
   delete extra.cardRadius
   delete extra.autoRefreshSec
   delete extra.widgets
+  delete extra.cardDisplayOverrides
+  const widgets = sanitizeWidgets(parsed.widgets)
   return {
+    cardDisplayOverrides: sanitizeCardDisplayOverrides(parsed.cardDisplayOverrides, collectCardIds(widgets)),
     filters: readFilterList(parsed.filters),
-    widgets: sanitizeWidgets(parsed.widgets),
+    widgets,
     theme: resolveDashThemeId(typeof parsed.theme === 'string' ? parsed.theme : undefined),
     cardRadius: resolveDashCardRadiusId(typeof parsed.cardRadius === 'string' ? parsed.cardRadius : undefined),
     autoRefreshSec: sanitizeAutoRefreshSec(parsed.autoRefreshSec),
@@ -76,6 +82,7 @@ export function stringifyDashConfig(
   theme?: DashThemeId,
   cardRadius?: DashCardRadiusId,
   autoRefreshSec?: number,
+  cardDisplayOverrides: DashCardDisplayOverrides = {},
 ) {
   const body: Record<string, unknown> = { ...extra }
   const ready = filters.map(persistFilterDef).filter(item => item.uid && item.field && item.datasetId)
@@ -101,6 +108,10 @@ export function stringifyDashConfig(
     body.autoRefreshSec = refreshSec
   else
     delete body.autoRefreshSec
+  const overrides = sanitizeCardDisplayOverrides(cardDisplayOverrides, collectCardIds(widgets))
+  delete body.cardDisplayOverrides
+  if (Object.keys(overrides).length)
+    body.cardDisplayOverrides = overrides
   body.widgets = widgets
   return JSON.stringify(body)
 }

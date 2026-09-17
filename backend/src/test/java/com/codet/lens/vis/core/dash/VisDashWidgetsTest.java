@@ -67,4 +67,29 @@ class VisDashWidgetsTest {
 
         assertEquals("文本外观 surface 无效", error.getMessage());
     }
+    @Test
+    void acceptsLocalTextAndHiddenRemarkWithoutChangingMembership() throws Exception {
+        String config = """
+                {"widgets":[{"kind":"card","cardId":"101"}],
+                 "cardDisplayOverrides":{"101":{"title":" 区域营收 ","description":null}}}
+                """;
+        var prepared = VisDashWidgets.prepare(config);
+        var display = MAPPER.readTree(prepared.configJson()).path("cardDisplayOverrides").path("101");
+        assertEquals(List.of(101L), prepared.cardIds());
+        assertEquals("区域营收", display.path("title").asText());
+        assertTrue(display.path("description").isNull());
+    }
+
+    @Test
+    void rejectsForeignMembersAndInvalidDisplayText() {
+        for (String overrides : List.of(
+                "null", "[]", "{\"102\":{\"title\":\"外部卡片\"}}",
+                "{\"101\":null}", "{\"101\":{\"title\":42}}",
+                "{\"101\":{\"title\":\"  \"}}",
+                "{\"101\":{\"title\":\"" + "长".repeat(51) + "\"}}",
+                "{\"101\":{\"description\":\"" + "长".repeat(201) + "\"}}")) {
+            String config = "{\"widgets\":[{\"kind\":\"card\",\"cardId\":\"101\"}],\"cardDisplayOverrides\":" + overrides + "}";
+            assertThrows(RuntimeException.class, () -> VisDashWidgets.prepare(config), overrides);
+        }
+    }
 }

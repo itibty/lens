@@ -16,6 +16,7 @@ import { useVisCardQuery } from '@/views/vis/shared/useVisCardQuery'
 import VisCardView from '@/views/vis/shared/VisCardView.vue'
 import VisFullWrap from '@/views/vis/shared/VisFullWrap.vue'
 import { isVisDisabled } from '../dashApi'
+import { DASH_CARD_DISPLAY_KEY, resolveDashCardVisual } from '../dashCardDisplay'
 import {
   DASH_EAGER_CARD_QUERIES_KEY,
   DASH_LAZY_CARD_QUERIES_KEY,
@@ -76,6 +77,8 @@ const emit = defineEmits<{
 const { hasFunction } = useAccountStore()
 const router = useRouter()
 const canEditCard = hasFunction(FUNCTION_CARD_CONF)
+const displayContext = inject(DASH_CARD_DISPLAY_KEY, undefined)
+const displayVisual = computed(() => resolveDashCardVisual(props.card.visual, displayContext?.overrides.value[props.cardId]))
 const disabled = computed(() => isVisDisabled(props.card.status))
 const presentationMode = inject(DASH_PRESENTATION_MODE_KEY, computed(() => 'auto' as const))
 const lazyCardQueries = inject(DASH_LAZY_CARD_QUERIES_KEY, false)
@@ -101,10 +104,12 @@ const extraActions = computed(() => {
   const actions: Array<{ key: string, label: string, icon: string }> = []
   if (!props.designActions)
     return actions
+  if (displayContext)
+    actions.push({ key: 'display', label: '显示设置', icon: 'i-mingcute-edit-line' })
   if (canEditCard) {
     actions.push({
       key: 'config',
-      label: '配置',
+      label: '编辑卡片',
       icon: 'i-mingcute-settings-3-line',
     })
   }
@@ -253,6 +258,10 @@ function onRefresh() {
 }
 
 function onMenuAction(key: string) {
+  if (key === 'display') {
+    displayContext?.edit(props.cardId)
+    return
+  }
   if (key === 'config') {
     if (!props.cardId)
       return
@@ -308,7 +317,7 @@ function onMenuAction(key: string) {
       <div class="dash-tile__body">
         <VisCardView
           :key="`${card.id}:${card.updatedAt}`"
-          :visual="card.visual"
+          :visual="displayVisual"
           :query="displayQuery"
           :data="data"
           :pivot-data="pivotData"

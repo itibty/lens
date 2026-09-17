@@ -43,6 +43,7 @@ describe('dashboard config codec', () => {
       widgets: [],
       theme: 't1',
       cardRadius: 'md',
+      cardDisplayOverrides: {},
       autoRefreshSec: undefined,
       extra: {},
     })
@@ -60,6 +61,7 @@ describe('dashboard config codec', () => {
       widgets: [],
       theme: 't1',
       cardRadius: 'md',
+      cardDisplayOverrides: {},
       autoRefreshSec: undefined,
       extra: {},
     })
@@ -81,6 +83,7 @@ describe('dashboard config codec', () => {
       theme: 't2',
       cardRadius: 'md',
       autoRefreshSec: 60,
+      cardDisplayOverrides: {},
       extra: { futureSetting: { enabled: true } },
     })
   })
@@ -101,6 +104,7 @@ describe('dashboard config codec', () => {
       theme: 't2',
       cardRadius: 'md',
       autoRefreshSec: 60,
+      cardDisplayOverrides: {},
       extra: { futureSetting: 'keep-me' },
     })
   })

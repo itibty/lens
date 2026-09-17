@@ -6,7 +6,7 @@
  *       按来源 _uid 跟随改名，对不上或重复别名则丢，方向保留。
  * HAVING：候选 = 已投放且非公式的指标；按 field+agg 对；
  *         改字段 / 汇总 / 改成公式则丢，只改显示名留下。
- * 切图表走 resetQueryShelves，不走这里。
+ * 柱 / 线 / 表互转保留货架，其他类型切换先 resetQueryShelves。
  */
 import type { DimensionPill, HavingPill, MetricPill, OrderPill } from '@/views/vis/shared/dnd'
 import type { VisQueryConfig } from '@/views/vis/shared/types'

@@ -6,6 +6,7 @@ import type { Layout } from 'grid-layout-plus'
 import type { CSSProperties } from 'vue'
 import type { DashCardGlobals } from '../dashApi'
 import type { DashTabValues } from '../dashboardViewState'
+import type { DashCardDisplayOverrides } from '../dashCardDisplay'
 import type {
   DashGroupWidget,
   DashLayoutRect,
@@ -21,6 +22,7 @@ import { GridItem, GridLayout } from 'grid-layout-plus'
 import { useVisCardDetail } from '@/views/vis/shared/useVisCardDetail'
 import VisDetailDrawer from '@/views/vis/shared/VisDetailDrawer.vue'
 import { DASH_COL_NUM, DASH_MARGIN, DASH_MIN_H, DASH_MIN_W, DASH_ROW_HEIGHT, DASH_STACK_MAX_WIDTH } from '../config'
+import { DASH_CARD_DISPLAY_KEY } from '../dashCardDisplay'
 import {
   applyTextDraft,
   collectCardIds,
@@ -42,6 +44,7 @@ import DashTextTile from './DashTextTile.vue'
 const props = withDefaults(defineProps<{
   tabs?: DashTabValues
   tabsDisabled?: boolean
+  cardDisplayOverrides?: DashCardDisplayOverrides
   cards: Record<string, VisCard>
   dashboardId?: string
   editable?: boolean
@@ -53,6 +56,7 @@ const props = withDefaults(defineProps<{
   presentationMode?: DashPresentationMode
   globalsOf?: (card: VisCard) => DashCardGlobals
 }>(), {
+  cardDisplayOverrides: () => ({}),
   dashboardId: '',
   tabs: undefined,
   tabsDisabled: false,
@@ -67,6 +71,7 @@ const props = withDefaults(defineProps<{
 })
 
 const emit = defineEmits<{
+  displayCard: [cardId: string]
   selectTab: [groupId: string, cardId: string]
   remove: [cardId: string]
   detach: [cardId: string]
@@ -74,6 +79,14 @@ const emit = defineEmits<{
   configureGroup: [groupId: string]
   removeText: [textId: string]
 }>()
+
+provide(DASH_CARD_DISPLAY_KEY, {
+  overrides: computed(() => props.cardDisplayOverrides),
+  edit: (cardId) => {
+    if (props.designActions)
+      emit('displayCard', cardId)
+  },
+})
 
 const widgets = defineModel<DashWidget[]>('widgets', { default: () => [] })
 const layout = ref<Layout>([])

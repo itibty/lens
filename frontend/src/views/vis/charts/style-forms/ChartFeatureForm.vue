@@ -15,7 +15,9 @@ import {
   resolveLineFields,
   resolveSecondaryFields,
 } from '@/views/vis/shared/chartOptions'
+import { supportsSeriesStyle } from '@/views/vis/shared/chartSeriesStyle'
 import { MARK_LINE_MAX, sanitizeMarkLines } from '@/views/vis/shared/markLine'
+import ChartAxesForm from './ChartAxesForm.vue'
 import ChartMarkLineForm from './ChartMarkLineForm.vue'
 import { useVisualBranch } from './composables/useVisualBranch'
 import FieldStyleShelf from './FieldStyleShelf.vue'
@@ -97,7 +99,7 @@ const showShape = computed(() =>
   || canLineMark.value,
 )
 
-const openSections = ref(['common', 'display', 'fieldStyle', 'shape', 'markLine'])
+const openSections = ref(['common', 'display', 'fieldStyle', 'shape', 'markLine', 'axes'])
 const markLineFormRef = ref<{ addLine: () => void } | null>(null)
 
 const legend = optField('legend')
@@ -464,6 +466,10 @@ const secondaryFields = computed({
         </StyleFormLabel>
         <el-switch v-model="randomRotate" size="small" />
       </div>
+    </StyleFormSection>
+
+    <StyleFormSection v-if="supportsSeriesStyle(chartType)" title="坐标轴" name="axes">
+      <ChartAxesForm v-model:visual="visual" :query="query" />
     </StyleFormSection>
 
     <StyleFormSection

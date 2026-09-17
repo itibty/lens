@@ -75,8 +75,8 @@ function entry(
   }
 }
 
-const AT_LEAST_ONE_EACH: ChartCardinality = {
-  dimensions: { min: 1 },
+const CARTESIAN_CARDINALITY: ChartCardinality = {
+  dimensions: { min: 1, max: 2 },
   metrics: { min: 1 },
 }
 
@@ -86,12 +86,12 @@ const EXACTLY_ONE_EACH: ChartCardinality = {
 }
 
 export const CHART_CATALOG: Record<ChartType, ChartCatalogEntry> = {
-  bar: entry('chart', AT_LEAST_ONE_EACH, [
-    '至少 1 个维度、1 个指标',
+  bar: entry('chart', CARTESIAN_CARDINALITY, [
+    '1～2 个维度，至少 1 个指标',
     '多指标时只能 1 个维度',
   ]),
-  line: entry('chart', AT_LEAST_ONE_EACH, [
-    '至少 1 个维度、1 个指标',
+  line: entry('chart', CARTESIAN_CARDINALITY, [
+    '1～2 个维度，至少 1 个指标',
     '多指标时只能 1 个维度',
   ]),
   combo: entry('chart', {

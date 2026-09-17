@@ -223,7 +223,7 @@ describe('lens theme contract', () => {
       truncated: false,
     }
     const spec = buildVChartSpec('bar', query, data, { chartType: 'bar', chart: { stacked: true, dataLabel: true } })
-    expect(spec).toMatchObject({ color: DATA_SERIES, seriesField: '__vis_series', stack: true, label: { smartInvert: true, style: { lineWidth: 0 } } })
+    expect(spec).toMatchObject({ color: { type: 'ordinal', range: DATA_SERIES, specified: {} }, seriesField: '__vis_series', stack: true, label: { smartInvert: true, style: { lineWidth: 0 } } })
     const pie = buildVChartSpec('pie', query, data, { chartType: 'pie' })
     expect(pie).toHaveProperty('pie.state.hover.outerRadius', 0.85)
     expect(pie).toHaveProperty('pie.state.hover.lineWidth', 0)

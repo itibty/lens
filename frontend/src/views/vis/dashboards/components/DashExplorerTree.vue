@@ -210,6 +210,10 @@ defineExpose<DashExplorerTreeInstance>({ setCurrentDashboard })
                       <span class="explorer-menu__icon i-mingcute-transfer-horizontal-line" />
                       移动
                     </el-dropdown-item>
+                    <el-dropdown-item command="copy-dashboard">
+                      <span class="explorer-menu__icon i-mingcute-copy-2-line" />
+                      复制
+                    </el-dropdown-item>
                     <el-dropdown-item command="toggle-dashboard">
                       <span
                         class="explorer-menu__icon"

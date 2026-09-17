@@ -20,10 +20,14 @@ import { useSwipeBackGuard } from '@/hooks/swipeBack'
 import { useAccountStore } from '@/stores/modules/account'
 import { showConfirm, showToast } from '@/utils/index'
 import { ChartDocBlock } from '@/views/vis/charts'
+import { pruneSeriesStyles } from '@/views/vis/shared/chartSeriesStyle'
+import { copyName } from '@/views/vis/shared/copyName'
 import { createDragUid } from '@/views/vis/shared/dnd'
 import { pruneFieldStyles } from '@/views/vis/shared/fieldStyle'
 import { createEmptyCard, hidesQueryDimensions, isPivotChart, isStaticChart, needsDataset } from '@/views/vis/shared/types'
-import { allowContrastForChart, apiErrorMessage, collectQueryIssues, fromVisCardInfo, hasQueryModelContent, hasQueryShelves, listChartConstraints, normalizeQueryForRequest, orderSourceDimensions, reconcileQueryDependents, resetQueryForDataset, resetQueryShelves, toVisCardSaveRequest } from './cardApi'
+import { allowContrastForChart, apiErrorMessage, collectQueryIssues, fromVisCardInfo, hasQueryModelContent, hasQueryShelves, listChartConstraints, normalizeQueryForRequest, orderSourceDimensions, reconcileQueryDependents, resetQueryForDataset, toVisCardSaveRequest } from './cardApi'
+import { createCardCopy } from './cardCopy'
+import { canPreserveChartQuery, changeCardChartType } from './chartShape'
 import AdvancedModule from './components/AdvancedModule.vue'
 import AdvFieldLabel from './components/AdvFieldLabel.vue'
 import CardPreview from './components/CardPreview.vue'
@@ -58,7 +62,6 @@ interface IStates {
   loading: boolean
   saveLoading: boolean
   card: VisCard
-  isNew: boolean
   centerTab: 'query' | 'feature' | 'style'
   /** 高级设置折叠面板；默认折叠 */
   advancedOpen: string[]
@@ -67,7 +70,8 @@ interface IStates {
 const route = useRoute()
 const router = useRouter()
 const dirty = ref(false)
-const { skipConfirm } = useLeaveConfirm(undefined, undefined, () => dirty.value)
+const previewRows = ref<Record<string, unknown>[]>([])
+const { skipConfirm, confirmLeave } = useLeaveConfirm(undefined, undefined, () => dirty.value)
 
 const designerRef = ref<HTMLElement>()
 const previewRef = ref<{
@@ -82,7 +86,6 @@ const resizing = ref<'left' | 'center' | null>(null)
 const states = reactive<IStates>({
   loading: true,
   saveLoading: false,
-  isNew: true,
   centerTab: 'query',
   advancedOpen: [],
   card: {
@@ -273,7 +276,7 @@ function applyShapeIssues(issues: QueryIssue[]) {
   shapeIssues.value = issues
   if (!issues.length)
     return
-  states.centerTab = issues[0]?.shelf === 'detail' ? 'feature' : 'query'
+  states.centerTab = ['detail', 'appearance'].includes(issues[0]?.shelf ?? '') ? 'feature' : 'query'
   if (issues.some(item => item.shelf === 'having') && !states.advancedOpen.includes('advanced'))
     states.advancedOpen = [...states.advancedOpen, 'advanced']
 }
@@ -283,7 +286,7 @@ function onPreviewIssues(issues: QueryIssue[]) {
 }
 
 watch(
-  () => [states.card.visual.chartType, states.card.query, states.card.visual.richtext, states.card.visual.web, states.card.visual.progress, states.card.visual.kpi, states.card.visual.detail, states.card.visual.allowDetail] as const,
+  () => [states.card.visual.chartType, states.card.query, states.card.visual.richtext, states.card.visual.web, states.card.visual.progress, states.card.visual.kpi, states.card.visual.detail, states.card.visual.allowDetail, states.card.visual.chart?.axes] as const,
   () => {
     if (!shapeIssues.value.length)
       return
@@ -330,22 +333,23 @@ watch(
   () => {
     reconcileQueryDependents(states.card.query, states.card.visual.chartType)
     pruneFieldStyles(states.card.visual, states.card.query)
+    pruneSeriesStyles(states.card.visual, states.card.query)
   },
   { deep: true },
 )
 
 function applyChartType(next: ChartType) {
   shapeIssues.value = []
-  resetQueryShelves(states.card.query)
-  states.card.visual.chartType = next
+  changeCardChartType(states.card, next)
   ensureArrays()
   previewRef.value?.resetPreview()
+  applyShapeIssues(collectQueryIssues(next, states.card.query, datasetFields.value, states.card.visual))
 }
 
 function onChartTypeChange(next: ChartType) {
   if (states.card.visual.chartType === next)
     return
-  if (!hasQueryShelves(states.card.query)) {
+  if (canPreserveChartQuery(states.card.visual.chartType, next) || !hasQueryShelves(states.card.query)) {
     applyChartType(next)
     return
   }
@@ -379,6 +383,7 @@ function applyDatasetChange() {
   if (visual.chart) {
     delete visual.chart.lineFields
     delete visual.chart.secondaryFields
+    delete visual.chart.seriesStyles
     if (!Object.keys(visual.chart).length)
       delete visual.chart
   }
@@ -420,17 +425,20 @@ watch(
   },
 )
 
+const saveOpen = ref(false)
 let loadRequestId = 0
-async function loadCard(id?: string) {
-  const cardId = id ?? (route.query.id as string | undefined)
+async function loadCard(id?: string, copyFrom?: string) {
+  const cardId = id || copyFrom
+  const copying = !id && !!copyFrom
+  let copied = false
   const currentRequestId = ++loadRequestId
   shapeIssues.value = []
+  saveOpen.value = false
   previewRef.value?.resetPreview()
   dirty.value = false
   states.loading = true
   try {
     if (!cardId) {
-      states.isNew = true
       states.card = {
         id: '',
         updatedAt: '',
@@ -448,14 +456,15 @@ async function loadCard(id?: string) {
       router.replace({ name: 'VisCards' })
       return
     }
-    states.isNew = false
-    states.card = fromVisCardInfo(res.data)
+    const loaded = fromVisCardInfo(res.data)
+    states.card = copying ? createCardCopy(loaded) : loaded
     ensureArrays()
     await nextTick()
     if (currentRequestId !== loadRequestId)
       return
     if (isStaticChart(states.card.visual.chartType) || states.card.query.datasetId)
       void previewRef.value?.runPreview()
+    copied = copying
   }
   catch (e) {
     if (currentRequestId !== loadRequestId)
@@ -465,12 +474,14 @@ async function loadCard(id?: string) {
     router.replace({ name: 'VisCards' })
   }
   finally {
-    if (currentRequestId === loadRequestId)
+    if (currentRequestId === loadRequestId) {
       states.loading = false
+      dirty.value = copied
+    }
   }
 }
 
-const saveOpen = ref(false)
+const saveAs = ref(false)
 const saveFormRef = ref<FormInstance>()
 const saveForm = reactive({
   name: '',
@@ -478,18 +489,22 @@ const saveForm = reactive({
   status: 'EBL' as 'EBL' | 'DBL',
 })
 const saveRules: FormRules<typeof saveForm> = {
-  name: [{ required: true, trigger: 'blur', message: '请填写卡片标题' }],
+  name: [{ required: true, whitespace: true, trigger: 'blur', message: '请填写卡片标题' }],
 }
 
-function openSaveDialog() {
-  saveForm.name = states.card.name?.trim() || ''
+function openSaveDialog(asCopy = false) {
+  if (states.loading || states.saveLoading || !canWrite)
+    return
+  saveAs.value = asCopy
+  saveForm.name = asCopy ? copyName(states.card.name) : states.card.name?.trim() || ''
   saveForm.desc = states.card.desc?.trim() || ''
   saveForm.status = states.card.status === 'DBL' ? 'DBL' : 'EBL'
   saveOpen.value = true
 }
 
 function closeSaveDialog() {
-  saveOpen.value = false
+  if (!states.saveLoading)
+    saveOpen.value = false
 }
 
 function onSaveDialogClosed() {
@@ -497,6 +512,8 @@ function onSaveDialogClosed() {
 }
 
 async function handleSave() {
+  if (states.saveLoading || !canWrite)
+    return
   const name = saveForm.name.trim()
   if (!name) {
     showToast('请填写卡片标题', 'warning')
@@ -520,23 +537,25 @@ async function handleSave() {
     const res = await vis.card.editCard(
       toVisCardSaveRequest({
         ...states.card,
+        id: saveAs.value ? '' : states.card.id,
         name,
         desc,
         status: saveForm.status,
       }, query),
     )
-    const savedId = res.data ? String(res.data) : states.card.id
+    const savedId = res.data ? String(res.data) : ''
+    if (!savedId)
+      throw new Error('保存失败：未返回卡片 ID')
     states.card.name = name
     states.card.desc = desc
     states.card.status = saveForm.status
     states.card.id = savedId
-    states.isNew = false
     saveOpen.value = false
     dirty.value = false
     showToast('保存成功', 'success')
     markListStale('VisCards')
-    if (!route.query.id && savedId)
-      router.replace({ name: 'VisCardEdit', query: { id: savedId } })
+    if (route.query.id !== savedId)
+      await router.replace({ name: 'VisCardEdit', query: { id: savedId } })
   }
   catch (e) {
     showToast(apiErrorMessage(e, '保存失败'), 'error')
@@ -565,13 +584,17 @@ onMounted(() => {
     CENTER_WIDTH_DEFAULT,
   )
   nextTick(() => clampPanelWidths())
-  loadCard()
+  loadCard(route.query.id as string | undefined, route.query.copyFrom as string | undefined)
 })
 
-onBeforeRouteUpdate((to) => {
+onBeforeRouteUpdate(async (to) => {
   if (to.name !== 'VisCardEdit')
     return
-  loadCard(to.query.id as string | undefined)
+  if (states.saveLoading && dirty.value)
+    return false
+  if (!(await confirmLeave()))
+    return false
+  await loadCard(to.query.id as string | undefined, to.query.copyFrom as string | undefined)
 })
 </script>
 
@@ -583,12 +606,15 @@ onBeforeRouteUpdate((to) => {
     class="noAutoSeg1"
   >
     <template #extra>
+      <el-button v-if="canWrite && states.card.id" :disabled="states.loading || states.saveLoading" @click="openSaveDialog(true)">
+        另存为
+      </el-button>
       <el-button
         v-if="canWrite"
         type="primary"
         :loading="states.saveLoading"
         :disabled="states.loading"
-        @click="openSaveDialog"
+        @click="openSaveDialog()"
       >
         保存
       </el-button>
@@ -768,6 +794,7 @@ onBeforeRouteUpdate((to) => {
                   <ChartFormHost
                     v-model:visual="states.card.visual"
                     mode="style"
+                    :rows="previewRows"
                     :query="states.card.query"
                     :fields="datasetFields"
                   />
@@ -791,17 +818,21 @@ onBeforeRouteUpdate((to) => {
             :description="states.card.desc"
             :fields="datasetFields"
             @issues="onPreviewIssues"
+            @rows="previewRows = $event"
           />
         </aside>
       </div>
       <CustomDialog
         v-model:visible="saveOpen"
-        title="保存卡片"
+        :title="saveAs ? '另存为新卡片' : '保存卡片'"
         size="mini"
         append-to-body
         cancel-text="取消"
         confirm-text="确定"
         :confirm-loading="states.saveLoading"
+        :show-close="!states.saveLoading"
+        :close-on-click-modal="!states.saveLoading"
+        :close-on-press-escape="!states.saveLoading"
         :handler-cancel="closeSaveDialog"
         :handler-confirm="confirmSave"
         @closed="onSaveDialogClosed"
@@ -811,6 +842,7 @@ onBeforeRouteUpdate((to) => {
             ref="saveFormRef"
             class="card-save-form"
             :model="saveForm"
+            :disabled="states.saveLoading"
             :rules="saveRules"
             label-position="top"
           >

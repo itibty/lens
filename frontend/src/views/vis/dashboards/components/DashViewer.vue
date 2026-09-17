@@ -3,6 +3,7 @@
 -->
 <script setup lang="ts">
 import type { DashFilterValues, VisDashFilterDef } from '../dashApi'
+import type { DashCardDisplayOverrides } from '../dashCardDisplay'
 import type { DashWidget } from '../dashLayout'
 import type { DashCardRadiusId, DashThemeId } from '../dashTheme'
 import type { VisCard } from '@/views/vis/shared/types'
@@ -82,6 +83,7 @@ const filters = ref<VisDashFilterDef[]>([])
 const filterValues = ref<DashFilterValues>({})
 const theme = ref<DashThemeId>(DEFAULT_DASH_THEME)
 const cardRadius = ref<DashCardRadiusId>(DEFAULT_DASH_CARD_RADIUS)
+const cardDisplayOverrides = ref<DashCardDisplayOverrides>({})
 const autoRefreshSec = ref<number>()
 const themeStyle = computed(() => dashThemeVars(theme.value, cardRadius.value))
 const glassTheme = computed(() => isDashGlassTheme(theme.value))
@@ -169,6 +171,7 @@ function resetViewer() {
   theme.value = DEFAULT_DASH_THEME
   cardRadius.value = DEFAULT_DASH_CARD_RADIUS
   autoRefreshSec.value = undefined
+  cardDisplayOverrides.value = {}
 }
 
 let loadRequestId = 0
@@ -210,6 +213,7 @@ async function loadDashboard(id: string) {
       theme.value = DEFAULT_DASH_THEME
       cardRadius.value = DEFAULT_DASH_CARD_RADIUS
       autoRefreshSec.value = undefined
+      cardDisplayOverrides.value = {}
     }
     else if (loaded) {
       filters.value = loaded.filters
@@ -218,6 +222,7 @@ async function loadDashboard(id: string) {
       theme.value = loaded.theme
       cardRadius.value = loaded.cardRadius
       autoRefreshSec.value = loaded.autoRefreshSec
+      cardDisplayOverrides.value = loaded.cardDisplayOverrides
     }
     if (!dashDisabled.value) {
       await personal.load(dashboardId.value, { ...route.query })
@@ -380,6 +385,7 @@ watch(
         <DashGrid
           v-else-if="personal.ready && !loading"
           v-model:widgets="widgets"
+          :card-display-overrides="cardDisplayOverrides"
           :cards="cardMap"
           :tabs="personal.tabs"
           :tabs-disabled="capturing || personal.busy || !!personal.runDate"

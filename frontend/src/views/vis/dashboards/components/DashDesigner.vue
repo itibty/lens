@@ -4,6 +4,7 @@
 <script setup lang="ts">
 import type { FormInstance, FormRules, ScrollbarInstance } from 'element-plus'
 import type { DashFilterValues, DashSettingsDraft, VisDashFilterDef } from '../dashApi'
+import type { DashCardDisplay, DashCardDisplayOverrides } from '../dashCardDisplay'
 import type { DashGroupDraft, DashWidget } from '../dashLayout'
 import type { DashCardRadiusId, DashThemeId } from '../dashTheme'
 import type { VisCard } from '@/views/vis/shared/types'
@@ -25,6 +26,7 @@ import {
   loadDashboardWidgets,
   saveDashboard,
 } from '../dashApi'
+import { sanitizeCardDisplayOverrides } from '../dashCardDisplay'
 import {
   addCardsToRoot,
   applyGroupDraft,
@@ -53,6 +55,7 @@ import {
 import { provideDashGridGuides } from '../useDashGridGuides'
 import { useDashRefresh } from '../useDashRefresh'
 import CardPickerDialog from './CardPickerDialog.vue'
+import DashCardDisplayDialog from './DashCardDisplayDialog.vue'
 import DashFilterBar from './DashFilterBar.vue'
 import DashGrid from './DashGrid.vue'
 import DashGroupEditor from './DashGroupEditor.vue'
@@ -117,6 +120,20 @@ const states = reactive({
 const widgets = ref<DashWidget[]>([])
 const cardMap = ref<Record<string, VisCard>>({})
 const filters = ref<VisDashFilterDef[]>([])
+const displayCardId = ref('')
+const displayOpen = ref(false)
+const cardDisplayOverrides = ref<DashCardDisplayOverrides>({})
+function openCardDisplay(cardId: string) {
+  displayCardId.value = cardId
+  displayOpen.value = true
+}
+function saveCardDisplay(value: DashCardDisplay) {
+  cardDisplayOverrides.value = sanitizeCardDisplayOverrides({ ...cardDisplayOverrides.value, [displayCardId.value]: value }, collectCardIds(widgets.value))
+}
+watch(() => collectCardIds(widgets.value).join(','), () => {
+  cardDisplayOverrides.value = sanitizeCardDisplayOverrides(cardDisplayOverrides.value, collectCardIds(widgets.value))
+})
+
 const configExtra = ref<Record<string, unknown>>({})
 const filterValues = ref<DashFilterValues>({})
 const theme = ref<DashThemeId>(DEFAULT_DASH_THEME)
@@ -164,6 +181,7 @@ function currentSnapshot() {
     theme: theme.value,
     cardRadius: cardRadius.value,
     autoRefreshSec: autoRefreshSec.value ?? null,
+    cardDisplayOverrides: cardDisplayOverrides.value,
     extra: configExtra.value,
     widgets: widgets.value,
   })
@@ -185,6 +203,8 @@ function resetEmpty() {
   states.groupId = '0'
   filters.value = []
   configExtra.value = {}
+  cardDisplayOverrides.value = {}
+  displayOpen.value = false
   theme.value = DEFAULT_DASH_THEME
   previewTheme.value = undefined
   cardRadius.value = DEFAULT_DASH_CARD_RADIUS
@@ -228,6 +248,7 @@ async function loadDashboard() {
     cardRadius.value = loaded.cardRadius
     autoRefreshSec.value = loaded.autoRefreshSec
     configExtra.value = loaded.extra
+    cardDisplayOverrides.value = loaded.cardDisplayOverrides
     widgets.value = loaded.widgets
     cardMap.value = loaded.cardMap
     captureSnapshot()
@@ -528,6 +549,7 @@ async function handleSave() {
       theme: theme.value,
       cardRadius: cardRadius.value,
       autoRefreshSec: autoRefreshSec.value,
+      cardDisplayOverrides: cardDisplayOverrides.value,
       extra: configExtra.value,
       widgets: widgets.value,
     })
@@ -666,12 +688,14 @@ defineExpose<DashDesignerInstance>({
           <DashGrid
             v-model:widgets="widgets"
             :cards="cardMap"
+            :card-display-overrides="cardDisplayOverrides"
             :dashboard-id="states.id"
             :globals-of="globalsOf"
             :data-tick="refreshTick"
             :editable="canWrite"
             :design-actions="canWrite"
             show-sql
+            @display-card="openCardDisplay"
             @remove="removeCard"
             @detach="detachCard"
             @move-to-group="openMoveToGroup"
@@ -683,6 +707,7 @@ defineExpose<DashDesignerInstance>({
     </div>
   </section>
 
+  <DashCardDisplayDialog v-model:visible="displayOpen" :initial="cardDisplayOverrides[displayCardId]" @confirm="saveCardDisplay" />
   <CardPickerDialog
     v-model:visible="pickerOpen"
     :exclude-ids="excludeIds"
