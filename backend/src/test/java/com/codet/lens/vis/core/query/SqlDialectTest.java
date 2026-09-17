@@ -22,13 +22,16 @@ class SqlDialectTest {
     void resolvesOnlySupportedDatasourceTypes() {
         assertEquals(SqlDialect.MYSQL, SqlDialect.of("mysql"));
         assertEquals(SqlDialect.POSTGRES, SqlDialect.of("postgresql"));
+        assertEquals(SqlDialect.STARROCKS, SqlDialect.of("starrocks"));
 
         ResultException error = assertThrows(ResultException.class, () -> SqlDialect.of("ORACLE"));
-        assertEquals("暂不支持的数据源类型：ORACLE，当前仅支持 MYSQL、POSTGRES", error.getMsg());
+        assertEquals("暂不支持的数据源类型：ORACLE，当前仅支持 MYSQL、POSTGRES、STARROCKS", error.getMsg());
     }
 
     @Test
     void generatesDatabaseSpecificTimeGrains() {
+        assertEquals("DATE_FORMAT(DATE_TRUNC('week', `created_at`), '%Y-%m-%d')",
+                SqlDialect.STARROCKS.timeGrain("`created_at`", TimeGrainEnum.WEEK));
         assertEquals("DATE_FORMAT(`created_at`, '%Y-%m')",
                 SqlDialect.MYSQL.timeGrain("`created_at`", TimeGrainEnum.MONTH));
         assertEquals("TO_CHAR(DATE_TRUNC('week', \"created_at\"), 'YYYY-MM-DD')",
@@ -65,6 +68,7 @@ class SqlDialectTest {
 
     @Test
     void generatesPaginationAndStringCastByDialect() {
+        assertEquals("CAST(`code` AS VARCHAR)", SqlDialect.STARROCKS.stringExpr("`code`"));
         assertEquals("SELECT 1 LIMIT 10 OFFSET 20",
                 SqlDialect.POSTGRES.paginate("SELECT 1", 20, 10));
         assertEquals("CAST(\"code\" AS VARCHAR)",

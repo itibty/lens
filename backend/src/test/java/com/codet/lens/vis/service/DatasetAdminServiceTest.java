@@ -94,7 +94,7 @@ class DatasetAdminServiceTest {
         VisCard second = new VisCard().setCardName("销售趋势").setStatus(Status.EBL);
         second.setId(21L);
         when(datasetMapper.selectById(10L)).thenReturn(dataset);
-        when(datasourceMapper.selectById(2L)).thenReturn(new VisDatasource());
+        when(datasourceMapper.selectForUpdate(2L)).thenReturn(new VisDatasource().setStatus(Status.EBL));
         when(cardMapper.selectList(any())).thenReturn(List.of(first, second));
 
         ResultException error = assertThrows(ResultException.class,
@@ -115,7 +115,7 @@ class DatasetAdminServiceTest {
         VisDataset dataset = new VisDataset().setSourceId(1L).setStatus(Status.EBL);
         dataset.setId(10L);
         when(datasetMapper.selectById(10L)).thenReturn(dataset);
-        when(datasourceMapper.selectById(2L)).thenReturn(new VisDatasource());
+        when(datasourceMapper.selectForUpdate(2L)).thenReturn(new VisDatasource().setStatus(Status.EBL));
 
         service.saveInfo(sourceChangeRequest(true));
 
@@ -134,5 +134,25 @@ class DatasetAdminServiceTest {
         request.setStatus(Status.EBL);
         request.setConfirmSourceChange(confirmed);
         return request;
+    }
+
+    @Test
+    void cannotBindDeletedOrDisabledSource() {
+        VisDataset dataset = new VisDataset().setSourceId(1L).setStatus(Status.EBL);
+        when(datasetMapper.selectById(10L)).thenReturn(dataset);
+        for (String status : List.of(Status.DEL, Status.DBL)) {
+            when(datasourceMapper.selectForUpdate(2L)).thenReturn(new VisDatasource().setStatus(status));
+            assertThrows(ResultException.class, () -> service.saveInfo(sourceChangeRequest(true)));
+        }
+        verify(datasetMapper, never()).updateById(any(VisDataset.class));
+    }
+
+    @Test
+    void canEditExistingDatasetWithoutChangingDisabledSource() {
+        VisDataset dataset = new VisDataset().setSourceId(2L).setStatus(Status.EBL);
+        when(datasetMapper.selectById(10L)).thenReturn(dataset);
+        when(datasourceMapper.selectForUpdate(2L)).thenReturn(new VisDatasource().setStatus(Status.DBL));
+        service.saveInfo(sourceChangeRequest(false));
+        verify(datasetMapper).updateById(dataset);
     }
 }

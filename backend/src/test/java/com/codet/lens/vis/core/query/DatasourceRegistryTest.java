@@ -1,112 +1,54 @@
 package com.codet.lens.vis.core.query;
 
-import com.codet.lens.common.base.Status;
+import com.codet.lens.common.base.ResultException;
 import com.codet.lens.vis.entity.VisDatasource;
 import com.codet.lens.vis.mapper.VisDatasourceMapper;
 import com.zaxxer.hikari.HikariDataSource;
-import java.util.List;
+import java.util.concurrent.*;
 import org.junit.jupiter.api.Test;
-
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.isNull;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 class DatasourceRegistryTest {
-
-    private final VisDatasourceMapper mapper = mock(VisDatasourceMapper.class);
-    private final DatasourceRegistry registry = spy(new DatasourceRegistry(mapper));
-
-    @Test
-    void renamingDatasourceReplacesPoolAndClosesOldName() {
-        HikariDataSource oldPool = mock(HikariDataSource.class);
-        HikariDataSource newPool = mock(HikariDataSource.class);
-        VisDatasource old = datasource("old", Status.EBL);
-        VisDatasource renamed = datasource("new", Status.EBL);
-        when(mapper.selectList(isNull())).thenReturn(List.of());
-        doReturn(oldPool).when(registry).create(old);
-        doReturn(newPool).when(registry).create(renamed);
-        registry.refresh(null, old);
-
-        registry.refresh("old", renamed);
-
-        assertFalse(registry.exists("old"));
-        assertTrue(registry.exists("new"));
-        assertSame(newPool, registry.raw("new"));
-        verify(oldPool).close();
+    final VisDatasourceMapper mapper = mock(VisDatasourceMapper.class);
+    final DatasourceConnectionFactory connections = mock(DatasourceConnectionFactory.class);
+    final DatasourceRegistry registry = new DatasourceRegistry(mapper, connections);
+    final VisDatasource source = new VisDatasource().setSourceName("sales");
+    @Test void reusesPoolAndEvictionLoadsUpdatedConnection() {
+        var first = mock(HikariDataSource.class); var second = mock(HikariDataSource.class);
+        when(mapper.selectOne(any())).thenReturn(source); when(connections.open(source)).thenReturn(first, second);
+        assertSame(first, registry.raw("sales")); assertSame(first, registry.raw("sales"));
+        registry.evict("sales"); verify(first).close(); assertSame(second, registry.raw("sales"));
     }
-
-    @Test
-    void disablingDatasourceClosesExistingPool() {
-        HikariDataSource oldPool = mock(HikariDataSource.class);
-        VisDatasource enabled = datasource("sales", Status.EBL);
-        doReturn(oldPool).when(registry).create(enabled);
-        registry.refresh(null, enabled);
-
-        registry.refresh("sales", datasource("sales", Status.DBL));
-
-        verify(oldPool).close();
+    @Test void failedCreationIsNotCached() {
+        when(mapper.selectOne(any())).thenReturn(source);
+        when(connections.open(source)).thenThrow(ResultException.fail("连接失败"));
+        assertThrows(ResultException.class, () -> registry.raw("sales"));
+        assertThrows(ResultException.class, () -> registry.raw("sales")); verify(connections, times(2)).open(source);
     }
-
-    @Test
-    void updatingSameNameSwapsPoolAndClosesPreviousOne() {
-        HikariDataSource oldPool = mock(HikariDataSource.class);
-        HikariDataSource newPool = mock(HikariDataSource.class);
-        VisDatasource old = datasource("sales", Status.EBL);
-        VisDatasource updated = datasource("sales", Status.EBL);
-        doReturn(oldPool).when(registry).create(old);
-        doReturn(newPool).when(registry).create(updated);
-        registry.refresh(null, old);
-
-        registry.refresh("sales", updated);
-
-        assertSame(newPool, registry.raw("sales"));
-        verify(oldPool).close();
+    @Test void slowSourceDoesNotBlockOtherSources() throws Exception {
+        var started = new CountDownLatch(1); var release = new CountDownLatch(1);
+        var slowSource = new VisDatasource().setSourceName("slow");
+        var slowPool = mock(HikariDataSource.class); var fastPool = mock(HikariDataSource.class);
+        when(mapper.selectOne(any())).thenReturn(slowSource, source);
+        when(connections.open(slowSource)).thenAnswer(call -> {
+            started.countDown(); assertTrue(release.await(5, TimeUnit.SECONDS)); return slowPool;
+        });
+        when(connections.open(source)).thenReturn(fastPool);
+        try (var executor = Executors.newFixedThreadPool(2)) {
+            var slow = executor.submit(() -> registry.raw("slow"));
+            try {
+                assertTrue(started.await(2, TimeUnit.SECONDS));
+                assertSame(fastPool, executor.submit(() -> registry.raw("sales")).get(2, TimeUnit.SECONDS));
+            } finally { release.countDown(); }
+            assertSame(slowPool, slow.get(2, TimeUnit.SECONDS));
+        } finally { registry.closeAll(); }
     }
-
-    @Test
-    void failedReplacementKeepsOldPoolAvailable() {
-        HikariDataSource oldPool = mock(HikariDataSource.class);
-        VisDatasource old = datasource("old", Status.EBL);
-        VisDatasource renamed = datasource("new", Status.EBL);
-        doReturn(oldPool).when(registry).create(old);
-        doThrow(new IllegalStateException("连接失败")).when(registry).create(renamed);
-        registry.refresh(null, old);
-
-        assertThrows(IllegalStateException.class, () -> registry.refresh("old", renamed));
-
-        assertSame(oldPool, registry.raw("old"));
-        verify(oldPool, never()).close();
-    }
-
-    @Test
-    void shutdownClosesAllCachedPools() {
-        HikariDataSource first = mock(HikariDataSource.class);
-        HikariDataSource second = mock(HikariDataSource.class);
-        VisDatasource one = datasource("one", Status.EBL);
-        VisDatasource two = datasource("two", Status.EBL);
-        doReturn(first).when(registry).create(one);
-        doReturn(second).when(registry).create(two);
-        registry.refresh(null, one);
-        registry.refresh(null, two);
-
-        registry.closeAll();
-
-        verify(first).close();
-        verify(second).close();
-    }
-
-    private static VisDatasource datasource(String sourceName, String status) {
-        return new VisDatasource()
-                .setSourceName(sourceName)
-                .setStatus(status);
+    @Test void shutdownClosesPoolsAndRejectsRequests() {
+        var pool = mock(HikariDataSource.class);
+        when(mapper.selectOne(any())).thenReturn(source); when(connections.open(source)).thenReturn(pool);
+        registry.raw("sales"); registry.closeAll(); verify(pool).close();
+        assertFalse(registry.exists("sales")); assertThrows(ResultException.class, () -> registry.raw("sales"));
     }
 }

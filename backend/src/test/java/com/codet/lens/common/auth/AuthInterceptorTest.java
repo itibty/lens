@@ -7,6 +7,9 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.web.method.HandlerMethod;
 import tools.jackson.databind.json.JsonMapper;
+import com.codet.lens.vis.VisPerms;
+import com.codet.lens.vis.controller.DatasourceController;
+import com.codet.lens.vis.service.DatasourceAdminService;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -56,6 +59,20 @@ class AuthInterceptorTest {
 
     private static AuthUser user(String subject, Set<String> perms) {
         return new AuthUser().setSubject(subject).setPerms(perms);
+    }
+
+    @Test
+    void datasetEditorsCannotManageConnectionsButDatasourceManagersCan() throws Exception {
+        var controller = new DatasourceController(mock(DatasourceAdminService.class));
+        var request = new MockHttpServletRequest();
+        request.addHeader("Authorization", "Bearer token");
+        for (var method : DatasourceController.class.getDeclaredMethods()) {
+            when(jwtService.parse("token")).thenReturn(user("10", Set.of(VisPerms.VIS_DATASET_CONF)));
+            assertFalse(interceptor.preHandle(request, new MockHttpServletResponse(), new HandlerMethod(controller, method)));
+            when(jwtService.parse("token")).thenReturn(user("10", Set.of(VisPerms.VIS_DATASOURCE_CONF)));
+            assertTrue(interceptor.preHandle(request, new MockHttpServletResponse(), new HandlerMethod(controller, method)));
+            AuthContext.clear();
+        }
     }
 
     private static HandlerMethod handler(String name) throws NoSuchMethodException {

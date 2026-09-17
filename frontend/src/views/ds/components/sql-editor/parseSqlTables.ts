@@ -57,19 +57,20 @@ export function stripEnjoyDirectives(sql: string): string {
 
 /**
  * 抽取 FROM / JOIN 后的表引用。
- * 支持: schema.table [AS] alias | table [AS] alias
+ * 支持: [catalog.]schema.table [AS] alias | table [AS] alias
  */
 export function parseSqlTableRefs(sql: string): SqlTableRef[] {
   const cleaned = stripEnjoyDirectives(sql)
   const refs: SqlTableRef[] = []
   const seen = new Set<string>()
 
-  // FROM/JOIN 后可跟 schema.table 或 `table`，再可选 AS alias / alias
-  const re = /\b(?:from|join)\s+(?:(\w+)\.)?[`"]?(\w+)[`"]?(?:\s+(?:as\s+)?[`"]?(\w+)[`"]?)?/gi
+  // 每个标识符可独立引用；最多三段，前两段作为元数据作用域。
+  const re = /\b(?:from|join)\s+((?:[`"]?\w+[`"]?\s*\.\s*){0,2}[`"]?\w+[`"]?)(?:\s+(?:as\s+)?[`"]?(\w+)[`"]?)?/gi
   for (const match of cleaned.matchAll(re)) {
-    const schema = match[1]
-    const table = match[2]
-    const rawAlias = match[3]
+    const parts = match[1]!.split(/\s*\.\s*/).map(part => part.replace(/^[`"]|[`"]$/g, ''))
+    const table = parts.pop()
+    const schema = parts.length ? parts.join('.') : undefined
+    const rawAlias = match[2]
     if (!table)
       continue
 

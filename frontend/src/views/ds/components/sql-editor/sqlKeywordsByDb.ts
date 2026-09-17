@@ -10,6 +10,7 @@ import type { SqlKeywordInput } from './keywordCompletion'
 export type SqlDbAlias
   = | 'mysql'
     | 'mariadb'
+    | 'starrocks'
     | 'postgres'
     | 'postgresql'
     | 'pgsql'
@@ -84,6 +85,7 @@ ROWNUM NVL DECODE CONNECT START SYSDATE DUAL
 
 /** 库别名 → 关键字列表（可直接当 sqlKeywords 用） */
 export const SQL_KEYWORDS_BY_DB: Record<SqlDbAlias, SqlKeywordInput[]> = {
+  starrocks: mergeLists(COMMON_KEYWORDS, 'SHOW EXPLAIN CATALOG DATABASE INTERVAL DATE_TRUNC DATE_FORMAT OVER PARTITION ROW_NUMBER'),
   mysql: mergeLists(COMMON_KEYWORDS, MYSQL_EXTRA),
   mariadb: mergeLists(COMMON_KEYWORDS, MYSQL_EXTRA),
   postgres: mergeLists(COMMON_KEYWORDS, POSTGRES_EXTRA),
@@ -106,6 +108,7 @@ export function normalizeSqlDbName(db?: string | null): SqlDbAlias | undefined {
     return undefined
 
   const aliases: Record<string, SqlDbAlias> = {
+    starrocks: 'starrocks',
     mysql: 'mysql',
     mariadb: 'mariadb',
     maria: 'mariadb',

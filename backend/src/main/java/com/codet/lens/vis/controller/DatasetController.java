@@ -21,10 +21,8 @@ import com.codet.lens.vis.dto.dataset.VisCardRefInfo;
 import com.codet.lens.vis.dto.dataset.DatasetDashboardRefInfo;
 import com.codet.lens.vis.service.DatasetReferenceService;
 import com.codet.lens.vis.dto.dataset.VisDatasetInfo;
-import com.codet.lens.vis.entity.VisDatasource;
 import com.codet.lens.vis.mapper.VisDatasourceMapper;
 import com.codet.lens.vis.service.DatasetAdminService;
-import com.codet.lens.vis.service.DatasourceAdminService;
 import com.codet.lens.vis.service.DatasourceMetaService;
 import com.codet.lens.vis.service.VisDatasetService;
 import com.codet.lens.vis.VisPerms;
@@ -49,7 +47,6 @@ import org.springframework.web.bind.annotation.RestController;
 public class DatasetController {
 
     private final VisDatasourceMapper datasourceMapper;
-    private final DatasourceAdminService datasourceAdminService;
     private final DatasourceMetaService datasourceMetaService;
     private final DatasetAdminService datasetAdminService;
     private final VisDatasetService visDatasetService;
@@ -128,14 +125,6 @@ public class DatasetController {
             @PathVariable String sourceName,
             @RequestParam(required = false) String tables) {
         return R.success(new ListResponse<>(datasourceMetaService.getMetaTree(sourceName, tables)));
-    }
-
-    @Tag(name = "DATASOURCE")
-    @Permission(VisPerms.VIS_DATASET_CONF)
-    @Operation(operationId = "editDatasource", summary = "新建或编辑数据源")
-    @PostMapping("/datasources/edit")
-    public R<Long> editDatasource(@RequestBody VisDatasource body) {
-        return R.success(datasourceAdminService.save(body));
     }
 
     @Tag(name = "DATASET")

@@ -14,6 +14,16 @@ export default [
     },
     children: [
       {
+        path: '/vis/datasources',
+        name: 'VisDatasources',
+        component: () => import('@/views/vis/datasources/index.vue'),
+        meta: {
+          menuId: '19',
+          title: '数据源',
+          componentName: 'VisDatasources',
+        },
+      },
+      {
         path: '/vis/datasets',
         name: 'VisDatasets',
         component: () => import('@/views/ds/index.vue'),

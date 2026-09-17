@@ -4,6 +4,7 @@ import cn.hutool.core.util.StrUtil;
 import com.codet.lens.common.base.ResultException;
 import com.codet.lens.common.base.Status;
 import com.codet.lens.vis.core.query.DatasourceRegistry;
+import com.codet.lens.vis.core.query.DatasourceType;
 import com.codet.lens.vis.core.query.SqlDialect;
 import com.codet.lens.vis.dto.dataset.MetaInfo;
 import com.codet.lens.vis.entity.VisDatasource;
@@ -74,7 +75,7 @@ public class DatasourceMetaService {
             schema.setDbType(source.getDbType());
             List<MetaInfo.TableInfo> tableInfos = new ArrayList<>();
             for (TableRef table : selected) {
-                tableInfos.add(readTable(metadata, scope, table));
+                tableInfos.add(readTable(metadata, scope, table, DatasourceType.of(source.getDbType())));
             }
             schema.setTableInfos(tableInfos);
             return List.of(schema);
@@ -121,10 +122,12 @@ public class DatasourceMetaService {
     }
 
     private static Scope resolveScope(Connection connection, String dbType) throws SQLException {
-        String type = StrUtil.blankToDefault(dbType, "").toUpperCase(Locale.ROOT);
+        DatasourceType type = DatasourceType.of(dbType);
         String catalog = StrUtil.trim(connection.getCatalog());
         String schema = StrUtil.trim(connection.getSchema());
-        if (SqlDialect.MYSQL.getTypeCode().equals(type) || "MARIADB".equals(type)) {
+        if (type == DatasourceType.STARROCKS)
+            return new Scope(requireScopeName(catalog) + "." + requireScopeName(schema), catalog, schema);
+        if (type == DatasourceType.MYSQL) {
             String name = StrUtil.blankToDefault(catalog, schema);
             return new Scope(requireScopeName(name), catalog, null);
         }
@@ -178,14 +181,14 @@ public class DatasourceMetaService {
         return selected;
     }
 
-    private static MetaInfo.TableInfo readTable(DatabaseMetaData metadata, Scope scope, TableRef table)
+    private static MetaInfo.TableInfo readTable(DatabaseMetaData metadata, Scope scope, TableRef table, DatasourceType type)
             throws SQLException {
-        Set<String> primaryKeys = readPrimaryKeys(metadata, scope, table.name());
+        Set<String> primaryKeys = type.supportsKeyMetadata() ? readPrimaryKeys(metadata, scope, table.name()) : Set.of();
         MetaInfo.TableInfo info = new MetaInfo.TableInfo();
         info.setName(table.name());
         info.setComment(table.comment());
         info.setFieldInfos(readFields(metadata, scope, table.name(), primaryKeys));
-        info.setIndexInfos(readIndexes(metadata, scope, table.name()));
+        info.setIndexInfos(type.supportsKeyMetadata() ? readIndexes(metadata, scope, table.name()) : List.of());
         return info;
     }
 

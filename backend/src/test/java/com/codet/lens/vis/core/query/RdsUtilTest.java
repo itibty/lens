@@ -55,6 +55,8 @@ class RdsUtilTest {
             assertEquals(2, rows.size());
             assertTrue(context.isTruncated());
             verify(fixture.statement()).setMaxRows(3);
+            verify(fixture.statement()).setQueryTimeout(30);
+            verify(fixture.statement()).close();
         } finally {
             QueryContextHolder.remove();
         }

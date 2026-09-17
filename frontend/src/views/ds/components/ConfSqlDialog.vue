@@ -95,14 +95,21 @@ function showDialog(data?: VIS.ConfSqlInfo) {
       ...defaultForm,
     }
   }
-  fetchDsOptions()
+  fetchDsOptions(data)
   dialog.visible = true
 }
-function fetchDsOptions() {
+let optionsRequest = 0
+function fetchDsOptions(selected?: VIS.ConfSqlInfo) {
+  const current = ++optionsRequest
   vis.datasource.listDatasourceOptions({ dsType: 'RDS' }).then((res) => {
+    if (current !== optionsRequest)
+      return
     states.dsOptions = res.data?.list || []
+    if (selected?.dsId && !states.dsOptions.some(item => item.value === selected.dsId))
+      states.dsOptions.push({ value: selected.dsId, name: `${selected.dsName || '原数据源'}（不可用）` })
   }).catch(() => {
-    states.dsOptions = []
+    if (current === optionsRequest)
+      states.dsOptions = []
   })
 }
 

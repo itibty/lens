@@ -56,9 +56,57 @@ export async function listDatasourceTables(
   );
 }
 
-/** 新建或编辑数据源 POST /datasources/edit */
+/** 引用数据集 GET /datasources/datasets */
+export async function listDatasourceDatasets(
+  // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
+  params: VIS.listDatasourceDatasetsParams,
+  options?: { [key: string]: any }
+) {
+  return request<VIS.RListResponseDatasourceDatasetInfo>(
+    `${VIS_BASE_PATH}/datasources/datasets`,
+    {
+      method: "GET",
+      params: {
+        ...params,
+      },
+      ...(options || {}),
+    }
+  );
+}
+
+/** 删除数据源 POST /datasources/del */
+export async function delDatasource(
+  // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
+  params: VIS.delDatasourceParams,
+  options?: { [key: string]: any }
+) {
+  return request<VIS.RVoid>(`${VIS_BASE_PATH}/datasources/del`, {
+    method: "POST",
+    params: {
+      ...params,
+    },
+    ...(options || {}),
+  });
+}
+
+/** 数据源详情 GET /datasources/detail */
+export async function getDatasourceDetail(
+  // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
+  params: VIS.getDatasourceDetailParams,
+  options?: { [key: string]: any }
+) {
+  return request<VIS.RDatasourceInfo>(`${VIS_BASE_PATH}/datasources/detail`, {
+    method: "GET",
+    params: {
+      ...params,
+    },
+    ...(options || {}),
+  });
+}
+
+/** 保存数据源 POST /datasources/edit */
 export async function editDatasource(
-  body: VIS.VisDatasource,
+  body: VIS.SaveDatasourceRequest,
   options?: { [key: string]: any }
 ) {
   return request<VIS.RLong>(`${VIS_BASE_PATH}/datasources/edit`, {
@@ -69,4 +117,55 @@ export async function editDatasource(
     data: body,
     ...(options || {}),
   });
+}
+
+/** 数据源列表 POST /datasources/query */
+export async function queryDatasources(
+  body: VIS.QueryDatasourceRequest,
+  options?: { [key: string]: any }
+) {
+  return request<VIS.RPageResponseDatasourceInfo>(
+    `${VIS_BASE_PATH}/datasources/query`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      data: body,
+      ...(options || {}),
+    }
+  );
+}
+
+/** 启停数据源 POST /datasources/status */
+export async function setDatasourceStatus(
+  body: VIS.DatasourceStatusRequest,
+  options?: { [key: string]: any }
+) {
+  return request<VIS.RVoid>(`${VIS_BASE_PATH}/datasources/status`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    data: body,
+    ...(options || {}),
+  });
+}
+
+/** 测试连接 POST /datasources/test */
+export async function testDatasource(
+  body: VIS.DatasourceConnectionRequest,
+  options?: { [key: string]: any }
+) {
+  return request<VIS.RDatasourceTestResult>(
+    `${VIS_BASE_PATH}/datasources/test`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      data: body,
+      ...(options || {}),
+    }
+  );
 }

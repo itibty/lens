@@ -13,7 +13,7 @@ SET @LENS_OLD_FOREIGN_KEY_CHECKS = @@FOREIGN_KEY_CHECKS;
 SET FOREIGN_KEY_CHECKS = 0;
 
 
--- sys_menu：当前数据 16 条
+-- sys_menu：当前数据 18 条
 DROP TABLE IF EXISTS `sys_menu`;
 CREATE TABLE `sys_menu` (
   `id` bigint unsigned NOT NULL,
@@ -48,6 +48,9 @@ INSERT INTO `sys_menu` (`id`, `pid`, `menu_name`, `menu_type`, `route_path`, `ic
 INSERT INTO `sys_menu` (`id`, `pid`, `menu_name`, `menu_type`, `route_path`, `icon`, `sort_num`, `perm_code`, `status`, `create_at`, `create_by`, `modify_at`, `modify_by`) VALUES (1100,11,'配置','FUNC',NULL,NULL,1,'vis:dataset:conf','EBL',NULL,NULL,NULL,NULL);
 INSERT INTO `sys_menu` (`id`, `pid`, `menu_name`, `menu_type`, `route_path`, `icon`, `sort_num`, `perm_code`, `status`, `create_at`, `create_by`, `modify_at`, `modify_by`) VALUES (1700,17,'配置','FUNC',NULL,NULL,1,'vis:card:conf','EBL',NULL,NULL,NULL,NULL);
 INSERT INTO `sys_menu` (`id`, `pid`, `menu_name`, `menu_type`, `route_path`, `icon`, `sort_num`, `perm_code`, `status`, `create_at`, `create_by`, `modify_at`, `modify_by`) VALUES (1800,18,'配置','FUNC',NULL,NULL,1,'vis:dashboard:conf','EBL',NULL,NULL,NULL,NULL);
+
+INSERT INTO `sys_menu` (`id`, `pid`, `menu_name`, `menu_type`, `route_path`, `icon`, `sort_num`, `perm_code`, `status`) VALUES (19,16,'数据源','MENU','/vis/datasources','database-2-line',35,NULL,'EBL');
+INSERT INTO `sys_menu` (`id`, `pid`, `menu_name`, `menu_type`, `sort_num`, `perm_code`, `status`) VALUES (1900,19,'配置','FUNC',1,'vis:datasource:conf','EBL');
 
 -- sys_role：当前数据 2 条
 DROP TABLE IF EXISTS `sys_role`;
@@ -84,7 +87,7 @@ INSERT INTO `sys_role_dashboard` (`id`, `role_id`, `dashboard_id`, `create_at`, 
 INSERT INTO `sys_role_dashboard` (`id`, `role_id`, `dashboard_id`, `create_at`, `create_by`) VALUES (9503,1,9503,0,0);
 INSERT INTO `sys_role_dashboard` (`id`, `role_id`, `dashboard_id`, `create_at`, `create_by`) VALUES (9504,1,9504,0,0);
 
--- sys_role_menu：当前数据 15 条
+-- sys_role_menu：当前数据 16 条
 DROP TABLE IF EXISTS `sys_role_menu`;
 CREATE TABLE `sys_role_menu` (
   `id` bigint unsigned NOT NULL,
@@ -110,6 +113,8 @@ INSERT INTO `sys_role_menu` (`id`, `role_id`, `menu_id`, `create_at`, `create_by
 INSERT INTO `sys_role_menu` (`id`, `role_id`, `menu_id`, `create_at`, `create_by`) VALUES (2092636242230358018,2092228177777459201,200,1787758334099,NULL);
 INSERT INTO `sys_role_menu` (`id`, `role_id`, `menu_id`, `create_at`, `create_by`) VALUES (2092636242238746625,2092228177777459201,300,1787758334099,NULL);
 INSERT INTO `sys_role_menu` (`id`, `role_id`, `menu_id`, `create_at`, `create_by`) VALUES (2092636242242940930,2092228177777459201,400,1787758334099,NULL);
+
+INSERT INTO `sys_role_menu` (`id`, `role_id`, `menu_id`, `create_at`, `create_by`) VALUES (1900,1,1900,0,0);
 
 -- sys_user：当前数据 2 条
 DROP TABLE IF EXISTS `sys_user`;

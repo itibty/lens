@@ -14,6 +14,8 @@ class DatasourceMetaServiceTest {
                 "lens.vis_card, other.hidden, vis_dataset, lens.vis_card", "lens");
 
         assertEquals(List.of("vis_card", "vis_dataset"), List.copyOf(tables));
+        assertEquals(Set.of("orders"), DatasourceMetaService.parseTableNames(
+                "hive.default.orders,other.default.hidden", "hive.default"));
     }
 
     @Test

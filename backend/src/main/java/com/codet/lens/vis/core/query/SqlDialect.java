@@ -1,9 +1,7 @@
 package com.codet.lens.vis.core.query;
 
-import cn.hutool.core.util.StrUtil;
 import com.codet.lens.common.base.ResultException;
 import com.codet.lens.vis.enums.TimeGrainEnum;
-import java.util.Locale;
 
 /**
  * 平台生成 SQL 的数据库方言。数据集原始 SQL 和用户公式保持原样。
@@ -11,7 +9,8 @@ import java.util.Locale;
 public enum SqlDialect {
 
     MYSQL("MYSQL", '`', '`'),
-    POSTGRES("POSTGRES", '"', '"');
+    POSTGRES("POSTGRES", '"', '"'),
+    STARROCKS("STARROCKS", '`', '`');
 
     private final String typeCode;
     private final char open;
@@ -24,14 +23,7 @@ public enum SqlDialect {
     }
 
     public static SqlDialect of(String typeCategory) {
-        if (StrUtil.isBlank(typeCategory))
-            throw unsupported(typeCategory);
-        String type = typeCategory.trim().toUpperCase(Locale.ROOT);
-        if (MYSQL.getTypeCode().equals(type))
-            return MYSQL;
-        if (POSTGRES.getTypeCode().equals(type) || "POSTGRESQL".equals(type))
-            return POSTGRES;
-        throw unsupported(typeCategory);
+        return DatasourceType.of(typeCategory).dialect();
     }
 
     public static boolean supports(String typeCategory) {
@@ -60,6 +52,8 @@ public enum SqlDialect {
     }
 
     public String timeGrain(String field, TimeGrainEnum grain) {
+        if (this == STARROCKS && grain == TimeGrainEnum.WEEK)
+            return "DATE_FORMAT(DATE_TRUNC('week', " + field + "), '%Y-%m-%d')";
         if (this == POSTGRES) {
             return switch (grain) {
                 case DAY -> "TO_CHAR(" + field + ", 'YYYY-MM-DD')";
@@ -84,7 +78,7 @@ public enum SqlDialect {
     }
 
     public String stringExpr(String expr) {
-        if (this == POSTGRES)
+        if (this != MYSQL)
             return "CAST(" + expr + " AS VARCHAR)";
         return "CAST(" + expr + " AS CHAR)";
     }
@@ -97,8 +91,4 @@ public enum SqlDialect {
         return sql + " LIMIT " + Math.max(limit, 0) + " OFFSET " + Math.max(offset, 0);
     }
 
-    private static ResultException unsupported(String typeCategory) {
-        String type = StrUtil.blankToDefault(StrUtil.trim(typeCategory), "空");
-        return ResultException.fail("暂不支持的数据源类型：" + type + "，当前仅支持 MYSQL、POSTGRES");
-    }
 }

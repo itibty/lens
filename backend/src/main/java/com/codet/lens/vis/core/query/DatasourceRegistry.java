@@ -1,124 +1,83 @@
 package com.codet.lens.vis.core.query;
 
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.codet.lens.common.base.ResultException;
 import com.codet.lens.common.base.Status;
 import com.codet.lens.vis.entity.VisDatasource;
 import com.codet.lens.vis.mapper.VisDatasourceMapper;
-import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import jakarta.annotation.PreDestroy;
-import java.sql.Connection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.IdentityHashMap;
 import java.util.Map;
-import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import javax.sql.DataSource;
-import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
-@Slf4j
 @Component
 @RequiredArgsConstructor
 public class DatasourceRegistry {
-
     private final VisDatasourceMapper datasourceMapper;
-    private final Map<String, HikariDataSource> pools = new HashMap<>();
+    private final DatasourceConnectionFactory connections;
+    private final Map<String, HikariDataSource> pools = new ConcurrentHashMap<>();
+    private final Map<String, Object> sourceLocks = new ConcurrentHashMap<>();
+    private volatile boolean closed;
 
-    public synchronized JdbcTemplate template(String sourceName) {
+    public JdbcTemplate template(String sourceName) {
         return new JdbcTemplate(pool(sourceName));
     }
 
-    public synchronized boolean exists(String sourceName) {
-        return pools.containsKey(sourceName) || loadEnabled(sourceName) != null;
+    public boolean exists(String sourceName) {
+        return !closed && (pools.containsKey(sourceName) || loadEnabled(sourceName) != null);
     }
 
-    public synchronized void evict(String sourceName) {
-        close(pools.remove(sourceName));
-    }
-
-    /**
-     * 新池验证成功后再替换；重命名时旧名称和新名称下的历史池都会关闭。
-     * 创建失败时不修改注册表，调用方可安全回滚数据库事务。
-     */
-    public synchronized void refresh(String oldSourceName, VisDatasource row) {
-        HikariDataSource replacement = Status.EBL.equals(row.getStatus()) ? create(row) : null;
-        Set<HikariDataSource> stale = Collections.newSetFromMap(new IdentityHashMap<>());
-        if (oldSourceName != null) {
-            stale.add(pools.remove(oldSourceName));
-        }
-        HikariDataSource current = replacement == null
-                ? pools.remove(row.getSourceName())
-                : pools.put(row.getSourceName(), replacement);
-        stale.add(current);
-        stale.remove(null);
-        stale.remove(replacement);
-        stale.forEach(DatasourceRegistry::close);
-    }
-
-    private HikariDataSource create(String sourceName) {
-        VisDatasource row = loadEnabled(sourceName);
-        if (row == null) {
-            throw new IllegalStateException(sourceName + "数据源未连接");
-        }
-        return create(row);
-    }
-
-    HikariDataSource create(VisDatasource row) {
-        HikariConfig conf = new HikariConfig();
-        conf.setPoolName("lens-" + row.getSourceName());
-        conf.setJdbcUrl(row.getJdbcUrl());
-        conf.setUsername(row.getUsername());
-        conf.setPassword(row.getPassword());
-        conf.setMaximumPoolSize(8);
-        conf.setMinimumIdle(0);
-        conf.setReadOnly(true);
-        HikariDataSource dataSource = null;
-        try {
-            dataSource = new HikariDataSource(conf);
-            try (Connection connection = dataSource.getConnection()) {
-                if (!connection.isValid(5))
-                    throw new IllegalStateException("连接校验失败");
-            }
-            log.info("打开数据源 {}", row.getSourceName());
-            return dataSource;
-        } catch (Exception e) {
-            close(dataSource);
-            throw new IllegalStateException(row.getSourceName() + "数据源连接失败", e);
-        }
-    }
-
-    private VisDatasource loadEnabled(String sourceName) {
-        return datasourceMapper.selectList(null).stream()
-                .filter(r -> sourceName.equals(r.getSourceName()) && Status.EBL.equals(r.getStatus()))
-                .findFirst()
-                .orElse(null);
-    }
-
-    public synchronized DataSource raw(String sourceName) {
+    public DataSource raw(String sourceName) {
         return pool(sourceName);
     }
 
-    @PreDestroy
-    public synchronized void closeAll() {
-        Set<HikariDataSource> all = Collections.newSetFromMap(new IdentityHashMap<>());
-        all.addAll(pools.values());
-        pools.clear();
-        all.forEach(DatasourceRegistry::close);
+    /** 与该数据源的懒加载互斥，其他数据源无需等待网络连接。 */
+    public void evict(String sourceName) {
+        if (sourceName == null)
+            return;
+        synchronized (lock(sourceName)) {
+            HikariDataSource previous = pools.remove(sourceName);
+            if (previous != null)
+                previous.close();
+        }
     }
 
     private HikariDataSource pool(String sourceName) {
-        HikariDataSource existing = pools.get(sourceName);
-        if (existing != null)
-            return existing;
-        HikariDataSource created = create(sourceName);
-        pools.put(sourceName, created);
-        return created;
+        synchronized (lock(sourceName)) {
+            if (closed)
+                throw ResultException.fail("数据源服务已关闭");
+            HikariDataSource existing = pools.get(sourceName);
+            if (existing != null)
+                return existing;
+            VisDatasource row = loadEnabled(sourceName);
+            if (row == null)
+                throw ResultException.fail("数据源不存在或已禁用");
+            HikariDataSource created = connections.open(row);
+            if (closed) {
+                created.close();
+                throw ResultException.fail("数据源服务已关闭");
+            }
+            pools.put(sourceName, created);
+            return created;
+        }
     }
 
-    private static void close(HikariDataSource dataSource) {
-        if (dataSource != null)
-            dataSource.close();
+    private Object lock(String sourceName) {
+        return sourceLocks.computeIfAbsent(sourceName, ignored -> new Object());
+    }
+
+    private VisDatasource loadEnabled(String sourceName) {
+        return datasourceMapper.selectOne(Wrappers.<VisDatasource>lambdaQuery()
+                .eq(VisDatasource::getSourceName, sourceName).eq(VisDatasource::getStatus, Status.EBL));
+    }
+
+    @PreDestroy
+    public void closeAll() {
+        closed = true;
+        sourceLocks.keySet().forEach(this::evict);
     }
 }

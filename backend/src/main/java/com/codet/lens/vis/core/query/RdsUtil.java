@@ -61,45 +61,52 @@ public class RdsUtil {
         JdbcTemplate jdbc = REGISTRY.template(tplRet.getDsName());
         try {
             return jdbc.execute((ConnectionCallback<SqlSelectResult>) conn -> {
-                PreparedStatement ps = conn.prepareStatement(tplRet.getSql());
-                // 多读一行只用于判断是否真的发生截断，返回值仍严格受 maxRows 限制。
-                int probeRows = maxRows == Integer.MAX_VALUE ? Integer.MAX_VALUE : maxRows + 1;
-                ps.setMaxRows(probeRows);
-                ps.setFetchSize(fetchSize);
-                Object[] params = tplRet.getParams() == null ? new Object[0] : tplRet.getParams();
-                for (int i = 0; i < params.length; i++) {
-                    ps.setObject(i + 1, params[i]);
-                }
-                ResultSet rs = ps.executeQuery();
-                ResultSetMetaData meta = rs.getMetaData();
-                int colCount = meta.getColumnCount();
-                List<String> fields = new ArrayList<>(colCount);
-                for (int i = 1; i <= colCount; i++) {
-                    fields.add(columnField(meta, i));
-                }
-                requireUniqueColumnLabels(fields);
-                List<SqlColumnMeta> columns = new ArrayList<>();
-                for (int i = 1; i <= colCount; i++) {
-                    columns.add(new SqlColumnMeta(fields.get(i - 1), meta.getColumnTypeName(i), meta.getColumnType(i)));
-                }
-                List<Map<String, Object>> rows = new ArrayList<>();
-                while (rs.next()) {
-                    if (rows.size() >= maxRows) {
-                        queryCtx.setTruncated(true);
-                        break;
+                try (PreparedStatement ps = conn.prepareStatement(tplRet.getSql())) {
+                    ps.setQueryTimeout(DatasourceConnectionFactory.QUERY_TIMEOUT_SECONDS);
+                    // 多读一行判断截断，返回结果仍受 maxRows 限制。
+                    ps.setMaxRows(maxRows == Integer.MAX_VALUE ? Integer.MAX_VALUE : maxRows + 1);
+                    ps.setFetchSize(fetchSize);
+                    Object[] params = tplRet.getParams() == null ? new Object[0] : tplRet.getParams();
+                    for (int i = 0; i < params.length; i++) {
+                        ps.setObject(i + 1, params[i]);
                     }
-                    Map<String, Object> row = new LinkedHashMap<>(colCount);
-                    for (int i = 1; i <= colCount; i++) {
-                        row.put(fields.get(i - 1), rs.getObject(i));
+                    try (ResultSet rs = ps.executeQuery()) {
+                        return readResult(rs, maxRows, queryCtx);
                     }
-                    rows.add(row);
                 }
-                return new SqlSelectResult(rows, columns);
             });
         } catch (Exception e) {
             log.error("DS_EXEC_ERR:{}", JsonUtil.toJson(tplRet), e);
             throw new RuntimeException(e.getMessage(), e);
         }
+    }
+
+    private static SqlSelectResult readResult(ResultSet rs, int maxRows, QueryContext queryCtx)
+            throws java.sql.SQLException {
+        ResultSetMetaData meta = rs.getMetaData();
+        int colCount = meta.getColumnCount();
+        List<String> fields = new ArrayList<>(colCount);
+        for (int i = 1; i <= colCount; i++) {
+            fields.add(columnField(meta, i));
+        }
+        requireUniqueColumnLabels(fields);
+        List<SqlColumnMeta> columns = new ArrayList<>();
+        for (int i = 1; i <= colCount; i++) {
+            columns.add(new SqlColumnMeta(fields.get(i - 1), meta.getColumnTypeName(i), meta.getColumnType(i)));
+        }
+        List<Map<String, Object>> rows = new ArrayList<>();
+        while (rs.next()) {
+            if (rows.size() >= maxRows) {
+                queryCtx.setTruncated(true);
+                break;
+            }
+            Map<String, Object> row = new LinkedHashMap<>(colCount);
+            for (int i = 1; i <= colCount; i++) {
+                row.put(fields.get(i - 1), rs.getObject(i));
+            }
+            rows.add(row);
+        }
+        return new SqlSelectResult(rows, columns);
     }
 
     public static SqlTplRet getSqlTplRet(SqlTplPara tplPara) {

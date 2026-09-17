@@ -75,9 +75,12 @@ public class DatasetAdminService {
     @Transactional
     public void saveInfo(ConfSqlInfoRequest req) {
         VisDataset row = req.getId() == null ? new VisDataset() : require(req.getId());
-        if (datasourceMapper.selectById(req.getDsId()) == null) {
+        // 与数据源删除／禁用使用同一行锁，避免引用检查后又创建绑定。
+        VisDatasource source = datasourceMapper.selectForUpdate(req.getDsId());
+        if (source == null || Status.DEL.equals(source.getStatus()))
             throw ResultException.fail("数据源不存在");
-        }
+        if (!Status.EBL.equals(source.getStatus()) && !Objects.equals(row.getSourceId(), req.getDsId()))
+            throw ResultException.fail("数据源已禁用");
         boolean sourceChanged = req.getId() != null && !Objects.equals(row.getSourceId(), req.getDsId());
         if (sourceChanged && !Boolean.TRUE.equals(req.getConfirmSourceChange())) {
             List<VisCard> references = findRefCards(List.of(req.getId()));

@@ -205,6 +205,44 @@ declare namespace VIS {
     cards: VisCardRefInfo[];
   };
 
+  type DatasourceConnectionRequest = {
+    id?: string;
+    dbType: string;
+    jdbcUrl: string;
+    username: string;
+    /** 未传表示保留原密码，空字符串表示使用空密码 */
+    password?: string;
+  };
+
+  type DatasourceDatasetInfo = {
+    id?: string;
+    name?: string;
+    status?: string;
+  };
+
+  type DatasourceInfo = {
+    id?: string;
+    sourceName?: string;
+    dbType?: string;
+    jdbcUrl?: string;
+    username?: string;
+    status?: string;
+    passwordSet?: boolean;
+    datasetCount?: number;
+  };
+
+  type DatasourceStatusRequest = {
+    id: string;
+    status: string;
+    confirmImpact?: boolean;
+  };
+
+  type DatasourceTestResult = {
+    success?: boolean;
+    message?: string;
+    elapsedMs?: number;
+  };
+
   type DataTime = {
     status?: string;
     kind?: string;
@@ -296,6 +334,10 @@ declare namespace VIS {
 
   type delDashGroupParams = {
     groupId: string;
+  };
+
+  type delDatasourceParams = {
+    datasourceId: string;
   };
 
   type deleteDashboardSubscriptionParams = {
@@ -442,6 +484,10 @@ declare namespace VIS {
     sqlId: string;
   };
 
+  type getDatasourceDetailParams = {
+    datasourceId: string;
+  };
+
   type getDatasourceMetaTreeParams = {
     sourceName: string;
     tables?: string;
@@ -553,6 +599,10 @@ declare namespace VIS {
     limit?: number;
   };
 
+  type listDatasourceDatasetsParams = {
+    datasourceId: string;
+  };
+
   type listDatasourceOptionsParams = {
     dsType: string;
   };
@@ -588,6 +638,11 @@ declare namespace VIS {
   type ListResponseDatasetDashboardRefInfo = {
     /** 列表 */
     list: DatasetDashboardRefInfo[];
+  };
+
+  type ListResponseDatasourceDatasetInfo = {
+    /** 列表 */
+    list: DatasourceDatasetInfo[];
   };
 
   type ListResponseDsOption = {
@@ -708,6 +763,19 @@ declare namespace VIS {
     pages: number;
     /** 记录 */
     records: ConfSqlInfo[];
+  };
+
+  type PageResponseDatasourceInfo = {
+    /** 当前页 */
+    pageNumber: number;
+    /** 每页大小 */
+    pageSize: number;
+    /** 总条数 */
+    total: number;
+    /** 总页数 */
+    pages: number;
+    /** 记录 */
+    records: DatasourceInfo[];
   };
 
   type PageResponseVisCardInfo = {
@@ -901,6 +969,14 @@ declare namespace VIS {
     execSqls?: ExecSqlInfo[];
   };
 
+  type QueryDatasourceRequest = {
+    /** 分页 */
+    page: PageCondition;
+    keyword?: string;
+    dbType?: string;
+    status?: string;
+  };
+
   type QueryMeta = {
     resultGeneratedAt?: string;
     datasetId?: string;
@@ -965,6 +1041,24 @@ declare namespace VIS {
     msg: string;
     /** 数据 */
     data?: DatasetSourceChangeWarning;
+  };
+
+  type RDatasourceInfo = {
+    /** 200成功 */
+    code: number;
+    /** 提示 */
+    msg: string;
+    /** 数据 */
+    data?: DatasourceInfo;
+  };
+
+  type RDatasourceTestResult = {
+    /** 200成功 */
+    code: number;
+    /** 提示 */
+    msg: string;
+    /** 数据 */
+    data?: DatasourceTestResult;
   };
 
   type RDataTime = {
@@ -1097,6 +1191,15 @@ declare namespace VIS {
     data?: ListResponseDatasetDashboardRefInfo;
   };
 
+  type RListResponseDatasourceDatasetInfo = {
+    /** 200成功 */
+    code: number;
+    /** 提示 */
+    msg: string;
+    /** 数据 */
+    data?: ListResponseDatasourceDatasetInfo;
+  };
+
   type RListResponseDsOption = {
     /** 200成功 */
     code: number;
@@ -1203,6 +1306,15 @@ declare namespace VIS {
     msg: string;
     /** 数据 */
     data?: PageResponseConfSqlInfo;
+  };
+
+  type RPageResponseDatasourceInfo = {
+    /** 200成功 */
+    code: number;
+    /** 提示 */
+    msg: string;
+    /** 数据 */
+    data?: PageResponseDatasourceInfo;
   };
 
   type RPageResponseVisCardInfo = {
@@ -1328,6 +1440,17 @@ declare namespace VIS {
 
   type saveDatasetDataTimeParams = {
     datasetId: string;
+  };
+
+  type SaveDatasourceRequest = {
+    id?: string;
+    dbType: string;
+    jdbcUrl: string;
+    username: string;
+    /** 未传表示保留原密码，空字符串表示使用空密码 */
+    password?: string;
+    sourceName: string;
+    confirmImpact?: boolean;
   };
 
   type SavePersonalViewRequest = {
@@ -1529,20 +1652,6 @@ declare namespace VIS {
     sqlName: string;
     /** 备注 */
     sqlDesc?: string;
-  };
-
-  type VisDatasource = {
-    id?: string;
-    createBy?: string;
-    createAt?: string;
-    modifyAt?: string;
-    modifyBy?: string;
-    sourceName?: string;
-    dbType?: string;
-    jdbcUrl?: string;
-    username?: string;
-    password?: string;
-    status?: string;
   };
 
   type VisFilterOptionItem = {
