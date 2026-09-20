@@ -1,7 +1,7 @@
 import type { ChartType, DatasetField, VisQueryConfig, VisVisualConfig } from '@/views/vis/shared/types'
 import { getChartCatalogEntry } from '@/views/vis/charts/catalog'
 import { CHART_HELP_FALLBACK } from '@/views/vis/charts/chartHelp'
-import { axisBoundsIssue } from '@/views/vis/shared/chartAxes'
+import { axisBoundsIssue, axisRoleLabels } from '@/views/vis/shared/chartAxes'
 import { chartMetricAliases, isDualAxisEnabled, resolveSecondaryFields } from '@/views/vis/shared/chartOptions'
 import { supportsSeriesStyle } from '@/views/vis/shared/chartSeriesStyle'
 import { detailConfigIssue } from '@/views/vis/shared/detailConfig'
@@ -151,12 +151,13 @@ export function collectQueryIssues(
     const dual = isDualAxisEnabled(visual, type, aliases)
     const percent = type === 'bar' && visual?.chart?.stacked && visual.chart.percent && !dual
     const secondary = dual ? resolveSecondaryFields(visual, aliases, type) : []
+    const labels = axisRoleLabels(aliases.length, secondary.length)
     for (const role of ['primary', 'secondary'] as const) {
       if (percent || (role === 'secondary' ? !secondary.length : secondary.length === aliases.length))
         continue
       const message = axisBoundsIssue(visual?.chart?.axes?.[role])
       if (message)
-        issues.push(issue('appearance', `${role === 'primary' ? '主' : '副'}数值轴：${message}`, `axis:${role}`))
+        issues.push(issue('appearance', `${labels[role]}：${message}`, `axis:${role}`))
     }
   }
 
@@ -318,14 +319,6 @@ export function collectQueryIssues(
       issues.push(issue('metrics', '趋势卡至少需要 1 个指标'))
     if (contrastMetrics.length)
       pushBannedContrast(issues, contrastMetrics, '趋势卡不支持同比 / 环比')
-  }
-  else if (type === 'tornado') {
-    if (dims.length !== cardinality.dimensions.min)
-      markExtras(issues, 'dimensions', '对比条需要恰好 1 个维度', dims.slice(cardinality.dimensions.max) as Array<{ _uid?: string }>)
-    if (regulars.length !== cardinality.metrics.min)
-      markExtras(issues, 'metrics', '对比条需要恰好 2 个指标', regulars.slice(cardinality.metrics.max) as Array<{ _uid?: string }>)
-    if (contrastMetrics.length)
-      pushBannedContrast(issues, contrastMetrics, '对比条不支持同比 / 环比')
   }
   else if (type === 'rank') {
     if (dims.length !== cardinality.dimensions.min)

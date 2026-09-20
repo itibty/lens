@@ -1121,6 +1121,11 @@ onBeforeRouteUpdate(async (to) => {
 
   &__tab-scroll {
     height: 100%;
+
+    :deep(.el-scrollbar__wrap) {
+      // 避免表单显隐时自动跟随其他字段调整滚动位置。
+      overflow-anchor: none;
+    }
   }
 
   &__tab-body {

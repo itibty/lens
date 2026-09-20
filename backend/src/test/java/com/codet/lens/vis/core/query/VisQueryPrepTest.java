@@ -28,6 +28,15 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class VisQueryPrepTest {
 
+    @ParameterizedTest
+    @ValueSource(strings = {"tornado", "unknown"})
+    void rejectsUnsupportedChartTypes(String chartType) {
+        ResultException error = assertThrows(ResultException.class,
+                () -> VisQueryPrep.prepare(request(chartType, 1, 2)));
+
+        assertEquals("不支持的图表类型: " + chartType, error.getMsg());
+    }
+
     @ParameterizedTest(name = "{0}: {1} dimensions, {2} metrics")
     @MethodSource("validChartShapes")
     void acceptsValidShapeForEveryQueryBackedChart(String chartType, int dimensions, int metrics) {
@@ -284,7 +293,6 @@ class VisQueryPrepTest {
                 Arguments.of("radar", 1, 1),
                 Arguments.of("waterfall", 1, 1),
                 Arguments.of("trend", 1, 1),
-                Arguments.of("tornado", 1, 2),
                 Arguments.of("rank", 1, 1)
         );
     }
@@ -308,7 +316,6 @@ class VisQueryPrepTest {
                 Arguments.of("radar", 1, 0, "雷达图至少需要 1 个指标"),
                 Arguments.of("waterfall", 1, 2, "瀑布图需要恰好 1 个指标"),
                 Arguments.of("trend", 0, 1, "趋势指标卡需要恰好 1 个维度"),
-                Arguments.of("tornado", 1, 1, "对比条需要恰好 2 个指标"),
                 Arguments.of("rank", 2, 1, "排行榜需要恰好 1 个维度")
         );
     }
@@ -330,7 +337,6 @@ class VisQueryPrepTest {
                 Arguments.of("radar", 2, 1, "雷达图需要恰好 1 个维度"),
                 Arguments.of("waterfall", 0, 1, "瀑布图需要恰好 1 个维度"),
                 Arguments.of("trend", 1, 0, "趋势指标卡至少需要 1 个指标"),
-                Arguments.of("tornado", 0, 2, "对比条需要恰好 1 个维度"),
                 Arguments.of("rank", 1, 2, "排行榜需要恰好 1 个指标")
         );
     }

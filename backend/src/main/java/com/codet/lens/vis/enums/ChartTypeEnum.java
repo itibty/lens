@@ -28,7 +28,6 @@ public enum ChartTypeEnum {
     TREEMAP("treemap", "矩形树图"),
     WATERFALL("waterfall", "瀑布图"),
     TREND("trend", "趋势指标卡"),
-    TORNADO("tornado", "对比条"),
     RANK("rank", "排行榜");
 
     private static final Map<String, ChartTypeEnum> BY_CODE = Arrays.stream(values())

@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import type { QueryIssue } from '@/views/vis/cards/chartShape'
 import type { VisAxisOptions, VisAxisRole, VisQueryConfig, VisVisualConfig } from '@/views/vis/shared/types'
-import { CARD_INPUT_PLACEHOLDERS } from '@/views/vis/charts/chartHelp'
+import { CARD_INPUT_PLACEHOLDERS, CHART_AXIS_COPY } from '@/views/vis/charts/chartHelp'
+import { axisRoleLabels } from '@/views/vis/shared/chartAxes'
 import { chartHasSeries, chartMetricAliases, isDualAxisEnabled, resolveChartOptions, resolveSecondaryFields } from '@/views/vis/shared/chartOptions'
 import StyleFormLabel from './StyleFormLabel.vue'
 import StyleFormSection from './StyleFormSection.vue'
@@ -14,16 +15,17 @@ const aliases = computed(() => chartMetricAliases(props.query))
 const secondary = computed(() => isDualAxisEnabled(visual.value, visual.value.chartType, aliases.value)
   ? resolveSecondaryFields(visual.value, aliases.value, visual.value.chartType)
   : [])
+const options = computed(() => resolveChartOptions(visual.value, visual.value.chartType, chartHasSeries(visual.value.chartType, props.query)))
+const labels = computed(() => axisRoleLabels(aliases.value.length, secondary.value.length))
 const roles = computed(() => [
-  { value: 'category' as const, label: '类目轴' },
-  ...(secondary.value.length < aliases.value.length ? [{ value: 'primary' as const, label: '主数值轴' }] : []),
-  ...(secondary.value.length ? [{ value: 'secondary' as const, label: '副数值轴' }] : []),
+  { value: 'category' as const, label: labels.value.category },
+  ...(secondary.value.length < aliases.value.length ? [{ value: 'primary' as const, label: labels.value.primary }] : []),
+  ...(secondary.value.length ? [{ value: 'secondary' as const, label: labels.value.secondary }] : []),
 ])
 watch(roles, (items) => {
   if (!items.some(item => item.value === role.value))
     role.value = 'category'
 })
-const options = computed(() => resolveChartOptions(visual.value, visual.value.chartType, chartHasSeries(visual.value.chartType, props.query)))
 const isPercent = computed(() => visual.value.chartType === 'bar' && options.value.percent && !isDualAxisEnabled(visual.value, visual.value.chartType, aliases.value))
 const axis = computed(() => visual.value.chart?.axes?.[role.value] ?? {})
 const defaultTitleVisible = computed(() => role.value !== 'category'
@@ -58,7 +60,6 @@ function patch(key: keyof VisAxisOptions, value: unknown) {
         <el-option v-for="item in roles" :key="item.value" :value="item.value" :label="item.label" />
       </el-select>
     </template>
-    <slot />
     <div class="vis-feature-group">
       <div class="vis-style-form__row">
         <StyleFormLabel>显示标题</StyleFormLabel>
@@ -83,11 +84,9 @@ function patch(key: keyof VisAxisOptions, value: unknown) {
           {{ issue }}
         </el-text>
         <div class="vis-style-form__row">
-          <StyleFormLabel>零点</StyleFormLabel>
+          <StyleFormLabel>{{ CHART_AXIS_COPY.range }}</StyleFormLabel>
           <el-select :model-value="axis.zero ?? 'auto'" size="small" class="vis-style-form__control" :disabled="axis.min != null || axis.max != null" @update:model-value="patch('zero', $event)">
-            <el-option value="auto" label="自动" />
-            <el-option value="include" label="包含零点" />
-            <el-option value="data" label="按数据范围" />
+            <el-option v-for="item in CHART_AXIS_COPY.rangeOptions" :key="item.value" :value="item.value" :label="item.label" />
           </el-select>
         </div>
       </template>

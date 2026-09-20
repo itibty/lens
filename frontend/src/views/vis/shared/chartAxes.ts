@@ -1,6 +1,18 @@
 import type { VisAxisOptions, VisAxisRole, VisChartOptions } from './types'
+import { CHART_AXIS_COPY } from '@/views/vis/charts/chartHelp'
 
 export const AXIS_ROLES: VisAxisRole[] = ['category', 'primary', 'secondary']
+
+/** 只有主、辅指标轴都实际存在时，才在名称中区分主辅。 */
+export function axisRoleLabels(metricCount: number, secondaryCount: number) {
+  if (secondaryCount > 0 && secondaryCount < metricCount)
+    return CHART_AXIS_COPY.roles
+  return {
+    ...CHART_AXIS_COPY.roles,
+    primary: CHART_AXIS_COPY.singleMetricAxis,
+    secondary: CHART_AXIS_COPY.singleMetricAxis,
+  }
+}
 
 export function axisBoundsIssue(axis?: VisAxisOptions) {
   if (!axis)

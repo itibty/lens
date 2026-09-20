@@ -1,6 +1,6 @@
 import type { MaybeRefOrGetter } from 'vue'
 import { useResizeObserver } from '@vueuse/core'
-import { isNumberChart, isProgressChart, isTrendChart } from '@/views/vis/shared/types'
+import { isNumberChart, isProgressChart, isRankChart, isTrendChart } from '@/views/vis/shared/types'
 
 /** 宽近看板 4 列。进度/趋势要更高才放得下环和走势；指标卡跟看板 4×5 即可 */
 const NUMBER_TILE = { w: 240, h: 188 } as const
@@ -10,6 +10,7 @@ export const PREVIEW_TILE_DEFAULT = {
   number: NUMBER_TILE,
   progress: TALL_TILE,
   trend: TALL_TILE,
+  rank: { w: 360, h: 360 },
   fill: null,
 } as const
 
@@ -29,6 +30,8 @@ export function previewTileKind(chartType?: string): PreviewTileKind | null {
     return 'progress'
   if (isNumberChart(chartType))
     return 'number'
+  if (isRankChart(chartType))
+    return 'rank'
   return String(chartType || '').trim() ? 'fill' : null
 }
 
@@ -78,8 +81,8 @@ export function usePreviewTile(
   function currentTileSize() {
     const { w: sw, h: sh } = stageSize()
     return {
-      w: tileW.value ?? Math.max(0, sw - STAGE_INSET * 2),
-      h: tileH.value ?? Math.max(0, sh - STAGE_INSET * 2),
+      w: Math.min(tileW.value ?? sw, Math.max(0, sw - STAGE_INSET * 2)),
+      h: Math.min(tileH.value ?? sh, Math.max(0, sh - STAGE_INSET * 2)),
     }
   }
 
@@ -170,8 +173,8 @@ export function usePreviewTile(
     pinFillAsTile(tileRect)
     const startX = event.clientX
     const startY = event.clientY
-    const startW = tileW.value ?? tileRect?.width ?? PREVIEW_TILE_DEFAULT.number.w
-    const startH = tileH.value ?? tileRect?.height ?? PREVIEW_TILE_DEFAULT.number.h
+    const startW = tileRect?.width ?? tileW.value ?? PREVIEW_TILE_DEFAULT.number.w
+    const startH = tileRect?.height ?? tileH.value ?? PREVIEW_TILE_DEFAULT.number.h
     trackPointer(
       (next) => {
         const { maxW, maxH } = sizeBounds()
@@ -218,10 +221,16 @@ export function usePreviewTile(
   }
 
   const tileStyle = computed(() => {
+    const available = `calc(100% - ${STAGE_INSET * 2}px)`
+    const size = {
+      width: tileW.value == null ? available : `${tileW.value}px`,
+      height: tileH.value == null ? available : `${tileH.value}px`,
+      maxWidth: available,
+      maxHeight: available,
+    }
     if (tileW.value == null) {
       return {
-        width: `calc(100% - ${STAGE_INSET * 2}px)`,
-        height: `calc(100% - ${STAGE_INSET * 2}px)`,
+        ...size,
         left: `${STAGE_INSET}px`,
         top: `${STAGE_INSET}px`,
         transform: 'none',
@@ -229,16 +238,14 @@ export function usePreviewTile(
     }
     if (tileX.value == null || tileY.value == null) {
       return {
-        width: `${tileW.value}px`,
-        height: `${tileH.value}px`,
+        ...size,
         left: '50%',
         top: '50%',
         transform: 'translate(-50%, -50%)',
       }
     }
     return {
-      width: `${tileW.value}px`,
-      height: `${tileH.value}px`,
+      ...size,
       left: `${tileX.value}px`,
       top: `${tileY.value}px`,
       transform: 'none',

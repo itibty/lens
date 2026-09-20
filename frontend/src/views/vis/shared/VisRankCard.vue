@@ -1,5 +1,5 @@
 <!--
- * @Description: 排行榜（前三领奖台 / 其余名次条）
+ * @Description: 排行榜（前三领奖台 / 排名列表）
 -->
 <script setup lang="ts">
 import type { RankItemView } from '@/views/vis/shared/rankCard'
@@ -7,7 +7,6 @@ import type { VisVisualConfig } from '@/views/vis/shared/types'
 import { VIS_EMPTY_TEXT } from '@/views/vis/shared/emptyState'
 import {
   rankSizeVars,
-  resolveRankBarColor,
   resolveRankItems,
   resolveRankOptions,
 } from '@/views/vis/shared/rankCard'
@@ -30,7 +29,6 @@ const emit = defineEmits<{
 
 const opt = computed(() => resolveRankOptions(props.visual))
 const items = computed(() => resolveRankItems(props.query, props.data, props.visual))
-const barColor = computed(() => resolveRankBarColor(props.visual))
 const cardStyle = computed(() => rankSizeVars(opt.value.size))
 
 const podium = computed(() => {
@@ -103,38 +101,21 @@ function onRowClick(item: { record: Record<string, unknown> }, event: MouseEvent
       :class="{ 'is-interactive': interactive }"
       @click="onRowClick(item, $event)"
     >
-      <span
-        v-if="opt.showRank"
-        class="vis-rank-card__no"
-      >
+      <span class="vis-rank-card__no">
         {{ item.rank }}
       </span>
-      <div class="vis-rank-card__main">
-        <div class="vis-rank-card__meta">
-          <span class="vis-rank-card__name">{{ item.name }}</span>
-          <span
-            v-if="opt.showValue || opt.showPercent"
-            class="vis-rank-card__nums"
-          >
-            <span v-if="opt.showValue" :style="item.valueColor ? { color: item.valueColor } : undefined">{{ item.valueText }}</span>
-            <span
-              v-if="opt.showPercent"
-              class="vis-rank-card__pct"
-            >{{ item.percentText }}</span>
-          </span>
-        </div>
-        <div
-          v-if="opt.showBar"
-          class="vis-rank-card__track"
+      <div class="vis-rank-card__meta">
+        <span class="vis-rank-card__name">{{ item.name }}</span>
+        <span
+          v-if="opt.showValue || opt.showPercent"
+          class="vis-rank-card__nums"
         >
-          <i
-            class="vis-rank-card__bar"
-            :style="{
-              width: `${item.barRatio * 100}%`,
-              background: barColor,
-            }"
-          />
-        </div>
+          <span v-if="opt.showValue" :style="item.valueColor ? { color: item.valueColor } : undefined">{{ item.valueText }}</span>
+          <span
+            v-if="opt.showPercent"
+            class="vis-rank-card__pct"
+          >{{ item.percentText }}</span>
+        </span>
       </div>
     </button>
   </div>
@@ -305,15 +286,8 @@ function onRowClick(item: { record: Record<string, unknown> }, event: MouseEvent
     text-align: right;
   }
 
-  &__main {
-    flex: 1 1 auto;
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-
   &__meta {
+    flex: 1 1 auto;
     display: flex;
     align-items: baseline;
     justify-content: space-between;
@@ -344,20 +318,6 @@ function onRowClick(item: { record: Record<string, unknown> }, event: MouseEvent
   &__pct {
     font-weight: 400;
     color: var(--vis-muted-color, var(--el-text-color-secondary));
-  }
-
-  &__track {
-    width: 100%;
-    height: var(--vis-rank-bar, 8px);
-    border-radius: 99px;
-    background: color-mix(in srgb, var(--vis-content-color, var(--el-text-color-primary)) 12%, transparent);
-    overflow: hidden;
-  }
-
-  &__bar {
-    display: block;
-    height: 100%;
-    border-radius: inherit;
   }
 }
 </style>

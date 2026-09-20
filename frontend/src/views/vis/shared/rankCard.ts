@@ -1,58 +1,45 @@
-import type { VisAccentPresetId } from './accentPresets'
-import type { VisProgressSize, VisRankOptions, VisVisualConfig } from './types'
-import { accentPreview, findAccentPreset, resolveAccentByColor, VIS_ACCENT_PRESETS } from './accentPresets'
-import { resolveCardChrome } from './cardTheme'
+import type { VisRankOptions, VisRankSize, VisVisualConfig } from './types'
 import { formatFieldText, resolveMetricFormat, resolveSignColor } from './fieldStyle'
 import { toFiniteNumber } from './numberStyle'
 import { dimensionAlias, isRankChart, metricAlias, regularMetrics } from './types'
 
 export const RANK_DEFAULTS = {
-  showRank: true,
   showValue: true,
   showPercent: false,
-  showBar: true,
   size: 'md',
-} as const satisfies Required<Omit<VisRankOptions, 'color' | 'decimals' | 'separator' | 'prefix' | 'suffix' | 'compact' | 'signColor'>>
-
-export const RANK_FEATURE_TIPS = {
-  showBar: '以最大绝对值为基准展示条形长度',
-} as const
-
-export const RANK_COLOR_PRESETS = VIS_ACCENT_PRESETS
-export type VisRankColorPresetId = VisAccentPresetId
+} as const satisfies Required<Omit<VisRankOptions, 'decimals' | 'separator' | 'prefix' | 'suffix' | 'compact' | 'signColor'>>
 
 export interface RankSizePreset {
-  id: VisProgressSize
+  id: VisRankSize
   name: string
   nameSize: number
   valueSize: number
   rankSize: number
-  barHeight: number
   gap: number
 }
 
 export const RANK_SIZE_PRESETS: RankSizePreset[] = [
-  { id: 'xs', name: '极小', nameSize: 12, valueSize: 12, rankSize: 12, barHeight: 4, gap: 6 },
-  { id: 'sm', name: '小', nameSize: 13, valueSize: 13, rankSize: 13, barHeight: 6, gap: 8 },
-  { id: 'md', name: '中', nameSize: 14, valueSize: 14, rankSize: 14, barHeight: 8, gap: 10 },
-  { id: 'lg', name: '大', nameSize: 15, valueSize: 16, rankSize: 16, barHeight: 10, gap: 12 },
-  { id: 'xl', name: '极大', nameSize: 16, valueSize: 18, rankSize: 18, barHeight: 12, gap: 14 },
+  { id: 'sm', name: '小', nameSize: 12, valueSize: 12, rankSize: 12, gap: 6 },
+  { id: 'md', name: '标准', nameSize: 14, valueSize: 14, rankSize: 14, gap: 10 },
+  { id: 'lg', name: '大', nameSize: 16, valueSize: 18, rankSize: 18, gap: 14 },
 ]
 
 const SIZE_MAP = Object.fromEntries(
   RANK_SIZE_PRESETS.map(item => [item.id, item]),
-) as Record<VisProgressSize, RankSizePreset>
+) as Record<VisRankSize, RankSizePreset>
 
 const RANK_MAX = 50
 
 export function rankSizeOf(size?: string): RankSizePreset {
-  if (size && size in SIZE_MAP)
-    return SIZE_MAP[size as VisProgressSize]
+  if (size === 'sm')
+    return SIZE_MAP.sm
+  if (size === 'lg')
+    return SIZE_MAP.lg
   return SIZE_MAP[RANK_DEFAULTS.size]
 }
 
 export function rankSizeSpec(item: RankSizePreset) {
-  return [item.nameSize, item.valueSize, item.barHeight]
+  return [item.nameSize, item.valueSize]
 }
 
 export function rankSizeVars(size?: string) {
@@ -62,48 +49,22 @@ export function rankSizeVars(size?: string) {
     '--vis-rank-name': `${s.nameSize}px`,
     '--vis-rank-value': `${s.valueSize}px`,
     '--vis-rank-no': `${s.rankSize}px`,
-    '--vis-rank-bar': `${s.barHeight}px`,
   }
 }
 
 export interface ResolvedRankOptions {
-  showRank: boolean
   showValue: boolean
   showPercent: boolean
-  showBar: boolean
-  size: VisProgressSize
-  color?: string
+  size: VisRankSize
 }
 
 export function resolveRankOptions(visual?: VisVisualConfig): ResolvedRankOptions {
   const raw = visual?.rank ?? {}
   return {
-    showRank: raw.showRank ?? RANK_DEFAULTS.showRank,
     showValue: raw.showValue ?? RANK_DEFAULTS.showValue,
     showPercent: raw.showPercent ?? RANK_DEFAULTS.showPercent,
-    showBar: raw.showBar ?? RANK_DEFAULTS.showBar,
     size: rankSizeOf(raw.size).id,
-    color: raw.color,
   }
-}
-
-export function resolveRankColorPreset(visual?: VisVisualConfig) {
-  return resolveAccentByColor(visual?.rank?.color)
-}
-
-export function rankColorPatch(id: VisRankColorPresetId) {
-  const item = findAccentPreset(id)
-  if (!item || item.id === 'default')
-    return null
-  return { color: item.color }
-}
-
-export function rankColorPreview(item: (typeof RANK_COLOR_PRESETS)[number]) {
-  return accentPreview(item)
-}
-
-export function resolveRankBarColor(visual: VisVisualConfig) {
-  return visual.rank?.color || resolveCardChrome(visual).color || 'var(--na-chart-accent)'
 }
 
 export function pruneRankVisual(visual: VisVisualConfig) {
@@ -111,26 +72,27 @@ export function pruneRankVisual(visual: VisVisualConfig) {
     delete visual.rank
     return visual
   }
-  const raw = visual.rank
+  const raw = visual.rank as (VisRankOptions & { showRank?: boolean, showBar?: boolean, color?: string }) | undefined
   if (!raw)
     return visual
-  if (raw.showRank !== false)
-    delete raw.showRank
   if (raw.showValue !== false)
     delete raw.showValue
   if (!raw.showPercent)
     delete raw.showPercent
-  if (raw.showBar !== false)
-    delete raw.showBar
+  // 清理旧卡片中已移除的名次开关、数值条设置。
+  delete raw.showRank
+  delete raw.showBar
+  delete raw.color
   delete raw.decimals
   delete raw.separator
   delete raw.prefix
   delete raw.suffix
   delete raw.compact
-  if (raw.size === RANK_DEFAULTS.size)
+  const size = rankSizeOf(raw.size).id
+  if (size === RANK_DEFAULTS.size)
     delete raw.size
-  if (!raw.color)
-    delete raw.color
+  else
+    raw.size = size
   if (!Object.keys(raw).length)
     delete visual.rank
   return visual
@@ -142,7 +104,6 @@ export interface RankItemView {
   valueText: string
   valueColor?: string
   percentText: string
-  barRatio: number
   record: Record<string, unknown>
 }
 
@@ -168,7 +129,6 @@ export function resolveRankItems(
     .filter((item): item is { value: number, name: string, record: Record<string, unknown> } => !!item)
     .sort((left, right) => right.value - left.value)
     .slice(0, RANK_MAX)
-  const max = Math.max(0, ...rows.map(item => Math.abs(item.value)))
   const total = rows.reduce((sum, item) => sum + Math.abs(item.value), 0)
   const format = resolveMetricFormat(visual, metric)
   return rows.map((item, index) => ({
@@ -179,7 +139,6 @@ export function resolveRankItems(
     percentText: total > 0
       ? `${new Intl.NumberFormat('zh-CN', { maximumFractionDigits: 1, minimumFractionDigits: 0 }).format((Math.abs(item.value) / total) * 100)}%`
       : '0%',
-    barRatio: max > 0 ? Math.abs(item.value) / max : 0,
     record: item.record,
   }))
 }

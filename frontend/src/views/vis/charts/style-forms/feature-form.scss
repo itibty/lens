@@ -83,8 +83,7 @@
     cursor: default;
   }
 
-  /* 格式、标注使用中性配置项；明细字段和排序保留维度 / 指标配色。 */
-  .field-style-shelf,
+  /* 标注规则使用中性色；字段胶囊统一按维度 / 指标配色。 */
   .table-mark {
     .field-pill:not(.is-invalid) {
       color: var(--el-text-color-regular);

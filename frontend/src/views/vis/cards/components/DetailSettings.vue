@@ -27,7 +27,7 @@ const shelfError = computed(() => shelfMessage(props.issues, 'detail'))
 const limitError = computed(() => pillMessage(props.issues, 'detail', 'detail:limit'))
 
 watch(() => props.issues, (issues, previous) => {
-  if (!issues?.some(item => item.shelf === 'detail' && !previous?.includes(item)))
+  if (!visual.value.allowDetail || !issues?.some(item => item.shelf === 'detail' && !previous?.includes(item)))
     return
   if (!openSections.value.includes('detail'))
     openSections.value = [...openSections.value, 'detail']
@@ -42,10 +42,14 @@ const enabled = computed({
     visual.value.allowDetail = value
     if (value && !openSections.value.includes('detail'))
       openSections.value = [...openSections.value, 'detail']
+    if (!value)
+      openSections.value = openSections.value.filter(name => name !== 'detail')
     if (value && visual.value.detail?.fields == null)
       patch({ fields: defaultDetailFields(props.query) })
   },
 })
+// 配置入口与功能启用状态分开；空字段列表也需要保留编辑入口。
+const configurable = computed(() => enabled.value || Object.keys(visual.value.detail ?? {}).length > 0)
 const fieldNames = computed(() => visual.value.detail?.fields ?? [])
 const unusedFields = computed(() => (props.fields ?? []).filter(item => !fieldNames.value.includes(item.field)))
 const fieldPills = computed({
@@ -106,11 +110,11 @@ function confirmDraft(field: string) {
 
 <template>
   <StyleFormShell v-if="needsDataset(visual.chartType)" v-model="openSections">
-    <StyleFormSection title="明细" name="detail">
+    <StyleFormSection title="明细" name="detail" :collapsible="configurable">
       <template #extra>
         <el-switch v-model="enabled" size="small" aria-label="允许查看明细" />
       </template>
-      <template v-if="enabled">
+      <template v-if="configurable">
         <div class="detail-fields" :class="{ 'is-invalid': !!shelfError }">
           <div class="detail-fields__head">
             <ShelfTitle :tip="CHART_HELP_FEATURE_TIPS.detailFields">

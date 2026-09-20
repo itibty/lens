@@ -15,7 +15,6 @@ import { rankChart } from './definitions/rank'
 import { richtextChart } from './definitions/richtext'
 import { scatterChart } from './definitions/scatter'
 import { tableChart } from './definitions/table'
-import { tornadoChart } from './definitions/tornado'
 import { treemapChart } from './definitions/treemap'
 import { trendChart } from './definitions/trend'
 import { urlChart } from './definitions/url'
@@ -44,7 +43,6 @@ const CHART_DEFINITIONS: ChartDefinition[] = [
   lineChart,
   comboChart,
   waterfallChart,
-  tornadoChart,
   pieChart,
   treemapChart,
   scatterChart,

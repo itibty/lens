@@ -54,6 +54,7 @@ export interface VisAxisOptions {
   zero?: 'include' | 'data'
 }
 export type VisAxisRole = 'category' | 'primary' | 'secondary'
+export type VisChartLabelContent = 'name' | 'value' | 'nameValue' | 'percent' | 'namePercent'
 
 /**
  * 几何图展示设置（挂在 visual.chart；产品语义，渲染侧译成 VChart）。
@@ -68,8 +69,10 @@ export interface VisChartOptions {
   legendPosition?: VisChartLegendPosition
   /** 悬停提示；默认开 */
   tooltip?: boolean
-  /** 数据标签；饼 / 漏斗默认开，其余默认关 */
+  /** 数据标签；饼 / 漏斗 / 矩形树图 / 瀑布默认开，其余默认关 */
   dataLabel?: boolean
+  /** 标签内容；可选项与默认值按图形及维度配置确定 */
+  dataLabelContent?: VisChartLabelContent
   /** 柱 / 折线：堆叠；默认关，无系列时不生效 */
   stacked?: boolean
   /** 柱：百分比堆叠；仅堆叠时生效，默认关 */
@@ -104,9 +107,12 @@ export interface VisChartOptions {
   markLines?: VisMarkLine[]
   /** 瀑布图：末项追加合计；默认开，关着才落库 */
   waterfallTotal?: boolean
+  /** 矩形树图：显示父级分组及名称；默认关，多个维度时生效 */
+  treemapParent?: boolean
 }
 
 export type VisMarkLineKind = 'fixed' | 'avg' | 'min' | 'max'
+export type VisMarkLineStyle = Pick<VisSeriesStyle, 'color' | 'lineStyle' | 'lineWidth'>
 
 /** 数值轴参照线（目标 / 警戒 / 统计）；不写 field = 主轴第一个指标 */
 export interface VisMarkLine {
@@ -117,6 +123,7 @@ export interface VisMarkLine {
   field?: string
   /** 不写：固定值用数字，统计用「平均 / 最大 / 最小」 */
   label?: string
+  style?: VisMarkLineStyle
 }
 
 /** 数据标注样式（未填的项保持主题） */
@@ -342,20 +349,16 @@ export interface VisTrendOptions {
   showChange?: boolean
 }
 
+export type VisRankSize = 'sm' | 'md' | 'lg'
+
 /** 排行榜（挂在 visual.rank） */
 export interface VisRankOptions extends VisNumberFormat {
-  /** 名次；默认开 */
-  showRank?: boolean
   /** 数值；默认开 */
   showValue?: boolean
   /** 占总计占比；默认关 */
   showPercent?: boolean
-  /** 占比条；默认开 */
-  showBar?: boolean
-  /** 条颜色；空 = 主题主色 */
-  color?: string
-  /** 行高与字号；默认 md */
-  size?: VisProgressSize
+  /** 字号与间距；默认 md */
+  size?: VisRankSize
 }
 
 /** 指标卡样式（挂在 visual.number；字段均可缺省，渲染侧填默认） */

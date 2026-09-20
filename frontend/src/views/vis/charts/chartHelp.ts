@@ -48,6 +48,7 @@ export const FEATURE_FORM_COPY = {
   maxRows: '最多行数',
   percentDecimals: '完成率小数位',
   values: '数值',
+  treemapParent: '父级层次',
 } as const
 
 /** 输入框只提示输入内容；仅为不易理解的配置保留 info 说明。 */
@@ -178,12 +179,6 @@ export const CHART_HELP: Record<ChartType, ChartHelp> = {
       metrics: '第 1 个指标作为主指标，其余作为辅指标。\n主值取最后一个有效数据点。\n“较上期”对比最后两个有效数据点，不支持配置同比 / 环比。',
     },
   },
-  tornado: {
-    constraints: ['1 个维度，2 个指标'],
-    shelfTips: {
-      metrics: '第 1 个指标显示在左侧，第 2 个显示在右侧，可拖动调整顺序。',
-    },
-  },
   rank: {
     constraints: ['1 个维度，1 个指标'],
     shelfTips: { metrics: '按指标值从大到小排列。' },
@@ -210,11 +205,30 @@ export const CHART_HELP_FEATURE_TIPS = {
   percentDecimals: '设置完成率的小数位数',
   lineFields: '以折线展示所选指标，默认选择最后一个指标',
   waterfallTotal: '在图表末尾显示累计总值',
+  treemapParent: '显示父级分组及名称',
   fixedTarget: '使用固定数值作为目标值，需大于 0',
   progressValues: '显示当前值与目标值',
+  rankPercent: '显示各项在当前榜单中的占比，按数值的绝对值计算',
   compactNumber: '以万、亿为单位显示较大数值',
   cellProgress: '在单元格中显示进度条，100 表示满格',
   detailFields: '展示当前筛选范围内的原始明细记录',
+} as const
+
+export const CHART_AXIS_COPY = {
+  singleMetricAxis: '指标轴',
+  roles: {
+    category: '维度轴',
+    primary: '主指标轴',
+    secondary: '辅指标轴',
+  },
+  secondaryFields: '辅轴指标',
+  secondaryFieldsTip: '所选指标共用辅指标轴刻度，其余指标使用主指标轴刻度',
+  range: '刻度范围',
+  rangeOptions: [
+    { value: 'auto', label: '自动' },
+    { value: 'include', label: '包含零点' },
+    { value: 'data', label: '按数据范围' },
+  ],
 } as const
 
 export function getChartShelfTips(chartType: ChartType): ChartShelfTips {

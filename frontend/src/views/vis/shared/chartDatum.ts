@@ -9,7 +9,7 @@ export function joinTreePath(parent: string, label: string) {
   return parent ? `${parent}${TREE_PATH_SEP}${label}` : label
 }
 
-/** VChart 点击可能是路径数组，或把原始行挂在 data 上 */
+/** VChart 原始数据可能是路径数组、树图的 datum 路径，或挂在 data 上。 */
 export function unwrapChartDatum(datum: unknown): Record<string, unknown> | undefined {
   if (!datum || typeof datum !== 'object')
     return undefined
@@ -22,7 +22,7 @@ export function unwrapChartDatum(datum: unknown): Record<string, unknown> | unde
     return undefined
   }
   const rec = datum as Record<string, unknown>
-  const nested = rec.data
+  const nested = Array.isArray(rec.datum) ? unwrapChartDatum(rec.datum) : rec.data
   if (nested && typeof nested === 'object' && !Array.isArray(nested))
     return { ...rec, ...(nested as Record<string, unknown>) }
   return rec

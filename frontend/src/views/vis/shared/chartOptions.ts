@@ -8,6 +8,7 @@ import type {
 } from './types'
 import { CHART_HELP_FEATURE_TIPS } from '@/views/vis/charts/chartHelp'
 import { sanitizeAxes } from './chartAxes'
+import { chartLabelConfig, resolveChartLabelContent } from './chartLabels'
 import { sanitizeSeriesStyles, supportsSeriesStyle } from './chartSeriesStyle'
 import { sanitizeMarkLines } from './markLine'
 import { isVChartType, metricAlias, regularMetrics } from './types'
@@ -85,7 +86,7 @@ const ORIENT = new Set<VisChartOrientation>(['vertical', 'horizontal'])
 const CAP_FIELDS: Record<keyof ChartCaps, Array<keyof VisChartOptions>> = {
   legend: ['legend', 'legendPosition'],
   tooltip: ['tooltip'],
-  dataLabel: ['dataLabel'],
+  dataLabel: ['dataLabel', 'dataLabelContent'],
   stacked: ['stacked', 'percent'],
   orientation: ['orientation'],
   area: ['area'],
@@ -146,13 +147,13 @@ export const COMMON_CHART_DEFAULTS: Required<ChartDefaultConfig> = {
 export const CHART_FEATURE_TIPS = {
   areaRadar: '填充雷达图轮廓内的区域',
   percent: '按各指标占比展示，每组合计为 100%',
-  dataLabelBar: '显示柱形数值；堆叠时自动隐藏空间不足的标签',
+  dataLabelBar: '堆叠时自动隐藏空间不足的标签',
   showRate: '显示相邻阶段的转化率',
-  secondaryFields: '所选指标使用独立的坐标轴刻度',
   lineFields: CHART_HELP_FEATURE_TIPS.lineFields,
   crosshair: '悬停时显示辅助线，便于对照坐标轴读数',
   markLineField: '标记线使用所选指标对应的坐标轴',
   waterfallTotal: CHART_HELP_FEATURE_TIPS.waterfallTotal,
+  treemapParent: CHART_HELP_FEATURE_TIPS.treemapParent,
 } as const
 
 /**
@@ -199,10 +200,6 @@ export const CHART_FEATURE: Partial<Record<ChartType, ChartFeatureConfig>> = {
     caps: { orientation: true, scrollbar: true, crosshair: true, markLine: true },
     defaults: { legend: true, dataLabel: true },
   },
-  tornado: {
-    caps: { scrollbar: true },
-    defaults: { legend: true, dataLabel: false },
-  },
 }
 
 export function chartFeatureOf(chartType?: string): ChartFeatureConfig {
@@ -248,7 +245,7 @@ export function defaultChartOptions(chartType?: string, hasSeries = false): Reso
   return resolveChartDefaults(chartFeatureOf(chartType).defaults, hasSeries)
 }
 
-const ALWAYS_SERIES_CHARTS = new Set(['pie', 'wordcloud', 'treemap', 'waterfall', 'tornado'])
+const ALWAYS_SERIES_CHARTS = new Set(['pie', 'wordcloud', 'treemap', 'waterfall'])
 const CARTESIAN_SERIES_CHARTS = new Set(['bar', 'line', 'combo', 'radar'])
 
 /** 多指标或第 2 维 → 有系列（饼 / 词云 / 树图按类别着色；散点有维才分色） */
@@ -405,6 +402,12 @@ export function pruneChartVisual(
     for (const field of fields)
       delete next[field]
   }
+  const labelConfig = chartLabelConfig(visual.chartType, query)
+  const labelContent = resolveChartLabelContent({ chart: next }, visual.chartType, query)
+  if (labelConfig && labelContent !== labelConfig.default)
+    next.dataLabelContent = labelContent
+  else
+    delete next.dataLabelContent
   const yFields = chartMetricAliases(query)
   if (isDualAxisEnabled({ chart: next }, visual.chartType, yFields)) {
     const secondary = resolveSecondaryFields({ chart: next }, yFields, visual.chartType)
@@ -444,6 +447,8 @@ export function pruneChartVisual(
   else {
     delete next.waterfallTotal
   }
+  if (visual.chartType !== 'treemap' || next.treemapParent !== true)
+    delete next.treemapParent
   if (caps.markLine) {
     const markLines = sanitizeMarkLines(next.markLines, yFields)
     if (markLines.length)

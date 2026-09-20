@@ -5,7 +5,8 @@
 import type { QueryIssue } from '@/views/vis/cards/chartShape'
 import type { ResolvedChartOptions } from '@/views/vis/shared/chartOptions'
 import type { VisChartOptions, VisQueryConfig, VisVisualConfig } from '@/views/vis/shared/types'
-import { CARD_INPUT_PLACEHOLDERS, CARD_INPUT_TIPS, FEATURE_FORM_COPY } from '@/views/vis/charts/chartHelp'
+import { CARD_INPUT_PLACEHOLDERS, CARD_INPUT_TIPS, CHART_AXIS_COPY, FEATURE_FORM_COPY } from '@/views/vis/charts/chartHelp'
+import { CHART_LABEL_COPY, chartLabelConfig, resolveChartLabelContent } from '@/views/vis/shared/chartLabels'
 import {
   CHART_FEATURE_TIPS,
   chartCaps,
@@ -42,6 +43,7 @@ const caps = computed(() => chartCaps(chartType.value))
 const metricAliases = computed(() => chartMetricAliases(props.query))
 const canDualAxis = computed(() => caps.value.dualAxis && metricAliases.value.length >= 2)
 const canLineMark = computed(() => caps.value.lineMark && metricAliases.value.length >= 2)
+const canTreemapParent = computed(() => chartType.value === 'treemap' && (props.query?.dimensions?.length ?? 0) >= 2)
 const lineFields = computed({
   get: () => resolveLineFields(visual.value, metricAliases.value),
   set: (value: string[]) => {
@@ -98,7 +100,8 @@ const hasShapeOptions = computed(() =>
   || caps.value.showRate
   || caps.value.randomRotate
   || caps.value.shapeText
-  || canLineMark.value,
+  || canLineMark.value
+  || canDualAxis.value,
 )
 
 const openSections = ref(['common', 'display', 'fieldStyle'])
@@ -108,6 +111,16 @@ const legend = optField('legend')
 const legendPosition = optField('legendPosition')
 const tooltip = optField('tooltip')
 const dataLabel = optField('dataLabel')
+const labelConfig = computed(() => chartLabelConfig(chartType.value, props.query))
+const labelContent = computed({
+  get: () => resolveChartLabelContent(visual.value, chartType.value, props.query),
+  set: (value) => {
+    if (value === labelConfig.value?.default)
+      branch.clearKey('dataLabelContent')
+    else
+      branch.patch({ dataLabelContent: value })
+  },
+})
 const stacked = optField('stacked', (value) => {
   if (!value)
     branch.clearKey('percent')
@@ -116,18 +129,15 @@ const percent = optField('percent')
 const markLineCount = computed(() =>
   sanitizeMarkLines(visual.value.chart?.markLines, metricAliases.value, { keepIncomplete: true }).length,
 )
+watch(markLineCount, (count) => {
+  if (!count)
+    openSections.value = openSections.value.filter(name => name !== 'markLine')
+})
 const canMarkLine = computed(() =>
   caps.value.markLine && metricAliases.value.length >= 1 && !percent.value,
 )
-const waterfallTotal = computed({
-  get: () => visual.value.chart?.waterfallTotal !== false,
-  set: (value: boolean) => {
-    if (value)
-      branch.clearKey('waterfallTotal')
-    else
-      branch.patch({ waterfallTotal: false })
-  },
-})
+const waterfallTotal = branch.boolField('waterfallTotal', true)
+const treemapParent = branch.boolField('treemapParent', false)
 
 function addMarkLine() {
   if (!openSections.value.includes('markLine'))
@@ -248,6 +258,39 @@ const secondaryFields = computed({
           </el-select>
         </div>
 
+        <div v-if="canDualAxis" class="vis-style-form__row">
+          <StyleFormLabel>
+            双轴
+          </StyleFormLabel>
+          <el-switch v-model="dualAxis" size="small" />
+        </div>
+
+        <div
+          v-if="canDualAxis && dualAxis"
+          class="vis-style-form__row is-block is-child"
+        >
+          <StyleFormLabel :tip="CHART_AXIS_COPY.secondaryFieldsTip">
+            {{ CHART_AXIS_COPY.secondaryFields }}
+          </StyleFormLabel>
+          <el-select
+            v-model="secondaryFields"
+            size="small"
+            class="vis-style-form__control"
+            multiple
+            collapse-tags
+            collapse-tags-tooltip
+            clearable
+            placeholder="选择指标"
+          >
+            <el-option
+              v-for="field in metricAliases"
+              :key="field"
+              :label="field"
+              :value="field"
+            />
+          </el-select>
+        </div>
+
         <div
           v-if="canStack"
           class="vis-style-form__row"
@@ -347,6 +390,16 @@ const secondaryFields = computed({
       </div>
 
       <div v-if="caps.legend || caps.dataLabel" class="vis-feature-group">
+        <div v-if="canTreemapParent" class="vis-style-form__row">
+          <StyleFormLabel :tip="CHART_FEATURE_TIPS.treemapParent">
+            {{ FEATURE_FORM_COPY.treemapParent }}
+          </StyleFormLabel>
+          <el-switch
+            v-model="treemapParent"
+            size="small"
+            :aria-label="FEATURE_FORM_COPY.treemapParent"
+          />
+        </div>
         <div
           v-if="caps.legend"
           class="vis-style-form__row"
@@ -393,6 +446,12 @@ const secondaryFields = computed({
           </StyleFormLabel>
           <el-switch v-model="dataLabel" size="small" />
         </div>
+        <div v-if="caps.dataLabel && dataLabel && labelConfig && labelConfig.options.length > 1" class="vis-style-form__row is-child">
+          <StyleFormLabel>{{ CHART_LABEL_COPY.content }}</StyleFormLabel>
+          <el-select v-model="labelContent" size="small" class="vis-style-form__control">
+            <el-option v-for="value in labelConfig.options" :key="value" :value="value" :label="CHART_LABEL_COPY.options[value]" />
+          </el-select>
+        </div>
       </div>
 
       <div class="vis-feature-group">
@@ -432,42 +491,7 @@ const secondaryFields = computed({
       data-validation-shelf="appearance"
       :query="query"
       :issues="issues"
-    >
-      <div v-if="canDualAxis" class="vis-feature-group">
-        <div class="vis-style-form__row">
-          <StyleFormLabel>
-            双轴
-          </StyleFormLabel>
-          <el-switch v-model="dualAxis" size="small" />
-        </div>
-
-        <div
-          v-if="dualAxis"
-          class="vis-style-form__row is-block is-child"
-        >
-          <StyleFormLabel :tip="CHART_FEATURE_TIPS.secondaryFields">
-            副轴指标
-          </StyleFormLabel>
-          <el-select
-            v-model="secondaryFields"
-            size="small"
-            class="vis-style-form__control"
-            multiple
-            collapse-tags
-            collapse-tags-tooltip
-            clearable
-            placeholder="选择指标"
-          >
-            <el-option
-              v-for="field in metricAliases"
-              :key="field"
-              :label="field"
-              :value="field"
-            />
-          </el-select>
-        </div>
-      </div>
-    </ChartAxesForm>
+    />
 
     <FieldStyleShelf
       v-model:visual="visual"
@@ -479,6 +503,7 @@ const secondaryFields = computed({
       v-if="canMarkLine"
       title="标记线"
       name="markLine"
+      :collapsible="markLineCount > 0"
     >
       <template #extra>
         <button

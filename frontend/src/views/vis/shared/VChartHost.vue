@@ -167,6 +167,16 @@ function axisRangeKey(spec: ISpec | null | undefined) {
   return JSON.stringify(axes.map(axis => [axis.orient, axis.type, axis.seriesId, axis.min, axis.max, axis.zero, axis.nice]))
 }
 
+/** 树图父级 / 子项共用标签组件，切换时 updateSpec 会误隐藏另一层标签。 */
+function treemapLabelKey(spec: ISpec | null | undefined) {
+  const rec = specRec(spec)
+  if (rec?.type !== 'treemap')
+    return ''
+  const parent = rec.nonLeafLabel as { visible?: boolean } | undefined
+  const leaf = rec.label as { visible?: boolean } | undefined
+  return `tm-${parent?.visible === true}-${leaf?.visible === true}`
+}
+
 /** updateSpec 清不掉的形态变化；新组件开关往这里加一项 */
 function remountKey(spec: ISpec | null | undefined) {
   if (!spec)
@@ -182,6 +192,7 @@ function remountKey(spec: ISpec | null | undefined) {
     markLineKey(spec),
     waterfallTotalKey(spec),
     waterfallLegendKey(spec),
+    treemapLabelKey(spec),
   ].join('/')
 }
 

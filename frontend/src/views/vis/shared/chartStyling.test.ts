@@ -1,16 +1,68 @@
 import type { VisQueryConfig, VisVisualConfig } from './types'
 import { describe, expect, it } from 'vitest'
+import { DARK_THEME, LIGHT_THEME } from '@/theme/tokens'
 import { withChartTheme } from '@/theme/vchart'
 import { buildVChartSpec } from './cardRenderer'
 import { axisBoundsIssue } from './chartAxes'
 import { pruneChartVisual } from './chartOptions'
 import { remapSeriesAlias, sanitizeSeriesStyles, seriesCandidates, seriesTargetKey } from './chartSeriesStyle'
+import { sanitizeMarkLines } from './markLine'
 
 const query: VisQueryConfig = { datasetId: '1', dimensions: [{ field: 'month' }], metrics: [{ field: 'revenue', label: '营收', agg: 'SUM' }, { field: 'cost', label: '成本', agg: 'SUM' }] }
 const data = { columns: ['month', '营收', '成本'], total: 2, truncated: false, rows: [{ month: '一月', 营收: 100, 成本: 40 }, { month: '二月', 营收: 110, 成本: 45 }] }
 function spec(visual: VisVisualConfig, q = query) {
   return buildVChartSpec(visual.chartType, q, data, visual) as Record<string, any>
 }
+
+describe('mark line settings', () => {
+  it('persists appearance and applies it to the selected metric without changing the statistic', () => {
+    const visual: VisVisualConfig = { chartType: 'combo', chart: { dualAxis: true, markLines: [
+      { kind: 'avg', field: '成本', label: '成本均值', style: { color: '#d4380d', lineStyle: 'solid', lineWidth: 4 } },
+    ] } }
+    pruneChartVisual(visual, query)
+    expect(visual.chart?.markLines?.[0]?.style).toEqual({ color: '#d4380d', lineStyle: 'solid', lineWidth: 4 })
+    const output = spec(visual)
+    const line = output.markLine[0]
+    expect(line).toMatchObject({ y: 42.5, label: { text: '成本均值', style: { fill: '#d4380d' } }, line: { style: { stroke: '#d4380d', lineDash: [], lineWidth: 4 } } })
+    expect(line.relativeSeriesId).toBe(output.series.find((item: any) => item.type === 'line').id)
+  })
+
+  it('keeps fixed horizontal lines and their dotted style through metric renames', () => {
+    const visual: VisVisualConfig = { chartType: 'bar', chart: { orientation: 'horizontal', markLines: [
+      { kind: 'fixed', field: '成本', value: 50, style: { lineStyle: 'dotted', lineWidth: 1 } },
+    ] } }
+    remapSeriesAlias(visual, '成本', '支出')
+    expect(visual.chart?.markLines?.[0]).toMatchObject({ field: '支出', style: { lineStyle: 'dotted', lineWidth: 1 } })
+    remapSeriesAlias(visual, '支出', '成本')
+    expect(spec(visual).markLine[0]).toMatchObject({ x: 50, line: { style: { lineDash: [2, 3], lineWidth: 1 } } })
+  })
+
+  it('ignores invalid appearance and supports clearing a custom color', () => {
+    expect(sanitizeMarkLines([{ kind: 'avg', style: { color: 'invalid', lineStyle: 'invalid', lineWidth: 99 } }], ['营收'])).toEqual([{ kind: 'avg' }])
+    expect(sanitizeMarkLines([{ kind: 'avg', style: { color: null, lineStyle: 'solid' } }], ['营收'])).toEqual([{ kind: 'avg', style: { lineStyle: 'solid' } }])
+  })
+
+  it('keeps an empty fixed value editable without rendering it as zero', () => {
+    for (const value of [null, '', undefined]) {
+      const lines = [{ kind: 'fixed', value }]
+      expect(sanitizeMarkLines(lines, ['营收'], { keepIncomplete: true })).toEqual([{ kind: 'fixed' }])
+      expect(sanitizeMarkLines(lines, ['营收'])).toEqual([])
+    }
+    expect(sanitizeMarkLines([{ kind: 'fixed', value: 0 }], ['营收'])).toEqual([{ kind: 'fixed', value: 0 }])
+  })
+
+  it('uses theme colors for existing lines and preserves explicit colors in dark mode', () => {
+    const visual: VisVisualConfig = { chartType: 'line', chart: { markLines: [{ kind: 'max' }, { kind: 'min', style: { color: '#ff0000' } }] } }
+    for (const theme of [LIGHT_THEME, DARK_THEME]) {
+      const output = withChartTheme(spec(visual) as any, theme) as any
+      expect(output.markLine[0]).toMatchObject({ y: 110, line: { style: { lineWidth: 2 } } })
+      expect(output.markLine[0].line.style.stroke).toBeUndefined()
+      expect(output.markLine[0].label.style.fill).toBeUndefined()
+      expect(output.theme.colorScheme.default.palette.markLineStrokeColor).toBe(theme.text.muted)
+      expect(output.markLine[1].line.style.stroke).toBe('#ff0000')
+    }
+  })
+})
 
 describe('series settings', () => {
   it('matches aliases independently of order, then follows renames', () => {

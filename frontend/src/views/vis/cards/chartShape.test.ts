@@ -31,12 +31,31 @@ describe('chart conversion', () => {
 
   it('rejects invalid active axis ranges, ignoring percent-only ranges and absent axes', () => {
     const visual = { chartType: 'bar', chart: { axes: { primary: { min: 10, max: 1 }, secondary: { min: 10, max: 1 } } } } as VisCard['visual']
-    expect(collectQueryIssues('bar', query, undefined, visual).filter(item => item.shelf === 'appearance')).toHaveLength(1)
+    const axisIssues = () => collectQueryIssues(visual.chartType, query, undefined, visual)
+      .filter(item => item.shelf === 'appearance')
+      .map(item => [item.uid, item.message])
+    expect(axisIssues()).toEqual([['axis:primary', '指标轴：最小值须小于最大值']])
     visual.chart!.stacked = true
     visual.chart!.percent = true
     expect(collectQueryIssues('bar', query, undefined, visual)).toEqual([])
     visual.chart!.dualAxis = true
-    expect(collectQueryIssues('bar', query, undefined, visual).filter(item => item.shelf === 'appearance')).toHaveLength(2)
+    for (const chartType of ['bar', 'line', 'combo'] as const) {
+      visual.chartType = chartType
+      expect(axisIssues()).toEqual([
+        ['axis:primary', '主指标轴：最小值须小于最大值'],
+        ['axis:secondary', '辅指标轴：最小值须小于最大值'],
+      ])
+    }
+    visual.chartType = 'bar'
+    visual.chart!.orientation = 'horizontal'
+    expect(axisIssues()).toEqual([
+      ['axis:primary', '主指标轴：最小值须小于最大值'],
+      ['axis:secondary', '辅指标轴：最小值须小于最大值'],
+    ])
+    visual.chart!.secondaryFields = []
+    expect(axisIssues()).toEqual([['axis:primary', '指标轴：最小值须小于最大值']])
+    visual.chart!.secondaryFields = ['营收', '成本']
+    expect(axisIssues()).toEqual([['axis:secondary', '指标轴：最小值须小于最大值']])
   })
 
   it('keeps unsupported dimensions and contrast definitions available for correction', () => {

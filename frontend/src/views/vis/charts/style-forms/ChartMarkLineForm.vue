@@ -2,11 +2,13 @@
  * @Description: 几何图标记线（固定值 / 平均 / 极值）
 -->
 <script setup lang="ts">
-import type { VisMarkLine, VisMarkLineKind, VisQueryConfig, VisVisualConfig } from '@/views/vis/shared/types'
+import type { VisMarkLine, VisMarkLineKind, VisMarkLineStyle, VisQueryConfig, VisVisualConfig } from '@/views/vis/shared/types'
 import { CARD_INPUT_PLACEHOLDERS } from '@/views/vis/charts/chartHelp'
 import { CHART_FEATURE_TIPS, chartMetricAliases } from '@/views/vis/shared/chartOptions'
+import { resolveChartSeriesColors } from '@/views/vis/shared/chartPalette'
 import {
   defaultMarkLineField,
+  MARK_LINE_DEFAULT_STYLE,
   MARK_LINE_KINDS,
   MARK_LINE_MAX,
   sanitizeMarkLines,
@@ -65,6 +67,10 @@ function lineField(line: VisMarkLine) {
   return line.field && metricAliases.value.includes(line.field)
     ? line.field
     : defaultField.value
+}
+
+function patchStyle(index: number, key: keyof VisMarkLineStyle, value: unknown) {
+  patchLine(index, { style: { ...lines.value[index]?.style, [key]: value } })
 }
 
 function setKind(index: number, kind: VisMarkLineKind) {
@@ -177,6 +183,53 @@ defineExpose({ addLine })
         :placeholder="CARD_INPUT_PLACEHOLDERS.label"
         @update:model-value="(value: string) => patchLine(index, { label: value.trim() || undefined })"
       />
+    </div>
+    <div class="vis-style-form__row">
+      <StyleFormLabel>颜色</StyleFormLabel>
+      <el-color-picker
+        :model-value="line.style?.color ?? null"
+        :predefine="resolveChartSeriesColors(visual)"
+        size="small"
+        @update:model-value="patchStyle(index, 'color', $event)"
+      />
+    </div>
+    <div class="vis-style-form__row">
+      <StyleFormLabel>线型</StyleFormLabel>
+      <el-radio-group
+        :model-value="line.style?.lineStyle ?? MARK_LINE_DEFAULT_STYLE.lineStyle"
+        size="small"
+        class="vis-style-form__segmented"
+        @update:model-value="patchStyle(index, 'lineStyle', $event)"
+      >
+        <el-radio-button value="solid">
+          实线
+        </el-radio-button>
+        <el-radio-button value="dashed">
+          虚线
+        </el-radio-button>
+        <el-radio-button value="dotted">
+          点线
+        </el-radio-button>
+      </el-radio-group>
+    </div>
+    <div class="vis-style-form__row">
+      <StyleFormLabel>线宽</StyleFormLabel>
+      <el-radio-group
+        :model-value="line.style?.lineWidth ?? MARK_LINE_DEFAULT_STYLE.lineWidth"
+        size="small"
+        class="vis-style-form__segmented"
+        @update:model-value="patchStyle(index, 'lineWidth', $event)"
+      >
+        <el-radio-button :value="1">
+          细
+        </el-radio-button>
+        <el-radio-button :value="2">
+          标准
+        </el-radio-button>
+        <el-radio-button :value="4">
+          粗
+        </el-radio-button>
+      </el-radio-group>
     </div>
   </div>
 </template>

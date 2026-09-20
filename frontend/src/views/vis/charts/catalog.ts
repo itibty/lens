@@ -17,7 +17,6 @@ export const CHART_TYPES = [
   'treemap',
   'waterfall',
   'trend',
-  'tornado',
   'rank',
   'richtext',
   'url',
@@ -134,10 +133,6 @@ export const CHART_CATALOG: Record<ChartType, ChartCatalogEntry> = {
     dimensions: { min: 1, max: 1 },
     metrics: { min: 1 },
   }, CHART_HELP.trend.constraints, { allowFullscreen: false }),
-  tornado: entry('chart', {
-    dimensions: { min: 1, max: 1 },
-    metrics: { min: 2, max: 2 },
-  }, CHART_HELP.tornado.constraints),
   rank: entry('rank', EXACTLY_ONE_EACH, CHART_HELP.rank.constraints),
   richtext: entry('static', {
     dimensions: { min: 0, max: 0 },

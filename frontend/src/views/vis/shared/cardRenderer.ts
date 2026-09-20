@@ -8,7 +8,9 @@ import {
   TREE_LABEL,
   TREE_NAME,
   TREE_VALUE,
+  unwrapChartDatum,
 } from './chartDatum'
+import { chartLabelText, resolveChartLabelContent } from './chartLabels'
 import {
   chartCaps,
   chartHasSeries,
@@ -144,7 +146,7 @@ function applyAxisTickFormat(
   })
 }
 
-const SKIP_METRIC_LABEL = new Set(['wordCloud', 'treemap', 'funnel', 'tornado'])
+const SKIP_METRIC_LABEL = new Set(['wordCloud', 'treemap', 'funnel'])
 
 function inferSpecValueField(spec: Record<string, unknown>) {
   if (typeof spec.valueField === 'string')
@@ -405,11 +407,12 @@ function pieLabelSpec(
   visual?: VisVisualConfig,
   query?: VIS.QueryConfig,
 ) {
+  const content = resolveChartLabelContent(visual, 'pie', query)
   return {
     formatMethod: (text: string | string[], datum?: Record<string, unknown>) => {
       const name = datum?.[categoryField] ?? (Array.isArray(text) ? text[0] : text)
       const value = formatChartNumber(visual, query, valueField, datum?.[valueField])
-      return [`${name ?? ''}`, `${value} (${formatPieShare(datum, valueField, total)})`]
+      return chartLabelText(content, name, value, formatPieShare(datum, valueField, total))
     },
   }
 }
@@ -796,6 +799,7 @@ function applyMarkLines(
           ? formatChartNumber(visual, query, field, value)
           : markLineLabel(line, value),
       relativeSeriesId: findRelativeSeriesId(spec, field),
+      style: line.style,
     }))
   }
   if (items.length)
@@ -1235,12 +1239,16 @@ function treemapTooltipSpec(
   return {
     mark: {
       title: {
-        value: (datum: Record<string, unknown>) => datum?.[TREE_NAME] || datum?.[TREE_LABEL] || '',
+        value: (datum: Record<string, unknown>) => {
+          const source = unwrapChartDatum(datum)
+          return source?.[TREE_NAME] || source?.[TREE_LABEL] || ''
+        },
       },
       content: [{
         key: valueField,
         value: (datum: Record<string, unknown>) => {
-          const raw = datum?.[TREE_VALUE] ?? datum?.[valueField]
+          const source = unwrapChartDatum(datum)
+          const raw = datum?.[TREE_VALUE] ?? source?.[TREE_VALUE] ?? source?.[valueField]
           return `${formatChartNumber(visual, query, valueField, raw)} (${formatPieShare({ [valueField]: raw }, valueField, total)})`
         },
       }],
@@ -1266,6 +1274,9 @@ function buildTreemapSpec(
     : nodes
   const leaves = collectTreemapLeaves(tree)
   const total = pieShareOfRows(leaves, TREE_VALUE)
+  const labelContent = resolveChartLabelContent(visual, 'treemap', query)
+  // 单维度的根节点仅用于布局，不作为父级分组展示。
+  const showParent = visual?.chart?.treemapParent === true && dimFields.length > 1
   return asSpec(applyValueGradient(
     applyChartLook({
       type: 'treemap',
@@ -1276,6 +1287,33 @@ function buildTreemapSpec(
       gapWidth: 2,
       drill: false,
       roam: false,
+      theme: {
+        series: {
+          treemap: {
+            nonLeafLabel: { style: { fill: { type: 'palette', key: 'primaryFontColor' } } },
+          },
+        },
+      },
+      nonLeaf: {
+        visible: showParent,
+        style: { fillOpacity: 0.15 },
+      },
+      nonLeafLabel: {
+        visible: showParent,
+        position: 'top',
+        padding: 24,
+        style: {
+          lineWidth: 0,
+          textAlign: 'left',
+          x: (datum: any) => (datum.labelRect?.x0 ?? datum.x0) + 4,
+          maxLineWidth: (datum: any) => Math.max(0, datum.x1 - datum.x0 - 8),
+          visible: (datum: any) => !!datum.labelRect,
+          text: (datum: Record<string, unknown>) => {
+            const source = unwrapChartDatum(datum)
+            return source?.[TREE_LABEL] ?? source?.[TREE_NAME] ?? ''
+          },
+        },
+      },
       leaf: {
         style: {
           stroke: NEUTRAL.white,
@@ -1284,8 +1322,12 @@ function buildTreemapSpec(
       },
       label: {
         smartInvert: true,
-        formatMethod: (_text: unknown, datum?: Record<string, unknown>) =>
-          datum?.[TREE_LABEL] || datum?.[TREE_NAME] || '',
+        formatMethod: (text: string | string[], datum?: Record<string, unknown>) => {
+          const source = unwrapChartDatum(datum)
+          const name = source?.[TREE_LABEL] ?? source?.[TREE_NAME] ?? text
+          const value = source?.[TREE_VALUE] ?? datum?.[TREE_VALUE] ?? source?.[valueField]
+          return chartLabelText(labelContent, name, formatChartNumber(visual, query, valueField, value))
+        },
       },
       tooltip: treemapTooltipSpec(valueField, total, visual, query),
     }, visual, 'treemap', query),
@@ -1366,14 +1408,6 @@ function buildHeatmapSpec(
   ))
 }
 
-const TORNADO_LEFT = '__vis_tornado_left'
-const TORNADO_RIGHT = '__vis_tornado_right'
-
-function absTick(value: unknown) {
-  const n = Number(value)
-  return Number.isFinite(n) ? Math.abs(n) : value
-}
-
 function buildWaterfallSpec(
   rows: Record<string, any>[],
   xField: string,
@@ -1418,119 +1452,6 @@ function buildWaterfallSpec(
   return asSpec(applyChartLook(spec, visual, 'waterfall', query))
 }
 
-function buildTornadoSpec(
-  rows: Record<string, any>[],
-  xField: string,
-  leftField: string,
-  rightField: string,
-  visual: VisVisualConfig | undefined,
-  query: VIS.QueryConfig,
-): ISpec | null {
-  const chartRows = dropBlankDimRows(rows, xField)
-  if (!chartRows.length)
-    return null
-  let max = 0
-  const values = chartRows.map((row) => {
-    const left = Number(row[leftField])
-    const right = Number(row[rightField])
-    const leftAbs = Number.isFinite(left) ? Math.abs(left) : 0
-    const rightAbs = Number.isFinite(right) ? Math.abs(right) : 0
-    max = Math.max(max, leftAbs, rightAbs)
-    return {
-      [xField]: row[xField],
-      [leftField]: left,
-      [rightField]: right,
-      [TORNADO_LEFT]: -leftAbs,
-      [TORNADO_RIGHT]: rightAbs,
-    }
-  })
-  if (max <= 0)
-    max = 1
-  const opt = resolveChartOptions(visual, 'tornado', true)
-  function valueLabel(field: string) {
-    return {
-      visible: opt.dataLabel,
-      formatMethod: (_text: unknown, datum?: Record<string, unknown>) => {
-        const n = Number(datum?.[field])
-        return Number.isFinite(n)
-          ? formatChartNumber(visual, query, field, Math.abs(n))
-          : absTick(datum?.[field])
-      },
-    }
-  }
-  return asSpec(applyChartLook({
-    type: 'common',
-    background: 'transparent',
-    data: [{ id: DATA_ID, values }],
-    series: [
-      {
-        id: 'visTornadoLeft',
-        type: 'bar',
-        dataId: DATA_ID,
-        direction: 'horizontal',
-        xField: TORNADO_LEFT,
-        yField: xField,
-        name: leftField,
-        label: valueLabel(leftField),
-      },
-      {
-        id: 'visTornadoRight',
-        type: 'bar',
-        dataId: DATA_ID,
-        direction: 'horizontal',
-        xField: TORNADO_RIGHT,
-        yField: xField,
-        name: rightField,
-        label: valueLabel(rightField),
-      },
-    ],
-    tooltip: {
-      mark: {
-        title: { value: (datum: Record<string, unknown>) => datum?.[xField] },
-        content: [
-          {
-            key: leftField,
-            value: (datum: Record<string, unknown>) => {
-              const n = Number(datum?.[leftField])
-              return Number.isFinite(n)
-                ? formatChartNumber(visual, query, leftField, Math.abs(n))
-                : absTick(datum?.[leftField])
-            },
-          },
-          {
-            key: rightField,
-            value: (datum: Record<string, unknown>) => {
-              const n = Number(datum?.[rightField])
-              return Number.isFinite(n)
-                ? formatChartNumber(visual, query, rightField, Math.abs(n))
-                : absTick(datum?.[rightField])
-            },
-          },
-        ],
-      },
-    },
-    axes: [
-      { orient: 'left', type: 'band', title: { visible: false } },
-      {
-        orient: 'bottom',
-        type: 'linear',
-        min: -max,
-        max,
-        title: { visible: false },
-        label: {
-          formatMethod: (text: string | string[]) => {
-            const raw = Array.isArray(text) ? text[0] : text
-            const n = Number(raw)
-            if (!Number.isFinite(n))
-              return text
-            return formatChartNumber(visual, query, leftField, Math.abs(n))
-          },
-        },
-      },
-    ],
-  }, visual, 'tornado', query))
-}
-
 /** vis 几何图 → VChart spec；字段不齐或无行时返回 null */
 export function buildVChartSpec(
   chartType: string,
@@ -1571,14 +1492,6 @@ export function buildVChartSpec(
     return buildWaterfallSpec(rows, xField, yField, visual, query)
   }
 
-  if (type === 'tornado') {
-    const left = metrics[0] ? metricAlias(metrics[0]) : undefined
-    const right = metrics[1] ? metricAlias(metrics[1]) : undefined
-    if (!xField || !left || !right)
-      return null
-    return buildTornadoSpec(rows, xField, left, right, visual, query)
-  }
-
   if (type === 'pie') {
     if (!xField || !yField)
       return null
@@ -1611,6 +1524,7 @@ export function buildVChartSpec(
     const y = metrics[1] ? metricAlias(metrics[1]) : undefined
     if (!x || !y)
       return null
+    const labelContent = resolveChartLabelContent(visual, type, query)
     return asSpec(applyChartLook({
       type: 'scatter',
       background: 'transparent',
@@ -1620,6 +1534,13 @@ export function buildVChartSpec(
       size: 8,
       ...(xField ? { seriesField: xField } : { name: y }),
       axes: cartesianAxes(),
+      label: {
+        formatMethod: (_text: unknown, datum?: Record<string, unknown>) => chartLabelText(
+          labelContent,
+          xField ? datum?.[xField] : undefined,
+          [x, y].map(field => `${field}：${formatChartNumber(visual, query, field, datum?.[field])}`),
+        ),
+      },
     }, visual, type, query))
   }
 
@@ -1710,12 +1631,20 @@ export function buildVChartSpec(
     if (!xField || !yField)
       return null
     const opt = resolveChartOptions(visual, type, false)
+    const labelContent = resolveChartLabelContent(visual, type, query)
     return asSpec(applyChartLook({
       type: 'funnel',
       background: 'transparent',
       data: chartData(rows),
       categoryField: xField,
       valueField: yField,
+      label: {
+        formatMethod: (_text: unknown, datum?: Record<string, unknown>) => chartLabelText(
+          labelContent,
+          datum?.[xField],
+          formatChartNumber(visual, query, yField, datum?.[yField]),
+        ),
+      },
       tooltip: metricTooltipSpec(xField, yField, visual, query),
       ...(opt.showRate
         ? {

@@ -137,20 +137,20 @@ function moveFocus(event: KeyboardEvent, offset: number) {
                 <el-dropdown-item v-if="dirty" command="save">
                   另存为新视图
                 </el-dropdown-item>
-                <el-dropdown-item command="rename">
-                  重命名
-                </el-dropdown-item>
                 <el-dropdown-item v-if="selectedId !== defaultViewId" command="default">
                   设为默认
                 </el-dropdown-item>
                 <el-dropdown-item v-else command="clearDefault">
                   取消默认
                 </el-dropdown-item>
-                <el-dropdown-item command="share" divided>
-                  复制视图链接
-                </el-dropdown-item>
                 <el-dropdown-item command="delete" divided class="personal-view-menu__delete">
                   删除视图
+                </el-dropdown-item>
+                <el-dropdown-item command="rename">
+                  重命名
+                </el-dropdown-item>
+                <el-dropdown-item command="share" divided>
+                  复制链接
                 </el-dropdown-item>
               </el-dropdown-menu>
             </template>

@@ -237,7 +237,7 @@ const emptyHint = computed(() =>
         :key="row.id"
         :name="row.name"
         :subtitle="row.subtitle"
-        tone="filter"
+        tone="metric"
         block
         @open="openDraft(row.item)"
         @confirm="confirmDraft(row.item)"

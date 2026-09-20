@@ -46,7 +46,6 @@ export function dashCardDefaultSize(chartType?: string): { w: number, h: number 
     case 'line':
     case 'combo':
     case 'waterfall':
-    case 'tornado':
     case 'heatmap':
     case 'treemap':
       return { w: 8, h: 10 }

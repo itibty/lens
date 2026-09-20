@@ -44,7 +44,7 @@ describe('lens theme contract', () => {
 
   it.each(CHART_TYPES.filter(isVChartType))('%s keeps its default appearance from design to dashboard', (chartType) => {
     const dimensions = [{ field: 'month' }, ...(chartType === 'heatmap' ? [{ field: 'channel' }] : [])]
-    const metrics = [{ field: 'value' }, ...(['combo', 'scatter', 'tornado'].includes(chartType) ? [{ field: 'target' }] : [])]
+    const metrics = [{ field: 'value' }, ...(['combo', 'scatter'].includes(chartType) ? [{ field: 'target' }] : [])]
     const query = { datasetId: 'preview', dimensions, metrics }
     const data = {
       columns: ['month', 'channel', 'value', 'target'],

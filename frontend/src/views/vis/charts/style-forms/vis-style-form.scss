@@ -79,6 +79,22 @@
     }
   }
 
+  .el-collapse-item.is-static {
+    > .el-collapse-item__header {
+      cursor: default;
+      color: var(--vis-cfg-title-color);
+      background: transparent;
+    }
+
+    .el-collapse-item__arrow {
+      display: none;
+    }
+
+    .vis-style-form__section-head {
+      padding-right: 0;
+    }
+  }
+
   &__section-head {
     display: flex;
     align-items: center;

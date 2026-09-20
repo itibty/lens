@@ -366,14 +366,6 @@ public final class VisQueryPrep {
                     throw fail("趋势指标卡至少需要 1 个指标");
                 }
             }
-            case TORNADO -> {
-                if (dimCount != 1) {
-                    throw fail("对比条需要恰好 1 个维度");
-                }
-                if (metricCount != 2) {
-                    throw fail("对比条需要恰好 2 个指标");
-                }
-            }
             case RANK -> {
                 if (dimCount != 1) {
                     throw fail("排行榜需要恰好 1 个维度");

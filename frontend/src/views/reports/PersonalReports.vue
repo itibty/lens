@@ -121,11 +121,11 @@ onBeforeUnmount(() => seq++)
 .personal-reports__illustration {
   display: flex;
   justify-content: center;
-  margin-bottom: 28px;
+  margin-bottom: 20px;
 
   :deep(.personal-reports__art) {
-    width: clamp(200px, 30vh, 300px);
-    height: clamp(200px, 30vh, 300px);
+    width: clamp(180px, 25vh, 240px);
+    height: clamp(180px, 25vh, 240px);
   }
 }
 .personal-reports__error {
@@ -200,7 +200,7 @@ onBeforeUnmount(() => seq++)
   time {
     flex-shrink: 0;
     margin-left: auto;
-    color: var(--el-text-color-placeholder);
+    color: var(--el-text-color-secondary);
     font-size: 12px;
     font-variant-numeric: tabular-nums;
   }
@@ -250,8 +250,8 @@ onBeforeUnmount(() => seq++)
     margin-bottom: 20px;
 
     :deep(.personal-reports__art) {
-      width: 200px;
-      height: 200px;
+      width: 180px;
+      height: 180px;
     }
   }
 }

@@ -121,7 +121,7 @@ defineExpose({ show })
     <template #custom-dialog-body>
       <el-form ref="formRef" v-spinner="loading" :model="form" :rules="rules" :disabled="busy" label-position="top">
         <el-form-item label="名称" prop="sourceName">
-          <el-input v-model="form.sourceName" :maxlength="50" clearable />
+          <el-input v-model="form.sourceName" placeholder="例如：销售分析库" :maxlength="50" clearable />
         </el-form-item>
         <el-form-item label="类型" prop="dbType">
           <el-radio-group v-model="form.dbType">
@@ -134,7 +134,7 @@ defineExpose({ show })
           <el-input v-model="form.jdbcUrl" :placeholder="placeholder" type="textarea" :rows="2" :maxlength="500" />
         </el-form-item>
         <el-form-item label="用户名" prop="username">
-          <el-input v-model="form.username" :maxlength="100" autocomplete="off" />
+          <el-input v-model="form.username" placeholder="请输入数据库用户名" :maxlength="100" autocomplete="off" />
         </el-form-item>
         <el-form-item label="密码" prop="password">
           <div class="password-field">

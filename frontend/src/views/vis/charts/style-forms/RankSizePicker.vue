@@ -2,7 +2,7 @@
  * @Description: 排行榜尺寸预设
 -->
 <script setup lang="ts">
-import type { VisProgressSize, VisVisualConfig } from '@/views/vis/shared/types'
+import type { VisRankSize, VisVisualConfig } from '@/views/vis/shared/types'
 import { RANK_DEFAULTS, RANK_SIZE_PRESETS, rankSizeOf, rankSizeSpec } from '@/views/vis/shared/rankCard'
 import { useVisualBranch } from './composables/useVisualBranch'
 
@@ -11,7 +11,7 @@ const branch = useVisualBranch(visual, 'rank')
 
 const size = computed({
   get: () => rankSizeOf(visual.value.rank?.size).id,
-  set: (value: VisProgressSize) => {
+  set: (value: VisRankSize) => {
     if (value === RANK_DEFAULTS.size)
       branch.clearKey('size')
     else
