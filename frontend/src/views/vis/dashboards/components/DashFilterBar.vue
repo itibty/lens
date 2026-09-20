@@ -230,23 +230,6 @@ watch(mobile, (enabled) => {
     </div>
     <div class="filter-dock__right">
       <div class="filter-dock__view">
-        <el-tooltip
-          v-if="!mobile && showDesign && showPreview"
-          :content="previewDisabled ? '请先保存看板' : '预览'"
-          placement="bottom"
-          :show-after="200"
-        >
-          <span class="filter-dock__preview">
-            <VisActionButton
-              size="regular" variant="outline" label="预览看板"
-              class="filter-dock__btn"
-              :disabled="previewDisabled"
-              @click="emit('preview')"
-            >
-              <span class="i-mingcute-eye-2-line" />
-            </VisActionButton>
-          </span>
-        </el-tooltip>
         <slot name="personal" />
         <el-tooltip :content="refreshing ? '正在刷新' : refreshFailed ? `${refreshFailed} 张卡片刷新失败，点击重试` : '刷新数据'" placement="bottom" :show-after="200" :disabled="mobile">
           <VisActionButton
@@ -814,10 +797,6 @@ watch(mobile, (enabled) => {
   height: 16px;
   margin: 0 2px;
   background: color-mix(in srgb, var(--dash-title, var(--na-text-strong)) 14%, transparent);
-}
-
-.filter-dock__preview {
-  display: inline-flex;
 }
 
 .filter-dock__save {

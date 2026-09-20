@@ -1275,6 +1275,8 @@ function buildTreemapSpec(
   const leaves = collectTreemapLeaves(tree)
   const total = pieShareOfRows(leaves, TREE_VALUE)
   const labelContent = resolveChartLabelContent(visual, 'treemap', query)
+  // 关闭数据标签时，父级仍保留分组名称。
+  const parentLabelContent = resolveChartOptions(visual, 'treemap', false).dataLabel ? labelContent : 'name'
   // 单维度的根节点仅用于布局，不作为父级分组展示。
   const showParent = visual?.chart?.treemapParent === true && dimFields.length > 1
   return asSpec(applyValueGradient(
@@ -1305,12 +1307,17 @@ function buildTreemapSpec(
         style: {
           lineWidth: 0,
           textAlign: 'left',
+          whiteSpace: 'no-wrap',
+          ellipsis: '…',
           x: (datum: any) => (datum.labelRect?.x0 ?? datum.x0) + 4,
           maxLineWidth: (datum: any) => Math.max(0, datum.x1 - datum.x0 - 8),
           visible: (datum: any) => !!datum.labelRect,
           text: (datum: Record<string, unknown>) => {
             const source = unwrapChartDatum(datum)
-            return source?.[TREE_LABEL] ?? source?.[TREE_NAME] ?? ''
+            const name = source?.[TREE_LABEL] ?? source?.[TREE_NAME] ?? ''
+            const value = datum[TREE_VALUE] ?? source?.[TREE_VALUE] ?? source?.[valueField]
+            const label = chartLabelText(parentLabelContent, name, formatChartNumber(visual, query, valueField, value))
+            return Array.isArray(label) ? label.join(' ') : label
           },
         },
       },

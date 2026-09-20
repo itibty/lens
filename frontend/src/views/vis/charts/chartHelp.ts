@@ -205,7 +205,7 @@ export const CHART_HELP_FEATURE_TIPS = {
   percentDecimals: '设置完成率的小数位数',
   lineFields: '以折线展示所选指标，默认选择最后一个指标',
   waterfallTotal: '在图表末尾显示累计总值',
-  treemapParent: '显示父级分组及名称',
+  treemapParent: '显示父级分组',
   fixedTarget: '使用固定数值作为目标值，需大于 0',
   progressValues: '显示当前值与目标值',
   rankPercent: '显示各项在当前榜单中的占比，按数值的绝对值计算',

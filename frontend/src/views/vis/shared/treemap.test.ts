@@ -28,7 +28,7 @@ function spec(visual: VisVisualConfig, q = query) {
 describe('treemap parent levels', () => {
   it.each([2, 3])('shows real parent groups for %s dimensions, independently of leaf labels', (count) => {
     const q = { ...query, dimensions: query.dimensions!.slice(0, count) }
-    const visual: VisVisualConfig = { chartType: 'treemap', chart: { treemapParent: true, dataLabel: false } }
+    const visual: VisVisualConfig = { chartType: 'treemap', chart: { treemapParent: true, dataLabel: false, dataLabelContent: 'nameValue' } }
     const output = spec(visual, q)
     expect(output).toMatchObject({
       nonLeaf: { visible: true },
@@ -42,6 +42,25 @@ describe('treemap parent levels', () => {
       expect(output.nonLeafLabel.style.text({ datum: [parent, child] })).toBe('上海')
       expect(child.name).toBe('华东 / 上海')
     }
+  })
+
+  it.each([
+    ['name', '华东', '上海', '上海'],
+    ['value', '5,000.0元', '2,000.0元', '0.0元'],
+    ['nameValue', '华东 5,000.0元', '上海 2,000.0元', '上海 0.0元'],
+  ] as const)('uses %s content for each parent level with formatted aggregate values', (content, regionLabel, cityLabel, zeroLabel) => {
+    const visual: VisVisualConfig = {
+      chartType: 'treemap',
+      chart: { treemapParent: true, dataLabelContent: content },
+      fieldStyles: [{ key: fieldStyleKey(query.metrics![0]!), kind: 'metric', format: { decimals: 1, suffix: '元' } }],
+    }
+    const output = spec(visual)
+    const region = output.data[0].values[0]
+    const city = region.children[0]
+    const text = output.nonLeafLabel.style.text
+    expect(text({ datum: [region], value: 5000 })).toBe(regionLabel)
+    expect(text({ datum: [region, city], value: 2000 })).toBe(cityLabel)
+    expect(text({ datum: [region, city], value: 0 })).toBe(zeroLabel)
   })
 
   it('keeps the existing layout by default and hides the synthetic root for one dimension', () => {

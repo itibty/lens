@@ -6,7 +6,9 @@ ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 APP_DIR="${ROOT_DIR}/app"
 JAR_PATH="${APP_DIR}/server/lens-server.jar"
 PID_FILE="${APP_DIR}/server/lens-server.pid"
-LOG_FILE="${APP_DIR}/server/lens-server.log"
+LOG_DIR="${LENS_LOG_DIR:-${APP_DIR}/logs}"
+[[ "${LOG_DIR}" == /* ]] || LOG_DIR="${APP_DIR}/${LOG_DIR}"
+LOG_FILE="${LOG_DIR}/launcher.log"
 STOP_TIMEOUT="${STOP_TIMEOUT:-30}"
 
 usage() {
@@ -44,6 +46,13 @@ start() {
   fi
   rm -f -- "${PID_FILE}"
 
+  mkdir -p -- "${LOG_DIR}"
+  # launcher 只兜底 JVM/启动错误；应用日志由 Logback 按天清理。
+  if [[ -s "${LOG_FILE}" ]]; then
+    mv -- "${LOG_FILE}" "${LOG_DIR}/launcher.$(date +%Y-%m-%d_%H-%M-%S).$$.log"
+  fi
+  find "${LOG_DIR}" -maxdepth 1 -type f -name 'launcher.*.log' -mtime +6 -delete
+
   if [[ -n "${JAVA_OPTS:-}" ]]; then
     read -r -a java_opts <<< "${JAVA_OPTS}"
     launch_command+=("${java_opts[@]}")
@@ -56,7 +65,10 @@ start() {
 
   (
     cd "${APP_DIR}"
-    nohup "${launch_command[@]}" >> "server/lens-server.log" 2>&1 &
+    export LENS_LOG_MODE="${LENS_LOG_MODE:-file}"
+    export LENS_LOG_DIR="${LOG_DIR}"
+    export SPRING_MAIN_BANNER_MODE=off
+    nohup "${launch_command[@]}" >> "${LOG_FILE}" 2>&1 &
     echo "$!" > "server/lens-server.pid"
   )
 
@@ -64,10 +76,10 @@ start() {
   sleep 1
   if ! kill -0 "${pid}" 2>/dev/null; then
     rm -f -- "${PID_FILE}"
-    echo "Lens 启动失败，请查看日志: ${LOG_FILE}" >&2
+    echo "Lens 启动失败，请查看 ${LOG_DIR}/error.log 和 ${LOG_FILE}" >&2
     exit 1
   fi
-  echo "Lens 已启动，PID=${pid}，日志=${LOG_FILE}"
+  echo "Lens 已启动，PID=${pid}，日志目录=${LOG_DIR}，启动输出=${LOG_FILE}"
 }
 
 stop() {

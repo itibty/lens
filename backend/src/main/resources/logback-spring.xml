@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <springProperty scope="context" name="LENS_LOG_MODE" source="lens.logging.mode" defaultValue="console"/>
+    <springProperty scope="context" name="LENS_LOG_DIR" source="lens.logging.path" defaultValue="./logs"/>
+    <springProperty scope="context" name="LENS_LOG_HISTORY" source="lens.logging.max-history" defaultValue="7"/>
+    <property name="LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS,Asia/Shanghai} [traceId=%X{traceId:-}] [runId=%X{runId:-}] [subscriptionId=%X{subscriptionId:-}] [%thread] %-5level %logger{36} - %msg%n%ex"/>
+
+    <!-- 在分支内创建 appender，确保 IDE 默认启动时不会创建日志目录。 -->
+    <condition class="ch.qos.logback.core.boolex.PropertyEqualityCondition">
+        <key>LENS_LOG_MODE</key>
+        <value>file</value>
+    </condition>
+    <if>
+        <then>
+            <appender name="DEBUG_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+                <file>${LENS_LOG_DIR}/debug.log</file>
+                <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+                    <fileNamePattern>${LENS_LOG_DIR}/debug.%d{yyyy-MM-dd,Asia/Shanghai}.log</fileNamePattern>
+                    <maxHistory>${LENS_LOG_HISTORY}</maxHistory>
+                    <cleanHistoryOnStart>true</cleanHistoryOnStart>
+                </rollingPolicy>
+                <filter class="ch.qos.logback.classic.filter.LevelFilter">
+                    <level>DEBUG</level>
+                    <onMatch>ACCEPT</onMatch>
+                    <onMismatch>DENY</onMismatch>
+                </filter>
+                <encoder>
+                    <charset>UTF-8</charset>
+                    <pattern>${LOG_PATTERN}</pattern>
+                </encoder>
+            </appender>
+            <appender name="INFO_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+                <file>${LENS_LOG_DIR}/info.log</file>
+                <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+                    <fileNamePattern>${LENS_LOG_DIR}/info.%d{yyyy-MM-dd,Asia/Shanghai}.log</fileNamePattern>
+                    <maxHistory>${LENS_LOG_HISTORY}</maxHistory>
+                    <cleanHistoryOnStart>true</cleanHistoryOnStart>
+                </rollingPolicy>
+                <filter class="ch.qos.logback.classic.filter.LevelFilter">
+                    <level>INFO</level>
+                    <onMatch>ACCEPT</onMatch>
+                    <onMismatch>DENY</onMismatch>
+                </filter>
+                <encoder>
+                    <charset>UTF-8</charset>
+                    <pattern>${LOG_PATTERN}</pattern>
+                </encoder>
+            </appender>
+            <appender name="WARN_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+                <file>${LENS_LOG_DIR}/warn.log</file>
+                <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+                    <fileNamePattern>${LENS_LOG_DIR}/warn.%d{yyyy-MM-dd,Asia/Shanghai}.log</fileNamePattern>
+                    <maxHistory>${LENS_LOG_HISTORY}</maxHistory>
+                    <cleanHistoryOnStart>true</cleanHistoryOnStart>
+                </rollingPolicy>
+                <filter class="ch.qos.logback.classic.filter.LevelFilter">
+                    <level>WARN</level>
+                    <onMatch>ACCEPT</onMatch>
+                    <onMismatch>DENY</onMismatch>
+                </filter>
+                <encoder>
+                    <charset>UTF-8</charset>
+                    <pattern>${LOG_PATTERN}</pattern>
+                </encoder>
+            </appender>
+            <appender name="ERROR_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+                <file>${LENS_LOG_DIR}/error.log</file>
+                <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+                    <fileNamePattern>${LENS_LOG_DIR}/error.%d{yyyy-MM-dd,Asia/Shanghai}.log</fileNamePattern>
+                    <maxHistory>${LENS_LOG_HISTORY}</maxHistory>
+                    <cleanHistoryOnStart>true</cleanHistoryOnStart>
+                </rollingPolicy>
+                <filter class="ch.qos.logback.classic.filter.LevelFilter">
+                    <level>ERROR</level>
+                    <onMatch>ACCEPT</onMatch>
+                    <onMismatch>DENY</onMismatch>
+                </filter>
+                <encoder>
+                    <charset>UTF-8</charset>
+                    <pattern>${LOG_PATTERN}</pattern>
+                </encoder>
+            </appender>
+            <root level="INFO">
+                <appender-ref ref="DEBUG_FILE"/>
+                <appender-ref ref="INFO_FILE"/>
+                <appender-ref ref="WARN_FILE"/>
+                <appender-ref ref="ERROR_FILE"/>
+            </root>
+        </then>
+        <else>
+            <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+                <encoder>
+                    <charset>UTF-8</charset>
+                    <pattern>${LOG_PATTERN}</pattern>
+                </encoder>
+            </appender>
+            <root level="INFO">
+                <appender-ref ref="CONSOLE"/>
+            </root>
+        </else>
+    </if>
+</configuration>

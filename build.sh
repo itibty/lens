@@ -169,7 +169,7 @@ case "${BUILD_TARGET}" in
     check_frontend_environment
     build_backend
     build_frontend
-    rm -rf -- "${APP_DIR}"
+    # 只替换构建产物，保留 logs、PID 和 config/local.properties 等运行文件。
     stage_backend
     stage_frontend
     ;;

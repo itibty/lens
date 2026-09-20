@@ -36,7 +36,7 @@ const gridGuides = defineModel<boolean>('gridGuides', { required: true })
 const currentTheme = computed(() => DASH_THEME_PRESETS.find(item => item.id === theme.value)?.name)
 const actions = computed<MenuAction[]>(() => [
   { id: 'favorite', label: props.favorite ? '取消收藏' : '收藏报表', icon: props.favorite ? 'i-mingcute-star-fill' : 'i-mingcute-star-line', visible: props.showFavorite, disabled: props.favoriteBusy, pressed: props.favorite },
-  { id: 'preview', label: '独立预览', icon: 'i-mingcute-eye-2-line', visible: !props.mobile && !props.showDesign && props.showPreview, disabled: props.previewDisabled },
+  { id: 'preview', label: '独立预览', icon: 'i-mingcute-eye-2-line', visible: !props.mobile && props.showPreview, disabled: props.previewDisabled },
   { id: 'screenshot', label: props.screenshotting ? '正在截屏…' : '一键截屏', icon: props.screenshotting ? 'i-svg-spinners-ring-resize' : 'i-mingcute-camera-2-line', disabled: props.loading || props.screenshotting },
   { id: 'subscription', label: '邮件订阅', icon: 'i-mingcute-mail-send-line', visible: props.showSubscription },
 ])

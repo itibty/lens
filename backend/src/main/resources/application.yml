@@ -54,6 +54,10 @@ mybatis-plus:
     banner: false
 
 lens:
+  logging:
+    mode: ${LENS_LOG_MODE:console}
+    path: ${LENS_LOG_DIR:./logs}
+    max-history: ${LENS_LOG_MAX_HISTORY:7}
   jwt-secret: ${LENS_JWT_SECRET:lens-dev-token-secret-change-me}
   jwt-ttl-ms: ${LENS_JWT_TTL_MS:43200000}
   subscription:
@@ -65,6 +69,11 @@ lens:
     max-screenshot-bytes: ${LENS_MAX_SCREENSHOT_BYTES:10485760}
     browser-channel: ${LENS_BROWSER_CHANNEL:}
     browser-executable-path: ${LENS_BROWSER_EXECUTABLE_PATH:}
+
+logging:
+  level:
+    root: INFO
+    com.codet.lens: INFO
 
 springdoc:
   api-docs:

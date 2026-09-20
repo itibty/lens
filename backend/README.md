@@ -48,6 +48,37 @@ mvn test
 | `LENS_REDIS_HOST` / `LENS_REDIS_PORT` / `LENS_REDIS_PASSWORD` | Redis 连接 |
 | `LENS_JWT_SECRET` / `LENS_JWT_TTL_MS` | JWT 签名密钥与有效期（毫秒） |
 
+### 日志
+
+IDE、`mvn spring-boot:run` 和直接 `java -jar` 默认只打印控制台，不创建日志文件。
+根目录 `./app.sh start` 默认启用文件模式，写到 `app/logs/`，关闭常规控制台日志。
+构建脚本更新 JAR、前端和主配置时保留日志目录及 `config/local.properties`。
+
+| 环境变量 | 用途 |
+|----------|------|
+| `LENS_LOG_MODE` | `console`（开发默认）或 `file`（`app.sh` 默认） |
+| `LENS_LOG_DIR` | 日志目录；开发默认 `./logs`，脚本默认 `app/logs`，相对路径以进程工作目录为准 |
+| `LENS_LOG_MAX_HISTORY` | 应用日志历史保留天数，默认 7；需设为正整数 |
+| `LOGGING_LEVEL_COM_CODET_LENS` | 业务日志级别，默认 INFO；排障时可临时设为 DEBUG |
+
+文件模式按级别写入 `info.log`、`warn.log`、`error.log` 和 `debug.log`（默认不输出 DEBUG）。
+每天按北京时间轮转，例如 `info.2026-09-20.log`；不压缩、不建归档目录。
+历史日志在轮转及启动时自动清理，默认最多 7 个历史日，另加当前活动文件；不限制单日大小。
+`launcher.log` 只兜底 JVM/启动错误，每次启动归档旧输出并删除超过 7 天的启动历史。
+若通过 `LENS_LOG_MODE=console ./app.sh start` 强制控制台模式，控制台输出会被脚本收集到 `launcher.log`。
+
+请求携带的 `X-Trace-Id` 若为 1–64 位字母、数字、点、下划线或短横线，且首位为字母或数字，
+则作为关联标识沿用；否则生成新的 UUID。响应头返回 `X-Trace-Id`，日志统一包含 `traceId`。
+该标识只用于排障，不作为身份或权限依据。异步任务传递 MDC，订阅队列每条任务使用独立 traceId，
+并记录 `runId`、`subscriptionId`；请求/任务结束后恢复线程原有上下文。
+
+手动运行构建后的 JAR 并开启文件日志：
+
+```shell
+cd app
+LENS_LOG_MODE=file java -jar server/lens-server.jar
+```
+
 ### 看板邮件订阅
 
 邮件订阅默认关闭。`db/schema.sql` 已包含订阅表的最新结构，以及当前账号、邮箱、权限、

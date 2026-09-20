@@ -15,6 +15,7 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.slf4j.MDC;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.core.task.TaskRejectedException;
 import org.springframework.dao.DataAccessResourceFailureException;
@@ -74,6 +75,30 @@ class DashboardSubscriptionJobServiceTest {
         verify(subscriptions, times(1)).queueManual(subscription);
         verify(sender, times(1)).send(any());
         assertTrue(statuses().contains("SUCCESS"));
+    }
+
+    @Test
+    void usesIndependentTraceForEachQueuedRunAndRestoresCaller() {
+        when(runMapper.selectList(any(Wrapper.class))).thenReturn(List.of(run(1L), run(2L)), List.of());
+        List<String> traceIds = new ArrayList<>();
+        List<String> runIds = new ArrayList<>();
+        doAnswer(call -> {
+            traceIds.add(MDC.get("traceId"));
+            runIds.add(MDC.get("runId"));
+            assertEquals("100", MDC.get("subscriptionId"));
+            return null;
+        }).when(sender).send(any());
+        MDC.put("traceId", "caller");
+        try {
+            jobs(Runnable::run).dispatchQueued();
+            assertEquals(List.of("1", "2"), runIds);
+            assertEquals(2, traceIds.stream().distinct().count());
+            assertTrue(traceIds.stream().allMatch(id -> id != null && !id.equals("caller")));
+            assertEquals("caller", MDC.get("traceId"));
+            assertNull(MDC.get("runId"));
+        } finally {
+            MDC.clear();
+        }
     }
 
     @Test

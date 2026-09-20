@@ -1,6 +1,7 @@
 package com.codet.lens.vis.subscription;
 
 import com.codet.lens.common.config.LensProperties;
+import com.codet.lens.common.logging.TraceContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -16,10 +17,12 @@ public class DashboardSubscriptionScheduler {
 
     @Scheduled(fixedDelay = 30_000)
     public void heartbeat() {
-        try {
-            jobService.heartbeat();
-        } catch (Exception e) {
-            log.warn("dashboard subscription heartbeat failed: {}", DashboardSubscriptionJobService.safeError(e));
+        try (TraceContext ignored = TraceContext.start()) {
+            try {
+                jobService.heartbeat();
+            } catch (Exception e) {
+                log.warn("dashboard subscription heartbeat failed: {}", DashboardSubscriptionJobService.safeError(e));
+            }
         }
     }
 
@@ -28,6 +31,12 @@ public class DashboardSubscriptionScheduler {
         if (!properties.getSubscription().isEnabled()) {
             return;
         }
+        try (TraceContext ignored = TraceContext.start()) {
+            pollWithTrace();
+        }
+    }
+
+    private void pollWithTrace() {
         try {
             jobService.recoverStaleRuns(System.currentTimeMillis());
         } catch (Exception e) {

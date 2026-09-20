@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.codet.lens.common.base.ResultException;
 import com.codet.lens.common.base.Status;
 import com.codet.lens.common.config.LensProperties;
+import com.codet.lens.common.logging.TraceContext;
 import com.codet.lens.vis.entity.VisDashboard;
 import com.codet.lens.vis.entity.VisDashboardSubscription;
 import com.codet.lens.vis.entity.VisDashboardSubscriptionRun;
@@ -14,6 +15,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.stereotype.Service;
 
@@ -52,10 +54,12 @@ public class DashboardSubscriptionJobService {
         }
         try {
             dashboardSubscriptionExecutor.execute(() -> {
-                try {
-                    drainQueue();
-                } catch (Exception e) {
-                    log.warn("dashboard subscription worker failed: {}", safeError(e));
+                try (TraceContext ignored = TraceContext.start()) {
+                    try {
+                        drainQueue();
+                    } catch (Exception e) {
+                        log.warn("dashboard subscription worker failed: {}", safeError(e));
+                    }
                 } finally {
                     draining.set(false);
                 }
@@ -92,11 +96,15 @@ public class DashboardSubscriptionJobService {
                     continue;
                 }
                 activeRun.set(run.getId());
-                try {
-                    execute(run);
-                } catch (Exception e) {
-                    // 数据库异常等不能终止整批；未能落库的 RUNNING 由心跳恢复逻辑处理。
-                    log.warn("dashboard subscription run interrupted runId={} error={}", run.getId(), safeError(e));
+                try (TraceContext ignored = TraceContext.start()) {
+                    MDC.put("runId", String.valueOf(run.getId()));
+                    MDC.put("subscriptionId", String.valueOf(run.getSubscriptionId()));
+                    try {
+                        execute(run);
+                    } catch (Exception e) {
+                        // 数据库异常等不能终止整批；未能落库的 RUNNING 由心跳恢复逻辑处理。
+                        log.warn("dashboard subscription run interrupted runId={} error={}", run.getId(), safeError(e));
+                    }
                 } finally {
                     activeRun.compareAndSet(run.getId(), null);
                 }

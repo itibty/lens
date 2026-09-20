@@ -1,5 +1,6 @@
 package com.codet.lens.vis.subscription;
 
+import com.codet.lens.common.logging.TraceContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -16,6 +17,7 @@ public class DashboardSubscriptionConfig {
         // 待执行记录保存在数据库中，不在线程池中排队。
         executor.setQueueCapacity(0);
         executor.setThreadNamePrefix("dashboard-subscription-");
+        executor.setTaskDecorator(TraceContext::wrap);
         executor.setWaitForTasksToCompleteOnShutdown(false);
         executor.initialize();
         return executor;
