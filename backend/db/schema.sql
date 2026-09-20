@@ -13,7 +13,8 @@ SET @LENS_OLD_FOREIGN_KEY_CHECKS = @@FOREIGN_KEY_CHECKS;
 SET FOREIGN_KEY_CHECKS = 0;
 
 
--- sys_menu：当前数据 18 条
+-- sys_menu：当前数据 20 条
+-- 后台管理分为账号权限（用户、角色、菜单）与可视化管理（卡片、看板、数据集、数据源）。
 DROP TABLE IF EXISTS `sys_menu`;
 CREATE TABLE `sys_menu` (
   `id` bigint unsigned NOT NULL,
@@ -32,13 +33,15 @@ CREATE TABLE `sys_menu` (
   PRIMARY KEY (`id`),
   KEY `idx_pid` (`pid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='菜单与按钮';
-INSERT INTO `sys_menu` (`id`, `pid`, `menu_name`, `menu_type`, `route_path`, `icon`, `sort_num`, `perm_code`, `status`, `create_at`, `create_by`, `modify_at`, `modify_by`) VALUES (2,16,'用户','MENU','/sys/users','user-3-line',60,NULL,'EBL',NULL,NULL,1787653070733,1);
-INSERT INTO `sys_menu` (`id`, `pid`, `menu_name`, `menu_type`, `route_path`, `icon`, `sort_num`, `perm_code`, `status`, `create_at`, `create_by`, `modify_at`, `modify_by`) VALUES (3,16,'角色','MENU','/sys/roles','group-3-line',50,NULL,'EBL',NULL,NULL,1787653070767,1);
-INSERT INTO `sys_menu` (`id`, `pid`, `menu_name`, `menu_type`, `route_path`, `icon`, `sort_num`, `perm_code`, `status`, `create_at`, `create_by`, `modify_at`, `modify_by`) VALUES (4,16,'菜单','MENU','/sys/menus','menu-line',40,NULL,'EBL',NULL,NULL,1787653070781,1);
-INSERT INTO `sys_menu` (`id`, `pid`, `menu_name`, `menu_type`, `route_path`, `icon`, `sort_num`, `perm_code`, `status`, `create_at`, `create_by`, `modify_at`, `modify_by`) VALUES (11,16,'数据集','MENU','/vis/datasets','storage-line',30,NULL,'EBL',NULL,NULL,1787653070668,1);
+INSERT INTO `sys_menu` (`id`, `pid`, `menu_name`, `menu_type`, `route_path`, `icon`, `sort_num`, `perm_code`, `status`, `create_at`, `create_by`, `modify_at`, `modify_by`) VALUES (2,20,'用户','MENU','/sys/users','user-3-line',10,NULL,'EBL',NULL,NULL,1789898116807,NULL);
+INSERT INTO `sys_menu` (`id`, `pid`, `menu_name`, `menu_type`, `route_path`, `icon`, `sort_num`, `perm_code`, `status`, `create_at`, `create_by`, `modify_at`, `modify_by`) VALUES (3,20,'角色','MENU','/sys/roles','group-3-line',20,NULL,'EBL',NULL,NULL,1789898116807,NULL);
+INSERT INTO `sys_menu` (`id`, `pid`, `menu_name`, `menu_type`, `route_path`, `icon`, `sort_num`, `perm_code`, `status`, `create_at`, `create_by`, `modify_at`, `modify_by`) VALUES (4,20,'菜单','MENU','/sys/menus','menu-line',30,NULL,'EBL',NULL,NULL,1789898116807,NULL);
+INSERT INTO `sys_menu` (`id`, `pid`, `menu_name`, `menu_type`, `route_path`, `icon`, `sort_num`, `perm_code`, `status`, `create_at`, `create_by`, `modify_at`, `modify_by`) VALUES (11,21,'数据集','MENU','/vis/datasets','table-2-line',30,NULL,'EBL',NULL,NULL,1789898116807,NULL);
 INSERT INTO `sys_menu` (`id`, `pid`, `menu_name`, `menu_type`, `route_path`, `icon`, `sort_num`, `perm_code`, `status`, `create_at`, `create_by`, `modify_at`, `modify_by`) VALUES (16,0,'后台管理','MENU',NULL,'settings-3-line',10,NULL,'EBL',NULL,NULL,1787653070652,1);
-INSERT INTO `sys_menu` (`id`, `pid`, `menu_name`, `menu_type`, `route_path`, `icon`, `sort_num`, `perm_code`, `status`, `create_at`, `create_by`, `modify_at`, `modify_by`) VALUES (17,16,'卡片','MENU','/vis/cards','layout-4-line',10,NULL,'EBL',NULL,NULL,1787653070681,1);
-INSERT INTO `sys_menu` (`id`, `pid`, `menu_name`, `menu_type`, `route_path`, `icon`, `sort_num`, `perm_code`, `status`, `create_at`, `create_by`, `modify_at`, `modify_by`) VALUES (18,16,'看板','MENU','/vis/dashboards','dashboard-3-line',20,NULL,'EBL',NULL,NULL,1787653070694,1);
+INSERT INTO `sys_menu` (`id`, `pid`, `menu_name`, `menu_type`, `route_path`, `icon`, `sort_num`, `perm_code`, `status`, `create_at`, `create_by`, `modify_at`, `modify_by`) VALUES (20,16,'账号权限','MENU',NULL,'group-3-line',10,NULL,'EBL',1789898116807,NULL,1789898116807,NULL);
+INSERT INTO `sys_menu` (`id`, `pid`, `menu_name`, `menu_type`, `route_path`, `icon`, `sort_num`, `perm_code`, `status`, `create_at`, `create_by`, `modify_at`, `modify_by`) VALUES (21,16,'可视化管理','MENU',NULL,'layout-4-line',20,NULL,'EBL',1789898116807,NULL,1789898116807,NULL);
+INSERT INTO `sys_menu` (`id`, `pid`, `menu_name`, `menu_type`, `route_path`, `icon`, `sort_num`, `perm_code`, `status`, `create_at`, `create_by`, `modify_at`, `modify_by`) VALUES (17,21,'卡片','MENU','/vis/cards','layout-4-line',10,NULL,'EBL',NULL,NULL,1789898116807,NULL);
+INSERT INTO `sys_menu` (`id`, `pid`, `menu_name`, `menu_type`, `route_path`, `icon`, `sort_num`, `perm_code`, `status`, `create_at`, `create_by`, `modify_at`, `modify_by`) VALUES (18,21,'看板','MENU','/vis/dashboards','dashboard-3-line',20,NULL,'EBL',NULL,NULL,1789898116807,NULL);
 INSERT INTO `sys_menu` (`id`, `pid`, `menu_name`, `menu_type`, `route_path`, `icon`, `sort_num`, `perm_code`, `status`, `create_at`, `create_by`, `modify_at`, `modify_by`) VALUES (200,2,'查看','FUNC',NULL,NULL,1,'sys:user:query','EBL',NULL,NULL,NULL,NULL);
 INSERT INTO `sys_menu` (`id`, `pid`, `menu_name`, `menu_type`, `route_path`, `icon`, `sort_num`, `perm_code`, `status`, `create_at`, `create_by`, `modify_at`, `modify_by`) VALUES (201,2,'编辑','FUNC',NULL,NULL,1,'sys:user:write','EBL',NULL,NULL,NULL,NULL);
 INSERT INTO `sys_menu` (`id`, `pid`, `menu_name`, `menu_type`, `route_path`, `icon`, `sort_num`, `perm_code`, `status`, `create_at`, `create_by`, `modify_at`, `modify_by`) VALUES (300,3,'查看','FUNC',NULL,NULL,1,'sys:role:query','EBL',NULL,NULL,NULL,NULL);
@@ -49,7 +52,7 @@ INSERT INTO `sys_menu` (`id`, `pid`, `menu_name`, `menu_type`, `route_path`, `ic
 INSERT INTO `sys_menu` (`id`, `pid`, `menu_name`, `menu_type`, `route_path`, `icon`, `sort_num`, `perm_code`, `status`, `create_at`, `create_by`, `modify_at`, `modify_by`) VALUES (1700,17,'配置','FUNC',NULL,NULL,1,'vis:card:conf','EBL',NULL,NULL,NULL,NULL);
 INSERT INTO `sys_menu` (`id`, `pid`, `menu_name`, `menu_type`, `route_path`, `icon`, `sort_num`, `perm_code`, `status`, `create_at`, `create_by`, `modify_at`, `modify_by`) VALUES (1800,18,'配置','FUNC',NULL,NULL,1,'vis:dashboard:conf','EBL',NULL,NULL,NULL,NULL);
 
-INSERT INTO `sys_menu` (`id`, `pid`, `menu_name`, `menu_type`, `route_path`, `icon`, `sort_num`, `perm_code`, `status`) VALUES (19,16,'数据源','MENU','/vis/datasources','database-2-line',35,NULL,'EBL');
+INSERT INTO `sys_menu` (`id`, `pid`, `menu_name`, `menu_type`, `route_path`, `icon`, `sort_num`, `perm_code`, `status`, `create_at`, `create_by`, `modify_at`, `modify_by`) VALUES (19,21,'数据源','MENU','/vis/datasources','storage-line',35,NULL,'EBL',NULL,NULL,1789898116807,NULL);
 INSERT INTO `sys_menu` (`id`, `pid`, `menu_name`, `menu_type`, `sort_num`, `perm_code`, `status`) VALUES (1900,19,'配置','FUNC',1,'vis:datasource:conf','EBL');
 
 -- sys_role：当前数据 2 条
