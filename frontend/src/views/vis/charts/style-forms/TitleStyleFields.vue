@@ -3,6 +3,7 @@
 -->
 <script setup lang="ts">
 import type { VisVisualConfig } from '@/views/vis/shared/types'
+import { CARD_INPUT_PLACEHOLDERS } from '@/views/vis/charts/chartHelp'
 import {
   AUTO_REFRESH_OPTIONS,
   DEFAULT_AUTO_REFRESH_SEC,
@@ -54,14 +55,14 @@ const allowDownload = computed({
   </div>
   <div
     v-if="showTitle"
-    class="vis-style-form__row is-block"
+    class="vis-style-form__row is-block is-child"
   >
     <el-input
       v-model="title"
       size="small"
       maxlength="40"
       clearable
-      placeholder="不填则跟随卡片名称"
+      :placeholder="CARD_INPUT_PLACEHOLDERS.title"
     />
   </div>
 
@@ -73,7 +74,7 @@ const allowDownload = computed({
   </div>
   <div
     v-if="showDescription"
-    class="vis-style-form__row is-block"
+    class="vis-style-form__row is-block is-child"
   >
     <el-input
       v-model="description"
@@ -83,7 +84,7 @@ const allowDownload = computed({
       maxlength="120"
       show-word-limit
       resize="vertical"
-      placeholder="不填则跟随卡片描述"
+      :placeholder="CARD_INPUT_PLACEHOLDERS.note"
     />
   </div>
 
@@ -108,7 +109,7 @@ const allowDownload = computed({
   </div>
   <div
     v-if="showDataFeatures && autoRefresh"
-    class="vis-style-form__row"
+    class="vis-style-form__row is-child"
   >
     <StyleFormLabel>
       刷新频率

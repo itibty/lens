@@ -21,7 +21,7 @@ export type VisNumberColorPresetId = VisAccentPresetId
 /** 默认 4×5 格时的字号；主值 / 主名随格子缩放，辅指标字号固定 */
 export const NUMBER_TYPE = {
   value: 36,
-  aux: 15,
+  aux: 14,
   auxLabel: 12,
   labelSize: 15,
   gap: 14,

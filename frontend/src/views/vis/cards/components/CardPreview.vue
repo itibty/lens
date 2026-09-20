@@ -4,17 +4,16 @@
 <script setup lang="ts">
 import type { QueryIssue } from '../cardApi'
 import type { DatasetField, VisQueryConfig, VisVisualConfig } from '@/views/vis/shared/types'
+import { CARD_PREVIEW_COPY } from '@/views/vis/charts/chartHelp'
 import { resolveAllowDetail } from '@/views/vis/shared/cardDetail'
-import { tableMarksPreviewFingerprint } from '@/views/vis/shared/tableMark'
-import { fromApiChartType, isStaticChart } from '@/views/vis/shared/types'
+import { isStaticChart } from '@/views/vis/shared/types'
 import { useVisCardDetail } from '@/views/vis/shared/useVisCardDetail'
-import { emptyPivotData, emptyQueryData, fetchVisCardData } from '@/views/vis/shared/useVisCardQuery'
 import VisCardView from '@/views/vis/shared/VisCardView.vue'
 import VisDetailDrawer from '@/views/vis/shared/VisDetailDrawer.vue'
-import { apiErrorMessage, collectQueryIssues, execSqlsFromBizError, normalizeQueryForRequest } from '../cardApi'
+import { PREVIEW_CARD_ID, PREVIEW_DASHBOARD_ID, useCardPreview } from '../useCardPreview'
 import { previewTileKind, usePreviewTile } from './usePreviewTile'
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   query: VisQueryConfig
   visual: VisVisualConfig
   /** 卡片名称；开标题且未自定义时作为默认标题 */
@@ -22,15 +21,16 @@ const props = defineProps<{
   /** 卡片描述；开备注且未填功能设置备注时作为默认备注 */
   description?: string
   fields?: DatasetField[]
-}>()
+  /** 等待卡片加载、数据集切换确认期间暂停预览。 */
+  enabled?: boolean
+  /** 普通输入未失焦或配置弹层未关闭时，保留当前预览。 */
+  deferUpdates?: boolean
+}>(), { enabled: true })
 
 const emit = defineEmits<{
   issues: [QueryIssue[]]
   rows: [Record<string, unknown>[]]
 }>()
-/** 设计器预览占位：path 为 Long，服务层不使用 */
-const PREVIEW_DASHBOARD_ID = '0'
-const PREVIEW_CARD_ID = '0'
 const previewHostId = `vis-card-preview-${useId()}`
 
 const SQL_HEIGHT_KEY = 'NA:vis-preview-sql-height'
@@ -38,63 +38,22 @@ const SQL_DEFAULT_HEIGHT = 220
 const SQL_MIN_HEIGHT = 120
 const SQL_HEADER_HEIGHT = 36
 
-/** 嵌套 reactive 无法 structuredClone，请求体用 JSON 深拷贝 */
-function clonePlain<T>(value: T): T {
-  return JSON.parse(JSON.stringify(toRaw(value))) as T
-}
-
-const loading = ref(false)
-const errorMsg = ref('')
-const hasPreviewed = ref(false)
-const response = ref<VIS.QueryDataResponse>(emptyQueryData())
-const pivotResponse = ref<VIS.PivotQueryResponse>(emptyPivotData())
-const execSqls = ref<VIS.ExecSqlInfo[]>([])
-/** 上次刷新时的配置快照；预览画布只吃 applied，避免 live 改类型/样式错配旧数据 */
-const appliedQuery = ref<VisQueryConfig | null>(null)
-const appliedVisual = ref<VisVisualConfig | null>(null)
-let previewSeq = 0
-let lastFeatureFp = ''
-let pendingFeatureStyle = false
-
-/** 数据模型里的字段不跟功能 / 样式自动刷新；文本 / 网页正文失焦后跟样式一起刷 */
-function featureStyleFingerprint(visual: VisVisualConfig) {
-  const rest: Record<string, unknown> = { ...visual }
-  delete rest.chartType
-  if (visual.table) {
-    const table = { ...visual.table }
-    const marks = tableMarksPreviewFingerprint(visual, props.query?.asOfDate)
-    if (marks.length)
-      table.marks = marks
-    else
-      delete table.marks
-    if (Object.keys(table).length)
-      rest.table = table
-    else
-      delete rest.table
-  }
-  return JSON.stringify(rest)
-}
-
-function isDraftingText() {
-  const el = document.activeElement
-  if (!(el instanceof HTMLElement))
-    return false
-  if (el.isContentEditable)
-    return true
-  if (el instanceof HTMLTextAreaElement)
-    return true
-  if (!(el instanceof HTMLInputElement))
-    return false
-  const type = el.type
-  return type === 'text' || type === 'search' || type === 'number' || type === 'password'
-    || type === 'tel' || type === 'url' || type === 'email' || type === ''
-}
-
-function applyPreviewSnapshot(query: VisQueryConfig, visual: VisVisualConfig) {
-  appliedQuery.value = query
-  appliedVisual.value = visual
-  lastFeatureFp = featureStyleFingerprint(visual)
-}
+const {
+  loading,
+  errorMsg,
+  valid,
+  showPreview,
+  response,
+  pivotResponse,
+  execSqls,
+  appliedQuery,
+  appliedVisual,
+  runPreview,
+  resetPreview: resetPreviewData,
+} = useCardPreview(() => props, {
+  onIssues: issues => emit('issues', issues),
+  onRows: rows => emit('rows', rows),
+})
 
 const {
   open: detailOpen,
@@ -118,43 +77,8 @@ const {
 }))
 
 function resetPreview() {
-  previewSeq++
-  pendingFeatureStyle = false
-  hasPreviewed.value = false
-  errorMsg.value = ''
-  appliedQuery.value = null
-  appliedVisual.value = null
-  lastFeatureFp = ''
-  loading.value = false
+  resetPreviewData()
   closeDetail()
-  clearPreviewData()
-}
-
-function flushFeatureStyle() {
-  pendingFeatureStyle = false
-  if (!hasPreviewed.value)
-    return
-  const fp = featureStyleFingerprint(props.visual)
-  if (fp === lastFeatureFp)
-    return
-  void runPreview()
-}
-
-function onFeatureStyleFocusOut() {
-  if (!pendingFeatureStyle)
-    return
-  void nextTick(() => {
-    if (isDraftingText())
-      return
-    flushFeatureStyle()
-  })
-}
-
-function clearPreviewData() {
-  emit('rows', [])
-  response.value = emptyQueryData()
-  pivotResponse.value = emptyPivotData()
-  execSqls.value = []
 }
 
 /** 下栏 SQL：默认折叠 */
@@ -233,87 +157,7 @@ function onSqlDragStart(e: MouseEvent) {
 }
 
 const isStatic = computed(() => isStaticChart(props.visual.chartType))
-const showSql = computed(() => hasPreviewed.value && !isStaticChart(appliedVisual.value?.chartType))
-
-async function runPreview() {
-  const seq = ++previewSeq
-  const snapshotVisual = clonePlain(props.visual)
-  snapshotVisual.chartType = fromApiChartType(props.visual.chartType)
-  const issues = collectQueryIssues(snapshotVisual.chartType, props.query, props.fields, snapshotVisual)
-  emit('issues', issues)
-  if (issues.length) {
-    lastFeatureFp = featureStyleFingerprint(snapshotVisual)
-    if (isStaticChart(snapshotVisual.chartType)) {
-      clearPreviewData()
-      applyPreviewSnapshot(
-        normalizeQueryForRequest(clonePlain(props.query), snapshotVisual.chartType),
-        snapshotVisual,
-      )
-      hasPreviewed.value = true
-      return
-    }
-    if (hasPreviewed.value)
-      resetPreview()
-    lastFeatureFp = featureStyleFingerprint(snapshotVisual)
-    return
-  }
-
-  const snapshotQuery = normalizeQueryForRequest(clonePlain(props.query), snapshotVisual.chartType)
-  errorMsg.value = ''
-
-  if (isStaticChart(snapshotVisual.chartType)) {
-    clearPreviewData()
-    applyPreviewSnapshot(snapshotQuery, snapshotVisual)
-    hasPreviewed.value = true
-    return
-  }
-
-  loading.value = true
-  try {
-    const result = await fetchVisCardData({
-      query: snapshotQuery,
-      visual: snapshotVisual,
-      dashboardId: PREVIEW_DASHBOARD_ID,
-      cardId: PREVIEW_CARD_ID,
-      showSql: true,
-    })
-    if (seq !== previewSeq)
-      return
-    response.value = result.data
-    emit('rows', result.data.rows ?? [])
-    pivotResponse.value = result.pivotData
-    execSqls.value = result.execSqls
-    applyPreviewSnapshot(snapshotQuery, snapshotVisual)
-    hasPreviewed.value = true
-  }
-  catch (e) {
-    if (seq !== previewSeq)
-      return
-    errorMsg.value = apiErrorMessage(e, '预览失败')
-    clearPreviewData()
-    execSqls.value = execSqlsFromBizError(e)
-    applyPreviewSnapshot(snapshotQuery, snapshotVisual)
-    hasPreviewed.value = true
-  }
-  finally {
-    if (seq === previewSeq)
-      loading.value = false
-  }
-}
-
-watch(
-  () => props.visual,
-  () => {
-    if (!hasPreviewed.value)
-      return
-    if (isDraftingText()) {
-      pendingFeatureStyle = true
-      return
-    }
-    flushFeatureStyle()
-  },
-  { deep: true },
-)
+const showSql = computed(() => showPreview.value && !isStaticChart(appliedVisual.value?.chartType))
 
 watch(
   () => resolveAllowDetail(props.visual),
@@ -325,11 +169,6 @@ watch(
 
 onMounted(() => {
   readStoredSqlHeight()
-  window.addEventListener('focusout', onFeatureStyleFocusOut, true)
-})
-
-onUnmounted(() => {
-  window.removeEventListener('focusout', onFeatureStyleFocusOut, true)
 })
 
 defineExpose({
@@ -347,15 +186,14 @@ defineExpose({
   >
     <div class="preview__main min-h-0">
       <div class="preview__main-head shrink-0">
-        <span class="preview__main-title">
-          预览
-        </span>
+        <span class="preview__main-title">预览</span>
         <el-button
           text
           bg
           size="small"
           :loading="loading"
-          @click="runPreview"
+          :disabled="!enabled"
+          @click="runPreview()"
         >
           <span class="preview__refresh-icon i-mingcute-refresh-2-line" />
           {{ isStatic ? '刷新预览' : '刷新数据' }}
@@ -365,14 +203,14 @@ defineExpose({
       <div
         ref="stageRef"
         class="preview__stage"
-        :class="{ 'is-tile-stage': resizablePreview && hasPreviewed }"
+        :class="{ 'is-tile-stage': resizablePreview && showPreview }"
       >
         <div
-          v-if="!hasPreviewed"
+          v-if="!showPreview"
           class="preview__idle"
         >
           <div class="preview__idle-text">
-            数据模型改完后点「{{ isStatic ? '刷新预览' : '刷新数据' }}」；功能与样式改完自动更新
+            {{ loading && valid ? CARD_PREVIEW_COPY.loading : CARD_PREVIEW_COPY.idle }}
           </div>
         </div>
 
@@ -401,7 +239,7 @@ defineExpose({
             :card-id="PREVIEW_CARD_ID"
             :embedded="resizablePreview"
             @open-detail="openDetail"
-            @refresh="runPreview"
+            @refresh="runPreview()"
           />
           <div
             v-if="resizablePreview"

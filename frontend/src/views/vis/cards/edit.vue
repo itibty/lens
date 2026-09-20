@@ -20,15 +20,16 @@ import { useSwipeBackGuard } from '@/hooks/swipeBack'
 import { useAccountStore } from '@/stores/modules/account'
 import { showConfirm, showToast } from '@/utils/index'
 import { ChartDocBlock } from '@/views/vis/charts'
+import { CARD_INPUT_PLACEHOLDERS, getChartShelfTips, QUERY_SETTINGS_COPY } from '@/views/vis/charts/chartHelp'
 import { pruneSeriesStyles } from '@/views/vis/shared/chartSeriesStyle'
 import { copyName } from '@/views/vis/shared/copyName'
 import { createDragUid } from '@/views/vis/shared/dnd'
 import { pruneFieldStyles } from '@/views/vis/shared/fieldStyle'
-import { createEmptyCard, hidesQueryDimensions, isPivotChart, isStaticChart, needsDataset } from '@/views/vis/shared/types'
+import { createEmptyCard, isPivotChart, isStaticChart, needsDataset } from '@/views/vis/shared/types'
 import { allowContrastForChart, apiErrorMessage, collectQueryIssues, fromVisCardInfo, hasQueryModelContent, hasQueryShelves, listChartConstraints, normalizeQueryForRequest, orderSourceDimensions, reconcileQueryDependents, resetQueryForDataset, toVisCardSaveRequest } from './cardApi'
 import { createCardCopy } from './cardCopy'
+import { retainQueryIssues } from './cardValidation'
 import { canPreserveChartQuery, changeCardChartType } from './chartShape'
-import AdvancedModule from './components/AdvancedModule.vue'
 import AdvFieldLabel from './components/AdvFieldLabel.vue'
 import CardPreview from './components/CardPreview.vue'
 import ChartFormHost from './components/ChartFormHost.vue'
@@ -42,6 +43,7 @@ import OrderShelf from './components/OrderShelf.vue'
 import ParamShelf from './components/ParamShelf.vue'
 import StaticContentFields from './components/StaticContentFields.vue'
 import { FUNCTION_CARD_CONF } from './config'
+import { providePreviewEditing } from './previewEditing'
 
 defineOptions({ name: 'VisCardEdit' })
 
@@ -74,14 +76,15 @@ const previewRows = ref<Record<string, unknown>[]>([])
 const { skipConfirm, confirmLeave } = useLeaveConfirm(undefined, undefined, () => dirty.value)
 
 const designerRef = ref<HTMLElement>()
+const fieldPanelRef = ref<InstanceType<typeof FieldPanel>>()
 const previewRef = ref<{
-  runPreview: () => Promise<void>
   resetPreview: () => void
   closeDetail: () => void
 }>()
 const leftWidth = ref(LEFT_WIDTH_DEFAULT)
 const centerWidth = ref(CENTER_WIDTH_DEFAULT)
 const resizing = ref<'left' | 'center' | null>(null)
+const { deferUpdates, onInput: onConfigInput, setInputEditing } = providePreviewEditing()
 
 const states = reactive<IStates>({
   loading: true,
@@ -94,6 +97,8 @@ const states = reactive<IStates>({
     ...createEmptyCard(),
   },
 })
+
+watch(() => [states.centerTab, states.card.id, states.card.visual.chartType, states.card.query.datasetId], () => setInputEditing(false))
 
 watch(
   () => states.card,
@@ -207,7 +212,7 @@ function ensureArrays() {
   }))
 }
 
-function onLimitChange(value: number | undefined) {
+function onLimitChange(value: number | null | undefined) {
   if (value == null || Number.isNaN(value)) {
     delete states.card.query.limit
     return
@@ -265,7 +270,7 @@ const paramPills = computed({
 })
 
 const datasetFields = ref<DatasetField[]>([])
-/** 刷新 / 保存写入；已有错误时改配置再收一次，未报过错不跟 */
+/** 仅主动刷新 / 保存写入；编辑过程只消除已修复的错误。 */
 const shapeIssues = ref<QueryIssue[]>([])
 
 const datasetError = computed(() =>
@@ -279,23 +284,32 @@ function applyShapeIssues(issues: QueryIssue[]) {
   states.centerTab = ['detail', 'appearance'].includes(issues[0]?.shelf ?? '') ? 'feature' : 'query'
   if (issues.some(item => item.shelf === 'having') && !states.advancedOpen.includes('advanced'))
     states.advancedOpen = [...states.advancedOpen, 'advanced']
+  void nextTick(() => {
+    const target = designerRef.value?.querySelector<HTMLElement>(`[data-validation-shelf="${issues[0]!.shelf}"]`)
+    target?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+  })
 }
 
-function onPreviewIssues(issues: QueryIssue[]) {
+function currentIssues() {
+  return collectQueryIssues(states.card.visual.chartType, states.card.query, datasetFields.value, states.card.visual)
+}
+
+function validateForSave() {
+  const issues = currentIssues()
   applyShapeIssues(issues)
+  if (issues[0])
+    showToast(issues[0].message, 'warning')
+  return !issues.length
 }
 
 watch(
-  () => [states.card.visual.chartType, states.card.query, states.card.visual.richtext, states.card.visual.web, states.card.visual.progress, states.card.visual.kpi, states.card.visual.detail, states.card.visual.allowDetail, states.card.visual.chart?.axes] as const,
+  () => [states.card.query, states.card.visual, datasetFields.value] as const,
   () => {
     if (!shapeIssues.value.length)
       return
-    shapeIssues.value = collectQueryIssues(
-      states.card.visual.chartType,
-      states.card.query,
-      datasetFields.value,
-      states.card.visual,
-    )
+    const remaining = retainQueryIssues(shapeIssues.value, currentIssues())
+    if (remaining.length !== shapeIssues.value.length)
+      shapeIssues.value = remaining
   },
   { deep: true },
 )
@@ -308,10 +322,10 @@ function onAsOfDateChange(value: string | undefined | null) {
 }
 
 const chartConstraints = computed(() => listChartConstraints(states.card.visual.chartType))
+const chartShelfTips = computed(() => getChartShelfTips(states.card.visual.chartType))
 const isPivot = computed(() => isPivotChart(states.card.visual.chartType))
 const isStatic = computed(() => isStaticChart(states.card.visual.chartType))
 const datasetNeeded = computed(() => needsDataset(states.card.visual.chartType))
-const hideDimensions = computed(() => hidesQueryDimensions(states.card.visual.chartType))
 const allowContrast = computed(() => allowContrastForChart(states.card.visual.chartType))
 const pageTitleAry = computed(() => {
   const name = states.card.name?.trim()
@@ -343,7 +357,6 @@ function applyChartType(next: ChartType) {
   changeCardChartType(states.card, next)
   ensureArrays()
   previewRef.value?.resetPreview()
-  applyShapeIssues(collectQueryIssues(next, states.card.query, datasetFields.value, states.card.visual))
 }
 
 function onChartTypeChange(next: ChartType) {
@@ -394,6 +407,7 @@ function applyDatasetChange() {
 }
 
 let ignoreDatasetWatch = false
+const datasetChangePending = ref(false)
 
 watch(
   () => states.card.query.datasetId,
@@ -412,14 +426,19 @@ watch(
       applyDatasetChange()
       return
     }
+    datasetChangePending.value = true
     showConfirm(
       '切换数据集将清空数据模型中的维度、指标、筛选、排序、结果过滤、模板参数和明细配置，是否继续？',
       '切换数据集',
       'warning',
-      applyDatasetChange,
+      () => {
+        applyDatasetChange()
+        datasetChangePending.value = false
+      },
       () => {
         ignoreDatasetWatch = true
         states.card.query.datasetId = prev
+        datasetChangePending.value = false
       },
     )
   },
@@ -462,8 +481,11 @@ async function loadCard(id?: string, copyFrom?: string) {
     await nextTick()
     if (currentRequestId !== loadRequestId)
       return
-    if (isStaticChart(states.card.visual.chartType) || states.card.query.datasetId)
-      void previewRef.value?.runPreview()
+    // 字段面板先响应数据集变更，再等字段回填到预览，避免初次校验误报字段不可用。
+    await fieldPanelRef.value?.waitForFields()
+    await nextTick()
+    if (currentRequestId !== loadRequestId)
+      return
     copied = copying
   }
   catch (e) {
@@ -492,8 +514,11 @@ const saveRules: FormRules<typeof saveForm> = {
   name: [{ required: true, whitespace: true, trigger: 'blur', message: '请填写卡片标题' }],
 }
 
-function openSaveDialog(asCopy = false) {
+async function openSaveDialog(asCopy = false) {
+  await nextTick()
   if (states.loading || states.saveLoading || !canWrite)
+    return
+  if (!validateForSave())
     return
   saveAs.value = asCopy
   saveForm.name = asCopy ? copyName(states.card.name) : states.card.name?.trim() || ''
@@ -512,22 +537,16 @@ function onSaveDialogClosed() {
 }
 
 async function handleSave() {
-  if (states.saveLoading || !canWrite)
+  await nextTick()
+  if (states.loading || states.saveLoading || !canWrite)
     return
   const name = saveForm.name.trim()
   if (!name) {
     showToast('请填写卡片标题', 'warning')
     return
   }
-  const issues = collectQueryIssues(
-    states.card.visual.chartType,
-    states.card.query,
-    datasetFields.value,
-    states.card.visual,
-  )
-  applyShapeIssues(issues)
-  if (issues[0]) {
-    showToast(issues[0].message, 'warning')
+  if (!validateForSave()) {
+    saveOpen.value = false
     return
   }
   const desc = saveForm.desc.trim()
@@ -633,8 +652,10 @@ onBeforeRouteUpdate(async (to) => {
           :style="{ width: `${leftWidth}px` }"
         >
           <FieldPanel
+            ref="fieldPanelRef"
             v-model:dataset-id="states.card.query.datasetId"
             v-model:fields="datasetFields"
+            data-validation-shelf="dataset"
             :needs-dataset="datasetNeeded"
             :error="datasetError"
           />
@@ -649,6 +670,8 @@ onBeforeRouteUpdate(async (to) => {
           class="designer__center"
           :class="{ 'is-resizing': resizing === 'center' }"
           :style="{ width: `${centerWidth}px` }"
+          @input.capture="onConfigInput"
+          @focusout.capture="setInputEditing(false)"
         >
           <ChartTypePicker
             v-if="!states.loading"
@@ -672,14 +695,16 @@ onBeforeRouteUpdate(async (to) => {
                   <StaticContentFields
                     v-if="isStatic"
                     v-model:visual="states.card.visual"
+                    data-validation-shelf="content"
                     :issues="shapeIssues"
                   />
                   <template v-else>
                     <template v-if="isPivot">
                       <DimensionShelf
                         v-model:dimensions="rowDimensionPills"
+                        data-validation-shelf="rowDimensions"
                         title="行维"
-                        tip="每一行代表一类，例如地区"
+                        :tip="chartShelfTips.rowDimensions"
                         shelf="rowDimensions"
                         :fields="datasetFields"
                         :issues="shapeIssues"
@@ -687,8 +712,9 @@ onBeforeRouteUpdate(async (to) => {
                       />
                       <DimensionShelf
                         v-model:dimensions="colDimensionPills"
+                        data-validation-shelf="colDimensions"
                         title="列维"
-                        tip="每一列代表一类，例如月份"
+                        :tip="chartShelfTips.colDimensions"
                         shelf="colDimensions"
                         :fields="datasetFields"
                         :issues="shapeIssues"
@@ -696,14 +722,18 @@ onBeforeRouteUpdate(async (to) => {
                       />
                     </template>
                     <DimensionShelf
-                      v-else-if="!hideDimensions"
+                      v-else
                       v-model:dimensions="dimensionPills"
+                      data-validation-shelf="dimensions"
+                      :tip="chartShelfTips.dimensions"
                       :fields="datasetFields"
                       :issues="shapeIssues"
                       :visual="states.card.visual"
                     />
                     <MetricShelf
                       v-model:metrics="metricPills"
+                      data-validation-shelf="metrics"
+                      :tip="chartShelfTips.metrics"
                       :allow-contrast="allowContrast"
                       :fields="datasetFields"
                       :issues="shapeIssues"
@@ -711,6 +741,7 @@ onBeforeRouteUpdate(async (to) => {
                     />
                     <FilterBuilder
                       v-model:filters="states.card.query.filters!"
+                      data-validation-shelf="filters"
                       :fields="datasetFields"
                       :issues="shapeIssues"
                     />
@@ -723,43 +754,55 @@ onBeforeRouteUpdate(async (to) => {
                     <el-collapse v-model="states.advancedOpen" class="designer__advanced">
                       <el-collapse-item title="高级设置" name="advanced">
                         <div class="designer__advanced-mods">
-                          <AdvancedModule title="查询范围">
-                            <div class="adv-fields">
-                              <div class="adv-field">
-                                <AdvFieldLabel tip="日期快捷、同环比的参照日，空则基准日为今天">
-                                  基准日
-                                </AdvFieldLabel>
-                                <el-date-picker
-                                  :model-value="states.card.query.asOfDate"
-                                  class="adv-field__control"
-                                  type="date"
-                                  size="small"
-                                  value-format="YYYY-MM-DD"
-                                  placeholder="默认今天"
-                                  clearable
-                                  @update:model-value="onAsOfDateChange"
-                                />
-                              </div>
-                              <div class="adv-field">
-                                <AdvFieldLabel tip="查询结果上限，空则不限制">
-                                  最多行数
-                                </AdvFieldLabel>
-                                <el-input-number
-                                  :model-value="states.card.query.limit"
-                                  class="adv-field__control"
-                                  size="small"
-                                  :min="1"
-                                  :max="50000"
-                                  controls-position="right"
-                                  placeholder="不限制"
-                                  :value-on-clear="undefined"
-                                  @update:model-value="onLimitChange"
-                                />
-                              </div>
+                          <div class="adv-fields">
+                            <div class="adv-field">
+                              <AdvFieldLabel :tip="QUERY_SETTINGS_COPY.asOfDate.tip">
+                                {{ QUERY_SETTINGS_COPY.asOfDate.label }}
+                              </AdvFieldLabel>
+                              <el-date-picker
+                                :model-value="states.card.query.asOfDate"
+                                class="adv-field__control"
+                                type="date"
+                                size="small"
+                                value-format="YYYY-MM-DD"
+                                :placeholder="QUERY_SETTINGS_COPY.asOfDate.placeholder"
+                                clearable
+                                @update:model-value="onAsOfDateChange"
+                              />
                             </div>
-                          </AdvancedModule>
+                            <div class="adv-field">
+                              <AdvFieldLabel :tip="QUERY_SETTINGS_COPY.limit.tip">
+                                {{ QUERY_SETTINGS_COPY.limit.label }}
+                              </AdvFieldLabel>
+                              <el-input-number
+                                :model-value="states.card.query.limit"
+                                :aria-label="QUERY_SETTINGS_COPY.limit.label"
+                                class="adv-field__control"
+                                size="small"
+                                :min="1"
+                                :max="50000"
+                                controls-position="right"
+                                :value-on-clear="null"
+                                @update:model-value="onLimitChange"
+                              >
+                                <template #suffix>
+                                  <button
+                                    v-if="states.card.query.limit != null"
+                                    type="button"
+                                    class="adv-field__clear"
+                                    :aria-label="QUERY_SETTINGS_COPY.limit.clear"
+                                    :title="QUERY_SETTINGS_COPY.limit.clear"
+                                    @click="onLimitChange(undefined)"
+                                  >
+                                    <span class="i-ep-circle-close" />
+                                  </button>
+                                </template>
+                              </el-input-number>
+                            </div>
+                          </div>
                           <HavingShelf
                             v-model:having-filters="havingPills"
+                            data-validation-shelf="having"
                             :metrics="metricPills"
                             :issues="shapeIssues"
                             :for-pivot="isPivot"
@@ -817,7 +860,9 @@ onBeforeRouteUpdate(async (to) => {
             :title="states.card.name"
             :description="states.card.desc"
             :fields="datasetFields"
-            @issues="onPreviewIssues"
+            :enabled="!states.loading && !datasetChangePending"
+            :defer-updates="deferUpdates"
+            @issues="applyShapeIssues"
             @rows="previewRows = $event"
           />
         </aside>
@@ -851,7 +896,7 @@ onBeforeRouteUpdate(async (to) => {
                 v-model="saveForm.name"
                 maxlength="50"
                 clearable
-                placeholder="请输入卡片标题"
+                :placeholder="CARD_INPUT_PLACEHOLDERS.title"
               />
             </el-form-item>
             <el-form-item label="卡片描述" prop="desc">
@@ -861,7 +906,7 @@ onBeforeRouteUpdate(async (to) => {
                 :rows="3"
                 maxlength="200"
                 show-word-limit
-                placeholder="请输入卡片描述"
+                :placeholder="CARD_INPUT_PLACEHOLDERS.description"
               />
             </el-form-item>
             <el-form-item
@@ -957,8 +1002,8 @@ onBeforeRouteUpdate(async (to) => {
 
   &__center {
     --vis-cfg-title-size: 13px;
-    --vis-cfg-title-weight: 500;
-    --vis-cfg-title-color: var(--el-text-color-regular);
+    --vis-cfg-title-weight: 600;
+    --vis-cfg-title-color: var(--el-text-color-primary);
     --vis-cfg-group-size: 12px;
     --vis-cfg-group-weight: 500;
     --vis-cfg-group-color: var(--el-text-color-regular);
@@ -1079,7 +1124,7 @@ onBeforeRouteUpdate(async (to) => {
   }
 
   &__tab-body {
-    padding: 12px 10px 16px;
+    padding: 12px 14px 16px;
     box-sizing: border-box;
   }
 
@@ -1107,6 +1152,16 @@ onBeforeRouteUpdate(async (to) => {
       line-height: 1;
     }
 
+    &.is-small {
+      width: 18px;
+      height: 18px;
+      opacity: 0.55;
+
+      > span {
+        font-size: 13px;
+      }
+    }
+
     &:hover:not(:disabled) {
       opacity: 1;
       background: rgb(0 0 0 / 8%);
@@ -1125,8 +1180,7 @@ onBeforeRouteUpdate(async (to) => {
   --el-collapse-header-height: 36px;
 
   :deep(.el-collapse-item) {
-    border: 1px solid var(--el-border-color-extra-light);
-    border-radius: 8px;
+    border-bottom: 1px solid var(--el-border-color-extra-light);
     overflow: hidden;
     background: var(--el-fill-color-blank);
   }
@@ -1134,16 +1188,16 @@ onBeforeRouteUpdate(async (to) => {
   :deep(.el-collapse-item__header) {
     height: var(--el-collapse-header-height);
     line-height: var(--el-collapse-header-height);
-    padding: 0 12px;
+    padding: 0 2px;
     font-size: var(--vis-cfg-title-size);
     font-weight: var(--vis-cfg-title-weight);
     color: var(--vis-cfg-title-color);
-    background: var(--el-fill-color-lighter);
+    background: transparent;
     border-bottom: none;
   }
 
-  :deep(.el-collapse-item.is-active .el-collapse-item__header) {
-    border-bottom: 1px solid var(--el-border-color-extra-light);
+  :deep(.el-collapse-item__header:hover) {
+    background: var(--el-fill-color-lighter);
   }
 
   :deep(.el-collapse-item__wrap) {
@@ -1152,7 +1206,7 @@ onBeforeRouteUpdate(async (to) => {
   }
 
   :deep(.el-collapse-item__content) {
-    padding: 8px 10px 10px;
+    padding: 8px 2px 14px;
   }
 }
 
@@ -1166,6 +1220,7 @@ onBeforeRouteUpdate(async (to) => {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  padding: 0 2px 4px;
 }
 
 .adv-field {
@@ -1182,6 +1237,33 @@ onBeforeRouteUpdate(async (to) => {
     max-width: 52%;
     min-width: 0;
     box-sizing: border-box;
+  }
+
+  &__clear {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--el-text-color-placeholder);
+    font-size: 14px;
+    cursor: pointer;
+    opacity: 0;
+
+    &:hover {
+      color: var(--el-text-color-secondary);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--el-color-primary-light-5);
+      outline-offset: 2px;
+    }
+  }
+
+  &__control:hover &__clear,
+  &__control:focus-within &__clear {
+    opacity: 1;
   }
 
   :deep(.adv-field__control.el-date-editor),

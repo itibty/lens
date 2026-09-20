@@ -3,6 +3,7 @@
 -->
 <script setup lang="ts">
 import type { VisVisualConfig } from '@/views/vis/shared/types'
+import { CARD_INPUT_PLACEHOLDERS } from '@/views/vis/charts/chartHelp'
 import { STAT_GROUP_MIN } from '@/views/vis/shared/staticModules'
 
 const props = defineProps<{
@@ -86,7 +87,7 @@ const value = computed({
         size="small"
         clearable
         maxlength="40"
-        placeholder="可选"
+        :placeholder="CARD_INPUT_PLACEHOLDERS.label"
       />
     </div>
     <div class="stat-item-row__nums">
@@ -106,7 +107,7 @@ const value = computed({
           size="small"
           clearable
           maxlength="8"
-          placeholder="可选，如 ¥"
+          :placeholder="CARD_INPUT_PLACEHOLDERS.prefix"
         />
       </div>
     </div>

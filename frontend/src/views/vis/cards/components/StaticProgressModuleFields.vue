@@ -3,6 +3,7 @@
 -->
 <script setup lang="ts">
 import type { VisProgressModule, VisVisualConfig } from '@/views/vis/shared/types'
+import { CARD_INPUT_PLACEHOLDERS } from '@/views/vis/charts/chartHelp'
 import { staticProgressView, staticProgressVisual } from '@/views/vis/shared/staticModules'
 import VisProgressCard from '@/views/vis/shared/VisProgressCard.vue'
 
@@ -80,7 +81,7 @@ const previewView = computed(() => {
         size="small"
         clearable
         maxlength="40"
-        placeholder="可选，如完成率"
+        :placeholder="CARD_INPUT_PLACEHOLDERS.label"
       />
     </div>
     <div class="static-progress-fields__nums">

@@ -5,6 +5,7 @@
 import type { QueryIssue } from '../cardApi'
 import type { HavingPill } from '@/views/vis/shared/dnd'
 import type { FilterConditionDraft } from '@/views/vis/shared/filterValue'
+import { CHART_HELP_EMPTY_HINTS, CHART_HELP_QUERY_TIPS } from '@/views/vis/charts/chartHelp'
 import { createDragUid } from '@/views/vis/shared/dnd'
 import {
   applyFilterConditionDraft,
@@ -27,8 +28,8 @@ const props = defineProps<{
 }>()
 
 const tip = computed(() => props.forPivot
-  ? '只过滤最细交叉格；小计、总计仍按筛选后的全部数据汇总'
-  : '对汇总结果再过滤，相当于 HAVING')
+  ? CHART_HELP_QUERY_TIPS.pivotHaving
+  : CHART_HELP_QUERY_TIPS.having)
 
 const shelfError = computed(() => shelfMessage(props.issues, 'having'))
 
@@ -144,7 +145,7 @@ function pillName(item: HavingPill) {
         v-if="!havingFilters.length"
         class="drop-empty"
       >
-        {{ candidates.length ? '选择已配置的指标添加' : '请先添加汇总指标' }}
+        {{ candidates.length ? CHART_HELP_EMPTY_HINTS.having : CHART_HELP_EMPTY_HINTS.havingPrerequisite }}
       </div>
     </div>
     <div v-if="shelfError" class="drop-error">
@@ -169,6 +170,7 @@ function pillName(item: HavingPill) {
 
   &.is-empty {
     min-height: 44px;
+    justify-content: center;
   }
 
   &.is-invalid {
@@ -181,9 +183,9 @@ function pillName(item: HavingPill) {
 }
 
 .drop-empty {
-  color: var(--el-text-color-placeholder);
-  font-size: 12px;
-  line-height: 28px;
+  padding: 0 8px;
+  color: var(--vis-cfg-hint-color, var(--el-text-color-placeholder));
+  font-size: var(--vis-cfg-hint-size, 12px);
 }
 
 .drop-error {

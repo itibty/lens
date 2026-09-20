@@ -4,11 +4,15 @@
 <script setup lang="ts">
 import type { ResolvedFieldFormat } from '@/views/vis/shared/fieldStyle'
 import type { VisFieldStyleRule, VisMetricCellVisual, VisQueryConfig, VisVisualConfig } from '@/views/vis/shared/types'
+import { CHART_HELP_FEATURE_TIPS, FEATURE_FORM_COPY } from '@/views/vis/charts/chartHelp'
 import {
   buildFieldStyleCandidates,
   fieldStyleFromDraft,
   resolveMetricFormat,
+  SIGN_COLOR_OPTIONS,
+  SIGN_COLOR_TIP,
   suggestedFieldSuffix,
+  supportsMetricSignColor,
   syncFieldStyles,
   unusedFieldStyleCandidates,
 } from '@/views/vis/shared/fieldStyle'
@@ -180,6 +184,8 @@ function formatRuleSubtitle(rule: VisFieldStyleRule) {
     bits.push('万/亿')
   if (format.separator === false)
     bits.push('无千分位')
+  if (format.signColor && supportsMetricSignColor(visual.value.chartType))
+    bits.push(SIGN_COLOR_OPTIONS.find(item => item.value === format.signColor)?.label || '')
   return bits.join(' · ') || '默认'
 }
 
@@ -212,7 +218,7 @@ const emptyHint = computed(() =>
         size="small"
         clearable
         filterable
-        placeholder="添加字段"
+        :placeholder="FEATURE_FORM_COPY.addMetric"
         :disabled="!unusedCandidates.length"
         @change="addField"
       >
@@ -249,9 +255,30 @@ const emptyHint = computed(() =>
             v-model:compact="row.draft.compact"
           />
 
+          <div v-if="supportsMetricSignColor(visual.chartType)" class="vis-style-form__row">
+            <StyleFormLabel :tip="SIGN_COLOR_TIP">
+              正负配色
+            </StyleFormLabel>
+            <el-select
+              :model-value="row.draft.signColor"
+              size="small"
+              class="vis-style-form__control"
+              clearable
+              placeholder=""
+              @update:model-value="row.draft.signColor = $event || undefined"
+            >
+              <el-option
+                v-for="option in SIGN_COLOR_OPTIONS"
+                :key="option.value"
+                :label="option.label"
+                :value="option.value"
+              />
+            </el-select>
+          </div>
+
           <template v-if="allowCellVisual">
             <div class="vis-style-form__row">
-              <StyleFormLabel tip="在数字下层叠加整格数据条；原始数值按 0～100 映射">
+              <StyleFormLabel :tip="CHART_HELP_FEATURE_TIPS.cellProgress">
                 进度条
               </StyleFormLabel>
               <el-switch v-model="row.draft.progressEnabled" size="small" />

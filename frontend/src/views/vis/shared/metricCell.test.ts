@@ -1,10 +1,12 @@
+import type { TYPES } from '@visactor/vtable'
 import type { VisQueryConfig, VisVisualConfig } from './types'
 import { describe, expect, it, vi } from 'vitest'
-import { alphaColor, DARK_THEME, THEME_PRESETS } from '@/theme/tokens'
+import { alphaColor, DARK_THEME, LIGHT_THEME, THEME_PRESETS } from '@/theme/tokens'
 import { buildFieldStyleCandidates, fieldStyleKey, syncFieldStyles } from './fieldStyle'
 import { listTableColumns } from './listTable'
 import {
   animateMetricProgressBars,
+  bindMetricSignColorStyle,
   METRIC_PROGRESS_DEFAULT_COLOR,
   METRIC_PROGRESS_MAX,
   METRIC_PROGRESS_MIN,
@@ -198,5 +200,65 @@ describe('metric cell progress', () => {
 
     expect(animateMetricProgressBars(table, true)).toBe(0)
     expect(table.scenegraph.highPerformanceGetCell).not.toHaveBeenCalled()
+  })
+})
+
+describe('metric cell sign colors', () => {
+  function cellArgs(value: unknown) {
+    return {
+      col: 0,
+      row: 1,
+      table: { getCellOriginValue: () => value },
+    } as unknown as TYPES.StylePropertyFunctionArg
+  }
+
+  // 表格用 canvas 绘制，须传入当前主题的真实色值，不能使用 CSS 变量。
+  it.each([LIGHT_THEME, DARK_THEME])('colors raw values using the active $mode theme', (theme) => {
+    const styled = {
+      ...progressVisual(),
+      fieldStyles: [{
+        ...progressVisual().fieldStyles![0]!,
+        format: { suffix: '%', signColor: 'positive-red' as const },
+      }],
+    }
+    const columns = listTableColumns(query(), {
+      columns: ['完成率'],
+      rows: [{ 完成率: 12.5 }],
+      total: 1,
+      truncated: false,
+    }, true, styled, theme)
+    const column = columns[0] as unknown as {
+      style: (args: ReturnType<typeof cellArgs>) => Record<string, unknown>
+      fieldFormat: (record: Record<string, unknown>) => string
+    }
+    expect(column.fieldFormat({ 完成率: 12.5 })).toBe('12.5%')
+    expect(column.style(cellArgs(12.5)).color).toBe(theme.status.danger.base)
+    expect(column.style(cellArgs(-12.5)).color).toBe(theme.status.success.base)
+    expect(column.style(cellArgs(0))).not.toHaveProperty('color')
+    expect(column.style(cellArgs(null))).not.toHaveProperty('color')
+    expect(column.style(cellArgs(12.5)).barHeight).toBe('100%')
+
+    const pivot = buildPivotTableOption({
+      rowFields: [],
+      columnFields: [],
+      metrics: ['完成率'],
+      columns: [],
+      rows: [],
+      total: 0,
+      truncated: false,
+      columnTruncated: false,
+    }, { ...styled, chartType: 'pivot' }, query(), undefined, theme)
+    const indicator = pivot?.indicators?.[0] as unknown as typeof column
+    expect(indicator.style(cellArgs(-12.5)).color).toBe(theme.status.success.base)
+    expect(indicator.style(cellArgs(0))).not.toHaveProperty('color')
+  })
+
+  it('keeps explicit table annotations above field coloring and never inserts a missing rule', () => {
+    const base = { color: '#123456', fontWeight: 'bold' }
+    expect(bindMetricSignColorStyle(base, undefined, LIGHT_THEME)).toBe(base)
+    const style = bindMetricSignColorStyle(base, 'positive-red', LIGHT_THEME)
+    expect(typeof style).toBe('function')
+    if (typeof style === 'function')
+      expect(style(cellArgs(12))).toEqual(base)
   })
 })

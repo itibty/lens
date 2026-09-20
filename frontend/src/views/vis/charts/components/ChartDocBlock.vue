@@ -1,5 +1,5 @@
 <!--
- * @Description: 图表说明块；支持一段文案或编号列表
+ * @Description: 图表说明块；支持一段文案或分行列表
 -->
 <script setup lang="ts">
 const props = withDefaults(defineProps<{
@@ -30,7 +30,7 @@ const visible = computed(() =>
     >
       {{ text }}
     </div>
-    <ol
+    <ul
       v-if="lines.length"
       class="chart-doc__list"
     >
@@ -40,7 +40,7 @@ const visible = computed(() =>
       >
         {{ item }}
       </li>
-    </ol>
+    </ul>
   </div>
 </template>
 
@@ -68,7 +68,8 @@ const visible = computed(() =>
 
   &__list {
     margin: 0;
-    padding-left: 1.35em;
+    padding: 0 0 0 1.25em;
+    list-style: disc outside;
     font-size: var(--vis-cfg-meta-size, 12px);
     font-weight: 400;
     color: var(--vis-cfg-meta-color, var(--el-text-color-secondary));

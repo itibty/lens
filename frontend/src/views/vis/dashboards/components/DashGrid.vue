@@ -296,7 +296,7 @@ onBeforeUnmount(() => {
     }"
     @pointerdown.capture="guides.onPointerDown"
   >
-    <DashGridGuides v-if="guides.visible.value" :active-item="guides.activeItem.value" />
+    <DashGridGuides v-if="guides.visible.value" :active-item="guides.activeItem.value" :items="layout" />
     <div v-if="!widgets.length" class="dash-grid__empty">
       {{ designActions ? '添加卡片、标注或分组，把内容放到看板上' : '看板上还没有内容' }}
     </div>

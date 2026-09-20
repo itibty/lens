@@ -1,5 +1,7 @@
-<!-- 指标卡和趋势卡共用的辅指标组；中性浅底统一标签与数值，空间不足时整组换行。 -->
+<!-- 指标卡和趋势卡共用的辅指标组；底色跟随卡片内容色，空间不足时整组换行。 -->
 <script setup lang="ts">
+import type { MetricTooltipPeriod } from './metricTooltip'
+import VisMetricTooltip from './VisMetricTooltip.vue'
 import VisMetricValue from './VisMetricValue.vue'
 
 defineProps<{
@@ -7,9 +9,10 @@ defineProps<{
     key: string
     label: string
     text: string
-    title?: string
+    periods?: MetricTooltipPeriod[]
     kind?: 'metric' | 'contrast'
     direction?: 'up' | 'down' | 'flat'
+    color?: string
   }>
   showLabel: boolean
 }>()
@@ -17,27 +20,27 @@ defineProps<{
 
 <template>
   <div class="vis-metric-aux">
-    <div
+    <VisMetricTooltip
       v-for="item in items"
       :key="item.key"
-      class="vis-metric-aux__item"
-      :class="item.kind === 'contrast' ? `is-${item.direction}` : undefined"
-      :title="[`${item.label}：${item.text}`, item.title].filter(Boolean).join('\n')"
+      :periods="item.periods"
     >
-      <span v-if="showLabel" class="vis-metric-aux__label">{{ item.label }}</span>
-      <VisMetricValue
-        class="vis-metric-aux__value"
-        size="aux"
-        :body="item.text"
-        :direction="item.kind === 'contrast' ? item.direction : undefined"
-      />
-    </div>
+      <div class="vis-metric-aux__item" :tabindex="item.periods?.length ? 0 : undefined">
+        <span v-if="showLabel" class="vis-metric-aux__label">{{ item.label }}</span>
+        <VisMetricValue
+          class="vis-metric-aux__value"
+          size="aux"
+          :body="item.text"
+          :direction="item.kind === 'contrast' ? item.direction : undefined"
+          :style="item.color ? { color: item.color } : undefined"
+          :native-tooltip="false"
+        />
+      </div>
+    </VisMetricTooltip>
   </div>
 </template>
 
 <style scoped lang="scss">
-@use '@/theme/presentation.scss' as ui;
-
 .vis-metric-aux {
   display: flex;
   flex-wrap: wrap;
@@ -56,20 +59,12 @@ defineProps<{
     gap: 6px;
     min-width: 0;
     max-width: 100%;
-    @include ui.badge;
-    color: var(--na-text-regular);
-
-    &.is-up {
-      color: var(--el-color-success);
-    }
-
-    &.is-down {
-      color: var(--el-color-danger);
-    }
-
-    &.is-flat {
-      color: var(--na-text-muted);
-    }
+    box-sizing: border-box;
+    padding: 2px 6px;
+    border-radius: var(--vis-radius-sm);
+    background: color-mix(in srgb, var(--vis-content-color, var(--na-text-strong)) 4%, transparent);
+    color: var(--vis-content-color, var(--na-text-regular));
+    cursor: default;
   }
 
   &__label {
@@ -80,7 +75,7 @@ defineProps<{
     white-space: nowrap;
     font-size: var(--vis-number-aux-label, 12px);
     line-height: 1.5;
-    color: var(--na-text-muted);
+    color: var(--vis-muted-color, var(--na-text-muted));
   }
 
   &__value {

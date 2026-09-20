@@ -138,6 +138,8 @@ function onRowClick(record: Record<string, unknown>, event: MouseEvent) {
             class="vis-kpi-card__values"
             :current="row.currentText"
             :target="row.targetText"
+            :current-color="row.currentColor"
+            :target-color="row.targetColor"
           />
         </div>
       </template>

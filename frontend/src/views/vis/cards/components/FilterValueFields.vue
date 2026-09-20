@@ -4,6 +4,8 @@
 <script setup lang="ts">
 import type { FilterOp } from '@/views/vis/shared/filterValue'
 import type { DatasetFieldDataType } from '@/views/vis/shared/types'
+import InfoTooltip from '@/components/InfoTooltip.vue'
+import { CARD_INPUT_PLACEHOLDERS } from '@/views/vis/charts/chartHelp'
 import { defaultValueForOp, valueArity } from '@/views/vis/shared/filterValue'
 
 const props = withDefaults(defineProps<{
@@ -185,14 +187,12 @@ const rangePickerType = computed(() => {
           v-model="oneText"
           :placeholder="op === 'like' || op === 'not_like' ? '关键字' : '值'"
         />
-        <el-tooltip
+        <InfoTooltip
           v-if="op === 'like' || op === 'not_like'"
           content="支持模糊匹配"
-          placement="top"
-          :show-after="200"
         >
           <span class="filter-value__info i-mingcute-information-line" />
-        </el-tooltip>
+        </InfoTooltip>
       </div>
     </template>
 
@@ -238,7 +238,7 @@ const rangePickerType = computed(() => {
         allow-create
         default-first-option
         :reserve-keyword="false"
-        :placeholder="kind === 'number' ? '输入数字后回车' : '输入后回车添加多个值'"
+        :placeholder="kind === 'number' ? CARD_INPUT_PLACEHOLDERS.multipleNumbers : CARD_INPUT_PLACEHOLDERS.multipleValues"
       />
     </template>
   </div>

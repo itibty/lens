@@ -1,8 +1,9 @@
 import type { VisKpiOptions, VisKpiPeriodMode, VisQueryConfig, VisVisualConfig } from './types'
 import { NEUTRAL } from '@/theme/tokens'
+import { CHART_HELP_FEATURE_TIPS } from '@/views/vis/charts/chartHelp'
 import { resolveAccentByPaint } from './accentPresets'
 import { resolveCardChrome } from './cardTheme'
-import { formatFieldText, resolveMetricFormat } from './fieldStyle'
+import { formatFieldText, resolveMetricFormat, resolveSignColor } from './fieldStyle'
 import { toFiniteNumber } from './numberStyle'
 import {
   formatProgressPercent,
@@ -73,10 +74,10 @@ export function kpiSizeVars(size?: string) {
 }
 
 export const KPI_FEATURE_TIPS = {
-  fixedTarget: '用此数当目标值，完成率 = 当前值 / 此数',
-  period: '选了期限后按评估日画时间线，并在线旁标出时间进度',
-  showValue: '显示当前值/目标值',
-  percentDecimals: '完成率保留几位小数；自动时最多 1 位',
+  fixedTarget: CHART_HELP_FEATURE_TIPS.fixedTarget,
+  period: '显示所选期限的时间进度',
+  showValue: CHART_HELP_FEATURE_TIPS.progressValues,
+  percentDecimals: CHART_HELP_FEATURE_TIPS.percentDecimals,
 } as const
 
 export const KPI_PERIOD_OPTIONS: Array<{ id: VisKpiPeriodMode, label: string }> = [
@@ -107,6 +108,8 @@ export interface KpiRowView {
   percentText: string
   currentText: string
   targetText: string
+  currentColor?: string
+  targetColor?: string
 }
 
 export interface KpiPaceView {
@@ -314,6 +317,8 @@ export function resolveKpiView(
       percentText: formatProgressPercent(item.ratio, opt.percentDecimals),
       currentText: formatFieldText(item.current, currentFormat),
       targetText: formatFieldText(item.target, targetFormat),
+      currentColor: resolveSignColor(item.current, currentFormat.signColor),
+      targetColor: targetMetric ? resolveSignColor(item.target, targetFormat.signColor) : undefined,
     })),
   }
 }

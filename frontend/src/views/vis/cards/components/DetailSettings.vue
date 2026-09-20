@@ -4,14 +4,15 @@ import type { DragFieldPayload, OrderPill } from '@/views/vis/shared/dnd'
 import type { ResolvedFieldFormat } from '@/views/vis/shared/fieldStyle'
 import type { DatasetField, VisDetailConfig, VisQueryConfig, VisVisualConfig } from '@/views/vis/shared/types'
 import draggable from 'vuedraggable'
+import { CARD_INPUT_PLACEHOLDERS, CHART_HELP_EMPTY_HINTS, CHART_HELP_FEATURE_TIPS, FEATURE_FORM_COPY } from '@/views/vis/charts/chartHelp'
 import NumberFormatFields from '@/views/vis/charts/style-forms/NumberFormatFields.vue'
 import StyleFormLabel from '@/views/vis/charts/style-forms/StyleFormLabel.vue'
 import StyleFormSection from '@/views/vis/charts/style-forms/StyleFormSection.vue'
 import StyleFormShell from '@/views/vis/charts/style-forms/StyleFormShell.vue'
 import { DEFAULT_DETAIL_LIMIT, defaultDetailFields, MAX_DETAIL_LIMIT, normalizeDetailConfig } from '@/views/vis/shared/detailConfig'
-import { DND_GROUP } from '@/views/vis/shared/dnd'
+import { DETAIL_FIELDS_DND_GROUP } from '@/views/vis/shared/dnd'
 import { FIELD_FORMAT_DEFAULTS } from '@/views/vis/shared/fieldStyle'
-import { needsDataset } from '@/views/vis/shared/types'
+import { datasetFieldRole, needsDataset } from '@/views/vis/shared/types'
 import { pillMessage, shelfMessage } from '../cardApi'
 import FieldPill from './FieldPill.vue'
 import OrderShelf from './OrderShelf.vue'
@@ -19,14 +20,14 @@ import ShelfTitle from './ShelfTitle.vue'
 
 const props = defineProps<{ query?: VisQueryConfig, fields?: DatasetField[], issues?: QueryIssue[] }>()
 const visual = defineModel<VisVisualConfig>('visual', { required: true })
-const openSections = ref<(string | number)[]>(['detail'])
+const openSections = ref<(string | number)[]>([])
 const pickField = ref('')
 const drafts = reactive<Record<string, { label: string, format: ResolvedFieldFormat }>>({})
 const shelfError = computed(() => shelfMessage(props.issues, 'detail'))
 const limitError = computed(() => pillMessage(props.issues, 'detail', 'detail:limit'))
 
-watch(() => props.issues, (issues) => {
-  if (!issues?.some(item => item.shelf === 'detail'))
+watch(() => props.issues, (issues, previous) => {
+  if (!issues?.some(item => item.shelf === 'detail' && !previous?.includes(item)))
     return
   if (!openSections.value.includes('detail'))
     openSections.value = [...openSections.value, 'detail']
@@ -39,6 +40,8 @@ const enabled = computed({
   get: () => !!visual.value.allowDetail,
   set: (value: boolean) => {
     visual.value.allowDetail = value
+    if (value && !openSections.value.includes('detail'))
+      openSections.value = [...openSections.value, 'detail']
     if (value && visual.value.detail?.fields == null)
       patch({ fields: defaultDetailFields(props.query) })
   },
@@ -77,6 +80,14 @@ function removeField(field: string) {
 function isNumber(field: string) {
   return props.fields?.find(item => item.field === field)?.dataType === 'number'
 }
+function fieldTone(field: string) {
+  const role = datasetFieldRole(props.fields?.find(item => item.field === field))
+  if (role === 'METRIC')
+    return 'metric'
+  if (role === 'DIMENSION')
+    return 'dimension'
+  return 'source'
+}
 function openDraft(field: string) {
   const options = visual.value.detail?.fieldOptions?.[field]
   drafts[field] = { label: options?.label ?? '', format: { ...FIELD_FORMAT_DEFAULTS, ...options?.format } }
@@ -102,41 +113,43 @@ function confirmDraft(field: string) {
       <template v-if="enabled">
         <div class="detail-fields" :class="{ 'is-invalid': !!shelfError }">
           <div class="detail-fields__head">
-            <ShelfTitle tip="使用当前数据集，自动继承卡片筛选、看板筛选、模板参数和点击维度；展示原始记录，不重新聚合。">
+            <ShelfTitle :tip="CHART_HELP_FEATURE_TIPS.detailFields">
               展示字段
             </ShelfTitle>
             <el-select v-model="pickField" size="small" filterable clearable placeholder="添加字段" class="detail-fields__picker" @change="addField">
               <el-option v-for="field in unusedFields" :key="field.field" :value="field.field" :label="field.field" />
             </el-select>
           </div>
-          <draggable v-model="fieldPills" :group="{ name: DND_GROUP, pull: false, put: true }" item-key="_uid" handle=".field-pill__handle" :animation="180" class="detail-fields__drop" :class="{ 'is-empty': !fieldNames.length, 'is-invalid': !!shelfError }">
+          <draggable v-model="fieldPills" :group="DETAIL_FIELDS_DND_GROUP" item-key="_uid" handle=".field-pill__handle" :animation="180" class="detail-fields__drop" :class="{ 'is-empty': !fieldNames.length, 'is-invalid': !!shelfError }">
             <template #item="{ element }">
-              <FieldPill
-                :name="element.field"
-                :subtitle="visual.detail?.fieldOptions?.[element.field]?.label"
-                :tone="isNumber(element.field) ? 'metric' : 'dimension'"
-                :error="shelfError && invalidFields.includes(element.field) ? shelfError : undefined"
-                drag-handle block
-                @open="openDraft(element.field)"
-                @confirm="confirmDraft(element.field)"
-                @remove="removeField(element.field)"
-              >
-                <template v-if="drafts[element.field]">
-                  <el-form label-position="top" size="small" @submit.prevent>
-                    <el-form-item label="显示名（可选）">
-                      <el-input v-model="drafts[element.field].label" clearable placeholder="不填则使用字段名" />
-                    </el-form-item>
-                    <NumberFormatFields
-                      v-if="isNumber(element.field)"
-                      v-model:decimals="drafts[element.field].format.decimals"
-                      v-model:prefix="drafts[element.field].format.prefix"
-                      v-model:suffix="drafts[element.field].format.suffix"
-                      v-model:separator="drafts[element.field].format.separator"
-                      v-model:compact="drafts[element.field].format.compact"
-                    />
-                  </el-form>
-                </template>
-              </FieldPill>
+              <div class="detail-fields__item">
+                <FieldPill
+                  :name="element.field"
+                  :subtitle="visual.detail?.fieldOptions?.[element.field]?.label"
+                  :tone="fieldTone(element.field)"
+                  :error="shelfError && invalidFields.includes(element.field) ? shelfError : undefined"
+                  drag-handle block
+                  @open="openDraft(element.field)"
+                  @confirm="confirmDraft(element.field)"
+                  @remove="removeField(element.field)"
+                >
+                  <template v-if="drafts[element.field]">
+                    <el-form label-position="top" size="small" @submit.prevent>
+                      <el-form-item label="显示名（可选）">
+                        <el-input v-model="drafts[element.field].label" clearable :placeholder="CARD_INPUT_PLACEHOLDERS.displayName" />
+                      </el-form-item>
+                      <NumberFormatFields
+                        v-if="isNumber(element.field)"
+                        v-model:decimals="drafts[element.field].format.decimals"
+                        v-model:prefix="drafts[element.field].format.prefix"
+                        v-model:suffix="drafts[element.field].format.suffix"
+                        v-model:separator="drafts[element.field].format.separator"
+                        v-model:compact="drafts[element.field].format.compact"
+                      />
+                    </el-form>
+                  </template>
+                </FieldPill>
+              </div>
             </template>
             <template #footer>
               <div v-if="!fieldNames.length && !shelfError" class="detail-fields__hint">
@@ -148,13 +161,19 @@ function confirmDraft(field: string) {
             {{ shelfError }}
           </div>
         </div>
-        <OrderShelf v-model:order-list="orders" :dimensions="sortDimensions" :metrics="[]" empty-hint="选择已展示的明细字段" />
+        <OrderShelf
+          v-model:order-list="orders"
+          :dimensions="sortDimensions"
+          :metrics="[]"
+          :field-tone="fieldTone"
+          :empty-hint="fieldNames.length ? CHART_HELP_EMPTY_HINTS.detailOrder : CHART_HELP_EMPTY_HINTS.detailOrderPrerequisite"
+        />
         <div class="detail-limit" :class="{ 'is-invalid': !!limitError }">
           <div class="vis-style-form__row">
             <StyleFormLabel tip="超过上限仅展示部分记录">
-              行数上限
+              {{ FEATURE_FORM_COPY.maxRows }}
             </StyleFormLabel>
-            <el-input-number v-model="maxRows" :min="1" :max="MAX_DETAIL_LIMIT" :value-on-clear="DEFAULT_DETAIL_LIMIT" controls-position="right" size="small" aria-label="行数上限" />
+            <el-input-number v-model="maxRows" class="vis-style-form__control" :min="1" :max="MAX_DETAIL_LIMIT" :value-on-clear="DEFAULT_DETAIL_LIMIT" controls-position="right" size="small" :aria-label="FEATURE_FORM_COPY.maxRows" />
           </div>
           <div v-if="limitError" class="detail-fields__error">
             {{ limitError }}
@@ -167,15 +186,8 @@ function confirmDraft(field: string) {
 
 <style scoped lang="scss">
 .detail-fields {
-  padding: 10px 12px 12px;
-  margin-bottom: 12px;
-  border: 1px solid var(--el-border-color-lighter);
-  border-radius: 8px;
-  background: var(--vis-shelf-well, var(--na-fill-color-light));
-
-  &.is-invalid {
-    border-color: var(--el-color-danger-light-5);
-  }
+  min-width: 0;
+  margin-bottom: 2px;
 
   &__head {
     display: flex;
@@ -186,7 +198,7 @@ function confirmDraft(field: string) {
   }
 
   &__picker {
-    width: 130px;
+    width: 132px;
     flex-shrink: 0;
   }
 
@@ -194,18 +206,28 @@ function confirmDraft(field: string) {
     display: flex;
     flex-direction: column;
     gap: 6px;
-    padding: 8px;
+    padding: 6px;
     border: 1px dashed var(--el-border-color);
     border-radius: 6px;
-    background: var(--el-bg-color);
+    background: var(--el-fill-color-blank);
 
     &.is-empty {
       min-height: 44px;
+      justify-content: center;
     }
 
     &.is-invalid {
       border-color: var(--el-color-danger-light-5);
     }
+  }
+
+  &__item {
+    min-width: 0;
+    width: 100%;
+  }
+
+  :deep(.sortable-ghost) {
+    opacity: 0.4;
   }
 
   &__error {

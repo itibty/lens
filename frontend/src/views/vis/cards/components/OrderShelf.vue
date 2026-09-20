@@ -1,9 +1,11 @@
 <!--
- * @Description: 排序 — 只能选已投放的维度 / 指标；关闭 popover 时确认方向
+ * @Description: 排序 — 只能选已配置的维度 / 指标；关闭 popover 时确认方向
 -->
 <script setup lang="ts">
 import type { DimensionPill, MetricPill, OrderPill } from '@/views/vis/shared/dnd'
 import draggable from 'vuedraggable'
+import { CHART_HELP_EMPTY_HINTS, CHART_HELP_QUERY_TIPS } from '@/views/vis/charts/chartHelp'
+import { ORDER_FIELDS_DND_GROUP } from '@/views/vis/shared/dnd'
 import { buildOrderCandidates, createOrderPill, unusedOrderCandidates } from '../queryDependents'
 import FieldPill from './FieldPill.vue'
 import ShelfTitle from './ShelfTitle.vue'
@@ -14,6 +16,8 @@ const props = defineProps<{
   /** 透视：有排序时行/列跟查询遇见序，没写则按维值正序 */
   forPivot?: boolean
   emptyHint?: string
+  /** 明细使用数据集的维度 / 指标分类配色，与展示字段保持一致。 */
+  fieldTone?: (field: string) => 'dimension' | 'metric' | 'source'
 }>()
 
 const orderList = defineModel<OrderPill[]>('orderList', { required: true })
@@ -67,7 +71,9 @@ function candidateOf(item: OrderPill) {
 }
 
 function pillTone(item: OrderPill) {
-  return candidateOf(item)?.kind === 'metric' ? 'metric' : 'dimension'
+  if (props.fieldTone)
+    return props.fieldTone(item.field)
+  return candidateOf(item)?.kind ?? 'source'
 }
 
 function pillName(item: OrderPill) {
@@ -75,11 +81,11 @@ function pillName(item: OrderPill) {
 }
 
 const emptyHint = computed(() =>
-  props.emptyHint || (candidates.value.length ? '选择已投放的维度或指标' : '请先添加维度或指标'),
+  props.emptyHint || (candidates.value.length ? CHART_HELP_EMPTY_HINTS.order : CHART_HELP_EMPTY_HINTS.orderPrerequisite),
 )
 
 const tip = computed(() => props.forPivot
-  ? '有排序时行、列按查询遇见顺序；没写排序时按维值正序'
+  ? CHART_HELP_QUERY_TIPS.pivotOrder
   : undefined)
 </script>
 
@@ -113,6 +119,7 @@ const tip = computed(() => props.forPivot
     <div class="shelf__well">
       <draggable
         v-model="orderList"
+        :group="ORDER_FIELDS_DND_GROUP"
         class="shelf__drop"
         :class="{ 'is-empty': !orderList.length }"
         handle=".field-pill__handle"

@@ -29,6 +29,14 @@ class SqlDialectTest {
     }
 
     @Test
+    void quotesDisplayAliasesAndEscapesEmbeddedDelimiters() {
+        String alias = "销售额 `合计` \"本月\"（元）";
+        assertEquals("`销售额 ``合计`` \"本月\"（元）`", SqlDialect.MYSQL.quote(alias));
+        assertEquals("`销售额 ``合计`` \"本月\"（元）`", SqlDialect.STARROCKS.quote(alias));
+        assertEquals("\"销售额 `合计` \"\"本月\"\"（元）\"", SqlDialect.POSTGRES.quote(alias));
+    }
+
+    @Test
     void generatesDatabaseSpecificTimeGrains() {
         assertEquals("DATE_FORMAT(DATE_TRUNC('week', `created_at`), '%Y-%m-%d')",
                 SqlDialect.STARROCKS.timeGrain("`created_at`", TimeGrainEnum.WEEK));

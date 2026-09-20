@@ -1,8 +1,9 @@
 <!--
- * @Description: 进度条功能设置（通用 / 目标 / 展示 / 格式）
+ * @Description: 进度条功能设置（通用 / 进度 / 格式）
 -->
 <script setup lang="ts">
 import type { VisProgressOptions, VisQueryConfig, VisVisualConfig } from '@/views/vis/shared/types'
+import { CARD_INPUT_PLACEHOLDERS, FEATURE_FORM_COPY } from '@/views/vis/charts/chartHelp'
 import { PROGRESS_DEFAULTS, PROGRESS_FEATURE_TIPS, progressMetricNames } from '@/views/vis/shared/progressCard'
 import { useVisualBranch } from './composables/useVisualBranch'
 import FieldStyleShelf from './FieldStyleShelf.vue'
@@ -16,7 +17,7 @@ const props = defineProps<{
 }>()
 
 const visual = defineModel<VisVisualConfig>('visual', { required: true })
-const openSections = ref(['common', 'target', 'display', 'fieldStyle'])
+const openSections = ref(['common', 'progress', 'fieldStyle'])
 const branch = useVisualBranch(visual, 'progress')
 
 const names = computed(() => progressMetricNames(props.query))
@@ -49,105 +50,101 @@ const percentDecimals = branch.valueField<NonNullable<VisProgressOptions['percen
       <TitleStyleFields v-model:visual="visual" />
     </StyleFormSection>
 
-    <StyleFormSection
-      title="目标"
-      name="target"
-    >
-      <div
-        v-if="names.hasMetricTarget"
-        class="vis-style-form__row"
-      >
-        <StyleFormLabel>指标目标</StyleFormLabel>
-        <span class="vis-style-form__value">{{ names.pair }}</span>
-      </div>
-      <div
-        v-else
-        class="vis-style-form__row"
-      >
-        <StyleFormLabel :tip="PROGRESS_FEATURE_TIPS.fixedTarget">
-          固定目标
-        </StyleFormLabel>
-        <el-input-number
-          v-model="target"
-          size="small"
-          class="vis-style-form__control"
-          :min="0"
-          :controls="false"
-          placeholder="必填"
-          :value-on-clear="undefined"
-        />
-      </div>
-    </StyleFormSection>
-
-    <StyleFormSection
-      title="展示"
-      name="display"
-    >
-      <div class="vis-style-form__row">
-        <StyleFormLabel>形态</StyleFormLabel>
-        <el-radio-group
-          v-model="shape"
-          size="small"
-          class="vis-style-form__segmented"
+    <StyleFormSection title="进度" name="progress">
+      <div class="vis-feature-group">
+        <div
+          v-if="names.hasMetricTarget"
+          class="vis-style-form__row"
         >
-          <el-radio-button value="bar">
-            条形
-          </el-radio-button>
-          <el-radio-button value="ring">
-            环形
-          </el-radio-button>
-          <el-radio-button value="gauge">
-            半环
-          </el-radio-button>
-        </el-radio-group>
-      </div>
-
-      <div class="vis-style-form__row">
-        <StyleFormLabel>
-          指标名
-        </StyleFormLabel>
-        <el-switch v-model="showLabel" size="small" />
-      </div>
-
-      <div class="vis-style-form__row">
-        <StyleFormLabel>
-          完成率
-        </StyleFormLabel>
-        <el-switch v-model="showPercent" size="small" />
-      </div>
-
-      <div
-        v-if="showPercent"
-        class="vis-style-form__row"
-      >
-        <StyleFormLabel :tip="PROGRESS_FEATURE_TIPS.percentDecimals">
-          完成率小数位
-        </StyleFormLabel>
-        <el-radio-group
-          v-model="percentDecimals"
-          size="small"
-          class="vis-style-form__segmented"
+          <StyleFormLabel>指标目标</StyleFormLabel>
+          <span class="vis-style-form__value">{{ names.pair }}</span>
+        </div>
+        <div
+          v-else
+          class="vis-style-form__row"
         >
-          <el-radio-button value="auto">
-            自动
-          </el-radio-button>
-          <el-radio-button :value="0">
-            0
-          </el-radio-button>
-          <el-radio-button :value="1">
-            1
-          </el-radio-button>
-          <el-radio-button :value="2">
-            2
-          </el-radio-button>
-        </el-radio-group>
+          <StyleFormLabel :tip="PROGRESS_FEATURE_TIPS.fixedTarget">
+            固定目标
+          </StyleFormLabel>
+          <el-input-number
+            v-model="target"
+            size="small"
+            class="vis-style-form__control"
+            :min="0"
+            :controls="false"
+            :placeholder="CARD_INPUT_PLACEHOLDERS.target"
+            :value-on-clear="undefined"
+          />
+        </div>
       </div>
 
-      <div class="vis-style-form__row">
-        <StyleFormLabel :tip="PROGRESS_FEATURE_TIPS.showValue">
-          目标值
-        </StyleFormLabel>
-        <el-switch v-model="showValue" size="small" />
+      <div class="vis-feature-group">
+        <div class="vis-style-form__row">
+          <StyleFormLabel>形态</StyleFormLabel>
+          <el-radio-group
+            v-model="shape"
+            size="small"
+            class="vis-style-form__segmented"
+          >
+            <el-radio-button value="bar">
+              条形
+            </el-radio-button>
+            <el-radio-button value="ring">
+              环形
+            </el-radio-button>
+            <el-radio-button value="gauge">
+              半环
+            </el-radio-button>
+          </el-radio-group>
+        </div>
+
+        <div class="vis-style-form__row">
+          <StyleFormLabel>
+            指标名
+          </StyleFormLabel>
+          <el-switch v-model="showLabel" size="small" />
+        </div>
+
+        <div class="vis-style-form__row">
+          <StyleFormLabel>
+            完成率
+          </StyleFormLabel>
+          <el-switch v-model="showPercent" size="small" />
+        </div>
+
+        <div
+          v-if="showPercent"
+          class="vis-style-form__row"
+        >
+          <StyleFormLabel :tip="PROGRESS_FEATURE_TIPS.percentDecimals">
+            {{ FEATURE_FORM_COPY.percentDecimals }}
+          </StyleFormLabel>
+          <el-radio-group
+            v-model="percentDecimals"
+            size="small"
+            class="vis-style-form__segmented"
+          >
+            <el-radio-button value="auto">
+              自动
+            </el-radio-button>
+            <el-radio-button :value="0">
+              0
+            </el-radio-button>
+            <el-radio-button :value="1">
+              1
+            </el-radio-button>
+            <el-radio-button :value="2">
+              2
+            </el-radio-button>
+          </el-radio-group>
+        </div>
+
+        <div class="vis-style-form__row">
+          <StyleFormLabel :tip="PROGRESS_FEATURE_TIPS.showValue">
+            {{ FEATURE_FORM_COPY.values }}
+          </StyleFormLabel>
+          <el-switch v-model="showValue" size="small" />
+        </div>
       </div>
     </StyleFormSection>
 

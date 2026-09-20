@@ -4,8 +4,8 @@ import type { ThemeColors } from '@/theme/tokens'
 import { TYPES } from '@visactor/vtable'
 import { LIGHT_THEME } from '@/theme/tokens'
 import { contrastPeriodDescription, findContrastInfo } from './contrastExp'
-import { FIELD_FORMAT_DEFAULTS, formatFieldText, formatMetricField } from './fieldStyle'
-import { metricProgressVTableConfig } from './metricCell'
+import { FIELD_FORMAT_DEFAULTS, formatFieldText, formatMetricField, resolveFieldFormat } from './fieldStyle'
+import { bindMetricSignColorStyle, metricProgressVTableConfig } from './metricCell'
 import { bindMarkColumnStyle, prepareTableMarks } from './tableMark'
 import { resolveTableStyle } from './tableStyle'
 import { dimensionAlias, metricAlias } from './types'
@@ -71,6 +71,7 @@ export function listTableColumns(
     const progress = isMetric
       ? metricProgressVTableConfig(visual, query, field, theme)
       : null
+    const signColor = options?.format?.signColor ?? (isMetric ? resolveFieldFormat(visual, query, field).signColor : undefined)
     const common = {
       field,
       title: options?.label || field,
@@ -88,13 +89,13 @@ export function listTableColumns(
     if (!progress) {
       return {
         ...common,
-        style: bindMarkColumnStyle(marks, field),
+        style: bindMetricSignColorStyle(bindMarkColumnStyle(marks, field), signColor, theme),
       }
     }
     return {
       ...common,
       ...progress.define,
-      style: bindMarkColumnStyle(marks, field, progress.style),
+      style: bindMetricSignColorStyle(bindMarkColumnStyle(marks, field, progress.style), signColor, theme),
     }
   })
 }

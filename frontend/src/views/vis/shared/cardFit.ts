@@ -1,31 +1,28 @@
 import type { MaybeRefOrGetter } from 'vue'
 import { useResizeObserver } from '@vueuse/core'
+import { ref, watch } from 'vue'
 
 /** 默认 4×5 格内容区；此时字号 / 间距 / 图形为设计基准（scale = 1） */
 export const CARD_FIT_REF_W = 216
 export const CARD_FIT_REF_H = 128
-export const CARD_FIT_MIN = 0.7
-/** 全屏卡不至于字号失控 */
-export const CARD_FIT_MAX = 2.8
-export const CARD_FIT_EPS = 0.02
-
-function clamp(n: number, min: number, max: number) {
-  return Math.min(max, Math.max(min, n))
-}
+/** 相近尺寸共用档位；保留小卡与全屏卡原有的缩放范围。 */
+export const CARD_FIT_LEVELS = [0.7, 0.8, 1, 1.25, 1.5, 2, 2.5, 2.8] as const
+/** 放大时多留 4px 再升档；缩小时立即退档，避免边界反复跳动。 */
+const GROW_BUFFER_PX = 4
 
 export function scaleFitPx(px: number, scale: number) {
-  return Math.round(px * scale * 10) / 10
+  return Math.round(px * scale)
 }
 
-/** 指标 / 进度 / 趋势同一套：随格子放大或缩小 */
-export function cardFitScale(width: number, height: number) {
+/** 内容区已经扣除卡片标题和外边距；按宽高同时容纳的最大档位展示。 */
+export function cardFitScale(width: number, height: number, previousScale?: number) {
   if (width < 32 || height < 24)
     return 1
-  return clamp(
-    Math.min(width / CARD_FIT_REF_W, height / CARD_FIT_REF_H),
-    CARD_FIT_MIN,
-    CARD_FIT_MAX,
-  )
+  return CARD_FIT_LEVELS.findLast((level) => {
+    const buffer = previousScale != null && level > previousScale ? GROW_BUFFER_PX : 0
+    return width >= CARD_FIT_REF_W * level + buffer
+      && height >= CARD_FIT_REF_H * level + buffer
+  }) ?? CARD_FIT_LEVELS[0]
 }
 
 export function useCardFitScale(
@@ -42,10 +39,7 @@ export function useCardFitScale(
     const rect = entries[0]?.contentRect
     if (!rect)
       return
-    const next = cardFitScale(rect.width, rect.height)
-    if (Math.abs(next - scale.value) < CARD_FIT_EPS)
-      return
-    scale.value = next
+    scale.value = cardFitScale(rect.width, rect.height, scale.value)
   })
 
   watch(() => toValue(enabled), (on) => {

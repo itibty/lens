@@ -3,6 +3,7 @@
 -->
 <script setup lang="ts">
 import type { VisNumberDecimals } from '@/views/vis/shared/types'
+import { CARD_INPUT_PLACEHOLDERS, CHART_HELP_FEATURE_TIPS } from '@/views/vis/charts/chartHelp'
 import StyleFormLabel from './StyleFormLabel.vue'
 
 const decimals = defineModel<VisNumberDecimals>('decimals', { required: true })
@@ -43,7 +44,7 @@ const compact = defineModel<boolean>('compact', { required: true })
       class="vis-style-form__control"
       maxlength="8"
       clearable
-      placeholder="如 ¥、约"
+      :placeholder="CARD_INPUT_PLACEHOLDERS.prefix"
     />
   </div>
 
@@ -55,7 +56,7 @@ const compact = defineModel<boolean>('compact', { required: true })
       class="vis-style-form__control"
       maxlength="8"
       clearable
-      placeholder="如 %、元"
+      :placeholder="CARD_INPUT_PLACEHOLDERS.suffix"
     />
   </div>
 
@@ -69,7 +70,7 @@ const compact = defineModel<boolean>('compact', { required: true })
   </div>
 
   <div class="vis-style-form__row">
-    <StyleFormLabel tip="达到万 / 亿时缩写">
+    <StyleFormLabel :tip="CHART_HELP_FEATURE_TIPS.compactNumber">
       紧凑数量级
     </StyleFormLabel>
     <el-switch v-model="compact" size="small" />

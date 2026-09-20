@@ -9,7 +9,7 @@ import { showToast } from '@/utils/index'
 import { contextFromTableRow, isContrastField } from './cardDetail'
 import { cardExportFileName, saveBlobFile } from './cardExport'
 import { VIS_EMPTY_TEXT } from './emptyState'
-import { formatMetricField } from './fieldStyle'
+import { formatMetricField, resolveMetricFieldColor } from './fieldStyle'
 import { listTableFields } from './listTable'
 import { metricAlias } from './types'
 
@@ -134,13 +134,14 @@ function downloadData() {
               class="data-metric-link"
               link
               type="primary"
+              :style="{ color: resolveMetricFieldColor(visual, query, field, row[field]) }"
               :aria-label="`${field}：${cellText(row, field)}，查看明细`"
               title="查看明细"
               @click="showDetail(row, field)"
             >
               {{ cellText(row, field) }}
             </el-button>
-            <span v-else>{{ cellText(row, field) }}</span>
+            <span v-else :style="{ color: resolveMetricFieldColor(visual, query, field, row[field]) }">{{ cellText(row, field) }}</span>
           </template>
         </el-table-column>
       </el-table>

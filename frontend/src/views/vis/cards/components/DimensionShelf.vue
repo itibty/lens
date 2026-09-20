@@ -7,6 +7,8 @@ import type { DimensionPill, DragFieldPayload } from '@/views/vis/shared/dnd'
 import type { DatasetField, VisVisualConfig } from '@/views/vis/shared/types'
 import draggable from 'vuedraggable'
 import { showToast } from '@/utils/index'
+import { CARD_INPUT_PLACEHOLDERS, CARD_INPUT_TIPS, DEFAULT_SHELF_TIPS } from '@/views/vis/charts/chartHelp'
+import StyleFormLabel from '@/views/vis/charts/style-forms/StyleFormLabel.vue'
 import { DND_GROUP, toDimensionPill } from '@/views/vis/shared/dnd'
 import { remapTableMarkAliases } from '@/views/vis/shared/tableMark'
 import { dimensionAlias, isDateField, TIME_GRAIN_OPTIONS } from '@/views/vis/shared/types'
@@ -23,7 +25,7 @@ const props = withDefaults(defineProps<{
   visual?: VisVisualConfig
 }>(), {
   title: '维度',
-  tip: '按什么拆开看，例如地区、日期',
+  tip: DEFAULT_SHELF_TIPS.dimensions,
   shelf: 'dimensions',
 })
 
@@ -34,12 +36,12 @@ function fieldMeta(field: string) {
   return props.fields?.find(item => item.field === field)
 }
 
-function onAdd(evt: { newIndex?: number }) {
-  const index = evt.newIndex
-  if (index == null)
+function onChange(evt: { added?: { newIndex: number, element: DragFieldPayload | DimensionPill } }) {
+  if (!evt.added)
     return
-  const raw = dimensions.value[index] as DragFieldPayload | DimensionPill
-  const pill = toDimensionPill(raw)
+  // change 事件给出数据索引，不受空态 footer 的 DOM 位置影响。
+  const { newIndex: index, element } = evt.added
+  const pill = toDimensionPill(element)
   if (dimensions.value.some((d, i) => i !== index && d.field === pill.field)) {
     dimensions.value.splice(index, 1)
     showToast('该维度已添加', 'warning')
@@ -113,7 +115,7 @@ function pillError(uid: string) {
       handle=".field-pill__handle"
       :animation="180"
       item-key="_uid"
-      @add="onAdd"
+      @change="onChange"
     >
       <template #item="{ element, index }">
         <div class="shelf__pill-wrap">
@@ -134,18 +136,23 @@ function pillError(uid: string) {
                   <el-input
                     v-model="drafts[element._uid].label"
                     clearable
-                    placeholder="不填则使用字段名"
+                    :placeholder="CARD_INPUT_PLACEHOLDERS.displayName"
                   />
                 </el-form-item>
                 <el-form-item
                   v-if="isDateField(fieldMeta(element.field)?.dataType)"
                   label="时间粒度（可选）"
                 >
+                  <template #label="{ label }">
+                    <StyleFormLabel :tip="CARD_INPUT_TIPS.timeGrain">
+                      {{ label }}
+                    </StyleFormLabel>
+                  </template>
                   <el-select
                     v-model="drafts[element._uid].timeGrain"
                     class="w-full"
                     clearable
-                    placeholder="不按粒度截断"
+                    :placeholder="CARD_INPUT_PLACEHOLDERS.timeGrain"
                   >
                     <el-option
                       v-for="opt in TIME_GRAIN_OPTIONS"
@@ -160,10 +167,12 @@ function pillError(uid: string) {
           </FieldPill>
         </div>
       </template>
+      <template #footer>
+        <div v-if="!dimensions.length && !shelfError" class="shelf__hint">
+          从左侧拖入字段
+        </div>
+      </template>
     </draggable>
-    <div v-if="!dimensions.length && !shelfError" class="shelf__hint">
-      从左侧拖入字段
-    </div>
     <div v-if="shelfError" class="shelf__error">
       {{ shelfError }}
     </div>
@@ -202,6 +211,7 @@ function pillError(uid: string) {
 
     &.is-empty {
       min-height: 44px;
+      justify-content: center;
     }
 
     &.is-invalid {
@@ -221,9 +231,7 @@ function pillError(uid: string) {
   }
 
   &__hint {
-    position: absolute;
-    left: 28px;
-    top: 52px;
+    padding: 0 8px;
     font-size: var(--vis-cfg-hint-size, 12px);
     color: var(--vis-cfg-hint-color, var(--el-text-color-placeholder));
     pointer-events: none;

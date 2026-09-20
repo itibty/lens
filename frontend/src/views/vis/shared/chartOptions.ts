@@ -6,6 +6,7 @@ import type {
   VisQueryConfig,
   VisVisualConfig,
 } from './types'
+import { CHART_HELP_FEATURE_TIPS } from '@/views/vis/charts/chartHelp'
 import { sanitizeAxes } from './chartAxes'
 import { sanitizeSeriesStyles, supportsSeriesStyle } from './chartSeriesStyle'
 import { sanitizeMarkLines } from './markLine'
@@ -141,17 +142,17 @@ export const COMMON_CHART_DEFAULTS: Required<ChartDefaultConfig> = {
   shapeText: '',
 }
 
-/** 功能表单问号说明；一看就懂的项不写 */
+/** 功能设置补充说明；仅说明展示效果和必要规则。 */
 export const CHART_FEATURE_TIPS = {
-  areaRadar: '填充多边形，关闭后只留轮廓',
-  percent: '每类合计为 100%，看构成占比',
-  dataLabelBar: '堆叠时显示在各自柱段内，过窄的段会隐藏',
-  showRate: '显示相邻阶段转化',
-  secondaryFields: '勾选的用副轴，可全选或全不选',
-  lineFields: '勾选的画折线，其余画柱；可全选或全不选',
-  crosshair: '悬停时对齐到坐标轴，不是标记线',
-  markLineField: '双轴时用来对齐对应轴',
-  waterfallTotal: '在最后追加合计柱，由各项增减累加',
+  areaRadar: '填充雷达图轮廓内的区域',
+  percent: '按各指标占比展示，每组合计为 100%',
+  dataLabelBar: '显示柱形数值；堆叠时自动隐藏空间不足的标签',
+  showRate: '显示相邻阶段的转化率',
+  secondaryFields: '所选指标使用独立的坐标轴刻度',
+  lineFields: CHART_HELP_FEATURE_TIPS.lineFields,
+  crosshair: '悬停时显示辅助线，便于对照坐标轴读数',
+  markLineField: '标记线使用所选指标对应的坐标轴',
+  waterfallTotal: CHART_HELP_FEATURE_TIPS.waterfallTotal,
 } as const
 
 /**

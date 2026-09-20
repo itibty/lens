@@ -6,9 +6,10 @@ import type { DatasetField, DatasetFieldDataType } from '@/views/vis/shared/type
 import { Search } from '@element-plus/icons-vue'
 import draggable from 'vuedraggable'
 import vis from '@/apis/vis/index'
+import InfoTooltip from '@/components/InfoTooltip.vue'
 import { cloneDatasetField, DND_GROUP } from '@/views/vis/shared/dnd'
 import FieldTypeIcon from '@/views/vis/shared/FieldTypeIcon.vue'
-import { DATA_TYPE_OPTIONS } from '@/views/vis/shared/types'
+import { DATA_TYPE_OPTIONS, datasetFieldRole } from '@/views/vis/shared/types'
 import { useDatasetOptions } from '@/views/vis/shared/useDatasetOptions'
 import { fromConfSqlField } from '../cardApi'
 
@@ -31,16 +32,6 @@ const {
 const loadingFields = ref(false)
 const keyword = ref('')
 const typeFilter = ref<DatasetFieldDataType | ''>('')
-const allDimensionFields = ref<DatasetField[]>([])
-const allMetricFields = ref<DatasetField[]>([])
-
-function isMetricField(field: DatasetField) {
-  if (field.suggestRole === 'METRIC')
-    return true
-  if (field.suggestRole === 'DIMENSION')
-    return false
-  return field.dataType === 'number'
-}
 
 function matchField(field: DatasetField) {
   if (typeFilter.value && field.dataType !== typeFilter.value)
@@ -53,16 +44,15 @@ function matchField(field: DatasetField) {
 
 const typeOptions = computed(() => {
   const present = new Set<DatasetFieldDataType>()
-  for (const field of [...allDimensionFields.value, ...allMetricFields.value]) {
+  for (const field of fields.value) {
     if (field.dataType)
       present.add(field.dataType)
   }
   return DATA_TYPE_OPTIONS.filter(item => present.has(item.value))
 })
 
-const dimensionFields = ref<DatasetField[]>([])
-const metricFields = ref<DatasetField[]>([])
 let fieldsRequestId = 0
+let fieldsReady: Promise<void> = Promise.resolve()
 
 const optionIds = computed(() => new Set(datasets.value.map(item => String(item.id))))
 
@@ -71,16 +61,10 @@ function onDatasetVisible(visible: boolean) {
     reloadDatasets()
 }
 
-function splitFields(list: DatasetField[]) {
-  allDimensionFields.value = list.filter(f => !isMetricField(f))
-  allMetricFields.value = list.filter(f => isMetricField(f))
-}
-
 async function loadFields(id: string) {
   const currentRequestId = ++fieldsRequestId
   if (!id) {
     fields.value = []
-    splitFields([])
     loadingFields.value = false
     return
   }
@@ -89,15 +73,12 @@ async function loadFields(id: string) {
     const res = await vis.dataset.listDatasetFieldsById({ datasetId: id })
     if (currentRequestId !== fieldsRequestId)
       return
-    const list = (res.data ?? []).map(fromConfSqlField)
-    fields.value = list
-    splitFields(list)
+    fields.value = (res.data ?? []).map(fromConfSqlField)
   }
   catch {
     if (currentRequestId !== fieldsRequestId)
       return
     fields.value = []
-    splitFields([])
   }
   finally {
     if (currentRequestId === fieldsRequestId)
@@ -110,35 +91,23 @@ watch(
   ([id, need]) => {
     keyword.value = ''
     typeFilter.value = ''
-    if (!need) {
-      void loadFields('')
-      return
-    }
-    void loadFields(id)
+    fieldsReady = loadFields(need ? id : '')
   },
   { immediate: true },
 )
 
-watch(
-  [allDimensionFields, allMetricFields, keyword, typeFilter],
-  () => {
-    dimensionFields.value = allDimensionFields.value.filter(matchField)
-    metricFields.value = allMetricFields.value.filter(matchField)
-  },
-  { immediate: true },
-)
+const fieldGroups = computed(() => {
+  const matched = fields.value.filter(matchField)
+  return [
+    { key: 'dimension', label: '维度', fields: matched.filter(field => datasetFieldRole(field) === 'DIMENSION') },
+    { key: 'metric', label: '指标', fields: matched.filter(field => datasetFieldRole(field) === 'METRIC') },
+    { key: 'unclassified', label: '未分类', fields: matched.filter(field => !datasetFieldRole(field)) },
+  ].filter(group => group.fields.length)
+})
+const hasFields = computed(() => fields.value.length > 0)
+const hasMatchedFields = computed(() => fieldGroups.value.length > 0)
 
-const hasFields = computed(() =>
-  allDimensionFields.value.length + allMetricFields.value.length > 0,
-)
-const hasMatchedFields = computed(() =>
-  dimensionFields.value.length + metricFields.value.length > 0,
-)
-
-const fieldGroups = computed(() => [
-  { key: 'dimension', label: '维度', fields: dimensionFields.value },
-  { key: 'metric', label: '指标', fields: metricFields.value },
-].filter(group => group.fields.length))
+defineExpose({ waitForFields: () => fieldsReady })
 </script>
 
 <template>
@@ -246,19 +215,17 @@ const fieldGroups = computed(() => [
                 <div class="field-source">
                   <div class="field-source__pill">
                     <FieldTypeIcon :data-type="element.dataType" />
-                    <span class="field-source__name ellipsis">{{ element.field }}</span>
-                    <el-tooltip
+                    <span class="field-source__name ellipsis" :title="element.field">{{ element.field }}</span>
+                    <InfoTooltip
                       v-if="element.remark"
                       :content="element.remark"
-                      placement="top"
-                      :show-after="200"
                     >
                       <span
                         class="field-source__info i-mingcute-information-line"
                         tabindex="0"
                         @pointerdown.stop
                       />
-                    </el-tooltip>
+                    </InfoTooltip>
                   </div>
                 </div>
               </template>
@@ -293,8 +260,8 @@ const fieldGroups = computed(() => [
   }
 
   &__types {
-    flex: 0 0 96px;
-    width: 96px;
+    flex: 0 0 80px;
+    width: 80px;
   }
 
   &__search {
@@ -327,9 +294,7 @@ const fieldGroups = computed(() => [
 }
 
 .field-group {
-  padding: 8px;
-  border-radius: 6px;
-  background: var(--el-fill-color-lighter);
+  padding: 4px 0;
 
   & + & {
     margin-top: 8px;
@@ -350,9 +315,9 @@ const fieldGroups = computed(() => [
     display: flex;
     align-items: center;
     gap: 6px;
-    margin: -8px -8px 8px;
+    margin-bottom: 4px;
     padding: 8px;
-    background: var(--el-fill-color-lighter);
+    background: var(--vis-panel-bg, var(--el-bg-color));
     font-size: 12px;
     font-weight: 500;
     line-height: 1.3;
@@ -370,12 +335,14 @@ const fieldGroups = computed(() => [
     height: 6px;
     border-radius: 50%;
     flex-shrink: 0;
+    background: var(--el-text-color-placeholder);
   }
 }
 
 .field-source {
-  margin-bottom: 4px;
+  margin-bottom: 6px;
   cursor: grab;
+  user-select: none;
 
   &:last-child {
     margin-bottom: 0;
@@ -389,22 +356,33 @@ const fieldGroups = computed(() => [
     display: flex;
     align-items: center;
     gap: 6px;
-    padding: 8px 10px;
-    border-radius: 4px;
-    border: 1px solid transparent;
+    min-width: 0;
+    min-height: 36px;
+    box-sizing: border-box;
+    padding: 7px;
+    border-radius: 6px;
+    border: 1px solid var(--el-border-color-lighter);
     background: var(--el-fill-color-light);
     color: var(--el-text-color-regular);
     transition:
       border-color 0.15s ease,
-      background 0.15s ease,
-      box-shadow 0.15s ease;
+      background 0.15s ease;
 
-    &:hover {
-      background: var(--el-bg-color);
+    &:hover,
+    &:focus-within {
       border-color: var(--el-border-color);
-      box-shadow: 0 1px 2px rgb(0 0 0 / 6%);
+      background: var(--el-fill-color);
       color: var(--el-text-color-primary);
     }
+  }
+
+  &.sortable-chosen &__pill {
+    border-color: var(--el-border-color);
+    background: var(--el-fill-color);
+  }
+
+  &.sortable-drag {
+    cursor: grabbing;
   }
 
   &__info {

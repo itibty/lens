@@ -1,10 +1,10 @@
 /* 功能 / 样式表单共用样式（FlatForm / 折叠壳均可引入）
- * 字阶：折叠标题 13/500，组标题 12/500，标签 12/400，说明 12/placeholder
+ * 字阶：折叠标题 13/600，组标题 12/500，标签 12/400，说明 12/placeholder
  */
 .vis-style-form {
   --vis-cfg-title-size: 13px;
-  --vis-cfg-title-weight: 500;
-  --vis-cfg-title-color: var(--el-text-color-regular);
+  --vis-cfg-title-weight: 600;
+  --vis-cfg-title-color: var(--el-text-color-primary);
   --vis-cfg-group-size: 12px;
   --vis-cfg-group-weight: 500;
   --vis-cfg-group-color: var(--el-text-color-regular);
@@ -19,7 +19,7 @@
   padding: 2px 0 8px;
   border: none;
   --el-collapse-header-height: 36px;
-  --el-collapse-header-bg-color: var(--el-fill-color-lighter);
+  --el-collapse-header-bg-color: transparent;
   --el-collapse-content-bg-color: var(--el-fill-color-blank);
 
   /* 扁平模式：无折叠，内容区不再叠一层 padding（外层 tab-body 已有） */
@@ -53,9 +53,8 @@
   }
 
   .el-collapse-item {
-    margin-bottom: 10px;
-    border: 1px solid var(--el-border-color-extra-light);
-    border-radius: 8px;
+    margin-bottom: 8px;
+    border-bottom: 1px solid var(--el-border-color-extra-light);
     overflow: hidden;
     background: var(--el-fill-color-blank);
 
@@ -67,13 +66,17 @@
   .el-collapse-item__header {
     height: var(--el-collapse-header-height);
     line-height: var(--el-collapse-header-height);
-    padding: 0 12px;
+    padding: 0 2px;
     border-bottom: none;
     font-size: var(--vis-cfg-title-size);
     font-weight: var(--vis-cfg-title-weight);
     letter-spacing: 0;
     color: var(--vis-cfg-title-color);
-    background: var(--el-fill-color-lighter);
+    background: transparent;
+
+    &:hover {
+      background: var(--el-fill-color-lighter);
+    }
   }
 
   &__section-head {
@@ -101,15 +104,11 @@
     padding: 0;
   }
 
-  .el-collapse-item.is-active .el-collapse-item__header {
-    border-bottom: 1px solid var(--el-border-color-extra-light);
-  }
-
   &__body {
     display: flex;
     flex-direction: column;
     gap: 10px;
-    padding: 8px 10px 10px;
+    padding: 8px 2px 14px;
     min-width: 0;
     box-sizing: border-box;
   }
@@ -163,7 +162,7 @@
     flex-shrink: 0;
     font-size: 14px;
     color: var(--vis-cfg-hint-color);
-    cursor: help;
+    cursor: default;
 
     &:hover,
     &:focus-visible {

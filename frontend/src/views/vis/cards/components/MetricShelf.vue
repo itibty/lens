@@ -6,6 +6,7 @@ import type { QueryIssue } from '../cardApi'
 import type { DragFieldPayload, MetricPill } from '@/views/vis/shared/dnd'
 import type { DatasetField, VisVisualConfig } from '@/views/vis/shared/types'
 import draggable from 'vuedraggable'
+import { CARD_INPUT_PLACEHOLDERS, DEFAULT_SHELF_TIPS } from '@/views/vis/charts/chartHelp'
 import { remapSeriesAlias } from '@/views/vis/shared/chartSeriesStyle'
 import {
   contrastDisplayLabel,
@@ -49,10 +50,12 @@ interface MetricDraft {
 const props = withDefaults(defineProps<{
   fields?: DatasetField[]
   allowContrast?: boolean
+  tip?: string
   issues?: QueryIssue[]
   visual?: VisVisualConfig
 }>(), {
   allowContrast: true,
+  tip: DEFAULT_SHELF_TIPS.metrics,
 })
 
 const metrics = defineModel<MetricPill[]>('metrics', { required: true })
@@ -62,12 +65,11 @@ const dateFields = computed(() =>
   (props.fields ?? []).filter(item => isDateField(item.dataType)),
 )
 
-function onAdd(evt: { newIndex?: number }) {
-  const index = evt.newIndex
-  if (index == null)
+function onChange(evt: { added?: { newIndex: number, element: DragFieldPayload | MetricPill } }) {
+  if (!evt.added)
     return
-  const raw = metrics.value[index] as DragFieldPayload | MetricPill
-  metrics.value[index] = toMetricPill(raw)
+  // change 事件给出数据索引，不受空态 footer 的 DOM 位置影响。
+  metrics.value[evt.added.newIndex] = toMetricPill(evt.added.element)
 }
 
 function removeAt(index: number) {
@@ -231,7 +233,7 @@ function pillError(uid: string) {
 <template>
   <div class="shelf" :class="{ 'is-invalid': !!shelfError }">
     <div class="shelf__title">
-      <ShelfTitle tip="要看的数字，例如销售额、订单量">
+      <ShelfTitle :tip="tip">
         指标
       </ShelfTitle>
     </div>
@@ -243,7 +245,7 @@ function pillError(uid: string) {
       handle=".field-pill__handle"
       :animation="180"
       item-key="_uid"
-      @add="onAdd"
+      @change="onChange"
     >
       <template #item="{ element, index }">
         <div class="shelf__pill-wrap">
@@ -290,17 +292,17 @@ function pillError(uid: string) {
                     v-model="drafts[element._uid].formula"
                     type="textarea"
                     :rows="2"
-                    placeholder="例如：营收 / 成本"
+                    :placeholder="CARD_INPUT_PLACEHOLDERS.formula"
                   />
                 </el-form-item>
                 <el-form-item
                   v-if="!(allowContrast || element.contrast) || !drafts[element._uid].contrastEnabled"
-                  :label="labelRequired(element._uid) ? '显示名' : '显示名（可选）'"
+                  :label="labelRequired(element._uid) ? '显示名（必填）' : '显示名（可选）'"
                 >
                   <el-input
                     v-model="drafts[element._uid].label"
                     clearable
-                    :placeholder="labelRequired(element._uid) ? '必填' : '不填则使用字段名'"
+                    :placeholder="CARD_INPUT_PLACEHOLDERS.displayName"
                   />
                 </el-form-item>
                 <div v-if="allowContrast || element.contrast" class="contrast-group">
@@ -315,11 +317,11 @@ function pillError(uid: string) {
                     v-if="drafts[element._uid].contrastEnabled"
                     class="contrast-group__body"
                   >
-                    <el-form-item label="显示名">
+                    <el-form-item label="显示名（必填）">
                       <el-input
                         v-model="drafts[element._uid].label"
                         clearable
-                        placeholder="必填"
+                        :placeholder="CARD_INPUT_PLACEHOLDERS.displayName"
                       />
                     </el-form-item>
                     <el-form-item label="日期字段">
@@ -329,7 +331,7 @@ function pillError(uid: string) {
                         filterable
                         allow-create
                         default-first-option
-                        placeholder="选择或输入日期字段"
+                        :placeholder="CARD_INPUT_PLACEHOLDERS.dateField"
                         @change="onContrastFieldChange(element._uid)"
                       >
                         <el-option
@@ -390,10 +392,12 @@ function pillError(uid: string) {
           </FieldPill>
         </div>
       </template>
+      <template #footer>
+        <div v-if="!metrics.length && !shelfError" class="shelf__hint">
+          从左侧拖入字段
+        </div>
+      </template>
     </draggable>
-    <div v-if="!metrics.length && !shelfError" class="shelf__hint">
-      从左侧拖入字段
-    </div>
     <div v-if="shelfError" class="shelf__error">
       {{ shelfError }}
     </div>
@@ -432,6 +436,7 @@ function pillError(uid: string) {
 
     &.is-empty {
       min-height: 44px;
+      justify-content: center;
     }
 
     &.is-invalid {
@@ -451,9 +456,7 @@ function pillError(uid: string) {
   }
 
   &__hint {
-    position: absolute;
-    left: 28px;
-    top: 52px;
+    padding: 0 8px;
     font-size: var(--vis-cfg-hint-size, 12px);
     color: var(--vis-cfg-hint-color, var(--el-text-color-placeholder));
     pointer-events: none;

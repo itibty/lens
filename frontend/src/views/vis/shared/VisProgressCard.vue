@@ -253,7 +253,12 @@ watch(
       v-if="options.showValue"
       class="vis-progress-card__values"
     >
-      <VisMetricRatio :current="resolved.currentText" :target="resolved.targetText" />
+      <VisMetricRatio
+        :current="resolved.currentText"
+        :target="resolved.targetText"
+        :current-color="resolved.currentColor"
+        :target-color="resolved.targetColor"
+      />
     </div>
   </div>
 </template>

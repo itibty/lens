@@ -5,6 +5,7 @@
 -->
 <script setup lang="ts">
 import { onClickOutside, useEventListener } from '@vueuse/core'
+import InfoTooltip from '@/components/InfoTooltip.vue'
 
 withDefaults(defineProps<{
   name: string
@@ -143,11 +144,9 @@ useEventListener(window, 'scroll', () => {
             <span class="field-pill__handle-icon i-tabler-grip-vertical" />
           </span>
           <span class="field-pill__name ellipsis" :title="name">{{ name }}</span>
-          <el-tooltip
+          <InfoTooltip
             v-if="error || tip"
             :content="error || tip"
-            placement="top"
-            :show-after="200"
           >
             <span
               class="field-pill__tip"
@@ -156,7 +155,7 @@ useEventListener(window, 'scroll', () => {
             >
               <span class="field-pill__tip-icon i-mingcute-information-line" />
             </span>
-          </el-tooltip>
+          </InfoTooltip>
           <span
             v-else-if="subtitle"
             class="field-pill__sub ellipsis"

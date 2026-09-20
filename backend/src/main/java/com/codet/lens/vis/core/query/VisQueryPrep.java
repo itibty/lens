@@ -163,11 +163,11 @@ public final class VisQueryPrep {
         validateFilterGroups(filters, today);
         validateCardParams(params, today);
         validateHavings(havings, today);
-        validateResultFilters(resultFilters, today);
+        validateResultFilters(resultFilters, today, selectAliases);
         validateOrders(orders, selectAliases);
     }
 
-    /** SELECT 别名：有 label 用 label，否则用 field。ORDER BY 按此校验，不改写调用方传入值。 */
+    /** SELECT 别名：有 label 用 label，否则用 field；排序和结果过滤只能引用这些列。 */
     private static Set<String> selectAliases(List<DimensionItem> dims, List<DimensionItem> extraDims,
                                              List<MetricItem> metrics) {
         Set<String> aliases = new LinkedHashSet<>();
@@ -176,7 +176,7 @@ public final class VisQueryPrep {
         if (CollUtil.isNotEmpty(metrics)) {
             for (MetricItem metric : metrics) {
                 if (metric != null) {
-                    aliases.add(SqlExprHelper.resolveMetricAlias(metric));
+                    addSelectAlias(aliases, SqlExprHelper.resolveMetricAlias(metric));
                 }
             }
         }
@@ -189,8 +189,14 @@ public final class VisQueryPrep {
         }
         for (DimensionItem dim : dims) {
             if (dim != null) {
-                aliases.add(SqlExprHelper.resolveDimAlias(dim));
+                addSelectAlias(aliases, SqlExprHelper.resolveDimAlias(dim));
             }
+        }
+    }
+
+    private static void addSelectAlias(Set<String> aliases, String alias) {
+        if (!aliases.add(alias)) {
+            throw fail("展示字段名重复，请修改显示名: " + alias);
         }
     }
 
@@ -253,8 +259,8 @@ public final class VisQueryPrep {
                 if (dimCount > 0) {
                     throw fail("数字卡片不支持维度");
                 }
-                if (metricCount < 1) {
-                    throw fail("数字卡片至少需要 1 个主指标");
+                if (CollUtil.isEmpty(config.getMetrics())) {
+                    throw fail("数字卡片至少需要 1 个指标");
                 }
             }
             case PROGRESS -> {
@@ -407,6 +413,7 @@ public final class VisQueryPrep {
                 throw fail(name + ".field 不能为空");
             }
             validateField(dim.getField());
+            normalizeLabel(dim);
             if (StrUtil.isNotBlank(dim.getTimeGrain()) && TimeGrainEnum.of(dim.getTimeGrain()) == null) {
                 throw fail("不支持的时间粒度: " + dim.getTimeGrain());
             }
@@ -424,8 +431,6 @@ public final class VisQueryPrep {
             }
             return;
         }
-        Set<String> aliases = new HashSet<>();
-        boolean anyContrast = false;
         for (MetricItem metric : metrics) {
             if (metric == null) {
                 throw fail("metric 不能为空");
@@ -434,6 +439,7 @@ public final class VisQueryPrep {
                 throw fail("metric.field 不能为空");
             }
             validateField(metric.getField());
+            normalizeLabel(metric);
             if (StrUtil.isBlank(metric.getFormula()) && StrUtil.isBlank(metric.getAgg())) {
                 throw fail("metric 的 formula 和 agg 不能同时为空");
             }
@@ -444,16 +450,7 @@ public final class VisQueryPrep {
                 if (!allowContrast) {
                     throw fail("透视不支持对比指标");
                 }
-                anyContrast = true;
                 validateContrast(metric, today);
-            }
-        }
-        if (anyContrast) {
-            for (MetricItem metric : metrics) {
-                String alias = SqlExprHelper.resolveMetricAlias(metric);
-                if (!aliases.add(alias)) {
-                    throw fail("指标列名重复: " + alias);
-                }
             }
         }
     }
@@ -498,7 +495,8 @@ public final class VisQueryPrep {
         }
     }
 
-    private static void validateResultFilters(List<FilterItem> resultFilters, LocalDate today) {
+    private static void validateResultFilters(List<FilterItem> resultFilters, LocalDate today,
+                                               Set<String> selectAliases) {
         if (CollUtil.isEmpty(resultFilters)) {
             return;
         }
@@ -506,8 +504,11 @@ public final class VisQueryPrep {
             if (item == null || StrUtil.isBlank(item.getField())) {
                 throw fail("resultFilters.field 不能为空");
             }
-            validateField(item.getField());
-            isCompleteFilter(item, true, today);
+            item.setField(StrUtil.trim(item.getField()));
+            if (!selectAliases.contains(item.getField())) {
+                throw fail("resultFilters.field 必须是 SELECT 别名: " + item.getField());
+            }
+            isCompleteFilterCondition(item, true, today);
         }
     }
 
@@ -515,7 +516,6 @@ public final class VisQueryPrep {
         if (StrUtil.isBlank(metric.getLabel())) {
             throw fail("对比指标 label 不能为空");
         }
-        validateField(metric.getLabel());
         ContrastConfig contrast = metric.getContrast();
         if (StrUtil.isBlank(contrast.getTimeField())) {
             throw fail("contrast.timeField 不能为空");
@@ -541,7 +541,7 @@ public final class VisQueryPrep {
             if (order == null || StrUtil.isBlank(order.getField())) {
                 throw fail("order.field 不能为空");
             }
-            validateField(order.getField());
+            order.setField(StrUtil.trim(order.getField()));
             if (StrUtil.isBlank(order.getDir())) {
                 throw fail("order.dir 不能为空");
             }
@@ -586,6 +586,11 @@ public final class VisQueryPrep {
             return false;
         }
         validateField(item.getField());
+        return isCompleteFilterCondition(item, strict, today);
+    }
+
+    /** 原始字段与结果别名采用不同校验，条件值规则共用。 */
+    private static boolean isCompleteFilterCondition(FilterItem item, boolean strict, LocalDate today) {
         if (StrUtil.isNotBlank(item.getValueExp())) {
             return checkValueExp(item.getValueExp(), item.getValue(), strict, today);
         }
@@ -647,6 +652,15 @@ public final class VisQueryPrep {
         if (StrUtil.isBlank(field) || !SAFE_FIELD.matcher(field).matches()) {
             throw fail("非法字段名: " + field);
         }
+    }
+
+    /** 展示别名会由数据库方言统一引用、转义，不套用原始字段名的字符限制。 */
+    private static void normalizeLabel(BaseField item) {
+        String label = StrUtil.trimToNull(item.getLabel());
+        if (label != null && label.codePoints().anyMatch(Character::isISOControl)) {
+            throw fail("显示名不能包含换行或其他控制字符");
+        }
+        item.setLabel(label);
     }
 
     private static void validateAgg(String agg) {

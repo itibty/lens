@@ -1,0 +1,199 @@
+/* 功能设置专用布局；不影响数据模型货架、样式页和字段弹层的提交方式。 */
+.chart-form-host.is-feature {
+  container-type: inline-size;
+  container-name: feature-form;
+
+  .vis-style-form {
+    padding: 0;
+  }
+
+  > .vis-style-form + .vis-style-form {
+    margin-top: 8px;
+  }
+
+  .vis-style-form__section-head {
+    min-width: 0;
+  }
+
+  .vis-style-form__section-extra .el-select,
+  .detail-fields__picker,
+  .shelf__extra .el-select {
+    width: 132px;
+  }
+
+  .vis-style-form__body {
+    gap: 8px;
+
+    &:empty {
+      display: none;
+    }
+  }
+
+  // 合并后的相关配置用间距分隔，不增加折叠层级或左侧缩进。
+  .vis-feature-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+
+    + .vis-feature-group {
+      margin-top: 4px;
+    }
+  }
+
+  .vis-style-form__row {
+    min-height: 30px;
+    gap: 10px;
+
+    > .el-switch {
+      flex-shrink: 0;
+    }
+
+    &.is-child {
+      // 子项与同组配置左对齐，通过间距和文字颜色区分层级。
+      margin-top: -2px;
+
+      > .vis-style-form__label {
+        color: var(--vis-cfg-meta-color);
+      }
+    }
+
+    &.is-block {
+      min-height: 0;
+      gap: 6px;
+
+      > .vis-style-form__control {
+        width: 100%;
+        max-width: 100%;
+        flex: none;
+      }
+    }
+  }
+
+  .vis-style-form__label {
+    line-height: 1.5;
+  }
+
+  .vis-style-form__control {
+    max-width: 56%;
+  }
+
+  .field-pill__tip,
+  .shelf-title__tip {
+    cursor: default;
+  }
+
+  /* 格式、标注使用中性配置项；明细字段和排序保留维度 / 指标配色。 */
+  .field-style-shelf,
+  .table-mark {
+    .field-pill:not(.is-invalid) {
+      color: var(--el-text-color-regular);
+      background: var(--el-fill-color-light);
+      border-color: var(--el-border-color-extra-light);
+
+      &:hover {
+        background: var(--el-fill-color);
+        border-color: var(--el-border-color-lighter);
+      }
+
+      &.is-active {
+        border-color: var(--el-color-primary-light-5);
+        box-shadow: 0 0 0 1px var(--el-color-primary-light-7);
+      }
+    }
+
+    .field-pill__name {
+      font-weight: 400;
+    }
+
+    .field-pill__sub {
+      color: var(--el-text-color-secondary);
+      opacity: 1;
+    }
+  }
+
+  .vis-style-form .vis-icon-btn {
+    color: var(--el-text-color-secondary);
+  }
+
+  /* 明细复用排序货架的交互，只去掉外围装饰层。 */
+  .shelf {
+    padding: 0;
+    margin-bottom: 2px;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+  }
+
+  .shelf__head {
+    margin-bottom: 8px;
+  }
+
+  .shelf-title {
+    justify-content: flex-start;
+    gap: 4px;
+    font-weight: var(--vis-cfg-group-weight);
+  }
+
+  .shelf__drop {
+    padding: 6px;
+    background: var(--el-fill-color-blank);
+  }
+
+  .shelf__hint {
+    padding: 0 8px;
+  }
+
+  .vis-feature-rule {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+    padding: 10px;
+    border: 1px solid var(--el-border-color-extra-light);
+    border-radius: 6px;
+    background: var(--el-fill-color-extra-light);
+  }
+
+  .vis-feature-rule__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    min-height: 22px;
+  }
+
+  .vis-feature-rule__title {
+    font-size: var(--vis-cfg-group-size);
+    font-weight: var(--vis-cfg-group-weight);
+    color: var(--vis-cfg-group-color);
+    line-height: 1.4;
+  }
+
+  @container feature-form (max-width: 280px) {
+    .vis-style-form__section-extra .el-select,
+    .detail-fields__picker,
+    .shelf__extra .el-select {
+      width: 116px;
+    }
+
+    .el-date-editor--daterange {
+      padding-inline: 6px;
+
+      .el-range-separator {
+        flex: none;
+        padding-inline: 2px;
+      }
+    }
+
+    .vis-style-form__row:has(> .vis-style-form__segmented) {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 6px;
+    }
+
+    .vis-style-form__segmented.el-radio-group {
+      justify-content: flex-start;
+    }
+  }
+}

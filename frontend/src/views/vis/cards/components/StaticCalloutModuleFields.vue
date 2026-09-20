@@ -3,6 +3,7 @@
 -->
 <script setup lang="ts">
 import type { VisCalloutTone, VisVisualConfig } from '@/views/vis/shared/types'
+import { CARD_INPUT_PLACEHOLDERS } from '@/views/vis/charts/chartHelp'
 import { CALLOUT_TONE_OPTIONS, resolveCalloutTone } from '@/views/vis/shared/staticModules'
 import VisStaticCallout from '@/views/vis/shared/VisStaticCallout.vue'
 
@@ -88,7 +89,7 @@ const text = computed({
         size="small"
         clearable
         maxlength="40"
-        placeholder="可选"
+        :placeholder="CARD_INPUT_PLACEHOLDERS.title"
       />
     </div>
     <div class="static-callout-fields__row">
@@ -100,7 +101,7 @@ const text = computed({
         maxlength="200"
         show-word-limit
         resize="vertical"
-        placeholder="口径、限制或更新说明"
+        :placeholder="CARD_INPUT_PLACEHOLDERS.text"
       />
     </div>
   </div>

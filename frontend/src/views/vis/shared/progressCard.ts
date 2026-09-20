@@ -1,9 +1,10 @@
 import type { VisAccentPresetId } from './accentPresets'
 import type { VisProgressOptions, VisProgressShape, VisQueryConfig, VisVisualConfig } from './types'
+import { CHART_HELP_FEATURE_TIPS } from '@/views/vis/charts/chartHelp'
 import { accentPreview, findAccentPreset, resolveAccentByPaint, VIS_ACCENT_PRESETS } from './accentPresets'
 import { scaleFitPx } from './cardFit'
 import { resolveCardChrome } from './cardTheme'
-import { formatFieldText, resolveMetricFormat } from './fieldStyle'
+import { formatFieldText, resolveMetricFormat, resolveSignColor } from './fieldStyle'
 import { toFiniteNumber } from './numberStyle'
 import { isProgressChart, metricAlias, regularMetrics } from './types'
 
@@ -24,9 +25,9 @@ export const PROGRESS_COLOR_PRESETS = VIS_ACCENT_PRESETS
 export type VisProgressColorPresetId = VisAccentPresetId
 
 export const PROGRESS_FEATURE_TIPS = {
-  fixedTarget: '用此数当目标值，完成率 = 当前值 / 此数',
-  showValue: '显示当前值/目标值',
-  percentDecimals: '完成率保留几位小数；自动时最多 1 位',
+  fixedTarget: CHART_HELP_FEATURE_TIPS.fixedTarget,
+  showValue: CHART_HELP_FEATURE_TIPS.progressValues,
+  percentDecimals: CHART_HELP_FEATURE_TIPS.percentDecimals,
 } as const
 
 export function isProgressArc(shape?: VisProgressShape) {
@@ -77,6 +78,8 @@ export interface ProgressView {
   percentText: string
   currentText: string
   targetText: string
+  currentColor?: string
+  targetColor?: string
   label: string
 }
 
@@ -303,6 +306,8 @@ function buildProgressView(
     percentText: formatProgressPercent(ratio, opt.percentDecimals),
     currentText: formatFieldText(current, currentFormat),
     targetText: formatFieldText(target, targetFormat),
+    currentColor: resolveSignColor(current, currentFormat.signColor),
+    targetColor: metrics[1] ? resolveSignColor(target, targetFormat.signColor) : undefined,
     label,
   }
 }

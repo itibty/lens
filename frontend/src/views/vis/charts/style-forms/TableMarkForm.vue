@@ -6,6 +6,8 @@ import type { FilterConditionDraft, FilterOp } from '@/views/vis/shared/filterVa
 import type { DatasetField, VisQueryConfig, VisTableMarkFilter, VisTableMarkRule, VisVisualConfig } from '@/views/vis/shared/types'
 import FieldPill from '@/views/vis/cards/components/FieldPill.vue'
 import FilterConditionForm from '@/views/vis/cards/components/FilterConditionForm.vue'
+import { usePopoverPreviewEditing } from '@/views/vis/cards/previewEditing'
+import { CARD_INPUT_PLACEHOLDERS } from '@/views/vis/charts/chartHelp'
 import { createDragUid } from '@/views/vis/shared/dnd'
 import {
   applyFilterConditionDraft,
@@ -34,6 +36,7 @@ const props = defineProps<{
 }>()
 
 const visual = defineModel<VisVisualConfig>('visual', { required: true })
+const paletteEditing = usePopoverPreviewEditing()
 
 const STYLE_PALETTES = [
   {
@@ -52,7 +55,6 @@ const STYLE_PALETTES = [
       '#8C8C8C',
       '#141414',
     ],
-    placeholder: '#1677FF',
   },
   {
     key: 'bgColor' as const,
@@ -70,7 +72,6 @@ const STYLE_PALETTES = [
       '#D9D9D9',
       '#BFBFBF',
     ],
-    placeholder: '#BAE0FF',
   },
 ]
 
@@ -188,6 +189,7 @@ function addRule() {
 }
 
 function removeRule(index: number) {
+  paletteEditing.reset()
   for (const [filterIndex, item] of (rules.value[index]?.filters ?? []).entries())
     delete drafts[filterKey(index, filterIndex, item)]
   rules.value = rules.value.filter((_, i) => i !== index)
@@ -269,10 +271,10 @@ defineExpose({ addRule })
     <div
       v-for="row in ruleRows"
       :key="row.ruleIndex"
-      class="table-mark__group"
+      class="vis-feature-rule"
     >
-      <div class="table-mark__group-title">
-        <span class="table-mark__group-name">
+      <div class="vis-feature-rule__head">
+        <span class="vis-feature-rule__title">
           规则 {{ row.ruleIndex + 1 }}
         </span>
         <button
@@ -292,6 +294,7 @@ defineExpose({ addRule })
         <el-select
           :model-value="row.rule.fields"
           class="table-mark__fields"
+          size="small"
           multiple
           collapse-tags
           collapse-tags-tooltip
@@ -349,6 +352,8 @@ defineExpose({ addRule })
             :show-after="120"
             :hide-after="120"
             popper-class="table-mark-palette-popper"
+            @before-enter="paletteEditing.setOpen(`${row.ruleIndex}:${palette.key}`, true)"
+            @before-leave="paletteEditing.setOpen(`${row.ruleIndex}:${palette.key}`, false)"
           >
             <template #reference>
               <button
@@ -393,7 +398,7 @@ defineExpose({ addRule })
                   :model-value="hexValue(row.ruleIndex, palette.key)"
                   size="small"
                   maxlength="7"
-                  :placeholder="palette.placeholder"
+                  :placeholder="CARD_INPUT_PLACEHOLDERS.color"
                   @update:model-value="(value: string) => onHexInput(row.ruleIndex, palette.key, value)"
                   @blur="onHexBlur(row.ruleIndex, palette.key)"
                 />
@@ -494,32 +499,6 @@ defineExpose({ addRule })
   display: flex;
   flex-direction: column;
   gap: 10px;
-}
-
-.table-mark__group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 9px 10px 10px;
-  border: 1px solid var(--el-border-color-extra-light);
-  border-radius: 8px;
-  background: var(--el-bg-color);
-}
-
-.table-mark__group-title {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  min-height: 22px;
-}
-
-.table-mark__group-name {
-  font-size: var(--vis-cfg-group-size, 12px);
-  font-weight: 600;
-  color: var(--vis-cfg-group-color, var(--el-text-color-regular));
-  line-height: 1.3;
-  white-space: nowrap;
 }
 
 .table-mark__fields {

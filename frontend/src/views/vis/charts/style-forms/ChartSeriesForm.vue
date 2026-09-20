@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { VisQueryConfig, VisSeriesStyle, VisVisualConfig } from '@/views/vis/shared/types'
+import { CARD_INPUT_PLACEHOLDERS } from '@/views/vis/charts/chartHelp'
 import { resolveLineFields } from '@/views/vis/shared/chartOptions'
 import { resolveChartSeriesColors } from '@/views/vis/shared/chartPalette'
 import { sanitizeSeriesStyles, seriesCandidates, seriesTargetKey } from '@/views/vis/shared/chartSeriesStyle'
@@ -39,8 +40,10 @@ function reset() {
 
 <template>
   <div class="vis-style-form__row">
-    <StyleFormLabel>系列</StyleFormLabel>
-    <el-select v-model="selection" size="small" class="vis-style-form__control" filterable :placeholder="candidates.length ? '选择系列' : '刷新预览后选择'" :disabled="!candidates.length">
+    <StyleFormLabel>
+      系列
+    </StyleFormLabel>
+    <el-select v-model="selection" size="small" class="vis-style-form__control" filterable :placeholder="candidates.length ? CARD_INPUT_PLACEHOLDERS.series : CARD_INPUT_PLACEHOLDERS.noSeries" :disabled="!candidates.length">
       <el-option v-for="item in candidates" :key="seriesTargetKey(item.target)" :value="seriesTargetKey(item.target)" :label="item.label" />
     </el-select>
   </div>

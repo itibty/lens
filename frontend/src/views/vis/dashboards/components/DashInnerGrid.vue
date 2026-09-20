@@ -187,7 +187,7 @@ onBeforeUnmount(() => {
     }"
     @pointerdown.capture="guides.onPointerDown"
   >
-    <DashGridGuides v-if="guides.visible.value" :active-item="guides.activeItem.value" />
+    <DashGridGuides v-if="guides.visible.value" :active-item="guides.activeItem.value" :items="layout" />
     <div v-if="!visibleItems.length" class="dash-inner__empty">
       {{ emptyText }}
     </div>

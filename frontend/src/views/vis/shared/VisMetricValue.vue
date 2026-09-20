@@ -7,14 +7,16 @@ withDefaults(defineProps<{
   suffix?: string
   size?: 'hero' | 'aux' | 'inherit'
   direction?: 'up' | 'down' | 'flat'
-}>(), { size: 'hero' })
+  /** 外层已有统一 Tooltip 时关闭原生 title，避免覆盖提示。 */
+  nativeTooltip?: boolean
+}>(), { size: 'hero', nativeTooltip: true })
 </script>
 
 <template>
   <span
     class="vis-metric-value"
     :class="`is-${size}`"
-    :title="`${prefix || ''}${body}${compactSuffix || ''}${suffix || ''}`"
+    :title="nativeTooltip ? `${prefix || ''}${body}${compactSuffix || ''}${suffix || ''}` : undefined"
   >
     <span v-if="prefix" class="vis-metric-value__affix">{{ prefix }}</span>
     <span class="vis-metric-value__body">

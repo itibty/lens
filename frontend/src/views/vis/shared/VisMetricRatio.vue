@@ -1,13 +1,13 @@
 <!-- 当前值 / 目标值保持为同一行，分隔符也沿文字基线对齐。 -->
 <script setup lang="ts">
-defineProps<{ current: string, target: string }>()
+defineProps<{ current: string, target: string, currentColor?: string, targetColor?: string }>()
 </script>
 
 <template>
   <span class="vis-metric-ratio" :title="`${current} / ${target}`">
-    <span class="vis-metric-ratio__current">{{ current }}</span>
+    <span class="vis-metric-ratio__current" :style="currentColor ? { color: currentColor } : undefined">{{ current }}</span>
     <span class="vis-metric-ratio__separator">/</span>
-    <span class="vis-metric-ratio__target">{{ target }}</span>
+    <span class="vis-metric-ratio__target" :style="targetColor ? { color: targetColor } : undefined">{{ target }}</span>
   </span>
 </template>
 

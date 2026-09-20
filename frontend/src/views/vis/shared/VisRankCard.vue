@@ -85,7 +85,7 @@ function onRowClick(item: { record: Record<string, unknown> }, event: MouseEvent
             v-if="opt.showValue || opt.showPercent"
             class="vis-rank-card__athlete-nums"
           >
-            <span v-if="opt.showValue">{{ slot.item.valueText }}</span>
+            <span v-if="opt.showValue" :style="slot.item.valueColor ? { color: slot.item.valueColor } : undefined">{{ slot.item.valueText }}</span>
             <span
               v-if="opt.showPercent"
               class="vis-rank-card__pct"
@@ -116,7 +116,7 @@ function onRowClick(item: { record: Record<string, unknown> }, event: MouseEvent
             v-if="opt.showValue || opt.showPercent"
             class="vis-rank-card__nums"
           >
-            <span v-if="opt.showValue">{{ item.valueText }}</span>
+            <span v-if="opt.showValue" :style="item.valueColor ? { color: item.valueColor } : undefined">{{ item.valueText }}</span>
             <span
               v-if="opt.showPercent"
               class="vis-rank-card__pct"

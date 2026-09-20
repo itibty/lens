@@ -247,6 +247,8 @@ export type VisProgressShape = 'bar' | 'ring' | 'gauge'
 /** 指标卡 / 进度条共用的数值格式 */
 export type VisNumberDecimals = 'auto' | 0 | 1 | 2
 
+export type VisSignColor = 'positive-red' | 'positive-green'
+
 export interface VisNumberFormat {
   /** 小数位；默认 auto */
   decimals?: VisNumberDecimals
@@ -258,6 +260,8 @@ export interface VisNumberFormat {
   suffix?: string
   /** 紧凑万/亿；默认 false */
   compact?: boolean
+  /** 正负配色；未配置时不覆盖原有文字颜色 */
+  signColor?: VisSignColor
 }
 
 /** 指标单元格内的百分比进度背景；原始数值固定按 0～100 映射 */
@@ -518,6 +522,12 @@ export interface DatasetField {
   dataType?: DatasetFieldDataType
   suggestRole?: DatasetFieldRole
   remark?: string
+}
+
+/** 只使用数据集明确配置的角色，不通过数据类型推断。 */
+export function datasetFieldRole(field?: DatasetField): DatasetFieldRole | undefined {
+  const role = field?.suggestRole
+  return role === 'DIMENSION' || role === 'METRIC' ? role : undefined
 }
 
 export function isDateField(dataType?: DatasetFieldDataType) {

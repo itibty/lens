@@ -2,6 +2,8 @@
  * @Description: 高级设置分块（标题 / 内容 / 说明）
 -->
 <script setup lang="ts">
+import InfoTooltip from '@/components/InfoTooltip.vue'
+
 defineProps<{
   title: string
   tip?: string
@@ -23,17 +25,15 @@ defineProps<{
         >
           <slot name="extra" />
         </div>
-        <el-tooltip
+        <InfoTooltip
           v-if="tip"
           :content="tip"
-          placement="top"
-          :show-after="200"
         >
           <span
             class="adv-mod__tip i-mingcute-information-line"
             tabindex="0"
           />
-        </el-tooltip>
+        </InfoTooltip>
       </div>
     </div>
     <slot />

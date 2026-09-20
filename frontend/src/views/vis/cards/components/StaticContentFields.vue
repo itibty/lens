@@ -4,6 +4,7 @@
 <script setup lang="ts">
 import type { QueryIssue } from '../cardApi'
 import type { VisVisualConfig } from '@/views/vis/shared/types'
+import { CARD_INPUT_PLACEHOLDERS } from '@/views/vis/charts/chartHelp'
 import { useVisualBranch } from '@/views/vis/charts/style-forms/composables/useVisualBranch'
 import { shelfMessage } from '../cardApi'
 import StaticModuleList from './StaticModuleList.vue'
@@ -35,7 +36,7 @@ const pageUrl = useVisualBranch(visual, 'web').optionalStringField('url')
         v-model="pageUrl"
         class="static-content__control"
         clearable
-        placeholder="https://example.com"
+        :placeholder="CARD_INPUT_PLACEHOLDERS.url"
       />
     </template>
     <div

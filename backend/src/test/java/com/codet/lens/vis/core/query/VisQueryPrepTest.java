@@ -3,7 +3,9 @@ package com.codet.lens.vis.core.query;
 import com.codet.lens.common.base.ResultException;
 import com.codet.lens.vis.dto.item.ContrastConfig;
 import com.codet.lens.vis.dto.item.DimensionItem;
+import com.codet.lens.vis.dto.item.FilterItem;
 import com.codet.lens.vis.dto.item.MetricItem;
+import com.codet.lens.vis.dto.item.OrderItem;
 import com.codet.lens.vis.dto.pivot.PivotQueryConfig;
 import com.codet.lens.vis.dto.pivot.PivotQueryRequest;
 import com.codet.lens.vis.dto.query.QueryConfig;
@@ -16,10 +18,13 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class VisQueryPrepTest {
 
@@ -71,13 +76,26 @@ class VisQueryPrepTest {
     }
 
     @Test
-    void numberRequiresARegularMetric() {
+    void numberAcceptsOnlyContrastMetrics() {
         QueryRequest request = request("number", 0, 0);
         request.getQuery().setMetrics(List.of(contrastMetric("amount", "amount_vs")));
 
-        ResultException error = assertThrows(ResultException.class, () -> VisQueryPrep.prepare(request));
+        assertDoesNotThrow(() -> VisQueryPrep.prepare(request));
 
-        assertEquals("数字卡片至少需要 1 个主指标", error.getMsg());
+        MetricItem difference = contrastMetric("amount", "amount_diff");
+        difference.getContrast().setCalcType("diff");
+        request.getQuery().setMetrics(List.of(difference, contrastMetric("amount", "amount_vs")));
+
+        assertDoesNotThrow(() -> VisQueryPrep.prepare(request));
+    }
+
+    @Test
+    void numberAcceptsContrastBeforeRegularMetric() {
+        QueryRequest request = request("number", 0, 1);
+        request.getQuery().getMetrics().addFirst(contrastMetric("amount", "amount_vs"));
+
+        assertDoesNotThrow(() -> VisQueryPrep.prepare(request));
+        assertEquals("amount_vs", request.getQuery().getMetrics().getFirst().getLabel());
     }
 
     @Test
@@ -120,6 +138,134 @@ class VisQueryPrepTest {
         assertEquals("metrics 不能为空", error.getMsg());
     }
 
+    @ParameterizedTest
+    @EnumSource(SqlDialect.class)
+    void sortsFormulaResultsAndDimensionsByQuotedDisplayNames(SqlDialect dialect) {
+        QueryRequest request = request("table", 1, 1);
+        QueryConfig config = request.getQuery();
+        config.getDimensions().getFirst().setLabel("  销售 地区  ");
+        MetricItem metric = config.getMetrics().getFirst();
+        metric.setFormula("SUM(metric_0) / 100");
+        metric.setAgg(null);
+        metric.setLabel("  销售额 `合计` \"本月\"（元）  ");
+        config.setOrderList(List.of(order(" 销售 地区 ", "asc"), order(metric.getLabel(), "desc")));
+
+        VisQueryPrep.prepare(request);
+
+        String quotedRegion = dialect.quote("销售 地区");
+        String quotedMetric = dialect.quote("销售额 `合计` \"本月\"（元）");
+        String sql = SqlBuilder.build(queryBo(config, dialect)).getSql();
+        assertTrue(sql.contains("SUM(metric_0) / 100 AS " + quotedMetric));
+        assertTrue(sql.contains(" ORDER BY " + quotedRegion + " ASC, " + quotedMetric + " DESC"));
+        assertEquals("销售 地区", config.getDimensions().getFirst().getLabel());
+        assertEquals("销售额 `合计` \"本月\"（元）", config.getOrderList().getLast().getField());
+    }
+
+    @ParameterizedTest
+    @EnumSource(SqlDialect.class)
+    void acceptsAndQuotesContrastDisplayNamesWithSpaces(SqlDialect dialect) {
+        QueryRequest request = request("number", 0, 0);
+        request.getQuery().setMetrics(List.of(contrastMetric("amount", "  销售 同比（%）  ")));
+        request.getQuery().setOrderList(List.of(order("销售 同比（%）", "desc")));
+
+        VisQueryPrep.prepare(request);
+
+        String alias = dialect.quote("销售 同比（%）");
+        String sql = ContrastSqlAssembler.build(queryBo(request.getQuery(), dialect)).getSqlRet().getSql();
+        assertTrue(sql.contains(" AS " + alias));
+        assertTrue(sql.contains(" ORDER BY " + alias + " DESC"));
+    }
+
+    @Test
+    void acceptsPivotSortingByDisplayNamesWithSpaces() {
+        PivotQueryRequest request = pivotRequest("pivot", 1, 1, 1);
+        var config = request.getQuery();
+        config.getRowDimensions().getFirst().setLabel("销售 地区");
+        config.getColDimensions().getFirst().setLabel("订单 月份");
+        config.getMetrics().getFirst().setLabel("销售 合计");
+        config.setOrderList(List.of(order("销售 地区", "asc"), order("销售 合计", "desc")));
+        assertDoesNotThrow(() -> VisQueryPrep.preparePivot(request));
+    }
+
+    @Test
+    void resultFiltersUseTheSameDisplayAliasesAndStillValidateTheirValues() {
+        QueryRequest request = request("table", 0, 1);
+        request.getQuery().getMetrics().getFirst().setLabel("销售 合计");
+        FilterItem filter = new FilterItem();
+        filter.setField(" 销售 合计 ");
+        filter.setOp("gt");
+        filter.setValue(new Object[]{100});
+        request.getQuery().setResultFilters(List.of(filter));
+
+        VisQueryPrep.prepare(request);
+
+        var sql = SqlBuilder.build(queryBo(request.getQuery(), SqlDialect.MYSQL));
+        assertTrue(sql.getSql().contains("WHERE `销售 合计` > ?"));
+        assertEquals(100, sql.getParams()[0]);
+        filter.setValue(null);
+        assertThrows(ResultException.class, () -> VisQueryPrep.prepare(request));
+        filter.setField("未选择的字段");
+        assertEquals("resultFilters.field 必须是 SELECT 别名: 未选择的字段",
+                assertThrows(ResultException.class, () -> VisQueryPrep.prepare(request)).getMsg());
+    }
+
+    @Test
+    void rejectsUnknownSortAliasesAndInvalidDirections() {
+        QueryRequest request = request("table", 0, 1);
+        request.getQuery().getMetrics().getFirst().setLabel("销售 合计");
+        OrderItem order = order("metric_0", "asc");
+        request.getQuery().setOrderList(List.of(order));
+        assertEquals("order.field 必须是 SELECT 别名: metric_0",
+                assertThrows(ResultException.class, () -> VisQueryPrep.prepare(request)).getMsg());
+        order.setField("销售 合计");
+        order.setDir("desc; SELECT 1");
+        assertThrows(ResultException.class, () -> VisQueryPrep.prepare(request));
+    }
+
+    @Test
+    void rejectsDuplicateDisplayNamesAcrossDimensionsAndMetrics() {
+        QueryRequest request = request("table", 1, 1);
+        request.getQuery().getDimensions().getFirst().setLabel("  销售 合计  ");
+        request.getQuery().getMetrics().getFirst().setLabel("销售 合计");
+        assertEquals("展示字段名重复，请修改显示名: 销售 合计",
+                assertThrows(ResultException.class, () -> VisQueryPrep.prepare(request)).getMsg());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"销售\n合计", "销售\t合计", "销售\u0000合计"})
+    void rejectsControlCharactersInDisplayNames(String alias) {
+        QueryRequest request = request("table", 0, 1);
+        request.getQuery().getMetrics().getFirst().setLabel(alias);
+        assertEquals("显示名不能包含换行或其他控制字符",
+                assertThrows(ResultException.class, () -> VisQueryPrep.prepare(request)).getMsg());
+    }
+
+    @Test
+    void keepsOriginalFieldValidationSeparateFromDisplayNames() {
+        QueryRequest request = request("table", 0, 1);
+        request.getQuery().getMetrics().getFirst().setField("amount invalid");
+        assertEquals("非法字段名: amount invalid",
+                assertThrows(ResultException.class, () -> VisQueryPrep.prepare(request)).getMsg());
+    }
+
+    private static OrderItem order(String alias, String direction) {
+        OrderItem order = new OrderItem();
+        order.setField(alias);
+        order.setDir(direction);
+        return order;
+    }
+
+    private static QueryBO queryBo(QueryConfig config, SqlDialect dialect) {
+        QueryBO query = new QueryBO();
+        query.setDialect(dialect);
+        query.setInnerSql("SELECT region, amount, metric_0, dimension_0, order_date FROM orders");
+        query.setDimensions(config.getDimensions());
+        query.setMetrics(config.getMetrics());
+        query.setOrderList(config.getOrderList());
+        query.setResultFilters(config.getResultFilters());
+        return query;
+    }
+
     private static Stream<Arguments> validChartShapes() {
         return Stream.of(
                 Arguments.of("table", 1, 0),
@@ -147,6 +293,7 @@ class VisQueryPrepTest {
         return Stream.of(
                 Arguments.of("table", 0, 0, "dimensions 和 metrics 不能同时为空"),
                 Arguments.of("number", 1, 1, "数字卡片不支持维度"),
+                Arguments.of("number", 0, 0, "dimensions 和 metrics 不能同时为空"),
                 Arguments.of("progress", 1, 1, "进度条不支持维度"),
                 Arguments.of("kpi", 0, 1, "KPI图需要恰好 1 个维度"),
                 Arguments.of("bar", 0, 1, "柱状图至少需要 1 个维度"),

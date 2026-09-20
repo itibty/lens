@@ -1,5 +1,5 @@
 <!--
- * @Description: 透视表功能设置（通用 / 树形 / 合计位置 / 数据标注）
+ * @Description: 透视表功能设置（通用 / 展示 / 合计 / 格式 / 数据标注）
 -->
 <script setup lang="ts">
 import type { DatasetField, VisPivotPlace, VisQueryConfig, VisVisualConfig } from '@/views/vis/shared/types'
@@ -62,7 +62,7 @@ const TOTAL_OPTIONS = [
 ] as const
 
 const visual = defineModel<VisVisualConfig>('visual', { required: true })
-const openSections = ref(['common', 'interaction', 'display', 'fieldStyle', 'totals', 'marks'])
+const openSections = ref(['common', 'display', 'totals', 'fieldStyle'])
 const branch = useVisualBranch(visual, 'table')
 const treeDisplay = branch.boolField('treeDisplay', TABLE_STYLE_DEFAULTS.treeDisplay)
 const sortColumn = branch.boolField('sortColumn', TABLE_STYLE_DEFAULTS.sortColumn)
@@ -117,10 +117,7 @@ function setPlace(key: keyof typeof placeModel, value: string | number | boolean
       <TitleStyleFields v-model:visual="visual" />
     </StyleFormSection>
 
-    <StyleFormSection
-      title="交互"
-      name="interaction"
-    >
+    <StyleFormSection title="展示" name="display">
       <div class="vis-style-form__row">
         <StyleFormLabel :tip="TABLE_FEATURE_TIPS.treeDisplay">
           行维树形
@@ -133,12 +130,7 @@ function setPlace(key: keyof typeof placeModel, value: string | number | boolean
         </StyleFormLabel>
         <el-switch v-model="sortColumn" size="small" />
       </div>
-    </StyleFormSection>
 
-    <StyleFormSection
-      title="展示"
-      name="display"
-    >
       <div class="vis-style-form__row">
         <StyleFormLabel>
           斑马纹
@@ -146,13 +138,6 @@ function setPlace(key: keyof typeof placeModel, value: string | number | boolean
         <el-switch v-model="striped" size="small" />
       </div>
     </StyleFormSection>
-
-    <FieldStyleShelf
-      v-model:visual="visual"
-      v-model:open-sections="openSections"
-      :query="query"
-      allow-cell-visual
-    />
 
     <StyleFormSection
       title="合计"
@@ -175,7 +160,7 @@ function setPlace(key: keyof typeof placeModel, value: string | number | boolean
 
         <div
           v-if="showPlace(item)"
-          class="vis-style-form__row"
+          class="vis-style-form__row is-child"
         >
           <div class="vis-style-form__label">
             位置
@@ -197,6 +182,13 @@ function setPlace(key: keyof typeof placeModel, value: string | number | boolean
         </div>
       </template>
     </StyleFormSection>
+
+    <FieldStyleShelf
+      v-model:visual="visual"
+      v-model:open-sections="openSections"
+      :query="query"
+      allow-cell-visual
+    />
 
     <TableMarkSection
       v-model:visual="visual"

@@ -1,8 +1,9 @@
 <!--
- * @Description: 目标进度功能设置（目标 / 期限 / 展示 / 格式）
+ * @Description: 目标进度功能设置（通用 / 进度 / 格式）
 -->
 <script setup lang="ts">
 import type { VisKpiOptions, VisKpiPeriodMode, VisQueryConfig, VisVisualConfig } from '@/views/vis/shared/types'
+import { CARD_INPUT_PLACEHOLDERS, FEATURE_FORM_COPY } from '@/views/vis/charts/chartHelp'
 import { KPI_DEFAULTS, KPI_FEATURE_TIPS, KPI_PERIOD_OPTIONS, kpiMetricNames } from '@/views/vis/shared/kpiCard'
 import { useVisualBranch } from './composables/useVisualBranch'
 import FieldStyleShelf from './FieldStyleShelf.vue'
@@ -16,7 +17,7 @@ const props = defineProps<{
 }>()
 
 const visual = defineModel<VisVisualConfig>('visual', { required: true })
-const openSections = ref(['common', 'target', 'period', 'display', 'fieldStyle'])
+const openSections = ref(['common', 'progress', 'fieldStyle'])
 const branch = useVisualBranch(visual, 'kpi')
 const names = computed(() => kpiMetricNames(props.query))
 
@@ -77,120 +78,111 @@ const percentDecimals = branch.valueField<NonNullable<VisKpiOptions['percentDeci
       <TitleStyleFields v-model:visual="visual" />
     </StyleFormSection>
 
-    <StyleFormSection
-      title="目标"
-      name="target"
-    >
-      <div
-        v-if="names.hasMetricTarget"
-        class="vis-style-form__row"
-      >
-        <StyleFormLabel>指标目标</StyleFormLabel>
-        <span class="vis-style-form__value">{{ names.pair }}</span>
-      </div>
-      <div
-        v-else
-        class="vis-style-form__row"
-      >
-        <StyleFormLabel :tip="KPI_FEATURE_TIPS.fixedTarget">
-          固定目标
-        </StyleFormLabel>
-        <el-input-number
-          v-model="target"
-          size="small"
-          class="vis-style-form__control"
-          :min="0"
-          :controls="false"
-          placeholder="必填"
-          :value-on-clear="undefined"
-        />
-      </div>
-    </StyleFormSection>
-
-    <StyleFormSection
-      title="期限"
-      name="period"
-    >
-      <div class="vis-style-form__row">
-        <StyleFormLabel :tip="KPI_FEATURE_TIPS.period">
-          期限
-        </StyleFormLabel>
-        <el-radio-group
-          v-model="periodMode"
-          size="small"
-          class="vis-style-form__segmented"
+    <StyleFormSection title="进度" name="progress">
+      <div class="vis-feature-group">
+        <div
+          v-if="names.hasMetricTarget"
+          class="vis-style-form__row"
         >
-          <el-radio-button value="">
-            无
-          </el-radio-button>
-          <el-radio-button
-            v-for="item in KPI_PERIOD_OPTIONS"
-            :key="item.id"
-            :value="item.id"
+          <StyleFormLabel>指标目标</StyleFormLabel>
+          <span class="vis-style-form__value">{{ names.pair }}</span>
+        </div>
+        <div
+          v-else
+          class="vis-style-form__row"
+        >
+          <StyleFormLabel :tip="KPI_FEATURE_TIPS.fixedTarget">
+            固定目标
+          </StyleFormLabel>
+          <el-input-number
+            v-model="target"
+            size="small"
+            class="vis-style-form__control"
+            :min="0"
+            :controls="false"
+            :placeholder="CARD_INPUT_PLACEHOLDERS.target"
+            :value-on-clear="undefined"
+          />
+        </div>
+
+        <div class="vis-style-form__row">
+          <StyleFormLabel :tip="KPI_FEATURE_TIPS.period">
+            期限
+          </StyleFormLabel>
+          <el-select
+            v-model="periodMode"
+            size="small"
+            class="vis-style-form__control"
+            aria-label="期限"
+            clearable
+            placeholder=""
+            value-on-clear=""
           >
-            {{ item.label }}
-          </el-radio-button>
-        </el-radio-group>
-      </div>
-      <div
-        v-if="periodMode === 'custom'"
-        class="vis-style-form__row"
-      >
-        <StyleFormLabel>起止</StyleFormLabel>
-        <el-date-picker
-          v-model="periodRange"
-          type="daterange"
-          size="small"
-          class="vis-style-form__control is-wide"
-          value-format="YYYY-MM-DD"
-          start-placeholder="开始"
-          end-placeholder="结束"
-          unlink-panels
-        />
-      </div>
-    </StyleFormSection>
-
-    <StyleFormSection
-      title="展示"
-      name="display"
-    >
-      <div class="vis-style-form__row">
-        <StyleFormLabel>
-          完成率
-        </StyleFormLabel>
-        <el-switch v-model="showPercent" size="small" />
-      </div>
-      <div
-        v-if="showPercent"
-        class="vis-style-form__row"
-      >
-        <StyleFormLabel :tip="KPI_FEATURE_TIPS.percentDecimals">
-          完成率小数位
-        </StyleFormLabel>
-        <el-radio-group
-          v-model="percentDecimals"
-          size="small"
-          class="vis-style-form__segmented"
+            <el-option
+              v-for="item in KPI_PERIOD_OPTIONS"
+              :key="item.id"
+              :value="item.id"
+              :label="item.label"
+            />
+          </el-select>
+        </div>
+        <div
+          v-if="periodMode === 'custom'"
+          class="vis-style-form__row is-block is-child"
         >
-          <el-radio-button value="auto">
-            自动
-          </el-radio-button>
-          <el-radio-button :value="0">
-            0
-          </el-radio-button>
-          <el-radio-button :value="1">
-            1
-          </el-radio-button>
-          <el-radio-button :value="2">
-            2
-          </el-radio-button>
-        </el-radio-group>
+          <StyleFormLabel>起止</StyleFormLabel>
+          <el-date-picker
+            v-model="periodRange"
+            type="daterange"
+            size="small"
+            class="vis-style-form__control is-wide"
+            value-format="YYYY-MM-DD"
+            start-placeholder="开始"
+            end-placeholder="结束"
+            unlink-panels
+          />
+        </div>
       </div>
-      <div class="vis-style-form__row">
-        <StyleFormLabel :tip="KPI_FEATURE_TIPS.showValue">
-          目标值
-        </StyleFormLabel>
-        <el-switch v-model="showValue" size="small" />
+
+      <div class="vis-feature-group">
+        <div class="vis-style-form__row">
+          <StyleFormLabel>
+            完成率
+          </StyleFormLabel>
+          <el-switch v-model="showPercent" size="small" />
+        </div>
+        <div
+          v-if="showPercent"
+          class="vis-style-form__row"
+        >
+          <StyleFormLabel :tip="KPI_FEATURE_TIPS.percentDecimals">
+            {{ FEATURE_FORM_COPY.percentDecimals }}
+          </StyleFormLabel>
+          <el-radio-group
+            v-model="percentDecimals"
+            size="small"
+            class="vis-style-form__segmented"
+          >
+            <el-radio-button value="auto">
+              自动
+            </el-radio-button>
+            <el-radio-button :value="0">
+              0
+            </el-radio-button>
+            <el-radio-button :value="1">
+              1
+            </el-radio-button>
+            <el-radio-button :value="2">
+              2
+            </el-radio-button>
+          </el-radio-group>
+        </div>
+        <div class="vis-style-form__row">
+          <StyleFormLabel :tip="KPI_FEATURE_TIPS.showValue">
+            {{ FEATURE_FORM_COPY.values }}
+          </StyleFormLabel>
+          <el-switch v-model="showValue" size="small" />
+        </div>
       </div>
     </StyleFormSection>
 

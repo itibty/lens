@@ -1,8 +1,9 @@
+import type { MetricTooltipPeriod } from './metricTooltip'
 import type { VisVisualConfig } from './types'
-import { contrastPeriodDescription, formatContrastRange } from './contrastExp'
-import { formatMetricField, resolveMetricFormat } from './fieldStyle'
+import { formatMetricField, resolveMetricFieldColor, resolveMetricFormat, resolveSignColor } from './fieldStyle'
+import { metricTooltipPeriods } from './metricTooltip'
 import { formatMetricNumber, toFiniteNumber } from './numberStyle'
-import { metricAlias, regularMetrics } from './types'
+import { metricAlias } from './types'
 
 export type NumberContrastDirection = 'up' | 'down' | 'flat'
 
@@ -13,13 +14,14 @@ export interface NumberContrastView {
   label: string
   text: string
   direction: NumberContrastDirection
-  title: string
+  periods: MetricTooltipPeriod[]
   kind?: NumberAuxKind
   value?: number | string | null
+  color?: string
 }
 
 function pickPrimaryMetric(query: VIS.QueryConfig): VIS.MetricItem | undefined {
-  return regularMetrics(query.metrics)[0]
+  return query.metrics?.[0]
 }
 
 export function pickNumberValue(query: VIS.QueryConfig, data: VIS.QueryDataResponse): number | string | null {
@@ -38,14 +40,7 @@ export function pickNumberMetricLabel(query: VIS.QueryConfig): string {
   return metric?.label || metric?.field || '指标'
 }
 
-/** 主指标周期：优先 contrasts.current，否则 asOfDate */
-export function pickNumberPeriodTitle(data: VIS.QueryDataResponse): string {
-  const current = data.contrasts?.find(item => item.current?.start)?.current
-  const text = formatContrastRange(current) || data.asOfDate || ''
-  return text ? `评估 ${text}` : ''
-}
-
-/** 指标卡辅区：主指标之后的普通指标 + 同比 / 环比，保持投放顺序 */
+/** 第 1 个指标作为主指标，其余指标按投放顺序展示在辅区。 */
 export function pickNumberAuxiliaries(
   query: VIS.QueryConfig,
   data: VIS.QueryDataResponse,
@@ -53,17 +48,11 @@ export function pickNumberAuxiliaries(
   const row = data.rows?.[0]
   if (!row)
     return []
-  const infos = data.contrasts ?? []
-  const periodTitle = pickNumberPeriodTitle(data)
   const items: NumberContrastView[] = []
-  let seenPrimary = false
-
   for (const [index, metric] of (query.metrics ?? []).entries()) {
+    if (index === 0)
+      continue
     if (!metric.contrast) {
-      if (!seenPrimary) {
-        seenPrimary = true
-        continue
-      }
       const alias = metricAlias(metric)
       const raw = row[alias]
       items.push({
@@ -71,7 +60,7 @@ export function pickNumberAuxiliaries(
         label: metric.label || metric.field || alias,
         text: raw == null || raw === '' ? '-' : String(raw),
         direction: 'flat',
-        title: periodTitle,
+        periods: [],
         kind: 'metric',
         value: raw as number | string | null,
       })
@@ -79,7 +68,6 @@ export function pickNumberAuxiliaries(
     }
 
     const label = metric.label || metricAlias(metric)
-    const info = infos.find(item => item.label === label)
     const value = toFiniteNumber(row[label])
     const direction: NumberContrastDirection = value == null || value === 0
       ? 'flat'
@@ -89,7 +77,7 @@ export function pickNumberAuxiliaries(
       label,
       text: value == null ? '-' : String(value),
       direction,
-      title: contrastPeriodDescription(info),
+      periods: metricTooltipPeriods(metric, data),
       kind: 'contrast',
       value,
     })
@@ -103,7 +91,8 @@ export interface NumberView {
   body: string
   compactSuffix: string
   suffix: string
-  periodTitle: string
+  periods: MetricTooltipPeriod[]
+  color?: string
   auxiliaries: NumberContrastView[]
 }
 
@@ -114,22 +103,26 @@ export function resolveNumberView(
 ): NumberView | null {
   const primary = pickPrimaryMetric(query)
   const format = resolveMetricFormat(visual, primary)
-  const parts = formatMetricNumber(pickNumberValue(query, data), format)
+  const value = toFiniteNumber(pickNumberValue(query, data))
+  const parts = formatMetricNumber(value, format)
   if (parts.empty)
     return null
   const auxiliaries = pickNumberAuxiliaries(query, data).map(item => ({
     ...item,
+    color: resolveMetricFieldColor(visual, query, item.label, item.value),
     text: formatMetricField(visual, query, item.label, item.value, {
       signed: item.kind === 'contrast',
     }),
   }))
+  const body = primary?.contrast && value != null && value > 0 ? `+${parts.body}` : parts.body
   return {
     label: pickNumberMetricLabel(query),
     prefix: format.prefix,
-    body: parts.body,
+    body,
     compactSuffix: parts.compactSuffix,
     suffix: format.suffix,
-    periodTitle: pickNumberPeriodTitle(data),
+    color: resolveSignColor(value, format.signColor),
+    periods: metricTooltipPeriods(primary, data),
     auxiliaries,
   }
 }

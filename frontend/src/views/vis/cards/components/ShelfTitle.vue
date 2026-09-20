@@ -2,6 +2,8 @@
  * @Description: 投放区标题；说明放 info tooltip，不写在文案里
 -->
 <script setup lang="ts">
+import InfoTooltip from '@/components/InfoTooltip.vue'
+
 defineProps<{
   tip?: string
 }>()
@@ -12,17 +14,15 @@ defineProps<{
     <span class="shelf-title__text">
       <slot />
     </span>
-    <el-tooltip
+    <InfoTooltip
       v-if="tip"
       :content="tip"
-      placement="top"
-      :show-after="200"
     >
       <span
         class="shelf-title__tip i-mingcute-information-line"
         tabindex="0"
       />
-    </el-tooltip>
+    </InfoTooltip>
   </span>
 </template>
 

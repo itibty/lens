@@ -1,5 +1,6 @@
 import type { ChartType, DatasetField, VisQueryConfig, VisVisualConfig } from '@/views/vis/shared/types'
 import { getChartCatalogEntry } from '@/views/vis/charts/catalog'
+import { CHART_HELP_FALLBACK } from '@/views/vis/charts/chartHelp'
 import { axisBoundsIssue } from '@/views/vis/shared/chartAxes'
 import { chartMetricAliases, isDualAxisEnabled, resolveSecondaryFields } from '@/views/vis/shared/chartOptions'
 import { supportsSeriesStyle } from '@/views/vis/shared/chartSeriesStyle'
@@ -30,7 +31,7 @@ export function allowContrastForChart(chartType?: string) {
 }
 
 export function listChartConstraints(chartType?: string): string[] {
-  return [...(getChartCatalogEntry(chartType)?.constraints ?? ['请至少添加维度或指标'])]
+  return [...(getChartCatalogEntry(chartType)?.constraints ?? CHART_HELP_FALLBACK)]
 }
 
 export type QueryShelf = 'dataset' | 'dimensions' | 'rowDimensions' | 'colDimensions' | 'metrics' | 'filters' | 'having' | 'content' | 'detail' | 'appearance'
@@ -135,7 +136,7 @@ function pushQueryFilterIssues(issues: QueryIssue[], query: VisQueryConfig) {
   pushFilterLikeIssues(issues, 'having', (query.havingFilters ?? []) as Array<{ _uid?: string }>)
 }
 
-/** 刷新 / 保存时收集形状问题；带 uid 的落点对应胶囊，无 uid 的落在投放区 */
+/** 只收集配置问题，由调用方决定是否提示；uid 对应字段，无 uid 时定位到模块。 */
 export function collectQueryIssues(
   chartType: string,
   query: VisQueryConfig,
@@ -155,7 +156,7 @@ export function collectQueryIssues(
         continue
       const message = axisBoundsIssue(visual?.chart?.axes?.[role])
       if (message)
-        issues.push(issue('appearance', `${role === 'primary' ? '主' : '副'}数值轴：${message}`))
+        issues.push(issue('appearance', `${role === 'primary' ? '主' : '副'}数值轴：${message}`, `axis:${role}`))
     }
   }
 
@@ -193,8 +194,8 @@ export function collectQueryIssues(
   else if (type === 'number') {
     if (dims.length > (cardinality.dimensions.max ?? Number.POSITIVE_INFINITY))
       issues.push(issue('dimensions', '指标卡不支持维度'))
-    if (regulars.length < cardinality.metrics.min)
-      issues.push(issue('metrics', '指标卡至少需要 1 个主指标（未开同比 / 环比）'))
+    if (metrics.length < cardinality.metrics.min)
+      issues.push(issue('metrics', '指标卡至少需要 1 个指标'))
     pushContrastFieldIssues(issues, metrics)
   }
   else if (type === 'progress') {

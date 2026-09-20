@@ -1,3 +1,4 @@
+import type { GroupOptions } from 'sortablejs'
 import type { DatasetField, DatasetFieldDataType } from './types'
 import { opsForDataType } from './filterValue'
 import { DEFAULT_METRIC_AGG } from './types'
@@ -125,6 +126,25 @@ export function stripPillUid<T extends { _uid?: string }>(item: T): Omit<T, '_ui
 }
 
 export const DND_GROUP = 'vis-query-fields'
+
+/** 明细列只接收左侧数据集字段的副本，不接收其它配置区的移动项。 */
+export const DETAIL_FIELDS_DND_GROUP: GroupOptions = {
+  name: 'vis-detail-fields',
+  pull: false,
+  put: (to, from, dragEl, event) => {
+    const source = from.options.group
+    return typeof source === 'object'
+      && source.name === DND_GROUP
+      && source.checkPull?.(to, from, dragEl, event) === 'clone'
+  },
+}
+
+/** 排序项仅在本列表内调整优先级。 */
+export const ORDER_FIELDS_DND_GROUP: GroupOptions = {
+  name: 'vis-order-fields',
+  pull: false,
+  put: false,
+}
 
 export {
   FILTER_OPS,

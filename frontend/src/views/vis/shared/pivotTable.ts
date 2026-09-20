@@ -3,8 +3,8 @@ import type { VisQueryConfig, VisVisualConfig } from './types'
 import type { ThemeColors } from '@/theme/tokens'
 import { TYPES } from '@visactor/vtable'
 import { LIGHT_THEME } from '@/theme/tokens'
-import { formatMetricField } from './fieldStyle'
-import { metricProgressVTableConfig } from './metricCell'
+import { formatMetricField, resolveFieldFormat } from './fieldStyle'
+import { bindMetricSignColorStyle, metricProgressVTableConfig } from './metricCell'
 import { bindMarkColumnStyle, prepareTableMarks } from './tableMark'
 import { resolvePivotPlaces, resolvePivotTreeDisplay, resolveTableStyle } from './tableStyle'
 import { dimensionAlias, metricAlias } from './types'
@@ -439,6 +439,7 @@ export function buildPivotTableOption(
     columns: dimDefines(colFields, undefined, marks, sortColumn && hideIndicatorName),
     indicators: metrics.map((metric) => {
       const progress = metricProgressVTableConfig(visual, query, metric, theme)
+      const signColor = resolveFieldFormat(visual, query, metric).signColor
       const common = {
         indicatorKey: metric,
         title: metric,
@@ -449,13 +450,13 @@ export function buildPivotTableOption(
       if (!progress) {
         return {
           ...common,
-          style: bindMarkColumnStyle(marks, metric),
+          style: bindMetricSignColorStyle(bindMarkColumnStyle(marks, metric), signColor, theme),
         }
       }
       return {
         ...common,
         ...progress.define,
-        style: bindMarkColumnStyle(marks, metric, progress.style),
+        style: bindMetricSignColorStyle(bindMarkColumnStyle(marks, metric, progress.style), signColor, theme),
       }
     }),
     rowTree,

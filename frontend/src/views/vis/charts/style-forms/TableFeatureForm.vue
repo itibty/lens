@@ -1,5 +1,5 @@
 <!--
- * @Description: 表格功能设置（通用 / 排序 / 过滤 / 展示 / 数据标注）
+ * @Description: 表格功能设置（通用 / 展示 / 格式 / 数据标注）
 -->
 <script setup lang="ts">
 import type { DatasetField, VisQueryConfig, VisVisualConfig } from '@/views/vis/shared/types'
@@ -18,7 +18,7 @@ defineProps<{
 }>()
 
 const visual = defineModel<VisVisualConfig>('visual', { required: true })
-const openSections = ref(['common', 'interaction', 'display', 'fieldStyle', 'marks'])
+const openSections = ref(['common', 'display', 'fieldStyle'])
 const branch = useVisualBranch(visual, 'table')
 
 const sortable = branch.boolField('sortable', TABLE_STYLE_DEFAULTS.sortable)
@@ -37,44 +37,40 @@ const mergeCell = branch.boolField('mergeCell', TABLE_STYLE_DEFAULTS.mergeCell)
       <TitleStyleFields v-model:visual="visual" />
     </StyleFormSection>
 
-    <StyleFormSection
-      title="交互"
-      name="interaction"
-    >
-      <div class="vis-style-form__row">
-        <StyleFormLabel>排序</StyleFormLabel>
-        <el-switch v-model="sortable" size="small" />
+    <StyleFormSection title="展示" name="display">
+      <div class="vis-feature-group">
+        <div class="vis-style-form__row">
+          <StyleFormLabel>
+            斑马纹
+          </StyleFormLabel>
+          <el-switch v-model="striped" size="small" />
+        </div>
+        <div class="vis-style-form__row">
+          <StyleFormLabel>
+            序号
+          </StyleFormLabel>
+          <el-switch v-model="showRowNumber" size="small" />
+        </div>
+        <div class="vis-style-form__row">
+          <StyleFormLabel :tip="TABLE_FEATURE_TIPS.mergeCell">
+            行合并
+          </StyleFormLabel>
+          <el-switch v-model="mergeCell" size="small" />
+        </div>
       </div>
 
-      <div class="vis-style-form__row">
-        <StyleFormLabel :tip="TABLE_FEATURE_TIPS.showFilter">
-          列过滤
-        </StyleFormLabel>
-        <el-switch v-model="showFilter" size="small" />
-      </div>
-    </StyleFormSection>
+      <div class="vis-feature-group">
+        <div class="vis-style-form__row">
+          <StyleFormLabel>排序</StyleFormLabel>
+          <el-switch v-model="sortable" size="small" />
+        </div>
 
-    <StyleFormSection
-      title="展示"
-      name="display"
-    >
-      <div class="vis-style-form__row">
-        <StyleFormLabel>
-          斑马纹
-        </StyleFormLabel>
-        <el-switch v-model="striped" size="small" />
-      </div>
-      <div class="vis-style-form__row">
-        <StyleFormLabel>
-          序号
-        </StyleFormLabel>
-        <el-switch v-model="showRowNumber" size="small" />
-      </div>
-      <div class="vis-style-form__row">
-        <StyleFormLabel :tip="TABLE_FEATURE_TIPS.mergeCell">
-          行合并
-        </StyleFormLabel>
-        <el-switch v-model="mergeCell" size="small" />
+        <div class="vis-style-form__row">
+          <StyleFormLabel :tip="TABLE_FEATURE_TIPS.showFilter">
+            列过滤
+          </StyleFormLabel>
+          <el-switch v-model="showFilter" size="small" />
+        </div>
       </div>
     </StyleFormSection>
 

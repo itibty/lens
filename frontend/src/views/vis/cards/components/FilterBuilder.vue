@@ -7,6 +7,7 @@ import type { DragFieldPayload, FilterPill } from '@/views/vis/shared/dnd'
 import type { FilterConditionDraft, FilterOp } from '@/views/vis/shared/filterValue'
 import type { DatasetField, DatasetFieldDataType } from '@/views/vis/shared/types'
 import draggable from 'vuedraggable'
+import { CHART_HELP_QUERY_TIPS, FILTER_GROUP_COPY } from '@/views/vis/charts/chartHelp'
 import { defaultDateExpValue } from '@/views/vis/shared/dateExp'
 import {
   createDragUid,
@@ -184,7 +185,7 @@ function confirmDraft(item: FilterPill) {
 <template>
   <div class="shelf" :class="{ 'is-invalid': !!shelfError }">
     <div class="shelf__title">
-      <ShelfTitle tip="只留下符合条件的数据">
+      <ShelfTitle :tip="CHART_HELP_QUERY_TIPS.filters">
         筛选
       </ShelfTitle>
     </div>
@@ -198,70 +199,67 @@ function confirmDraft(item: FilterPill) {
         :key="group._uid"
         class="filter-group"
       >
-        <div class="filter-group__title flex items-center justify-between gap-8px">
-          <span class="filter-group__name">
-            条件组 {{ gIndex + 1 }}
-          </span>
-          <div class="filter-group__actions flex items-center gap-4px">
-            <el-radio-group v-model="group.combineOp" size="small">
-              <el-radio-button value="and">
-                全部
-              </el-radio-button>
-              <el-radio-button value="or">
-                任一
-              </el-radio-button>
-            </el-radio-group>
-            <button
-              type="button"
-              class="vis-icon-btn"
-              title="删除条件组"
-              @click="removeGroup(gIndex)"
-            >
-              <span class="i-mingcute-close-line" />
-            </button>
-          </div>
+        <div v-if="gIndex > 0" class="filter-group__connector">
+          <span>{{ FILTER_GROUP_COPY.between }}</span>
         </div>
-
-        <div class="filter-group__body">
-          <draggable
-            v-model="group.conditions"
-            class="shelf__drop"
-            :class="{ 'is-empty': !group.conditions.length, 'is-invalid': !!shelfError }"
-            :group="DND_GROUP"
-            handle=".field-pill__handle"
-            :animation="180"
-            item-key="_uid"
-            @add="onAdd(group, $event)"
+        <div class="filter-group__content" :class="{ 'is-invalid': !!shelfError }">
+          <button
+            type="button"
+            class="filter-group__combine"
+            :title="FILTER_GROUP_COPY.toggle"
+            :aria-label="`${FILTER_GROUP_COPY.combine[group.combineOp]}，${FILTER_GROUP_COPY.toggle}`"
+            @click="group.combineOp = group.combineOp === 'and' ? 'or' : 'and'"
           >
-            <template #item="{ element, index }">
-              <div class="shelf__pill-wrap">
-                <FieldPill
-                  :name="element.field"
-                  :tip="formatFilterConditionTip(element)"
-                  :error="pillError(element._uid)"
-                  tone="filter"
-
-                  drag-handle block
-                  :popover-width="320"
-                  @open="openDraft(element)"
-                  @confirm="confirmDraft(element)"
-                  @remove="removeAt(group, index)"
-                >
-                  <FilterConditionForm
-                    v-if="drafts[element._uid]"
-                    v-model="drafts[element._uid]"
-                    :data-type="fieldType(element.field)"
-                  />
-                </FieldPill>
-              </div>
-            </template>
-          </draggable>
-          <div
-            v-if="!group.conditions.length"
-            class="filter-group__hint"
-          >
-            从左侧拖入字段
+            {{ FILTER_GROUP_COPY.combine[group.combineOp] }}
+          </button>
+          <div class="filter-group__body">
+            <draggable
+              v-model="group.conditions"
+              class="shelf__drop"
+              :group="DND_GROUP"
+              handle=".field-pill__handle"
+              :animation="180"
+              item-key="_uid"
+              @add="onAdd(group, $event)"
+            >
+              <template #item="{ element, index }">
+                <div class="shelf__pill-wrap">
+                  <FieldPill
+                    :name="element.field"
+                    :tip="formatFilterConditionTip(element)"
+                    :error="pillError(element._uid)"
+                    tone="filter"
+                    drag-handle block
+                    :popover-width="320"
+                    @open="openDraft(element)"
+                    @confirm="confirmDraft(element)"
+                    @remove="removeAt(group, index)"
+                  >
+                    <FilterConditionForm
+                      v-if="drafts[element._uid]"
+                      v-model="drafts[element._uid]"
+                      :data-type="fieldType(element.field)"
+                    />
+                  </FieldPill>
+                </div>
+              </template>
+            </draggable>
+            <div
+              v-if="!group.conditions.length"
+              class="filter-group__hint"
+            >
+              {{ FILTER_GROUP_COPY.empty }}
+            </div>
           </div>
+          <button
+            type="button"
+            class="vis-icon-btn is-small filter-group__remove"
+            :title="FILTER_GROUP_COPY.remove"
+            :aria-label="FILTER_GROUP_COPY.remove"
+            @click="removeGroup(gIndex)"
+          >
+            <span class="i-mingcute-close-line" />
+          </button>
         </div>
       </div>
     </div>
@@ -272,7 +270,7 @@ function confirmDraft(item: FilterPill) {
       @click="addGroup"
     >
       <span class="i-mingcute-add-line" />
-      <span>添加条件组</span>
+      <span>{{ FILTER_GROUP_COPY.add }}</span>
     </button>
     <div v-if="shelfError" class="shelf__error">
       {{ shelfError }}
@@ -311,18 +309,9 @@ function confirmDraft(item: FilterPill) {
     display: flex;
     flex-direction: column;
     gap: 6px;
-    padding: 8px;
-    border: 1px dashed var(--el-border-color);
-    border-radius: 6px;
-    background: #fff;
-
-    &.is-empty {
-      min-height: 44px;
-    }
-
-    &.is-invalid {
-      border-color: var(--el-color-danger-light-5);
-    }
+    min-height: 44px;
+    padding: 6px;
+    box-sizing: border-box;
   }
 
   &__error {
@@ -334,6 +323,7 @@ function confirmDraft(item: FilterPill) {
 
   &__pill-wrap {
     width: 100%;
+    min-width: 0;
   }
 
   &__add {
@@ -375,25 +365,86 @@ function confirmDraft(item: FilterPill) {
 }
 
 .filter-group {
-  &__title {
+  &__connector {
+    display: flex;
+    justify-content: center;
     margin-bottom: 8px;
+    color: var(--vis-cfg-meta-color, var(--el-text-color-secondary));
+    font-size: 12px;
+    line-height: 20px;
+    cursor: default;
+
+    > span {
+      min-width: 24px;
+      padding: 0 4px;
+      border-radius: 4px;
+      background: color-mix(in srgb, var(--el-text-color-secondary) 8%, transparent);
+      text-align: center;
+      box-sizing: border-box;
+    }
   }
 
-  &__name {
-    font-size: var(--vis-cfg-group-size, 12px);
-    font-weight: var(--vis-cfg-group-weight, 500);
-    color: var(--vis-cfg-group-color, var(--el-text-color-regular));
-    white-space: nowrap;
+  &__content {
+    display: grid;
+    grid-template-columns: 30px minmax(0, 1fr) 26px;
+    border: 1px solid var(--el-border-color);
+    border-radius: 6px;
+    background: var(--el-fill-color-blank);
+    overflow: hidden;
+
+    &.is-invalid {
+      border-color: var(--el-color-danger-light-5);
+    }
+  }
+
+  &__combine {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 0;
+    border-right: 1px solid var(--el-border-color-lighter);
+    background: var(--el-fill-color-light);
+    color: var(--el-text-color-regular);
+    font: inherit;
+    font-size: 12px;
+    cursor: pointer;
+    transition:
+      background 0.15s ease,
+      color 0.15s ease;
+
+    &:hover {
+      background: var(--el-color-primary-light-9);
+      color: var(--el-color-primary);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--el-color-primary);
+      outline-offset: -2px;
+    }
+  }
+
+  &__remove {
+    align-self: center;
+    justify-self: center;
+
+    &:focus-visible {
+      outline: 2px solid var(--el-color-primary);
+      outline-offset: -2px;
+    }
   }
 
   &__body {
     position: relative;
+    min-width: 0;
   }
 
   &__hint {
     position: absolute;
-    left: 16px;
-    top: 14px;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    padding: 0 8px;
     font-size: var(--vis-cfg-hint-size, 12px);
     color: var(--vis-cfg-hint-color, var(--el-text-color-placeholder));
     pointer-events: none;

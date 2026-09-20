@@ -1,3 +1,5 @@
+import { CHART_HELP } from './chartHelp'
+
 export const CHART_TYPES = [
   'bar',
   'line',
@@ -86,118 +88,69 @@ const EXACTLY_ONE_EACH: ChartCardinality = {
 }
 
 export const CHART_CATALOG: Record<ChartType, ChartCatalogEntry> = {
-  bar: entry('chart', CARTESIAN_CARDINALITY, [
-    '1～2 个维度，至少 1 个指标',
-    '多指标时只能 1 个维度',
-  ]),
-  line: entry('chart', CARTESIAN_CARDINALITY, [
-    '1～2 个维度，至少 1 个指标',
-    '多指标时只能 1 个维度',
-  ]),
+  bar: entry('chart', CARTESIAN_CARDINALITY, CHART_HELP.bar.constraints),
+  line: entry('chart', CARTESIAN_CARDINALITY, CHART_HELP.line.constraints),
   combo: entry('chart', {
     dimensions: { min: 1, max: 1 },
     metrics: { min: 2 },
-  }, [
-    '恰好 1 个维度、至少 2 个指标',
-    '未指定折线指标时，最后一个指标画折线',
-  ]),
-  pie: entry('chart', EXACTLY_ONE_EACH, ['恰好 1 个维度、1 个指标']),
+  }, CHART_HELP.combo.constraints),
+  pie: entry('chart', EXACTLY_ONE_EACH, CHART_HELP.pie.constraints),
   scatter: entry('chart', {
     dimensions: { min: 0, max: 1 },
     metrics: { min: 2, max: 2 },
-  }, [
-    '恰好 2 个指标，按顺序对应横轴、纵轴',
-    '最多 1 个维度',
-  ]),
+  }, CHART_HELP.scatter.constraints),
   table: entry('table', {
     dimensions: { min: 0 },
     metrics: { min: 0 },
-  }, [
-    '维度、指标不能都为空',
-    '有日期维度时，不可配置同比 / 环比',
-  ], { allowContrast: true }),
+  }, CHART_HELP.table.constraints, { allowContrast: true }),
   number: entry('number', {
     dimensions: { min: 0, max: 0 },
     metrics: { min: 1 },
-  }, [
-    '不投放维度，只出当期一个数',
-    '至少 1 个主指标（未开同比 / 环比），可另加同比 / 环比或辅指标',
-  ], { allowContrast: true, allowFullscreen: false }),
+  }, CHART_HELP.number.constraints, { allowContrast: true, allowFullscreen: false }),
   progress: entry('progress', {
     dimensions: { min: 0, max: 0 },
     metrics: { min: 1, max: 2 },
-  }, [
-    '至少 1 个指标（当前值）',
-    '目标：指标区第 2 个指标，或功能设置中的固定目标',
-  ], { allowFullscreen: false }),
+  }, CHART_HELP.progress.constraints, { allowFullscreen: false }),
   kpi: entry('kpi', {
     dimensions: { min: 1, max: 1 },
     metrics: { min: 1, max: 2 },
-  }, [
-    '恰好 1 个维度',
-    '至少 1 个指标（当前值）',
-    '目标：指标区第 2 个指标，或功能设置中的固定目标',
-  ]),
+  }, CHART_HELP.kpi.constraints),
   radar: entry('chart', {
     dimensions: { min: 1, max: 1 },
     metrics: { min: 1 },
-  }, [
-    '恰好 1 个维度',
-    '至少 1 个指标',
-  ]),
-  funnel: entry('chart', EXACTLY_ONE_EACH, ['恰好 1 个维度、1 个指标']),
-  wordcloud: entry('chart', EXACTLY_ONE_EACH, ['恰好 1 个维度、1 个指标']),
+  }, CHART_HELP.radar.constraints),
+  funnel: entry('chart', EXACTLY_ONE_EACH, CHART_HELP.funnel.constraints),
+  wordcloud: entry('chart', EXACTLY_ONE_EACH, CHART_HELP.wordcloud.constraints),
   heatmap: entry('chart', {
     dimensions: { min: 2, max: 2 },
     metrics: { min: 1, max: 1 },
-  }, [
-    '恰好 2 个维度、1 个指标',
-    '第 1 个维度为横轴，第 2 个为纵轴',
-  ]),
+  }, CHART_HELP.heatmap.constraints),
   treemap: entry('chart', {
     dimensions: { min: 1, max: 3 },
     metrics: { min: 1, max: 1 },
-  }, [
-    '1 到 3 个维度、恰好 1 个指标',
-    '维度按顺序嵌套，指标映射面积',
-  ]),
-  waterfall: entry('chart', EXACTLY_ONE_EACH, [
-    '恰好 1 个维度、1 个指标',
-    '正数为增加、负数为减少；默认可在末项追加合计',
-  ]),
+  }, CHART_HELP.treemap.constraints),
+  waterfall: entry('chart', EXACTLY_ONE_EACH, CHART_HELP.waterfall.constraints),
   trend: entry('trend', {
     dimensions: { min: 1, max: 1 },
     metrics: { min: 1 },
-  }, [
-    '恰好 1 个维度（建议按时间升序）、至少 1 个指标',
-    '主值取最后一期；较上期是相邻两点，不能配同比 / 环比',
-  ], { allowFullscreen: false }),
+  }, CHART_HELP.trend.constraints, { allowFullscreen: false }),
   tornado: entry('chart', {
     dimensions: { min: 1, max: 1 },
     metrics: { min: 2, max: 2 },
-  }, [
-    '恰好 1 个维度、2 个指标',
-    '第 1 个指标朝左，第 2 个朝右',
-  ]),
-  rank: entry('rank', EXACTLY_ONE_EACH, [
-    '恰好 1 个维度、1 个指标',
-    '按指标从大到小排列',
-  ]),
+  }, CHART_HELP.tornado.constraints),
+  rank: entry('rank', EXACTLY_ONE_EACH, CHART_HELP.rank.constraints),
   richtext: entry('static', {
     dimensions: { min: 0, max: 0 },
     metrics: { min: 0, max: 0 },
-  }, ['至少有一段正文或一个内容模块']),
+  }, CHART_HELP.richtext.constraints),
   url: entry('static', {
     dimensions: { min: 0, max: 0 },
     metrics: { min: 0, max: 0 },
-  }, ['须填写有效的 http(s) 网址']),
+  }, CHART_HELP.url.constraints),
   pivot: entry('pivot', {
     dimensions: { min: 0 },
     metrics: { min: 1 },
-  }, [
-    '至少 1 个指标',
-    '同一字段不能既做行维又做列维',
-  ]),
+  }, CHART_HELP.pivot.constraints),
 }
 
 export const API_CHART_TYPES = new Set<string>(CHART_TYPES)

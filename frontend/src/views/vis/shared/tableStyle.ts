@@ -11,11 +11,11 @@ export const TABLE_STYLE_DEFAULTS = {
 } as const satisfies Pick<Required<VisTableStyle>, 'sortable' | 'showFilter' | 'striped' | 'showRowNumber' | 'mergeCell' | 'treeDisplay' | 'sortColumn'>
 
 export const TABLE_FEATURE_TIPS = {
-  showFilter: '按取值或条件筛选当前结果，不是数据集筛选',
-  mergeCell: '同一列相邻相同值合并为一格',
-  treeDisplay: '行维收成一列，分组值显示在父行',
-  rowSubtotal: '按行维分组汇总，需 2 个及以上行维',
-  columnSubtotal: '按列维分组汇总，需 2 个及以上列维',
+  showFilter: '按取值或条件筛选表格中的数据',
+  mergeCell: '合并同列中相邻且相同的单元格',
+  treeDisplay: '将行维度按层级展示在同一列',
+  rowSubtotal: '按行维度分组汇总，需至少 2 个行维度',
+  columnSubtotal: '按列维度分组汇总，需至少 2 个列维度',
 } as const
 
 export type ResolvedTableStyle = Pick<Required<VisTableStyle>, 'sortable' | 'showFilter' | 'striped' | 'showRowNumber' | 'mergeCell' | 'treeDisplay' | 'sortColumn'>

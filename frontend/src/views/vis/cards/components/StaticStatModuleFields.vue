@@ -3,6 +3,7 @@
 -->
 <script setup lang="ts">
 import type { VisStatModule, VisVisualConfig } from '@/views/vis/shared/types'
+import { CARD_INPUT_PLACEHOLDERS } from '@/views/vis/charts/chartHelp'
 import VisStaticStat from '@/views/vis/shared/VisStaticStat.vue'
 
 const props = defineProps<{
@@ -75,7 +76,7 @@ const value = computed({
         size="small"
         clearable
         maxlength="40"
-        placeholder="可选，如本月签约"
+        :placeholder="CARD_INPUT_PLACEHOLDERS.label"
       />
     </div>
     <div class="static-stat-fields__nums">
@@ -95,7 +96,7 @@ const value = computed({
           size="small"
           clearable
           maxlength="8"
-          placeholder="可选，如 ¥"
+          :placeholder="CARD_INPUT_PLACEHOLDERS.prefix"
         />
       </div>
     </div>

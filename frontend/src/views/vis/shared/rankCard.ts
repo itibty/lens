@@ -2,7 +2,7 @@ import type { VisAccentPresetId } from './accentPresets'
 import type { VisProgressSize, VisRankOptions, VisVisualConfig } from './types'
 import { accentPreview, findAccentPreset, resolveAccentByColor, VIS_ACCENT_PRESETS } from './accentPresets'
 import { resolveCardChrome } from './cardTheme'
-import { formatFieldText, resolveMetricFormat } from './fieldStyle'
+import { formatFieldText, resolveMetricFormat, resolveSignColor } from './fieldStyle'
 import { toFiniteNumber } from './numberStyle'
 import { dimensionAlias, isRankChart, metricAlias, regularMetrics } from './types'
 
@@ -12,10 +12,10 @@ export const RANK_DEFAULTS = {
   showPercent: false,
   showBar: true,
   size: 'md',
-} as const satisfies Required<Omit<VisRankOptions, 'color' | 'decimals' | 'separator' | 'prefix' | 'suffix' | 'compact'>>
+} as const satisfies Required<Omit<VisRankOptions, 'color' | 'decimals' | 'separator' | 'prefix' | 'suffix' | 'compact' | 'signColor'>>
 
 export const RANK_FEATURE_TIPS = {
-  showBar: '条长度对照最大值，不是合计占比',
+  showBar: '以最大绝对值为基准展示条形长度',
 } as const
 
 export const RANK_COLOR_PRESETS = VIS_ACCENT_PRESETS
@@ -140,6 +140,7 @@ export interface RankItemView {
   rank: number
   name: string
   valueText: string
+  valueColor?: string
   percentText: string
   barRatio: number
   record: Record<string, unknown>
@@ -169,10 +170,12 @@ export function resolveRankItems(
     .slice(0, RANK_MAX)
   const max = Math.max(0, ...rows.map(item => Math.abs(item.value)))
   const total = rows.reduce((sum, item) => sum + Math.abs(item.value), 0)
+  const format = resolveMetricFormat(visual, metric)
   return rows.map((item, index) => ({
     rank: index + 1,
     name: item.name,
-    valueText: formatFieldText(item.value, resolveMetricFormat(visual, metric)),
+    valueText: formatFieldText(item.value, format),
+    valueColor: resolveSignColor(item.value, format.signColor),
     percentText: total > 0
       ? `${new Intl.NumberFormat('zh-CN', { maximumFractionDigits: 1, minimumFractionDigits: 0 }).format((Math.abs(item.value) / total) * 100)}%`
       : '0%',

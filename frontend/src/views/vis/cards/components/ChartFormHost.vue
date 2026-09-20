@@ -7,6 +7,7 @@ import type { DatasetField, VisQueryConfig, VisVisualConfig } from '@/views/vis/
 import { getChartDefinition } from '@/views/vis/charts'
 import { needsDataset } from '@/views/vis/shared/types'
 import DetailSettings from './DetailSettings.vue'
+import '../../charts/style-forms/feature-form.scss'
 
 const props = defineProps<{
   mode: 'feature' | 'style'
@@ -37,7 +38,7 @@ const showEmpty = computed(() => !Form.value && !showDetailSettings.value)
 </script>
 
 <template>
-  <div class="chart-form-host">
+  <div class="chart-form-host" :class="{ 'is-feature': mode === 'feature' }">
     <component
       :is="Form"
       v-if="Form"
@@ -45,8 +46,9 @@ const showEmpty = computed(() => !Form.value && !showDetailSettings.value)
       :query="query"
       :rows="rows"
       :fields="fields"
+      :issues="issues"
     />
-    <DetailSettings v-if="showDetailSettings" v-model:visual="visual" :query="query" :fields="fields" :issues="issues" />
+    <DetailSettings v-if="showDetailSettings" v-model:visual="visual" data-validation-shelf="detail" :query="query" :fields="fields" :issues="issues" />
     <el-text
       v-if="showEmpty"
       type="info"

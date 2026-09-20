@@ -1,49 +1,80 @@
-<!-- 设计态辅助层：列线在卡片下方，操作边界与尺寸提示在上方，不拦截鼠标。 -->
+<!-- 设计态辅助层：横纵网格常驻卡片下方，操作边界与尺寸提示在上方，不拦截鼠标。 -->
 <script setup lang="ts">
-import type { DashLayoutRect } from '../dashLayout'
+import type { DashGuideItem } from '../dashGridGuides'
 import { useElementSize } from '@vueuse/core'
 import { useId } from 'vue'
 import { DASH_MARGIN, DASH_ROW_HEIGHT } from '../config'
-import { dashGridGeometry } from '../dashGridGuides'
+import { DASH_GUIDE_LABEL, dashAlignmentGuides, dashGridGeometry, dashGuideLabelPosition } from '../dashGridGuides'
 
-const props = defineProps<{ activeItem?: DashLayoutRect }>()
+const props = withDefaults(defineProps<{
+  activeItem?: DashGuideItem
+  items?: readonly DashGuideItem[]
+}>(), { items: () => [] })
+const MAJOR_STEP = 4
 const root = ref<HTMLElement>()
+const label = ref<HTMLElement>()
 const { width, height } = useElementSize(root)
+const { width: labelWidth } = useElementSize(label, { width: 0, height: 0 }, { box: 'border-box' })
 const geometry = computed(() => dashGridGeometry(width.value))
 const bounds = computed(() => props.activeItem && geometry.value?.rect(props.activeItem))
+const alignments = computed(() => props.activeItem ? dashAlignmentGuides(width.value, props.activeItem, props.items) : [])
 const rowPatternId = `dash-guide-rows-${useId()}`
-const labelStyle = computed(() => bounds.value && ({
-  left: `${Math.max(4, Math.min(bounds.value.left + 8, width.value - 144))}px`,
-  top: `${Math.max(4, bounds.value.top + 8)}px`,
-}))
+const labelStyle = computed(() => {
+  if (!bounds.value)
+    return undefined
+  const position = dashGuideLabelPosition(bounds.value, width.value, height.value, labelWidth.value)
+  return {
+    left: `${position.left}px`,
+    top: `${position.top}px`,
+    height: `${DASH_GUIDE_LABEL.height}px`,
+  }
+})
 </script>
 
 <template>
-  <div ref="root" class="dash-grid-guides" :class="{ 'is-active': !!bounds }" aria-hidden="true">
+  <div ref="root" class="dash-grid-guides" aria-hidden="true">
     <svg v-if="geometry" class="dash-grid-guides__grid" width="100%" height="100%">
-      <g class="dash-grid-guides__columns">
+      <g class="dash-grid-guides__columns" :class="{ 'is-dense': geometry.width / geometry.columns.length < 24 }">
         <template v-for="(column, index) in geometry.columns" :key="index">
-          <line :x1="column.start" y1="0" :x2="column.start" :y2="height" />
-          <line :x1="column.end" y1="0" :x2="column.end" :y2="height" />
+          <line :class="{ 'is-major': index % MAJOR_STEP === 0 }" :x1="column.start" y1="0" :x2="column.start" :y2="height" />
+          <line :class="{ 'is-major': index === geometry.columns.length - 1 }" :x1="column.end" y1="0" :x2="column.end" :y2="height" />
         </template>
       </g>
-      <template v-if="bounds">
-        <defs>
-          <pattern :id="rowPatternId" patternUnits="userSpaceOnUse" :width="geometry.width" :height="geometry.rowStep" :y="DASH_MARGIN[1]">
-            <path :d="`M 0 0 H ${geometry.width} M 0 ${DASH_ROW_HEIGHT} H ${geometry.width}`" />
-          </pattern>
-        </defs>
-        <rect width="100%" height="100%" :fill="`url(#${rowPatternId})`" stroke="none" />
-      </template>
+      <defs>
+        <pattern :id="rowPatternId" patternUnits="userSpaceOnUse" :width="geometry.width" :height="geometry.rowStep * MAJOR_STEP" :y="DASH_MARGIN[1]">
+          <template v-for="row in MAJOR_STEP" :key="row">
+            <line :class="{ 'is-major': row === 1 }" x1="0" :y1="(row - 1) * geometry.rowStep" :x2="geometry.width" :y2="(row - 1) * geometry.rowStep" />
+            <line x1="0" :y1="(row - 1) * geometry.rowStep + DASH_ROW_HEIGHT" :x2="geometry.width" :y2="(row - 1) * geometry.rowStep + DASH_ROW_HEIGHT" />
+          </template>
+        </pattern>
+      </defs>
+      <rect width="100%" height="100%" :fill="`url(#${rowPatternId})`" stroke="none" />
     </svg>
     <template v-if="bounds && activeItem">
       <svg class="dash-grid-guides__edges" width="100%" height="100%">
-        <line :x1="bounds.left" y1="0" :x2="bounds.left" :y2="height" />
-        <line :x1="bounds.left + bounds.width" y1="0" :x2="bounds.left + bounds.width" :y2="height" />
-        <line x1="0" :y1="bounds.top" :x2="width" :y2="bounds.top" />
-        <line x1="0" :y1="bounds.top + bounds.height" :x2="width" :y2="bounds.top + bounds.height" />
+        <g v-for="(guide, index) in alignments" :key="index" class="dash-grid-guides__alignment">
+          <template v-if="guide.axis === 'x'">
+            <line :x1="guide.position" :y1="guide.start" :x2="guide.position" :y2="guide.end" />
+            <path :d="`M ${guide.position - 3} ${guide.start} h 6 M ${guide.position - 3} ${guide.end} h 6`" />
+          </template>
+          <template v-else>
+            <line :x1="guide.start" :y1="guide.position" :x2="guide.end" :y2="guide.position" />
+            <path :d="`M ${guide.start} ${guide.position - 3} v 6 M ${guide.end} ${guide.position - 3} v 6`" />
+          </template>
+        </g>
+        <rect class="dash-grid-guides__selection" :x="bounds.left" :y="bounds.top" :width="bounds.width" :height="bounds.height" />
       </svg>
-      <span class="dash-grid-guides__size" :style="labelStyle">宽 {{ activeItem.w }} 列 · 高 {{ activeItem.h }} 行</span>
+      <span ref="label" class="dash-grid-guides__size" :style="labelStyle">
+        <span class="dash-grid-guides__measure">
+          <span class="dash-grid-guides__value">{{ activeItem.w }}</span>
+          <span class="dash-grid-guides__unit">列</span>
+        </span>
+        <span class="dash-grid-guides__times">×</span>
+        <span class="dash-grid-guides__measure">
+          <span class="dash-grid-guides__value">{{ activeItem.h }}</span>
+          <span class="dash-grid-guides__unit">行</span>
+        </span>
+      </span>
     </template>
   </div>
 </template>
@@ -54,11 +85,9 @@ const labelStyle = computed(() => bounds.value && ({
   inset: 0;
   pointer-events: none;
   user-select: none;
-  --dash-guide-line: color-mix(in srgb, var(--dash-title, var(--na-text-strong)) 8%, transparent);
-
-  &.is-active {
-    --dash-guide-line: color-mix(in srgb, var(--dash-title, var(--na-text-strong)) 14%, transparent);
-  }
+  --dash-guide-line: color-mix(in srgb, var(--dash-title, var(--na-text-strong)) 5%, transparent);
+  --dash-guide-major: color-mix(in srgb, var(--dash-title, var(--na-text-strong)) 10%, transparent);
+  --dash-guide-accent: var(--dash-accent, var(--na-color-primary));
 
   &__grid,
   &__edges {
@@ -71,31 +100,74 @@ const labelStyle = computed(() => bounds.value && ({
 
   &__grid {
     z-index: 0;
-    stroke: var(--dash-guide-line);
+
+    line {
+      stroke: var(--dash-guide-line);
+    }
+
+    .is-major {
+      stroke: var(--dash-guide-major);
+    }
   }
 
   &__edges {
     z-index: 8;
-    stroke: color-mix(in srgb, var(--dash-accent, var(--na-color-primary)) 65%, transparent);
-    stroke-dasharray: 4 3;
+    fill: none;
+  }
+
+  // 窄分组仍使用原栅格定位，只减少过密的背景参考线。
+  &__columns.is-dense line:not(.is-major) {
+    display: none;
+  }
+
+  &__alignment {
+    stroke: color-mix(in srgb, var(--dash-guide-accent) 60%, transparent);
+
+    line {
+      stroke-dasharray: 3 4;
+    }
+  }
+
+  &__selection {
+    stroke: color-mix(in srgb, var(--dash-guide-accent) 80%, transparent);
+    stroke-width: 1.5;
+    rx: var(--dash-card-radius, 12px);
   }
 
   &__size {
     position: absolute;
     z-index: 9;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
     box-sizing: border-box;
     max-width: calc(100% - 8px);
-    padding: 3px 8px;
-    border: 1px solid var(--na-color-primary-border);
-    border-radius: var(--vis-radius-sm);
-    background: var(--dash-card-bg, var(--na-surface-bg));
-    box-shadow: var(--na-shadow-surface);
-    color: var(--dash-accent, var(--na-color-primary));
+    padding: 2px 0;
+    border: 1px solid var(--na-border-color-lighter, var(--el-border-color-lighter));
+    border-radius: 4px;
+    color: var(--na-text-strong, var(--el-text-color-primary));
     font-size: var(--vis-caption-size);
-    font-weight: 500;
+    font-weight: 400;
     font-variant-numeric: tabular-nums;
     line-height: 18px;
     white-space: nowrap;
+  }
+
+  &__measure {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 4px;
+  }
+
+  &__value {
+    font-weight: 600;
+  }
+
+  &__unit,
+  &__times {
+    color: var(--na-text-muted, var(--el-text-color-secondary));
+    font-size: 11px;
   }
 }
 </style>

@@ -1,5 +1,5 @@
 import type { VisTrendOptions, VisVisualConfig } from './types'
-import { FIELD_FORMAT_DEFAULTS, formatFieldText, formatMetricField, resolveMetricFormat } from './fieldStyle'
+import { FIELD_FORMAT_DEFAULTS, formatFieldText, formatMetricField, resolveMetricFieldColor, resolveMetricFormat, resolveSignColor } from './fieldStyle'
 import { formatMetricNumber, toFiniteNumber } from './numberStyle'
 import { dimensionAlias, isTrendChart, metricAlias, regularMetrics } from './types'
 
@@ -51,10 +51,12 @@ export interface TrendView {
   body: string
   compactSuffix: string
   suffix: string
+  color?: string
   points: number[]
   changeText: string
   changeDirection: 'up' | 'down' | 'flat'
-  auxiliaries: Array<{ key: string, label: string, text: string }>
+  changeColor?: string
+  auxiliaries: Array<{ key: string, label: string, text: string, color?: string }>
   lastRow: Record<string, unknown> | null
 }
 
@@ -90,8 +92,10 @@ export function resolveTrendView(
   const opt = resolveTrendOptions(visual)
   let changeText = ''
   let changeDirection: TrendView['changeDirection'] = 'flat'
+  let changeColor: string | undefined
   if (opt.showChange && prev != null && last != null) {
     const diff = last - prev
+    changeColor = resolveSignColor(diff, format.signColor)
     changeDirection = diff === 0 ? 'flat' : diff > 0 ? 'up' : 'down'
     if (prev === 0)
       changeText = formatFieldText(diff, format, { signed: true })
@@ -104,6 +108,7 @@ export function resolveTrendView(
       key: `${alias}-${index}`,
       label: metric.label || metric.field || alias,
       text: formatMetricField(visual, query, alias, lastRow[alias]),
+      color: resolveMetricFieldColor(visual, query, alias, lastRow[alias]),
     }
   })
   return {
@@ -112,9 +117,11 @@ export function resolveTrendView(
     body: parts.body,
     compactSuffix: parts.compactSuffix,
     suffix: parts.empty ? '' : format.suffix,
+    color: resolveSignColor(last, format.signColor),
     points,
     changeText,
     changeDirection,
+    changeColor,
     auxiliaries,
     lastRow,
   }

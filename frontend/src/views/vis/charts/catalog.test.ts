@@ -163,6 +163,7 @@ describe('chart catalog', () => {
     ['scatter', query(0, 1), undefined],
     ['table', query(0, 0), undefined],
     ['number', query(1, 1), undefined],
+    ['number', query(0, 0), undefined],
     ['progress', query(0, 1), undefined],
     ['kpi', query(1, 1), undefined],
     ['radar', query(0, 1), undefined],
@@ -219,7 +220,7 @@ describe('chart catalog', () => {
     expect(collectQueryIssues('number', {
       ...query(0, 0),
       metrics: [contrastMetric()],
-    })).toContainEqual(expect.objectContaining({ message: '指标卡至少需要 1 个主指标（未开同比 / 环比）' }))
+    })).toEqual([])
     expect(collectQueryIssues('number', {
       ...query(0, 1),
       metrics: [...metrics(1), contrastMetric()],

@@ -26,9 +26,9 @@ export interface HavingCandidate {
   display: string
 }
 
-/** 与后端 resolveDimAlias / resolveMetricAlias 一致：label 非空白才用 label */
+/** 与请求中的别名一致：只去除首尾空白，保留展示名内部空格。 */
 export function querySelectAlias(item: { field: string, label?: string }) {
-  return item.label?.trim() ? item.label : item.field
+  return item.label?.trim() || item.field
 }
 
 export function orderSourceDimensions(query: VisQueryConfig, chartType?: string): DimensionPill[] {
@@ -105,7 +105,7 @@ function syncOrderList(orders: OrderPill[], candidates: OrderCandidate[]): Order
   const seen = new Set<string>()
   const next: OrderPill[] = []
   for (const order of orders) {
-    const cand = (order.sourceUid ? byUid.get(order.sourceUid) : undefined) ?? byAlias.get(order.field)
+    const cand = (order.sourceUid ? byUid.get(order.sourceUid) : undefined) ?? byAlias.get(order.field.trim())
     if (!cand || seen.has(cand.alias))
       continue
     seen.add(cand.alias)

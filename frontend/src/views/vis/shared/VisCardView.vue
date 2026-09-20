@@ -43,7 +43,7 @@ import VisProgressCard from '@/views/vis/shared/VisProgressCard.vue'
 import VisRankCard from '@/views/vis/shared/VisRankCard.vue'
 import VisStaticCard from '@/views/vis/shared/VisStaticCard.vue'
 import VisTrendCard from '@/views/vis/shared/VisTrendCard.vue'
-import { dataTimeText, formatQueryTime } from './queryTime'
+import { CARD_TIME_COPY, cardTimeRows, formatQueryTime } from './queryTime'
 import VisCardDataDialog from './VisCardDataDialog.vue'
 
 export interface VisCardMenuAction {
@@ -118,6 +118,7 @@ const emit = defineEmits<{
 }>()
 
 const queryMeta = computed(() => props.data.queryMeta || props.pivotData?.queryMeta)
+const timeRows = computed(() => cardTimeRows(queryMeta.value))
 const timeOpen = ref(false)
 
 const emptyPivotData: VIS.PivotQueryResponse = {
@@ -534,23 +535,45 @@ watch(allowDetail, (ok) => {
           @mousedown.stop
           @click.stop
         >
-          <el-popover v-if="queryMeta" v-model:visible="timeOpen" :trigger="coarsePointer ? 'click' : ['hover', 'focus']" :show-after="150" width="280" placement="bottom-end" :popper-style="overlayThemeStyle">
-            <template #reference>
-              <button type="button" class="vis-card-view__time-icon" aria-label="数据时间" :aria-expanded="timeOpen">
-                <span :class="refreshing ? 'i-svg-spinners-ring-resize' : 'i-mingcute-time-line'" />
-              </button>
+          <el-tooltip
+            v-if="timeRows.length"
+            v-model:visible="timeOpen"
+            :trigger="coarsePointer ? 'click' : ['hover', 'focus']"
+            effect="light"
+            placement="top"
+            popper-class="vis-card-time-popper"
+            :popper-style="overlayThemeStyle"
+            :popper-options="{ modifiers: [{ name: 'preventOverflow', options: { padding: 16 } }] }"
+            :show-after="200"
+            :hide-after="120"
+            :enterable="true"
+          >
+            <template #content>
+              <div class="vis-card-time">
+                <dl class="vis-card-time__rows">
+                  <template v-for="row in timeRows" :key="row.label">
+                    <dt>{{ row.label }}</dt>
+                    <dd>{{ row.value }}</dd>
+                  </template>
+                </dl>
+                <div v-if="refreshing" class="vis-card-time__status">
+                  {{ CARD_TIME_COPY.refreshing }}
+                </div>
+                <div v-else-if="refreshError" class="vis-card-time__status is-error">
+                  {{ CARD_TIME_COPY.refreshFailed }}
+                </div>
+              </div>
             </template>
-            <div class="vis-card-time">
-              <div v-if="dataTimeText(queryMeta)" class="vis-card-time__data">
-                {{ dataTimeText(queryMeta) }}
-              </div>
-              <div class="vis-card-time__query">
-                <span>查询刷新</span><span>{{ formatQueryTime(queryMeta.resultGeneratedAt) }}</span>
-              </div>
-              <span v-if="refreshing" class="vis-card-time__status">刷新中</span>
-              <span v-else-if="refreshError" class="vis-card-time__error">刷新失败 · 保留上次结果</span>
-            </div>
-          </el-popover>
+            <button
+              type="button"
+              class="vis-card-view__time-icon"
+              :class="{ 'is-clickable': coarsePointer }"
+              :aria-label="CARD_TIME_COPY.label"
+              :aria-expanded="timeOpen"
+            >
+              <span :class="refreshing ? 'i-svg-spinners-ring-resize' : 'i-mingcute-time-line'" />
+            </button>
+          </el-tooltip>
           <VisActionButton
             v-if="showFullscreen"
             class="vis-card-view__full-btn"
@@ -638,7 +661,7 @@ watch(allowDetail, (ok) => {
       </div>
 
       <div v-if="refreshError" class="vis-card-view__refresh-error" role="status">
-        <span :title="`最近刷新 ${formatQueryTime(queryMeta?.resultGeneratedAt)}`">刷新失败 · 保留上次结果</span>
+        <span :title="`${CARD_TIME_COPY.resultUpdated} ${formatQueryTime(queryMeta?.resultGeneratedAt)}`">{{ CARD_TIME_COPY.refreshFailed }}</span>
         <button @click="emit('refresh')">
           重试
         </button>
@@ -830,28 +853,48 @@ watch(allowDetail, (ok) => {
 <style scoped lang="scss">
 @use '@/theme/presentation.scss' as ui;
 
+:global(.el-popper.vis-card-time-popper) {
+  box-sizing: border-box;
+  max-width: min(320px, calc(100vw - 32px));
+  padding: 10px 12px;
+}
+
 .vis-card-time {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 2px;
+  max-height: min(320px, 50vh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
   font-size: 12px;
-}
-.vis-card-time__data {
+  line-height: 1.6;
+  text-align: left;
+  white-space: normal;
+  overflow-wrap: anywhere;
   color: var(--el-text-color-primary);
-}
-.vis-card-time__query {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  color: var(--el-text-color-secondary);
-  font-variant-numeric: tabular-nums;
-}
-.vis-card-time__status {
-  color: var(--el-text-color-secondary);
-}
-.vis-card-time__error {
-  color: var(--el-color-warning);
+
+  &__rows {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 4px 12px;
+    margin: 0;
+
+    dt {
+      color: var(--el-text-color-secondary);
+      white-space: nowrap;
+    }
+
+    dd {
+      margin: 0;
+      font-variant-numeric: tabular-nums;
+    }
+  }
+
+  &__status {
+    margin-top: 6px;
+    color: var(--el-text-color-secondary);
+
+    &.is-error {
+      color: var(--el-color-warning);
+    }
+  }
 }
 
 .vis-card-view__refresh-error {
@@ -953,7 +996,6 @@ watch(allowDetail, (ok) => {
 
   &.is-embedded &__header:not(.is-ghost) {
     padding-right: var(--vis-space-2);
-    padding-left: var(--vis-space-2);
   }
 
   &.is-embedded.is-borderless-actions &__header:not(.is-ghost) {
@@ -1001,7 +1043,7 @@ watch(allowDetail, (ok) => {
     flex: 0 0 auto;
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 4px;
     line-height: 1;
     opacity: 0;
     pointer-events: none;
@@ -1023,9 +1065,13 @@ watch(allowDetail, (ok) => {
     border: 0;
     background: transparent;
     color: var(--vis-content-color, var(--el-text-color-secondary));
-    cursor: pointer;
+    cursor: default;
     opacity: 0.65;
     @include ui.focus-ring;
+
+    &.is-clickable {
+      cursor: pointer;
+    }
 
     > span {
       width: 15px;

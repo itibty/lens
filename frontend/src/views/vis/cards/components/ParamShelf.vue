@@ -5,6 +5,7 @@
 import type { DragFieldPayload, ParamPill } from '@/views/vis/shared/dnd'
 import type { DatasetField } from '@/views/vis/shared/types'
 import draggable from 'vuedraggable'
+import { CARD_INPUT_PLACEHOLDERS, CHART_HELP_QUERY_TIPS } from '@/views/vis/charts/chartHelp'
 import { dateValueExpLabel } from '@/views/vis/shared/dateExp'
 import { DND_GROUP, toParamPill } from '@/views/vis/shared/dnd'
 import AdvancedModule from './AdvancedModule.vue'
@@ -95,7 +96,7 @@ function pillSubtitle(element: ParamPill) {
 <template>
   <AdvancedModule
     title="模板参数"
-    tip="写入数据集 SQL 模板的参数"
+    :tip="CHART_HELP_QUERY_TIPS.params"
   >
     <div class="drop-wrap">
       <draggable
@@ -130,7 +131,7 @@ function pillSubtitle(element: ParamPill) {
                       filterable
                       allow-create
                       default-first-option
-                      placeholder="选择或输入 Enjoy 参数名"
+                      :placeholder="CARD_INPUT_PLACEHOLDERS.paramName"
                     >
                       <el-option
                         v-for="name in fieldNames"
@@ -154,7 +155,7 @@ function pillSubtitle(element: ParamPill) {
                     <el-input
                       v-model="drafts[element._uid].text"
                       clearable
-                      placeholder="写入模板的参数值"
+                      :placeholder="CARD_INPUT_PLACEHOLDERS.paramValue"
                     />
                   </el-form-item>
                   <DateExpFields

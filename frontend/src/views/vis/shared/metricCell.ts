@@ -1,9 +1,10 @@
 /** 表格 / 透视指标单元格展示：配置解析与 VTable 百分比进度属性。 */
-import type { VisMetricCellVisual, VisQueryConfig, VisVisualConfig } from './types'
+import type { TYPES } from '@visactor/vtable'
+import type { VisMetricCellVisual, VisNumberFormat, VisQueryConfig, VisVisualConfig } from './types'
 import type { ThemeColors } from '@/theme/tokens'
 import { ACCENT, alphaColor, LIGHT_THEME, mixColor, NEUTRAL } from '@/theme/tokens'
 import { sameCssColor } from './accentPresets'
-import { compactCellVisual, resolveMetricStyleRule } from './fieldStyle'
+import { compactCellVisual, resolveMetricStyleRule, resolveSignColor } from './fieldStyle'
 import { metricAlias } from './types'
 import { resolveVTableProgressTrackColor } from './vtableTheme'
 
@@ -11,6 +12,24 @@ export const METRIC_PROGRESS_MIN = 0
 export const METRIC_PROGRESS_MAX = 100
 export const METRIC_PROGRESS_VERTICAL_GAP = 3
 export const METRIC_PROGRESS_DEFAULT_COLOR = alphaColor(LIGHT_THEME.chart.series[0], 0.26)
+
+type MetricColumnStyle = Record<string, unknown> | ((args: TYPES.StylePropertyFunctionArg) => Record<string, unknown>) | undefined
+
+/** 保留数据标注的显式文字色；无正负规则或零 / 空值时不覆盖表格内容色。 */
+export function bindMetricSignColorStyle(
+  base: MetricColumnStyle,
+  rule: VisNumberFormat['signColor'],
+  theme: ThemeColors,
+): MetricColumnStyle {
+  if (!rule)
+    return base
+  return (args: TYPES.StylePropertyFunctionArg) => {
+    const style = typeof base === 'function' ? base(args) : base
+    const value = args.table.getCellOriginValue(args.col, args.row)
+    const color = resolveSignColor(value, rule, { red: theme.status.danger.base, green: theme.status.success.base })
+    return color ? { color, ...style } : { ...style }
+  }
+}
 
 /** 横向数据条使用固定的半透明预设，兼顾色彩识别与上层数字可读性。 */
 function dataBarPreset<Id extends keyof typeof ACCENT>(id: Id, label: string) {

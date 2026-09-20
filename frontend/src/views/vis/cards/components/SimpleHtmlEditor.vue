@@ -10,6 +10,7 @@ import { TextStyleKit } from '@tiptap/extension-text-style'
 import StarterKit from '@tiptap/starter-kit'
 import { EditorContent, useEditor } from '@tiptap/vue-3'
 import { BubbleMenu } from '@tiptap/vue-3/menus'
+import { CARD_INPUT_PLACEHOLDERS } from '@/views/vis/charts/chartHelp'
 import { SlashCommand } from './slashCommand'
 
 const props = withDefaults(defineProps<{
@@ -89,7 +90,7 @@ const editor = useEditor({
     }),
     Highlight.configure({ multicolor: true }),
     TextAlign.configure({ types: ['heading', 'paragraph'] }),
-    Placeholder.configure({ placeholder: '输入说明文字，或输入 /' }),
+    Placeholder.configure({ placeholder: CARD_INPUT_PLACEHOLDERS.richtext }),
     SlashCommand,
   ],
   editorProps: {
@@ -177,7 +178,7 @@ async function insertLink() {
   }
   try {
     const { value } = await ElMessageBox.prompt('链接地址', '插入链接', {
-      inputPlaceholder: 'https://',
+      inputPlaceholder: CARD_INPUT_PLACEHOLDERS.url,
       inputPattern: /^https?:\/\/.+/i,
       inputErrorMessage: '请输入 http(s) 地址',
       confirmButtonText: '确定',

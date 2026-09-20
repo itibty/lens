@@ -2,7 +2,7 @@
  * 按指标覆盖显示格式 / 表格单元格展示（visual.fieldStyles）。
  * 不改查询结果；未添加的字段走 implicitFieldFormat，落库只写差异。
  */
-import type { VisFieldStyleRule, VisMetricCellVisual, VisNumberFormat, VisQueryConfig, VisVisualConfig } from './types'
+import type { ChartType, VisFieldStyleRule, VisMetricCellVisual, VisNumberFormat, VisQueryConfig, VisVisualConfig } from './types'
 import {
   formatMetricNumber,
   joinMetricNumber,
@@ -16,9 +16,43 @@ export const FIELD_FORMAT_DEFAULTS = {
   prefix: '',
   suffix: '',
   compact: false,
-} as const satisfies Required<VisNumberFormat>
+} as const satisfies Required<Omit<VisNumberFormat, 'signColor'>>
 
-export type ResolvedFieldFormat = Required<VisNumberFormat>
+export type ResolvedFieldFormat = Required<Omit<VisNumberFormat, 'signColor'>> & Pick<VisNumberFormat, 'signColor'>
+
+export const SIGN_COLOR_OPTIONS = [
+  { value: 'positive-red', label: '正红负绿' },
+  { value: 'positive-green', label: '正绿负红' },
+] as const
+
+export const SIGN_COLOR_TIP = '优先于内容色；零值、空值沿用原有文字颜色。'
+
+/** 数值卡片和表格支持按字段着色，几何图表仍使用图表系列配色。 */
+export function supportsMetricSignColor(chartType: ChartType) {
+  return ['number', 'trend', 'progress', 'kpi', 'rank', 'table', 'pivot'].includes(chartType)
+}
+
+export function resolveSignColor(
+  value: unknown,
+  rule: VisNumberFormat['signColor'],
+  palette = { red: 'var(--el-color-danger)', green: 'var(--el-color-success)' },
+): string | undefined {
+  if (rule !== 'positive-red' && rule !== 'positive-green')
+    return undefined
+  const number = toFiniteNumber(value)
+  if (number == null || number === 0)
+    return undefined
+  return (number > 0) === (rule === 'positive-red') ? palette.red : palette.green
+}
+
+export function resolveMetricFieldColor(
+  visual: VisVisualConfig | undefined,
+  query: Pick<VisQueryConfig, 'metrics'> | undefined,
+  alias: string,
+  value: unknown,
+) {
+  return resolveSignColor(value, resolveFieldFormat(visual, query, alias).signColor)
+}
 
 export interface FieldStyleCandidate {
   sourceUid: string
@@ -145,6 +179,8 @@ function compactFormat(raw: VisNumberFormat | undefined, metric: VIS.MetricItem)
     next.separator = raw.separator
   if (raw.compact != null && raw.compact !== implicit.compact)
     next.compact = raw.compact
+  if (raw.signColor === 'positive-red' || raw.signColor === 'positive-green')
+    next.signColor = raw.signColor
   const prefix = raw.prefix?.trim() ?? ''
   if (prefix !== implicit.prefix)
     next.prefix = prefix

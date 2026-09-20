@@ -104,7 +104,7 @@ function onValueClick(event: MouseEvent) {
         <div
           class="vis-trend-card__value"
           :class="{ 'is-interactive': interactive }"
-          :style="valueColor ? { color: valueColor } : undefined"
+          :style="{ color: view.color ?? valueColor }"
           @click="onValueClick"
         >
           <VisMetricValue
@@ -117,7 +117,7 @@ function onValueClick(event: MouseEvent) {
         <div
           v-if="view.changeText"
           class="vis-trend-card__change"
-          :class="`is-${view.changeDirection}`"
+          :style="view.changeColor ? { color: view.changeColor } : undefined"
         >
           <VisMetricValue :body="view.changeText" size="aux" />
         </div>
@@ -265,18 +265,6 @@ function onValueClick(event: MouseEvent) {
     flex: 0 0 auto;
     max-width: 100%;
     white-space: nowrap;
-
-    &.is-up {
-      color: var(--el-color-success);
-    }
-
-    &.is-down {
-      color: var(--el-color-danger);
-    }
-
-    &.is-flat {
-      color: var(--vis-muted-color, var(--el-text-color-secondary));
-    }
   }
 
   &__hero {

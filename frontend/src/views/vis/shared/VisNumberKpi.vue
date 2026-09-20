@@ -12,6 +12,7 @@ import {
 } from '@/views/vis/shared/numberStyle'
 
 import VisMetricAux from './VisMetricAux.vue'
+import VisMetricTooltip from './VisMetricTooltip.vue'
 import VisMetricValue from './VisMetricValue.vue'
 
 const props = withDefaults(defineProps<{
@@ -40,7 +41,7 @@ function onValueClick(event: MouseEvent) {
 
 const style = computed(() => resolveNumberStyle(props.visual))
 const view = computed(() => resolveNumberView(props.query, props.data, props.visual))
-const valueColor = computed(() => resolveNumberValueColor(props.visual))
+const valueColor = computed(() => view.value?.color ?? resolveNumberValueColor(props.visual))
 const rootRef = ref<HTMLElement>()
 const { vars: cardStyle } = useNumberFit(rootRef, () => props.fill)
 </script>
@@ -53,29 +54,30 @@ const { vars: cardStyle } = useNumberFit(rootRef, () => props.fill)
     :class="{ 'has-aux': view.auxiliaries.length, 'is-fill': fill }"
     :style="cardStyle"
   >
-    <div
-      class="vis-number-kpi__hero"
-      :title="view.periodTitle || undefined"
-    >
+    <div class="vis-number-kpi__hero">
       <div
         v-if="style.showLabel"
         class="vis-number-kpi__name"
       >
         {{ view.label }}
       </div>
-      <div
-        class="vis-number-kpi__value"
-        :class="{ 'is-interactive': interactive }"
-        :style="valueColor ? { color: valueColor } : undefined"
-        @click="onValueClick"
-      >
-        <VisMetricValue
-          :body="view.body"
-          :prefix="view.prefix"
-          :compact-suffix="view.compactSuffix"
-          :suffix="view.suffix"
-        />
-      </div>
+      <VisMetricTooltip :periods="view.periods">
+        <div
+          class="vis-number-kpi__value"
+          :class="{ 'is-interactive': interactive }"
+          :style="valueColor ? { color: valueColor } : undefined"
+          :tabindex="view.periods.length ? 0 : undefined"
+          @click="onValueClick"
+        >
+          <VisMetricValue
+            :body="view.body"
+            :prefix="view.prefix"
+            :compact-suffix="view.compactSuffix"
+            :suffix="view.suffix"
+            :native-tooltip="false"
+          />
+        </div>
+      </VisMetricTooltip>
     </div>
     <VisMetricAux
       v-if="view.auxiliaries.length"
@@ -128,10 +130,7 @@ const { vars: cardStyle } = useNumberFit(rootRef, () => props.fill)
     flex-direction: column;
     gap: 2px;
     min-width: 0;
-
-    &[title] {
-      cursor: help;
-    }
+    cursor: default;
   }
 
   &__name {
@@ -150,6 +149,7 @@ const { vars: cardStyle } = useNumberFit(rootRef, () => props.fill)
     display: flex;
     align-items: baseline;
     flex-wrap: nowrap;
+    width: fit-content;
     min-width: 0;
     max-width: 100%;
     overflow: hidden;

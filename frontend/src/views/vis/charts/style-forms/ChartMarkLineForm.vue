@@ -3,6 +3,7 @@
 -->
 <script setup lang="ts">
 import type { VisMarkLine, VisMarkLineKind, VisQueryConfig, VisVisualConfig } from '@/views/vis/shared/types'
+import { CARD_INPUT_PLACEHOLDERS } from '@/views/vis/charts/chartHelp'
 import { CHART_FEATURE_TIPS, chartMetricAliases } from '@/views/vis/shared/chartOptions'
 import {
   defaultMarkLineField,
@@ -88,10 +89,10 @@ defineExpose({ addLine })
   <div
     v-for="(line, index) in lines"
     :key="index"
-    class="chart-mark-line"
+    class="vis-feature-rule"
   >
-    <div class="chart-mark-line__head">
-      <span class="chart-mark-line__name">
+    <div class="vis-feature-rule__head">
+      <span class="vis-feature-rule__title">
         标记线 {{ index + 1 }}
       </span>
       <button
@@ -135,7 +136,7 @@ defineExpose({ addLine })
         size="small"
         class="vis-style-form__control"
         :controls="false"
-        placeholder="必填"
+        :placeholder="CARD_INPUT_PLACEHOLDERS.number"
         :value-on-clear="undefined"
         @update:model-value="(value: number | undefined) => patchLine(index, { value })"
       />
@@ -173,37 +174,9 @@ defineExpose({ addLine })
         class="vis-style-form__control"
         maxlength="12"
         clearable
-        placeholder="空则自动"
+        :placeholder="CARD_INPUT_PLACEHOLDERS.label"
         @update:model-value="(value: string) => patchLine(index, { label: value.trim() || undefined })"
       />
     </div>
   </div>
 </template>
-
-<style scoped lang="scss">
-.chart-mark-line {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 8px 10px;
-  border: 1px solid var(--el-border-color-extra-light);
-  border-radius: 8px;
-  background: var(--el-fill-color-lighter);
-
-  &__head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    min-height: 22px;
-  }
-
-  &__name {
-    font-size: var(--vis-cfg-group-size, 12px);
-    font-weight: var(--vis-cfg-group-weight, 500);
-    color: var(--vis-cfg-group-color, var(--el-text-color-regular));
-    line-height: 1.3;
-    white-space: nowrap;
-  }
-}
-</style>

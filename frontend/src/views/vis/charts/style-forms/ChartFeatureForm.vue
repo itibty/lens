@@ -1,9 +1,11 @@
 <!--
- * @Description: 几何图功能设置（通用 / 展示 / 形态，按类型显隐）
+ * @Description: 几何图功能设置（通用 / 展示 / 坐标轴 / 格式 / 标记线，按类型显隐）
 -->
 <script setup lang="ts">
+import type { QueryIssue } from '@/views/vis/cards/chartShape'
 import type { ResolvedChartOptions } from '@/views/vis/shared/chartOptions'
 import type { VisChartOptions, VisQueryConfig, VisVisualConfig } from '@/views/vis/shared/types'
+import { CARD_INPUT_PLACEHOLDERS, CARD_INPUT_TIPS, FEATURE_FORM_COPY } from '@/views/vis/charts/chartHelp'
 import {
   CHART_FEATURE_TIPS,
   chartCaps,
@@ -28,6 +30,7 @@ import TitleStyleFields from './TitleStyleFields.vue'
 
 const props = defineProps<{
   query?: VisQueryConfig
+  issues?: QueryIssue[]
 }>()
 
 const visual = defineModel<VisVisualConfig>('visual', { required: true })
@@ -86,7 +89,7 @@ const canStack = computed(() =>
   && !dualAxis.value
   && (canLineMark.value ? barAliases.value.length > 1 : hasSeries.value),
 )
-const showShape = computed(() =>
+const hasShapeOptions = computed(() =>
   caps.value.orientation
   || canStack.value
   || caps.value.area
@@ -95,11 +98,10 @@ const showShape = computed(() =>
   || caps.value.showRate
   || caps.value.randomRotate
   || caps.value.shapeText
-  || canDualAxis.value
   || canLineMark.value,
 )
 
-const openSections = ref(['common', 'display', 'fieldStyle', 'shape', 'markLine', 'axes'])
+const openSections = ref(['common', 'display', 'fieldStyle'])
 const markLineFormRef = ref<{ addLine: () => void } | null>(null)
 
 const legend = optField('legend')
@@ -187,290 +189,291 @@ const secondaryFields = computed({
       <TitleStyleFields v-model:visual="visual" />
     </StyleFormSection>
 
-    <StyleFormSection
-      title="展示"
-      name="display"
-    >
-      <div
-        v-if="caps.legend"
-        class="vis-style-form__row"
-      >
-        <StyleFormLabel>
-          图例
-        </StyleFormLabel>
-        <el-switch v-model="legend" size="small" />
-      </div>
-
-      <div
-        v-if="caps.legend && legend"
-        class="vis-style-form__row"
-      >
-        <StyleFormLabel>
-          图例位置
-        </StyleFormLabel>
-        <el-radio-group
-          v-model="legendPosition"
-          size="small"
-          class="vis-style-form__segmented"
+    <StyleFormSection title="展示" name="display">
+      <div v-if="hasShapeOptions" class="vis-feature-group">
+        <div
+          v-if="caps.orientation"
+          class="vis-style-form__row"
         >
-          <el-radio-button value="top">
-            上
-          </el-radio-button>
-          <el-radio-button value="bottom">
-            下
-          </el-radio-button>
-          <el-radio-button value="left">
-            左
-          </el-radio-button>
-          <el-radio-button value="right">
-            右
-          </el-radio-button>
-        </el-radio-group>
+          <StyleFormLabel>
+            方向
+          </StyleFormLabel>
+          <el-radio-group
+            v-model="orientation"
+            size="small"
+            class="vis-style-form__segmented"
+          >
+            <el-radio-button value="vertical">
+              纵向
+            </el-radio-button>
+            <el-radio-button value="horizontal">
+              横向
+            </el-radio-button>
+          </el-radio-group>
+        </div>
+
+        <div
+          v-if="chartType === 'waterfall'"
+          class="vis-style-form__row"
+        >
+          <StyleFormLabel :tip="CHART_FEATURE_TIPS.waterfallTotal">
+            末项合计
+          </StyleFormLabel>
+          <el-switch v-model="waterfallTotal" size="small" />
+        </div>
+
+        <div
+          v-if="canLineMark"
+          class="vis-style-form__row is-block"
+        >
+          <StyleFormLabel :tip="CHART_FEATURE_TIPS.lineFields">
+            折线指标
+          </StyleFormLabel>
+          <el-select
+            v-model="lineFields"
+            size="small"
+            class="vis-style-form__control"
+            multiple
+            collapse-tags
+            collapse-tags-tooltip
+            clearable
+            placeholder="选择指标"
+          >
+            <el-option
+              v-for="field in metricAliases"
+              :key="field"
+              :label="field"
+              :value="field"
+            />
+          </el-select>
+        </div>
+
+        <div
+          v-if="canStack"
+          class="vis-style-form__row"
+        >
+          <StyleFormLabel>
+            堆叠
+          </StyleFormLabel>
+          <el-switch v-model="stacked" size="small" />
+        </div>
+
+        <div
+          v-if="canStack && stacked && chartType === 'bar'"
+          class="vis-style-form__row is-child"
+        >
+          <StyleFormLabel :tip="CHART_FEATURE_TIPS.percent">
+            百分比
+          </StyleFormLabel>
+          <el-switch v-model="percent" size="small" />
+        </div>
+
+        <div
+          v-if="caps.area"
+          class="vis-style-form__row"
+        >
+          <StyleFormLabel :tip="chartType === 'radar' ? CHART_FEATURE_TIPS.areaRadar : undefined">
+            面积
+          </StyleFormLabel>
+          <el-switch v-model="area" size="small" />
+        </div>
+
+        <div
+          v-if="caps.smooth"
+          class="vis-style-form__row"
+        >
+          <StyleFormLabel>
+            平滑
+          </StyleFormLabel>
+          <el-switch v-model="smooth" size="small" />
+        </div>
+
+        <div
+          v-if="caps.donut"
+          class="vis-style-form__row"
+        >
+          <StyleFormLabel>
+            圆环
+          </StyleFormLabel>
+          <el-switch v-model="donut" size="small" />
+        </div>
+
+        <div
+          v-if="caps.donut && donut"
+          class="vis-style-form__row is-child"
+        >
+          <StyleFormLabel>
+            环指标卡
+          </StyleFormLabel>
+          <el-switch v-model="centerText" size="small" />
+        </div>
+
+        <div
+          v-if="caps.showRate"
+          class="vis-style-form__row"
+        >
+          <StyleFormLabel :tip="CHART_FEATURE_TIPS.showRate">
+            转化率
+          </StyleFormLabel>
+          <el-switch v-model="showRate" size="small" />
+        </div>
+
+        <div
+          v-if="caps.shapeText"
+          class="vis-style-form__row"
+        >
+          <StyleFormLabel :tip="CARD_INPUT_TIPS.shapeText">
+            轮廓文字
+          </StyleFormLabel>
+          <el-input
+            v-model="shapeText"
+            size="small"
+            class="vis-style-form__control"
+            maxlength="12"
+            clearable
+            :placeholder="CARD_INPUT_PLACEHOLDERS.shapeText"
+          />
+        </div>
+
+        <div
+          v-if="caps.randomRotate"
+          class="vis-style-form__row"
+        >
+          <StyleFormLabel>
+            随机角度
+          </StyleFormLabel>
+          <el-switch v-model="randomRotate" size="small" />
+        </div>
       </div>
 
-      <div class="vis-style-form__row">
-        <StyleFormLabel>
-          提示
-        </StyleFormLabel>
-        <el-switch v-model="tooltip" size="small" />
+      <div v-if="caps.legend || caps.dataLabel" class="vis-feature-group">
+        <div
+          v-if="caps.legend"
+          class="vis-style-form__row"
+        >
+          <StyleFormLabel>
+            图例
+          </StyleFormLabel>
+          <el-switch v-model="legend" size="small" />
+        </div>
+
+        <div
+          v-if="caps.legend && legend"
+          class="vis-style-form__row is-child"
+        >
+          <StyleFormLabel>
+            图例位置
+          </StyleFormLabel>
+          <el-radio-group
+            v-model="legendPosition"
+            size="small"
+            class="vis-style-form__segmented"
+          >
+            <el-radio-button value="top">
+              上
+            </el-radio-button>
+            <el-radio-button value="bottom">
+              下
+            </el-radio-button>
+            <el-radio-button value="left">
+              左
+            </el-radio-button>
+            <el-radio-button value="right">
+              右
+            </el-radio-button>
+          </el-radio-group>
+        </div>
+
+        <div
+          v-if="caps.dataLabel"
+          class="vis-style-form__row"
+        >
+          <StyleFormLabel :tip="chartType === 'bar' || chartType === 'combo' ? CHART_FEATURE_TIPS.dataLabelBar : undefined">
+            数据标签
+          </StyleFormLabel>
+          <el-switch v-model="dataLabel" size="small" />
+        </div>
       </div>
 
-      <div
-        v-if="caps.crosshair"
-        class="vis-style-form__row"
-      >
-        <StyleFormLabel :tip="CHART_FEATURE_TIPS.crosshair">
-          辅助线
-        </StyleFormLabel>
-        <el-switch v-model="crosshair" size="small" />
-      </div>
+      <div class="vis-feature-group">
+        <div class="vis-style-form__row">
+          <StyleFormLabel>
+            {{ FEATURE_FORM_COPY.tooltip }}
+          </StyleFormLabel>
+          <el-switch v-model="tooltip" size="small" />
+        </div>
 
-      <div
-        v-if="caps.dataLabel"
-        class="vis-style-form__row"
-      >
-        <StyleFormLabel :tip="chartType === 'bar' || chartType === 'combo' ? CHART_FEATURE_TIPS.dataLabelBar : undefined">
-          数据标签
-        </StyleFormLabel>
-        <el-switch v-model="dataLabel" size="small" />
-      </div>
+        <div
+          v-if="caps.crosshair"
+          class="vis-style-form__row"
+        >
+          <StyleFormLabel :tip="CHART_FEATURE_TIPS.crosshair">
+            辅助线
+          </StyleFormLabel>
+          <el-switch v-model="crosshair" size="small" />
+        </div>
 
-      <div
-        v-if="caps.scrollbar"
-        class="vis-style-form__row"
-      >
-        <StyleFormLabel>
-          滚动条
-        </StyleFormLabel>
-        <el-switch v-model="scrollbar" size="small" />
+        <div
+          v-if="caps.scrollbar"
+          class="vis-style-form__row"
+        >
+          <StyleFormLabel>
+            滚动条
+          </StyleFormLabel>
+          <el-switch v-model="scrollbar" size="small" />
+        </div>
       </div>
     </StyleFormSection>
+
+    <ChartAxesForm
+      v-if="supportsSeriesStyle(chartType)"
+      v-model:visual="visual"
+      v-model:open-sections="openSections"
+      data-validation-shelf="appearance"
+      :query="query"
+      :issues="issues"
+    >
+      <div v-if="canDualAxis" class="vis-feature-group">
+        <div class="vis-style-form__row">
+          <StyleFormLabel>
+            双轴
+          </StyleFormLabel>
+          <el-switch v-model="dualAxis" size="small" />
+        </div>
+
+        <div
+          v-if="dualAxis"
+          class="vis-style-form__row is-block is-child"
+        >
+          <StyleFormLabel :tip="CHART_FEATURE_TIPS.secondaryFields">
+            副轴指标
+          </StyleFormLabel>
+          <el-select
+            v-model="secondaryFields"
+            size="small"
+            class="vis-style-form__control"
+            multiple
+            collapse-tags
+            collapse-tags-tooltip
+            clearable
+            placeholder="选择指标"
+          >
+            <el-option
+              v-for="field in metricAliases"
+              :key="field"
+              :label="field"
+              :value="field"
+            />
+          </el-select>
+        </div>
+      </div>
+    </ChartAxesForm>
 
     <FieldStyleShelf
       v-model:visual="visual"
       v-model:open-sections="openSections"
       :query="query"
     />
-
-    <StyleFormSection
-      v-if="showShape"
-      title="形态"
-      name="shape"
-    >
-      <div
-        v-if="caps.orientation"
-        class="vis-style-form__row"
-      >
-        <StyleFormLabel>
-          方向
-        </StyleFormLabel>
-        <el-radio-group
-          v-model="orientation"
-          size="small"
-          class="vis-style-form__segmented"
-        >
-          <el-radio-button value="vertical">
-            纵向
-          </el-radio-button>
-          <el-radio-button value="horizontal">
-            横向
-          </el-radio-button>
-        </el-radio-group>
-      </div>
-
-      <div
-        v-if="chartType === 'waterfall'"
-        class="vis-style-form__row"
-      >
-        <StyleFormLabel :tip="CHART_FEATURE_TIPS.waterfallTotal">
-          末项合计
-        </StyleFormLabel>
-        <el-switch v-model="waterfallTotal" size="small" />
-      </div>
-
-      <div
-        v-if="canLineMark"
-        class="vis-style-form__row"
-      >
-        <StyleFormLabel :tip="CHART_FEATURE_TIPS.lineFields">
-          折线指标
-        </StyleFormLabel>
-        <el-select
-          v-model="lineFields"
-          size="small"
-          class="vis-style-form__control"
-          multiple
-          collapse-tags
-          collapse-tags-tooltip
-          clearable
-          placeholder="选择指标"
-        >
-          <el-option
-            v-for="field in metricAliases"
-            :key="field"
-            :label="field"
-            :value="field"
-          />
-        </el-select>
-      </div>
-
-      <div
-        v-if="canDualAxis"
-        class="vis-style-form__row"
-      >
-        <StyleFormLabel>
-          双轴
-        </StyleFormLabel>
-        <el-switch v-model="dualAxis" size="small" />
-      </div>
-
-      <div
-        v-if="canDualAxis && dualAxis"
-        class="vis-style-form__row"
-      >
-        <StyleFormLabel :tip="CHART_FEATURE_TIPS.secondaryFields">
-          副轴指标
-        </StyleFormLabel>
-        <el-select
-          v-model="secondaryFields"
-          size="small"
-          class="vis-style-form__control"
-          multiple
-          collapse-tags
-          collapse-tags-tooltip
-          clearable
-          placeholder="选择指标"
-        >
-          <el-option
-            v-for="field in metricAliases"
-            :key="field"
-            :label="field"
-            :value="field"
-          />
-        </el-select>
-      </div>
-
-      <div
-        v-if="canStack"
-        class="vis-style-form__row"
-      >
-        <StyleFormLabel>
-          堆叠
-        </StyleFormLabel>
-        <el-switch v-model="stacked" size="small" />
-      </div>
-
-      <div
-        v-if="canStack && stacked && chartType === 'bar'"
-        class="vis-style-form__row"
-      >
-        <StyleFormLabel :tip="CHART_FEATURE_TIPS.percent">
-          百分比
-        </StyleFormLabel>
-        <el-switch v-model="percent" size="small" />
-      </div>
-
-      <div
-        v-if="caps.area"
-        class="vis-style-form__row"
-      >
-        <StyleFormLabel :tip="chartType === 'radar' ? CHART_FEATURE_TIPS.areaRadar : undefined">
-          面积
-        </StyleFormLabel>
-        <el-switch v-model="area" size="small" />
-      </div>
-
-      <div
-        v-if="caps.smooth"
-        class="vis-style-form__row"
-      >
-        <StyleFormLabel>
-          平滑
-        </StyleFormLabel>
-        <el-switch v-model="smooth" size="small" />
-      </div>
-
-      <div
-        v-if="caps.donut"
-        class="vis-style-form__row"
-      >
-        <StyleFormLabel>
-          圆环
-        </StyleFormLabel>
-        <el-switch v-model="donut" size="small" />
-      </div>
-
-      <div
-        v-if="caps.donut && donut"
-        class="vis-style-form__row"
-      >
-        <StyleFormLabel>
-          环指标卡
-        </StyleFormLabel>
-        <el-switch v-model="centerText" size="small" />
-      </div>
-
-      <div
-        v-if="caps.showRate"
-        class="vis-style-form__row"
-      >
-        <StyleFormLabel :tip="CHART_FEATURE_TIPS.showRate">
-          转化率
-        </StyleFormLabel>
-        <el-switch v-model="showRate" size="small" />
-      </div>
-
-      <div
-        v-if="caps.shapeText"
-        class="vis-style-form__row"
-      >
-        <StyleFormLabel>
-          轮廓文字
-        </StyleFormLabel>
-        <el-input
-          v-model="shapeText"
-          size="small"
-          class="vis-style-form__control"
-          maxlength="12"
-          clearable
-          placeholder="空则铺满"
-        />
-      </div>
-
-      <div
-        v-if="caps.randomRotate"
-        class="vis-style-form__row"
-      >
-        <StyleFormLabel>
-          随机角度
-        </StyleFormLabel>
-        <el-switch v-model="randomRotate" size="small" />
-      </div>
-    </StyleFormSection>
-
-    <StyleFormSection v-if="supportsSeriesStyle(chartType)" title="坐标轴" name="axes">
-      <ChartAxesForm v-model:visual="visual" :query="query" />
-    </StyleFormSection>
 
     <StyleFormSection
       v-if="canMarkLine"
