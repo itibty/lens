@@ -764,6 +764,8 @@ watch(mobile, (enabled) => {
   transition: opacity 0.15s ease;
 }
 
+// 独立预览的手机 / 平板布局与卡片操作一致，直接显示工具，无需先点顶栏。
+.filter-dock.is-mobile .filter-dock__right,
 .filter-dock.is-touch-active .filter-dock__right,
 .filter-dock:has(:focus-visible) .filter-dock__right,
 .filter-dock:has(.filter-dock__right [aria-expanded='true']) .filter-dock__right {

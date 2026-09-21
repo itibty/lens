@@ -25,7 +25,6 @@ const props = defineProps<{
   data: DashManageNode[]
   loading?: boolean
   canWrite?: boolean
-  canViewUsers?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -198,9 +197,9 @@ defineExpose<DashExplorerTreeInstance>({ setCurrentDashboard })
                     </template>
                   </el-dropdown-menu>
                   <el-dropdown-menu v-else>
-                    <el-dropdown-item v-if="canViewUsers" command="related-users">
-                      <span class="explorer-menu__icon i-mingcute-group-line" />
-                      用户
+                    <el-dropdown-item v-if="canWrite" command="dashboard-info">
+                      <span class="explorer-menu__icon i-mingcute-information-line" />
+                      信息
                     </el-dropdown-item>
                     <el-dropdown-item command="edit-dashboard">
                       <span class="explorer-menu__icon i-mingcute-edit-3-line" />

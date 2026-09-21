@@ -47,6 +47,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class DatasetAdminService {
 
+    private final ResourceAuditService auditService;
     private final VisDatasetMapper datasetMapper;
     private final VisDatasetFieldMapper fieldMapper;
     private final VisDatasourceMapper datasourceMapper;
@@ -64,12 +65,16 @@ public class DatasetAdminService {
                 .orderByDesc(VisDataset::getId));
         Map<Long, VisDatasource> sources = datasourceMapper.selectList(null).stream()
                 .collect(Collectors.toMap(VisDatasource::getId, s -> s, (a, b) -> a));
-        return ConvertUtil.toPageResponse(page.convert(row -> toInfo(row, sources.get(row.getSourceId()))));
+        var result = page.convert(row -> toInfo(row, sources.get(row.getSourceId())));
+        auditService.fillNames(result.getRecords());
+        return ConvertUtil.toPageResponse(result);
     }
 
     public ConfSqlInfo detail(Long id) {
         VisDataset row = require(id);
-        return toInfo(row, datasourceMapper.selectById(row.getSourceId()));
+        ConfSqlInfo info = toInfo(row, datasourceMapper.selectById(row.getSourceId()));
+        auditService.fillNames(List.of(info));
+        return info;
     }
 
     @Transactional
@@ -213,6 +218,7 @@ public class DatasetAdminService {
 
     private ConfSqlInfo toInfo(VisDataset row, VisDatasource source) {
         ConfSqlInfo info = new ConfSqlInfo();
+        info.copyAuditFrom(row);
         info.setId(row.getId());
         info.setSqlName(row.getDatasetName());
         info.setSqlDesc(row.getDatasetDesc());

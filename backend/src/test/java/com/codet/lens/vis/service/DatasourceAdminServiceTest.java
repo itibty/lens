@@ -19,7 +19,7 @@ class DatasourceAdminServiceTest {
     final VisDatasetMapper datasets = mock(VisDatasetMapper.class);
     final DatasourceRegistry registry = mock(DatasourceRegistry.class);
     final DatasourceConnectionFactory connections = mock(DatasourceConnectionFactory.class);
-    final DatasourceAdminService service = new DatasourceAdminService(sources, datasets, registry, connections);
+    final DatasourceAdminService service = new DatasourceAdminService(mock(ResourceAuditService.class), sources, datasets, registry, connections);
     VisDatasource old;
     @BeforeEach void setup() {
         TransactionSynchronizationManager.initSynchronization();

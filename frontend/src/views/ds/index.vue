@@ -15,6 +15,7 @@ import { useKeepAlive } from '@/hooks/layout'
 import { useAccountStore } from '@/stores/modules/account'
 import { getPageAfterDelete, showAlert, showConfirm, showToast } from '@/utils/index'
 import { isBlank } from '@/utils/validate'
+import AuditTableColumns from '@/views/vis/shared/AuditTableColumns.vue'
 import BindFieldsDialog from './components/BindFieldsDialog.vue'
 import { FUNCTION_DATASET_CONF } from './components/config'
 import ConfSqlDialog from './components/ConfSqlDialog.vue'
@@ -239,7 +240,8 @@ onMounted(() => {
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="备注" prop="sqlDesc" show-overflow-tooltip />
+        <el-table-column label="备注" prop="sqlDesc" min-width="180" show-overflow-tooltip />
+        <AuditTableColumns />
         <!-- @vue-generic {VIS.ConfSqlInfo} -->
         <el-table-column label="操作" width="310" fixed="right">
           <template #default="{ row }">

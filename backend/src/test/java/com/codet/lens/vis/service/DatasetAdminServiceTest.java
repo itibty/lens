@@ -34,7 +34,7 @@ class DatasetAdminServiceTest {
     private final VisCardMapper cardMapper = mock(VisCardMapper.class);
     private final DatasetReferenceService referenceService = mock(DatasetReferenceService.class);
     private final DatasetAdminService service =
-            new DatasetAdminService(datasetMapper, fieldMapper, datasourceMapper, cardMapper, referenceService);
+            new DatasetAdminService(mock(ResourceAuditService.class), datasetMapper, fieldMapper, datasourceMapper, cardMapper, referenceService);
 
     @Test
     void blocksDeletingDatasetReferencedByActiveCards() {

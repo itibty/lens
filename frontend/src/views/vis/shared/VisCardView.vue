@@ -120,6 +120,7 @@ const emit = defineEmits<{
 const queryMeta = computed(() => props.data.queryMeta || props.pivotData?.queryMeta)
 const timeRows = computed(() => cardTimeRows(queryMeta.value))
 const timeOpen = ref(false)
+const remarkOpen = ref(false)
 
 const emptyPivotData: VIS.PivotQueryResponse = {
   rowFields: [],
@@ -158,7 +159,8 @@ const overlayThemeStyle = computed(() => themeCssVars(renderTheme.value))
 
 const hasHeaderText = computed(() => !!(cardTitle.value || cardRemark.value))
 const coarsePointer = useMediaQuery('(hover: none), (pointer: coarse)')
-const remarkTrigger = computed<'click' | 'hover'>(() => coarsePointer.value ? 'click' : 'hover')
+const smallScreen = useMediaQuery('(max-width: 1023px)')
+const showRemarkIcon = computed(() => props.compact || smallScreen.value || coarsePointer.value || remarkOpen.value)
 
 const empty = computed(() => {
   if (stageMode.value === 'pivot')
@@ -505,27 +507,36 @@ watch(allowDetail, (ok) => {
           >
             {{ cardTitle }}
           </div>
-          <el-popover
-            v-if="cardRemark && !compact"
-            :trigger="remarkTrigger"
-            placement="bottom-start"
-            :show-after="200"
-            :width="260"
+          <el-tooltip
+            v-if="cardRemark"
+            v-model:visible="remarkOpen"
+            :trigger="coarsePointer ? 'click' : ['hover', 'focus']"
+            effect="light"
+            placement="top"
             popper-class="vis-card-remark-popper"
             :popper-style="overlayThemeStyle"
+            :popper-options="{ modifiers: [{ name: 'preventOverflow', options: { padding: 16 } }] }"
+            :show-after="200"
+            :hide-after="120"
+            :enterable="true"
           >
-            <template #reference>
-              <VisActionButton
-                class="vis-card-view__remark-btn"
-                label="查看卡片备注"
-                @click.stop
-                @pointerdown.stop
-              >
-                <span class="vis-card-view__remark-icon i-mingcute-information-line" />
-              </VisActionButton>
+            <template #content>
+              <div class="vis-card-remark">
+                {{ cardRemark }}
+              </div>
             </template>
-            {{ cardRemark }}
-          </el-popover>
+            <button
+              type="button"
+              class="vis-card-view__remark-btn"
+              :class="{ 'is-clickable': coarsePointer, 'is-visible': showRemarkIcon }"
+              aria-label="查看卡片备注"
+              :aria-expanded="remarkOpen"
+              @click.stop
+              @pointerdown.stop
+            >
+              <span class="vis-card-view__remark-icon i-mingcute-information-line" />
+            </button>
+          </el-tooltip>
         </div>
         <div
           v-if="hasMenu"
@@ -853,13 +864,15 @@ watch(allowDetail, (ok) => {
 <style scoped lang="scss">
 @use '@/theme/presentation.scss' as ui;
 
-:global(.el-popper.vis-card-time-popper) {
+:global(.el-popper.vis-card-time-popper),
+:global(.el-popper.vis-card-remark-popper) {
   box-sizing: border-box;
   max-width: min(320px, calc(100vw - 32px));
   padding: 10px 12px;
 }
 
-.vis-card-time {
+.vis-card-time,
+.vis-card-remark {
   max-height: min(320px, 50vh);
   overflow-y: auto;
   overscroll-behavior: contain;
@@ -869,7 +882,13 @@ watch(allowDetail, (ok) => {
   white-space: normal;
   overflow-wrap: anywhere;
   color: var(--el-text-color-primary);
+}
 
+.vis-card-remark {
+  white-space: pre-wrap;
+}
+
+.vis-card-time {
   &__rows {
     display: grid;
     grid-template-columns: auto minmax(0, 1fr);
@@ -1054,7 +1073,8 @@ watch(allowDetail, (ok) => {
     }
   }
 
-  &__time-icon {
+  &__time-icon,
+  &__remark-btn {
     display: inline-flex;
     flex: 0 0 auto;
     align-items: center;
@@ -1098,6 +1118,23 @@ watch(allowDetail, (ok) => {
     }
   }
 
+  &__remark-btn {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  &__body:hover &__remark-btn,
+  &__body:focus-within &__remark-btn,
+  &__remark-btn.is-visible {
+    opacity: 0.65;
+    pointer-events: auto;
+
+    &:hover,
+    &:focus-visible {
+      opacity: 1;
+    }
+  }
+
   &.is-borderless-actions &__full-btn {
     display: none;
   }
@@ -1108,8 +1145,7 @@ watch(allowDetail, (ok) => {
   }
 
   &__full-btn,
-  &__more-btn,
-  &__remark-btn {
+  &__more-btn {
     .is-card-color & {
       color: var(--vis-content-color, inherit);
 
@@ -1147,11 +1183,6 @@ watch(allowDetail, (ok) => {
     .is-card-color & {
       color: inherit;
     }
-  }
-
-  &__remark-btn {
-    flex-shrink: 0;
-    cursor: help;
   }
 
   &__content {
@@ -1367,14 +1398,6 @@ watch(allowDetail, (ok) => {
 </style>
 
 <style lang="scss">
-.vis-card-remark-popper {
-  z-index: 4000 !important;
-  max-width: calc(100vw - 16px);
-  font-size: 12px;
-  line-height: 1.5;
-  word-break: break-word;
-}
-
 .vis-card-more-popper {
   z-index: 4000 !important;
   max-width: min(280px, calc(100vw - 24px));

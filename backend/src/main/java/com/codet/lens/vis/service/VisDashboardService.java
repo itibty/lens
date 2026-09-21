@@ -44,6 +44,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class VisDashboardService {
 
+    private final ResourceAuditService auditService;
     private final VisDashboardMapper visDashboardMapper;
     private final VisDashboardCardMapper visDashboardCardMapper;
     private final VisCardMapper visCardMapper;
@@ -64,6 +65,7 @@ public class VisDashboardService {
         IPage<VisDashboardInfo> page = visDashboardMapper.selectPage(request.getPage().toIPage(), wrapper)
                 .convert(row -> toInfo(row, false));
         fillGroupNames(page.getRecords());
+        auditService.fillNames(page.getRecords());
         return ConvertUtil.toPageResponse(page);
     }
 
@@ -72,6 +74,7 @@ public class VisDashboardService {
         VisDashboard row = requireDashboard(dashboardId);
         VisDashboardInfo info = toInfo(row, true);
         fillGroupNames(List.of(info));
+        auditService.fillNames(List.of(info));
         return info;
     }
 

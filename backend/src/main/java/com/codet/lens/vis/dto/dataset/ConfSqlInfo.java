@@ -1,5 +1,6 @@
 package com.codet.lens.vis.dto.dataset;
 
+import com.codet.lens.vis.dto.ResourceAuditInfo;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
@@ -7,7 +8,7 @@ import lombok.Setter;
 @Schema(description = "sql脚本")
 @Getter
 @Setter
-public class ConfSqlInfo {
+public class ConfSqlInfo extends ResourceAuditInfo {
 
     @Schema(description = "数据id", requiredMode = Schema.RequiredMode.REQUIRED)
     private Long id;

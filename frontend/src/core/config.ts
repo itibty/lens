@@ -9,6 +9,7 @@
 // UI
 export const UIConfig = {
   appTitle: import.meta.env.VITE_APP_TITLE || 'Lens',
+  appSlogan: '让数据更清晰',
   showWatermark: true, // 是否水印
   sidebarFilter: true, // 侧栏是否支持搜索
   sidebarUniqueOpened: false, // 侧栏 uniqueOpened

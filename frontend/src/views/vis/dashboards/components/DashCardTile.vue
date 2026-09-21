@@ -105,11 +105,11 @@ const extraActions = computed(() => {
   if (!props.designActions)
     return actions
   if (displayContext)
-    actions.push({ key: 'display', label: '显示设置', icon: 'i-mingcute-edit-line' })
+    actions.push({ key: 'display', label: '显示', icon: 'i-mingcute-edit-line' })
   if (canEditCard) {
     actions.push({
       key: 'config',
-      label: '编辑卡片',
+      label: '编辑',
       icon: 'i-mingcute-settings-3-line',
     })
   }

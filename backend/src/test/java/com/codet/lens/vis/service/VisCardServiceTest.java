@@ -28,7 +28,7 @@ class VisCardServiceTest {
     private final VisDashboardMapper dashboardMapper = mock(VisDashboardMapper.class);
     private final VisDashboardAccess dashboardAccess = mock(VisDashboardAccess.class);
     private final VisDatasetMapper datasetMapper = mock(VisDatasetMapper.class);
-    private final VisCardService service = new VisCardService(
+    private final VisCardService service = new VisCardService(mock(ResourceAuditService.class),
             cardMapper, dashboardCardMapper, dashboardMapper, dashboardAccess, datasetMapper, mock(VisDetailRules.class));
 
     @Test

@@ -10,19 +10,13 @@ import type { MenuInfo } from '@/core/data'
 import type { ModifyAccountPwdDialogInstance } from '@/views/account/components/ModifyAccountPwdDialog.vue'
 import LensLogo from '@/components/LensLogo.vue'
 import MenuIcon from '@/components/MenuIcon.vue'
+import { UIConfig } from '@/core/config'
 import { menuIconClass } from '@/core/menuIcons'
 import LayoutNotice from '@/layout/components/Notice/index.vue'
 import { useAccountStore } from '@/stores/modules/account'
 import { useAppStore } from '@/stores/modules/app'
 import { useMenuStore } from '@/stores/modules/menu'
 import ModifyAccountPwdDialog from '@/views/account/components/ModifyAccountPwdDialog.vue'
-
-const SLOGANS = [
-  '让数据更清晰',
-  '看见数据价值',
-  '聚焦数据洞见',
-  '数据驱动决策',
-] as const
 
 const accountStore = useAccountStore()
 const menuStore = useMenuStore()
@@ -34,7 +28,6 @@ const route = useRoute()
 const rootPopoverVisible = ref(false)
 const accountPopoverVisible = ref(false)
 const modifyPwdDialogRef = ref<ModifyAccountPwdDialogInstance>()
-const slogan = SLOGANS[Math.floor(Math.random() * SLOGANS.length)]
 
 const activeRootName = computed(() =>
   rootMenus.value.find(item => item.id === activeRootId.value)?.name || '',
@@ -75,18 +68,19 @@ function switchRoot(root: MenuInfo) {
 <template>
   <div class="dark header-wrapper">
     <div class="h-100% flex-xy">
-      <div
-        class="clickable logo-wrapper h-100% flex items-center pl-10px"
+      <button
+        type="button"
+        class="logo-wrapper"
         :class="{ fold: appSetting.sidebarFold }"
+        aria-label="Lens 首页"
         @click="goHome"
       >
-        <LensLogo class="nav-logo" surface="dark" />
-        <div class="logo-txt">
+        <LensLogo class="nav-logo" surface="dark" aria-hidden="true" />
+        <span class="logo-txt">
           <span class="logo-title">Lens</span>
-          <span class="logo-divider" />
-          <span class="logo-slogan">{{ slogan }}</span>
-        </div>
-      </div>
+          <span class="logo-slogan">{{ UIConfig.appSlogan }}</span>
+        </span>
+      </button>
       <el-popover
         v-model:visible="rootPopoverVisible"
         trigger="click"
@@ -208,16 +202,33 @@ function switchRoot(root: MenuInfo) {
 
 .logo-wrapper {
   box-sizing: border-box;
-  width: 200px; //200
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 200px;
+  height: 100%;
+  padding: 0 16px;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid var(--na-brand-on-dark);
+    outline-offset: -4px;
+  }
 
   .nav-logo {
-    flex: 0 0 24px;
-    width: 24px;
-    height: 24px;
+    flex: 0 0 28px;
+    width: 28px;
+    height: 28px;
   }
 
   &.fold {
-    width: 42px !important; //42
+    width: 42px;
+    justify-content: center;
+    padding: 0;
 
     > .logo-txt {
       display: none;
@@ -226,28 +237,24 @@ function switchRoot(root: MenuInfo) {
 
   .logo-txt {
     display: flex;
-    height: auto;
-    align-items: flex-end;
-    margin-left: 10px;
+    align-items: center;
+    gap: 8px;
     white-space: nowrap;
   }
 
   .logo-title {
-    font-weight: 700;
-  }
-
-  .logo-divider {
-    width: 1px;
-    height: 12px;
-    margin: 0 7px;
-    background: currentColor;
-    opacity: 0.28;
+    font-size: 18px;
+    font-weight: 650;
+    line-height: 24px;
+    letter-spacing: -0.5px;
   }
 
   .logo-slogan {
     font-size: 11px;
     font-weight: 400;
-    opacity: 0.68;
+    line-height: 24px;
+    letter-spacing: 0.4px;
+    color: var(--na-navbar-text-color);
   }
 }
 

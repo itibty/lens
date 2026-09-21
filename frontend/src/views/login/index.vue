@@ -8,6 +8,7 @@
 <script setup lang="ts">
 import type { FormInstance } from 'element-plus'
 import LensLogo from '@/components/LensLogo.vue'
+import { UIConfig } from '@/core/config'
 import { isDefaultHomeRedirect } from '@/router/navigation'
 import { useAccountStore } from '@/stores/modules/account'
 import { showToast } from '@/utils'
@@ -15,19 +16,11 @@ import { CacheKeyNameEnum, storageUtil } from '@/utils/cache'
 import { createLogger } from '@/utils/logger'
 import { isBlank } from '@/utils/validate'
 
-const SLOGANS = [
-  '让数据更清晰',
-  '看见数据价值',
-  '聚焦数据洞见',
-  '数据驱动决策',
-] as const
-
 const logger = createLogger('LOGIN')
 const accountStore = useAccountStore()
 const router = useRouter()
 const route = useRoute()
 const formRef = ref<FormInstance>()
-const slogan = SLOGANS[Math.floor(Math.random() * SLOGANS.length)] ?? SLOGANS[0]
 
 const states = reactive({
   loading: false,
@@ -124,7 +117,7 @@ onMounted(initLoginForm)
 
       <div class="slogan-block">
         <span class="slogan-focus" aria-hidden="true" />
-        <h1>{{ slogan }}</h1>
+        <h1>{{ UIConfig.appSlogan }}</h1>
       </div>
     </section>
 

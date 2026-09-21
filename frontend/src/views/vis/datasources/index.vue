@@ -3,6 +3,7 @@ import { MoreFilled, Plus, Search } from '@element-plus/icons-vue'
 import { ElMessageBox } from 'element-plus'
 import vis from '@/apis/vis'
 import { showToast } from '@/utils'
+import AuditTableColumns from '@/views/vis/shared/AuditTableColumns.vue'
 import { apiErrorMessage } from '@/views/vis/shared/visRequest'
 import DatasourceEditDialog from './DatasourceEditDialog.vue'
 import { DATABASE_TYPES, databaseTypeLabel, isDialogCancel, withImpactConfirmation } from './datasourceModel'
@@ -175,6 +176,7 @@ onMounted(fetchRows)
             </el-button>
           </template>
         </el-table-column>
+        <AuditTableColumns />
         <el-table-column label="操作" width="205" fixed="right">
           <template #default="{ row }">
             <el-button link type="primary" :disabled="busy" @click="editRef?.show(row.id)">

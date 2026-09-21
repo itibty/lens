@@ -35,6 +35,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 @Service
 @RequiredArgsConstructor
 public class DatasourceAdminService {
+    private final ResourceAuditService auditService;
     private final VisDatasourceMapper sources;
     private final VisDatasetMapper datasets;
     private final DatasourceRegistry registry;
@@ -49,11 +50,15 @@ public class DatasourceAdminService {
                 .orderByDesc(VisDatasource::getId));
         var ids = page.getRecords().stream().map(VisDatasource::getId).toList();
         var counts = referenceCounts(ids);
-        return ConvertUtil.toPageResponse(page.convert(row -> info(row, counts.getOrDefault(row.getId(), 0L).intValue())));
+        var result = page.convert(row -> info(row, counts.getOrDefault(row.getId(), 0L).intValue()));
+        auditService.fillNames(result.getRecords());
+        return ConvertUtil.toPageResponse(result);
     }
 
     public DatasourceInfo detail(Long id) {
-        return info(require(sources.selectById(id)), referenceCount(id));
+        DatasourceInfo info = info(require(sources.selectById(id)), referenceCount(id));
+        auditService.fillNames(List.of(info));
+        return info;
     }
 
     public List<DatasourceDatasetInfo> references(Long id) {
@@ -178,9 +183,11 @@ public class DatasourceAdminService {
     }
 
     private static DatasourceInfo info(VisDatasource row, int count) {
-        return new DatasourceInfo().setId(row.getId()).setSourceName(row.getSourceName()).setDbType(row.getDbType())
+        DatasourceInfo info = new DatasourceInfo().setId(row.getId()).setSourceName(row.getSourceName()).setDbType(row.getDbType())
                 .setJdbcUrl(row.getJdbcUrl()).setUsername(row.getUsername()).setStatus(row.getStatus())
                 .setPasswordSet(StrUtil.isNotEmpty(row.getPassword())).setDatasetCount(count);
+        info.copyAuditFrom(row);
+        return info;
     }
 
     private void evictAfterCommit(String oldName, String newName) {

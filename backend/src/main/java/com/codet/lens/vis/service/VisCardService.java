@@ -37,6 +37,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class VisCardService {
 
+    private final ResourceAuditService auditService;
     private final VisCardMapper visCardMapper;
     private final VisDashboardCardMapper visDashboardCardMapper;
     private final VisDashboardMapper visDashboardMapper;
@@ -54,13 +55,16 @@ public class VisCardService {
                         .like(StrUtil.isNotBlank(request.getCardName()), VisCard::getCardName, request.getCardName())
                         .orderByDesc(VisCard::getId))
                 .convert(row -> BeanUtil.copyProperties(row, VisCardInfo.class));
+        auditService.fillNames(page.getRecords());
         return ConvertUtil.toPageResponse(page);
     }
 
     /** 配置只读。不拦 vis:card:conf；按看板分配（或设计权限）在 access 里判。 */
     public VisCardInfo detail(Long cardId) {
         dashboardAccess.assertCanViewCard(cardId);
-        return BeanUtil.copyProperties(requireCard(cardId), VisCardInfo.class);
+        VisCardInfo info = BeanUtil.copyProperties(requireCard(cardId), VisCardInfo.class);
+        auditService.fillNames(List.of(info));
+        return info;
     }
 
     public ListResponse<VisDashboardRefInfo> listRefDashboards(Long cardId) {

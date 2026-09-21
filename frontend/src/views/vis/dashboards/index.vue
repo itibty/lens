@@ -7,14 +7,13 @@ import type { DashDesignerInstance, DashDesignerSavedPayload } from './component
 import type { DashExplorerTreeInstance } from './components/DashExplorerTree.vue'
 import type { DashManageNode, ExplorerCommand } from './dashManage'
 import vis from '@/apis/vis/index'
-import { SYS_ROLE_QUERY, SYS_USER_QUERY } from '@/core/permCodes'
 import { useResizablePanel } from '@/hooks/resizablePanel'
 import { useAccountStore } from '@/stores/modules/account'
 import { showConfirm, showToast } from '@/utils/index'
 import MenuIconPicker from '@/views/permission/menu/components/MenuIconPicker.vue'
 import { copyName } from '@/views/vis/shared/copyName'
 import { apiErrorMessage } from '@/views/vis/shared/visRequest'
-import DashboardUsersDialog from './components/DashboardUsersDialog.vue'
+import DashboardInfoDialog from './components/DashboardInfoDialog.vue'
 import DashDesigner from './components/DashDesigner.vue'
 import DashExplorerTree from './components/DashExplorerTree.vue'
 import DashGroupTreeSelect from './components/DashGroupTreeSelect.vue'
@@ -26,8 +25,7 @@ defineOptions({ name: 'VisDashboards' })
 
 const { hasFunction } = useAccountStore()
 const canWrite = hasFunction(FUNCTION_DASHBOARD_CONF)
-const canViewUsers = canWrite && (hasFunction(SYS_USER_QUERY) || hasFunction(SYS_ROLE_QUERY))
-const usersDialogRef = ref<InstanceType<typeof DashboardUsersDialog>>()
+const infoDialogRef = ref<InstanceType<typeof DashboardInfoDialog>>()
 
 const designerRef = ref<DashDesignerInstance>()
 const explorerRef = ref<DashExplorerTreeInstance>()
@@ -469,9 +467,9 @@ async function deleteDashboard(node: DashManageNode) {
 }
 
 function onTreeCommand(command: ExplorerCommand, node: DashManageNode) {
-  if (command === 'related-users') {
-    if (canViewUsers)
-      usersDialogRef.value?.showDialog(node)
+  if (command === 'dashboard-info') {
+    if (canWrite)
+      infoDialogRef.value?.showDialog(node)
     return
   }
   if (command !== 'edit-dashboard')
@@ -561,7 +559,6 @@ onMounted(() => {
             :data="treeData"
             :loading="treeLoading"
             :can-write="canWrite"
-            :can-view-users="canViewUsers"
             @select="onTreeSelect"
             @command="onTreeCommand"
           />
@@ -587,7 +584,7 @@ onMounted(() => {
       </div>
     </PageCard>
 
-    <DashboardUsersDialog v-if="canViewUsers" ref="usersDialogRef" />
+    <DashboardInfoDialog v-if="canWrite" ref="infoDialogRef" />
 
     <CustomDialog
       v-model:visible="groupDialogOpen"

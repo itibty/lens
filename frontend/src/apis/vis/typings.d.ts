@@ -30,6 +30,18 @@ declare namespace VIS {
   };
 
   type ConfSqlInfo = {
+    /** 创建人 id */
+    createBy?: string;
+    /** 创建人姓名或账号 */
+    createByName?: string;
+    /** 创建时间 */
+    createAt?: string;
+    /** 更新人 id */
+    modifyBy?: string;
+    /** 更新人姓名或账号 */
+    modifyByName?: string;
+    /** 更新时间 */
+    modifyAt?: string;
     /** 数据id */
     id: string;
     /** 名称 */
@@ -221,6 +233,18 @@ declare namespace VIS {
   };
 
   type DatasourceInfo = {
+    /** 创建人 id */
+    createBy?: string;
+    /** 创建人姓名或账号 */
+    createByName?: string;
+    /** 创建时间 */
+    createAt?: string;
+    /** 更新人 id */
+    modifyBy?: string;
+    /** 更新人姓名或账号 */
+    modifyByName?: string;
+    /** 更新时间 */
+    modifyAt?: string;
     id?: string;
     sourceName?: string;
     dbType?: string;
@@ -1522,6 +1546,18 @@ declare namespace VIS {
   };
 
   type VisCardInfo = {
+    /** 创建人 id */
+    createBy?: string;
+    /** 创建人姓名或账号 */
+    createByName?: string;
+    /** 创建时间 */
+    createAt?: string;
+    /** 更新人 id */
+    modifyBy?: string;
+    /** 更新人姓名或账号 */
+    modifyByName?: string;
+    /** 更新时间 */
+    modifyAt?: string;
     /** 卡片 id */
     id: string;
     /** 卡片名 */
@@ -1538,8 +1574,6 @@ declare namespace VIS {
     visualJson?: string;
     /** 状态 */
     status: "EBL" | "DBL";
-    /** 修改时间 */
-    modifyAt?: string;
   };
 
   type VisCardRefInfo = {
@@ -1571,6 +1605,18 @@ declare namespace VIS {
   };
 
   type VisDashboardInfo = {
+    /** 创建人 id */
+    createBy?: string;
+    /** 创建人姓名或账号 */
+    createByName?: string;
+    /** 创建时间 */
+    createAt?: string;
+    /** 更新人 id */
+    modifyBy?: string;
+    /** 更新人姓名或账号 */
+    modifyByName?: string;
+    /** 更新时间 */
+    modifyAt?: string;
     /** 看板 id */
     id: string;
     /** 分组 id */
@@ -1589,8 +1635,6 @@ declare namespace VIS {
     configJson?: string;
     /** 看板卡片 */
     cards?: VisDashboardLayoutItem[];
-    /** 修改时间 */
-    modifyAt?: string;
   };
 
   type VisDashboardLayoutItem = {

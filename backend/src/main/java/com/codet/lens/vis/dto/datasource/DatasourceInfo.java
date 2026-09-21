@@ -1,5 +1,6 @@
 package com.codet.lens.vis.dto.datasource;
 
+import com.codet.lens.vis.dto.ResourceAuditInfo;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -7,7 +8,7 @@ import lombok.experimental.Accessors;
 @Getter
 @Setter
 @Accessors(chain = true)
-public class DatasourceInfo {
+public class DatasourceInfo extends ResourceAuditInfo {
     private Long id;
     private String sourceName;
     private String dbType;

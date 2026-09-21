@@ -17,20 +17,14 @@ withDefaults(defineProps<{
     role="img"
     :aria-label="label"
   >
-    <g class="lens-logo__mark">
-      <circle class="lens-logo__orbit" cx="50" cy="50" r="36" pathLength="100" />
-      <path class="lens-logo__bar lens-logo__bar--short" d="M31 63V55" />
-      <path class="lens-logo__bar lens-logo__bar--medium" d="M50 63V44" />
-      <path class="lens-logo__bar lens-logo__bar--tall" d="M69 63V33" />
-    </g>
+    <circle class="lens-logo__orbit" cx="50" cy="50" r="37" pathLength="100" transform="rotate(55 50 50)" />
+    <circle class="lens-logo__focus" cx="50" cy="50" r="16" />
   </svg>
 </template>
 
 <style scoped>
 .lens-logo {
   --lens-logo-primary: var(--na-color-primary);
-  --lens-logo-medium: var(--el-color-primary-light-3);
-  --lens-logo-light: var(--el-color-primary-light-5);
 
   display: block;
   overflow: visible;
@@ -38,35 +32,17 @@ withDefaults(defineProps<{
 
 .lens-logo--on-dark {
   --lens-logo-primary: var(--na-brand-on-dark);
-  --lens-logo-medium: var(--na-brand-on-dark-muted);
-  --lens-logo-light: var(--na-brand-on-dark-light);
-}
-
-.lens-logo__orbit,
-.lens-logo__bar {
-  fill: none;
-  stroke-linecap: round;
 }
 
 .lens-logo__orbit {
+  fill: none;
+  stroke-linecap: round;
   stroke: var(--lens-logo-primary);
-  stroke-width: 11;
-  stroke-dasharray: 82 18;
-}
-
-.lens-logo__bar {
   stroke-width: 9;
+  stroke-dasharray: 88 12;
 }
 
-.lens-logo__bar--short {
-  stroke: var(--lens-logo-light);
-}
-
-.lens-logo__bar--medium {
-  stroke: var(--lens-logo-medium);
-}
-
-.lens-logo__bar--tall {
-  stroke: var(--lens-logo-primary);
+.lens-logo__focus {
+  fill: var(--lens-logo-primary);
 }
 </style>

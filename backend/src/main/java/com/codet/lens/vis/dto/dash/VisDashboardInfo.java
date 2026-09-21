@@ -1,17 +1,16 @@
 package com.codet.lens.vis.dto.dash;
 
-import com.codet.lens.common.base.Long2DatetimeStr;
 import com.codet.lens.common.base.Status;
+import com.codet.lens.vis.dto.ResourceAuditInfo;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
-import tools.jackson.databind.annotation.JsonSerialize;
 
 @Schema(description = "可视化看板")
 @Getter
 @Setter
-public class VisDashboardInfo {
+public class VisDashboardInfo extends ResourceAuditInfo {
 
     @Schema(description = "看板 id", requiredMode = Schema.RequiredMode.REQUIRED)
     private Long id;
@@ -40,8 +39,4 @@ public class VisDashboardInfo {
 
     @Schema(description = "看板卡片")
     private List<VisDashboardLayoutItem> cards;
-
-    @Schema(description = "修改时间")
-    @JsonSerialize(using = Long2DatetimeStr.class)
-    private Long modifyAt;
 }

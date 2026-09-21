@@ -10,6 +10,7 @@ import { useAccountStore } from '@/stores/modules/account'
 import { getPageAfterDelete, showConfirm, showToast } from '@/utils/index'
 import { isBlank } from '@/utils/validate'
 import { CHART_TYPE_OPTIONS } from '@/views/vis/charts'
+import AuditTableColumns from '@/views/vis/shared/AuditTableColumns.vue'
 import { resolveChartTypeCode } from '@/views/vis/shared/types'
 import { FUNCTION_CARD_CONF } from './config'
 
@@ -233,8 +234,8 @@ onMounted(() => {
               {{ chartTypeLabel(row.chartType) }}
             </template>
           </el-table-column>
-          <el-table-column label="名称" prop="cardName" show-overflow-tooltip />
-          <el-table-column label="描述" prop="cardDesc" show-overflow-tooltip />
+          <el-table-column label="名称" prop="cardName" min-width="160" show-overflow-tooltip />
+          <el-table-column label="描述" prop="cardDesc" min-width="180" show-overflow-tooltip />
           <el-table-column label="状态" width="80" align="center" prop="status">
             <template #default="{ row }">
               <el-tag v-if="row.status === 'EBL'" type="success">
@@ -246,7 +247,7 @@ onMounted(() => {
               <span v-else>-</span>
             </template>
           </el-table-column>
-          <el-table-column label="修改时间" prop="modifyAt" width="180" show-overflow-tooltip />
+          <AuditTableColumns />
           <!-- @vue-generic {VIS.VisCardInfo} -->
           <el-table-column label="操作" width="260" fixed="right">
             <template #default="{ row }">

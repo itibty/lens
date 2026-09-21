@@ -2,6 +2,7 @@
 import { Search } from '@element-plus/icons-vue'
 import dayjs from 'dayjs'
 import { listDashboardRoles, queryDashboardUsers, unlinkDashboardRole } from '@/apis/admin/dashboardRelation'
+import { getDashboardDetail } from '@/apis/vis/query'
 import CustomDialog from '@/components/CustomDialog.vue'
 import { SYS_ROLE_QUERY, SYS_ROLE_WRITE, SYS_USER_QUERY } from '@/core/permCodes'
 import { useAccountStore } from '@/stores/modules/account'
@@ -14,11 +15,12 @@ const canReadRoles = computed(() => hasFunction(SYS_ROLE_QUERY))
 const canUnlink = computed(() => hasFunction(SYS_ROLE_WRITE))
 const visible = ref(false)
 const dashboard = reactive({ id: '', name: '' })
+const info = ref<VIS.VisDashboardInfo>()
 const activeTab = ref('users')
 const roles = ref<ADMIN.DashboardRoleInfo[]>([])
 const users = ref<ADMIN.DashboardUserInfo[]>([])
-const loading = reactive({ users: false, roles: false })
-const errors = reactive({ users: false, roles: false })
+const loading = reactive({ info: false, users: false, roles: false })
+const errors = reactive({ info: false, users: false, roles: false })
 const keyword = ref('')
 const appliedKeyword = ref('')
 const pageNumber = ref(1)
@@ -28,6 +30,30 @@ const removing = ref('')
 let session = 0
 let usersRequest = 0
 let rolesRequest = 0
+let infoRequest = 0
+
+async function fetchInfo() {
+  const currentSession = session
+  const request = ++infoRequest
+  loading.info = true
+  errors.info = false
+  try {
+    const res = await getDashboardDetail({ dashboardId: dashboard.id }, { showErrorMessage: false })
+    if (currentSession !== session || request !== infoRequest)
+      return
+    if (!res.data)
+      throw new Error('看板信息不存在')
+    info.value = res.data
+  }
+  catch {
+    if (currentSession === session && request === infoRequest)
+      errors.info = true
+  }
+  finally {
+    if (currentSession === session && request === infoRequest)
+      loading.info = false
+  }
+}
 
 async function fetchUsers() {
   if (!canReadUsers.value)
@@ -94,6 +120,7 @@ function search() {
 function showDialog(row: { id: string, name: string }) {
   session++
   Object.assign(dashboard, row)
+  info.value = undefined
   roles.value = []
   users.value = []
   keyword.value = ''
@@ -101,10 +128,11 @@ function showDialog(row: { id: string, name: string }) {
   pageNumber.value = 1
   total.value = 0
   removing.value = ''
-  Object.assign(loading, { users: false, roles: false })
-  Object.assign(errors, { users: false, roles: false })
+  Object.assign(loading, { info: false, users: false, roles: false })
+  Object.assign(errors, { info: false, users: false, roles: false })
   activeTab.value = canReadUsers.value ? 'users' : 'roles'
   visible.value = true
+  void fetchInfo()
   void fetchUsers()
   void fetchRoles()
 }
@@ -156,8 +184,8 @@ defineExpose({ showDialog })
 
 <template>
   <CustomDialog
-    v-model.visible="visible"
-    :title="`「${dashboard.name}」的相关用户`"
+    v-model:visible="visible"
+    :title="`「${dashboard.name}」的信息`"
     size="big"
     :show-footer="false"
     append-to-body
@@ -165,7 +193,21 @@ defineExpose({ showDialog })
     @close="session++"
   >
     <template #custom-dialog-body>
-      <el-tabs v-model="activeTab">
+      <section v-spinner="loading.info" class="dashboard-info" aria-label="创建与更新信息">
+        <div v-if="errors.info" class="info-error">
+          <span>看板信息加载失败</span>
+          <el-button link type="primary" @click="fetchInfo">
+            重试
+          </el-button>
+        </div>
+        <dl v-else class="audit-grid">
+          <div><dt>创建人</dt><dd>{{ info?.createByName || '—' }}</dd></div>
+          <div><dt>创建时间</dt><dd>{{ info?.createAt || '—' }}</dd></div>
+          <div><dt>更新人</dt><dd>{{ info?.modifyByName || '—' }}</dd></div>
+          <div><dt>更新时间</dt><dd>{{ info?.modifyAt || '—' }}</dd></div>
+        </dl>
+      </section>
+      <el-tabs v-if="canReadUsers || canReadRoles" v-model="activeTab">
         <el-tab-pane v-if="canReadUsers" label="用户" name="users">
           <div class="users-toolbar">
             <el-input v-model="keyword" :prefix-icon="Search" placeholder="搜索用户名或姓名" clearable @keyup.enter="search" @clear="search" />
@@ -244,6 +286,43 @@ defineExpose({ showDialog })
 </template>
 
 <style scoped lang="scss">
+.dashboard-info {
+  margin-bottom: 20px;
+}
+.audit-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px 24px;
+  margin: 0;
+
+  > div {
+    display: flex;
+    gap: 12px;
+  }
+
+  dt {
+    flex: 0 0 56px;
+    color: var(--el-text-color-secondary);
+  }
+
+  dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+}
+.info-error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 72px;
+  color: var(--el-text-color-secondary);
+}
+@media (max-width: 640px) {
+  .audit-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
 .users-toolbar {
   display: flex;
   gap: 8px;
