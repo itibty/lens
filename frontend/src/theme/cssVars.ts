@@ -1,4 +1,5 @@
 import type { ThemeColors } from './tokens'
+import { applyChromeTheme, readChromeTheme } from './chrome'
 import { alphaColor, DARK_THEME, LIGHT_THEME, mixColor, NAVBAR_COLORS } from './tokens'
 
 /** 全局和局部作用域共用的 DOM / Element Plus 适配。不得在页面里重算色阶。 */
@@ -84,4 +85,5 @@ export function installTheme() {
   const style = document.getElementById(id) ?? document.head.appendChild(document.createElement('style'))
   style.id = id
   style.textContent = `:root:root{${Object.entries(themeCssVars(LIGHT_THEME)).map(([key, value]) => `${key}:${value}`).join(';')}}`
+  applyChromeTheme(readChromeTheme())
 }

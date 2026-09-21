@@ -135,7 +135,7 @@ defineExpose({
 <template>
   <CustomDialog
     v-bind="{ ...dialog }"
-    v-model.visible="dialog.visible"
+    v-model:visible="dialog.visible"
     @closed="handleClose"
   >
     <template #custom-dialog-body>

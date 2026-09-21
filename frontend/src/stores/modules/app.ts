@@ -5,6 +5,8 @@
  * @LastEditors: Chuang
  * @Description: 应用
  */
+import type { ChromeThemeId } from '@/theme/chrome'
+import { applyChromeTheme, readChromeTheme, resolveChromeTheme, saveChromeTheme } from '@/theme/chrome'
 import { CacheKeyNameEnum, storageUtil } from '@/utils/cache'
 
 interface AppSetting {
@@ -12,6 +14,14 @@ interface AppSetting {
 }
 
 export const useAppStore = defineStore('app', () => {
+  const chromeTheme = ref<ChromeThemeId>(readChromeTheme())
+
+  const setChromeTheme = (value: ChromeThemeId) => {
+    chromeTheme.value = resolveChromeTheme(value)
+    applyChromeTheme(chromeTheme.value)
+    saveChromeTheme(chromeTheme.value)
+  }
+
   // states
   const appSetting = ref<AppSetting>({
     sidebarFold: storageUtil.get(CacheKeyNameEnum.sidebarFold) === '1',
@@ -35,6 +45,8 @@ export const useAppStore = defineStore('app', () => {
   }
 
   return {
+    chromeTheme,
+    setChromeTheme,
     appSetting,
     toggleSidebarFold,
     setSidebarFold,

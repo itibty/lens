@@ -22,7 +22,7 @@ import {
   stripFuncs,
 } from './menuAdmin'
 
-type MenuCommand = 'add-root' | 'add-child' | 'add-func' | 'delete'
+type MenuCommand = 'add-root' | 'add-child' | 'delete'
 
 const loading = ref(false)
 const keyword = ref('')
@@ -104,11 +104,11 @@ function addChild(pid: string, menuType?: MenuType) {
   dialogRef.value?.showAdd({ pid, menuType })
 }
 
-function addUnderNode(data: ADMIN.MenuTree, menuType?: MenuType) {
+function addUnderNode(data: ADMIN.MenuTree) {
   if (!data.id)
     return
   selectNode(data.id)
-  addChild(data.id, menuType)
+  addChild(data.id)
 }
 
 function addUnderSelected(menuType: MenuType) {
@@ -137,8 +137,6 @@ function onHeadCommand(command: Extract<MenuCommand, 'add-root'>) {
 function onNodeCommand(command: MenuCommand, node: ADMIN.MenuTree) {
   if (command === 'add-child')
     addUnderNode(node)
-  else if (command === 'add-func')
-    addUnderNode(node, 'FUNC')
   else if (command === 'delete')
     removeNode(node)
 }
@@ -154,7 +152,7 @@ onMounted(() => fetchData())
   >
     <div
       ref="menuAdminRef"
-      v-loading="loading"
+      v-spinner="loading"
       class="menu-admin"
       :class="{ 'is-resizing': treeResizing }"
     >
@@ -229,10 +227,6 @@ onMounted(() => fetchData())
                           <span class="menu-drop__icon i-mingcute-add-circle-line" />
                           子菜单
                         </el-dropdown-item>
-                        <el-dropdown-item command="add-func">
-                          <span class="menu-drop__icon i-mingcute-add-square-line" />
-                          功能点
-                        </el-dropdown-item>
                         <el-dropdown-item command="delete" divided>
                           <span class="menu-drop__icon i-mingcute-delete-2-line" />
                           删除
@@ -258,7 +252,7 @@ onMounted(() => fetchData())
         <template v-if="selectedNode">
           <el-scrollbar class="menu-admin__body">
             <div class="menu-admin__body-inner">
-              <MenuDetailForm :node="selectedNode" :can-write="canWrite" @saved="handleSaved(selectedNode.id)" />
+              <MenuDetailForm :node="selectedNode" :menus="records" :can-write="canWrite" @saved="handleSaved" />
               <MenuButtonsTable
                 :buttons="selectedFuncs"
                 :can-write="canWrite"

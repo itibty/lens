@@ -1,5 +1,7 @@
 # Lens 主题
 
+- 系统导航外观单独定义在 `chrome.ts`（经典、明亮、墨蓝、松青），只投影 `--na-navbar-*` / `--na-sidebar-*` 变量；不会修改主内容区、按钮或看板主题。`chrome.scss` 负责侧栏和传送到 body 的折叠菜单，避免深色方案的浮层失配。
+- 账号菜单中的「系统外观」即选即用，偏好存入浏览器 `NA:chrome_theme`，应用挂载前恢复。选择「经典」会删除该偏好并恢复原有配色；`UIConfig.appearanceEnabled = false` 会隐藏入口并忽略已保存的方案，便于整体撤回。
 - `tokens.ts` 是默认颜色、明暗表面和主题预设的来源。按用途修改语义，避免按页面新增颜色。
 - `cssVars.ts` 一次性适配 `--na-*` 和 Element Plus 的 `--el-*`，在应用挂载前安装。
 - 组件 CSS 使用 `var(--na-text-muted)`、`var(--na-surface-bg)` 等语义变量；继承 Element Plus 的组件也可使用对应 `--el-*`。

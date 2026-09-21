@@ -4,5 +4,6 @@
 @use './base.scss';
 @use './utilities.scss';
 @use './overrides/element.scss';
+@use '@/theme/chrome.scss';
 @use './overrides/codemirror.scss';
 @use './overrides/nprogress.scss';

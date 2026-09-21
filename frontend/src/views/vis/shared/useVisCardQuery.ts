@@ -126,7 +126,8 @@ export function useVisCardQuery(getInput: () => FetchVisCardDataInput & { enable
     const keepPrevious = fingerprint === appliedFingerprint
     if (!keepPrevious)
       clear()
-    loading.value = !keepPrevious
+    // 手动刷新始终显示遮罩；自动刷新仅在没有可复用结果时显示。
+    loading.value = !options?.silent || !keepPrevious
     refreshing.value = true
     error.value = ''
     refreshError.value = ''

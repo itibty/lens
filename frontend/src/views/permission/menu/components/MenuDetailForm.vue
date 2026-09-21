@@ -3,20 +3,22 @@ import type { FormInstance, FormRules } from 'element-plus'
 import { editMenu } from '@/apis/admin/menu'
 import { normalizeMenuIconName } from '@/core/menuIcons'
 import { showToast } from '@/utils/index'
-import { isFunc } from '../menuAdmin'
+import { isFunc, menuParentOptions } from '../menuAdmin'
 import MenuIconPicker from './MenuIconPicker.vue'
 
 const props = defineProps<{
   node: ADMIN.MenuTree
+  menus: ADMIN.MenuTree[]
   canWrite?: boolean
 }>()
 
 const emits = defineEmits<{
-  (e: 'saved'): void
+  (e: 'saved', id?: string): void
 }>()
 
 const formRef = ref<FormInstance>()
 const saving = ref(false)
+const parentOptions = computed(() => menuParentOptions(props.menus, props.node.id))
 const form = reactive<ADMIN.SaveMenuRequest>({
   id: undefined,
   pid: '0',
@@ -31,6 +33,7 @@ const form = reactive<ADMIN.SaveMenuRequest>({
 
 const rules: FormRules<ADMIN.SaveMenuRequest> = {
   menuName: [{ required: true, trigger: 'blur', message: '请输入名称' }],
+  pid: [{ required: true, trigger: 'change', message: '请选择上级菜单' }],
 }
 
 function fillForm(node: ADMIN.MenuTree) {
@@ -51,18 +54,22 @@ function fillForm(node: ADMIN.MenuTree) {
 watch(() => props.node, fillForm, { immediate: true })
 
 async function save() {
-  const valid = await formRef.value?.validate().catch(() => false)
-  if (!valid)
+  if (!props.canWrite || saving.value)
     return
   saving.value = true
+  const editingId = form.id
   try {
-    await editMenu({
+    const valid = await formRef.value?.validate().catch(() => false)
+    if (!valid || form.id !== editingId)
+      return
+    const payload = {
       ...form,
       menuType: isFunc(form) ? 'FUNC' : 'MENU',
       icon: normalizeMenuIconName(form.icon),
-    })
+    } satisfies ADMIN.SaveMenuRequest
+    await editMenu(payload)
     showToast('保存成功')
-    emits('saved')
+    emits('saved', payload.id)
   }
   finally {
     saving.value = false
@@ -84,7 +91,8 @@ async function save() {
       ref="formRef"
       :model="form"
       :rules="rules"
-      label-width="72px"
+      :disabled="!canWrite || saving"
+      label-width="88px"
       class="menu-detail-form"
     >
       <el-row :gutter="16">
@@ -96,6 +104,27 @@ async function save() {
         <el-col :sm="24" :md="12">
           <el-form-item label="图标" prop="icon">
             <MenuIconPicker v-model="form.icon" />
+          </el-form-item>
+        </el-col>
+        <el-col :sm="24" :md="12">
+          <el-form-item label="上级菜单" prop="pid">
+            <el-tree-select
+              v-model="form.pid"
+              class="w-full"
+              :data="parentOptions"
+              node-key="id"
+              :props="{ label: 'menuName', children: 'children' }"
+              placeholder="请选择上级菜单"
+              check-strictly
+              filterable
+              default-expand-all
+              :render-after-expand="false"
+            />
+          </el-form-item>
+        </el-col>
+        <el-col :sm="24" :md="12">
+          <el-form-item label="排序" prop="sortNum">
+            <el-input-number v-model="form.sortNum" :min="0" :max="9999" />
           </el-form-item>
         </el-col>
         <el-col :sm="24" :md="12">
@@ -116,11 +145,6 @@ async function save() {
               clearable
               placeholder="如 sys:user:query，可空"
             />
-          </el-form-item>
-        </el-col>
-        <el-col :sm="24" :md="12">
-          <el-form-item label="排序" prop="sortNum">
-            <el-input-number v-model="form.sortNum" :min="0" :max="9999" />
           </el-form-item>
         </el-col>
       </el-row>

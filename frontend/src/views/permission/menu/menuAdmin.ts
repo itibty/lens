@@ -1,5 +1,21 @@
 export type MenuType = 'MENU' | 'FUNC'
 
+interface MenuParentOption {
+  id: string
+  menuName: string
+  children: MenuParentOption[]
+}
+
+/** 排除当前菜单及其整个子树，防止循环层级。 */
+export function menuParentOptions(nodes: ADMIN.MenuTree[], currentId: string): MenuParentOption[] {
+  function prune(items: ADMIN.MenuTree[]): MenuParentOption[] {
+    return items
+      .filter(node => !isFunc(node) && node.id !== currentId)
+      .map(node => ({ id: node.id, menuName: node.menuName, children: prune(node.children ?? []) }))
+  }
+  return [{ id: '0', menuName: '顶级菜单', children: prune(nodes) }]
+}
+
 export function isFunc(node?: Pick<ADMIN.MenuTree, 'menuType'>) {
   return node?.menuType === 'FUNC'
 }

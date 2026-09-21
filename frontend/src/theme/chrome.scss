@@ -1,0 +1,58 @@
+// 侧栏和传送到 body 的折叠菜单共用导航变量，不改变业务组件的 Element Plus 主题。
+.sidebar-wrapper .el-menu,
+.lens-sidebar-popper,
+.lens-sidebar-popper .el-menu {
+  --el-menu-bg-color: var(--na-sidebar-bg);
+  --el-menu-text-color: var(--na-sidebar-text);
+  --el-menu-active-color: var(--na-sidebar-active-text);
+  --el-menu-hover-text-color: var(--na-sidebar-hover-text);
+  --el-menu-hover-bg-color: var(--na-sidebar-hover-bg);
+  --el-menu-border-color: var(--na-sidebar-border);
+}
+
+.sidebar-wrapper,
+.lens-sidebar-popper {
+  .el-menu-item,
+  .el-sub-menu__title {
+    &:hover,
+    &:focus-visible {
+      background-color: var(--na-sidebar-hover-bg);
+      color: var(--na-sidebar-hover-text);
+    }
+  }
+
+  .el-menu-item.is-active {
+    background-color: var(--na-sidebar-active-bg) !important;
+    color: var(--na-sidebar-active-text);
+  }
+
+  .el-sub-menu.is-active > .el-sub-menu__title {
+    color: var(--na-sidebar-active-text);
+  }
+
+  .el-sub-menu.is-active.is-opened > .el-sub-menu__title {
+    color: var(--na-sidebar-text);
+
+    &.el-tooltip__trigger {
+      color: var(--na-sidebar-active-text);
+    }
+  }
+}
+
+.sidebar-wrapper .filter-input {
+  --el-input-bg-color: var(--na-sidebar-bg);
+  --el-input-text-color: var(--na-sidebar-text);
+  --el-input-placeholder-color: var(--na-sidebar-muted);
+  --el-input-icon-color: var(--na-sidebar-muted);
+  --el-input-border-color: var(--na-sidebar-input-border);
+  --el-input-hover-border-color: var(--na-sidebar-muted);
+  --el-input-focus-border-color: var(--na-sidebar-active-text);
+  --el-text-color-placeholder: var(--na-sidebar-muted);
+}
+
+.lens-sidebar-popper.el-popper.is-light,
+.lens-sidebar-popper.el-popper.is-light .el-popper__arrow::before {
+  background: var(--na-sidebar-bg);
+  border-color: var(--na-sidebar-border);
+  color: var(--na-sidebar-text);
+}

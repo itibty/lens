@@ -4,6 +4,7 @@
 <script setup lang="ts">
 import type { VisDetailConfig, VisVisualConfig } from '@/views/vis/shared/types'
 import { useMediaQuery } from '@vueuse/core'
+import LoadingIcon from '@/components/loading/LoadingIcon.vue'
 import { LENS_THEME_KEY } from '@/theme/context'
 import { themeCssVars } from '@/theme/cssVars'
 import { LIGHT_THEME } from '@/theme/tokens'
@@ -111,7 +112,7 @@ const truncate = computed(() => !!tableData.value.truncated)
           v-show="loading"
           class="vis-detail-drawer__loading"
         >
-          <span class="i-svg-spinners-ring-resize" />
+          <LoadingIcon :size="28" />
         </div>
       </div>
     </template>

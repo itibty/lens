@@ -5,6 +5,7 @@
 import type { DetailHit, DetailMenuPayload, PivotPathMember } from '@/views/vis/shared/cardDetail'
 import type { VisQueryConfig, VisVisualConfig } from '@/views/vis/shared/types'
 import { onClickOutside, useEventListener, useMediaQuery } from '@vueuse/core'
+import LoadingIcon from '@/components/loading/LoadingIcon.vue'
 import { LENS_THEME_KEY } from '@/theme/context'
 import { themeCssVars } from '@/theme/cssVars'
 import { LIGHT_THEME } from '@/theme/tokens'
@@ -582,7 +583,7 @@ watch(allowDetail, (ok) => {
               :aria-label="CARD_TIME_COPY.label"
               :aria-expanded="timeOpen"
             >
-              <span :class="refreshing ? 'i-svg-spinners-ring-resize' : 'i-mingcute-time-line'" />
+              <span :class="refreshing && !loading ? 'i-svg-spinners-ring-resize' : 'i-mingcute-time-line'" />
             </button>
           </el-tooltip>
           <VisActionButton
@@ -826,7 +827,7 @@ watch(allowDetail, (ok) => {
         class="vis-card-view__loading"
         aria-hidden="true"
       >
-        <span class="vis-card-view__loading-icon i-svg-spinners-ring-resize" />
+        <LoadingIcon :size="28" />
       </div>
     </div>
     <VisCardDataDialog
@@ -1363,11 +1364,6 @@ watch(allowDetail, (ok) => {
     border-radius: inherit;
     background: color-mix(in srgb, var(--dash-card-bg, var(--el-bg-color)) 48%, transparent);
     pointer-events: all;
-  }
-
-  &__loading-icon {
-    font-size: 28px;
-    color: var(--el-color-primary);
   }
 }
 

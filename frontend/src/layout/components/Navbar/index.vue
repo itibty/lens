@@ -17,6 +17,7 @@ import { useAccountStore } from '@/stores/modules/account'
 import { useAppStore } from '@/stores/modules/app'
 import { useMenuStore } from '@/stores/modules/menu'
 import ModifyAccountPwdDialog from '@/views/account/components/ModifyAccountPwdDialog.vue'
+import AppearancePanel from './AppearancePanel.vue'
 
 const accountStore = useAccountStore()
 const menuStore = useMenuStore()
@@ -27,6 +28,8 @@ const router = useRouter()
 const route = useRoute()
 const rootPopoverVisible = ref(false)
 const accountPopoverVisible = ref(false)
+const appearanceVisible = ref(false)
+const accountButtonRef = ref<HTMLButtonElement>()
 const modifyPwdDialogRef = ref<ModifyAccountPwdDialogInstance>()
 
 const activeRootName = computed(() =>
@@ -47,6 +50,11 @@ function handleModifyPassword() {
   accountPopoverVisible.value = false
   modifyPwdDialogRef.value?.showDialog()
 }
+
+function closeAppearance() {
+  accountPopoverVisible.value = false
+  accountButtonRef.value?.focus({ preventScroll: true })
+}
 function goHome() {
   const url = menuStore.resolveHomeUrl()
   router.push(url || { path: '/index' })
@@ -66,7 +74,7 @@ function switchRoot(root: MenuInfo) {
 </script>
 
 <template>
-  <div class="dark header-wrapper">
+  <div class="header-wrapper">
     <div class="h-100% flex-xy">
       <button
         type="button"
@@ -125,11 +133,15 @@ function switchRoot(root: MenuInfo) {
       </div>
       <el-popover
         v-model:visible="accountPopoverVisible"
-        :width="220"
+        :width="appearanceVisible ? 320 : 220"
+        trigger="click"
+        placement="bottom-end"
         popper-class="account-popover"
+        @after-leave="appearanceVisible = false"
       >
         <template #reference>
           <button
+            ref="accountButtonRef"
             type="button"
             class="account-trigger clickable"
             :title="displayName"
@@ -138,31 +150,43 @@ function switchRoot(root: MenuInfo) {
           </button>
         </template>
         <template #default>
-          <div class="account-popover__profile">
-            <div class="account-popover__avatar">
-              <span class="i-mingcute-user-3-fill" />
+          <AppearancePanel v-if="appearanceVisible && UIConfig.appearanceEnabled" @close="closeAppearance" />
+          <template v-else>
+            <div class="account-popover__profile">
+              <div class="account-popover__avatar">
+                <span class="i-mingcute-user-3-fill" />
+              </div>
+              <div class="account-popover__identity">
+                <strong>{{ userInfo.realName || userInfo.username }}</strong>
+                <span>{{ userInfo.username }}</span>
+              </div>
             </div>
-            <div class="account-popover__identity">
-              <strong>{{ userInfo.realName || userInfo.username }}</strong>
-              <span>{{ userInfo.username }}</span>
-            </div>
-          </div>
-          <button
-            type="button"
-            class="account-popover__action"
-            @click="handleModifyPassword"
-          >
-            <span class="i-mingcute-key-2-line" />
-            修改密码
-          </button>
-          <button
-            type="button"
-            class="account-popover__action"
-            @click="handleLogout"
-          >
-            <span class="i-mingcute-exit-line" />
-            退出登录
-          </button>
+            <button
+              v-if="UIConfig.appearanceEnabled"
+              type="button"
+              class="account-popover__action"
+              @click="appearanceVisible = true"
+            >
+              <span class="i-mingcute-palette-line" />
+              系统外观
+            </button>
+            <button
+              type="button"
+              class="account-popover__action"
+              @click="handleModifyPassword"
+            >
+              <span class="i-mingcute-key-2-line" />
+              修改密码
+            </button>
+            <button
+              type="button"
+              class="account-popover__action"
+              @click="handleLogout"
+            >
+              <span class="i-mingcute-exit-line" />
+              退出登录
+            </button>
+          </template>
         </template>
       </el-popover>
     </div>
@@ -177,25 +201,21 @@ function switchRoot(root: MenuInfo) {
   justify-content: space-between;
   box-sizing: border-box;
   height: 100%;
-  border-bottom: 1px solid transparent;
+  border-bottom: 1px solid var(--na-navbar-border-color);
+  background: var(--na-navbar-bg);
 
-  &.dark {
-    background: var(--na-navbar-bg); //$navbar-deep-bg;
-    border-bottom-color: var(--na-navbar-border-color);
+  .logo-txt {
+    color: var(--na-navbar-title-color);
+  }
 
-    .logo-txt {
-      color: var(--na-navbar-title-color);
-    }
+  .root-nav-trigger,
+  .account-trigger {
+    color: var(--na-navbar-text-color);
 
-    .root-nav-trigger,
-    .account-trigger {
-      color: var(--na-navbar-text-color);
-
-      &:hover,
-      &.open {
-        color: var(--na-navbar-hover-text-color);
-        background-color: var(--na-navbar-hover-bg);
-      }
+    &:hover,
+    &.open {
+      color: var(--na-navbar-hover-text-color);
+      background-color: var(--na-navbar-hover-bg);
     }
   }
 }
@@ -215,11 +235,13 @@ function switchRoot(root: MenuInfo) {
   cursor: pointer;
 
   &:focus-visible {
-    outline: 2px solid var(--na-brand-on-dark);
+    outline: 2px solid var(--na-navbar-brand-color);
     outline-offset: -4px;
   }
 
   .nav-logo {
+    --lens-logo-primary: var(--na-navbar-brand-color);
+
     flex: 0 0 28px;
     width: 28px;
     height: 28px;
@@ -237,7 +259,7 @@ function switchRoot(root: MenuInfo) {
 
   .logo-txt {
     display: flex;
-    align-items: center;
+    align-items: baseline;
     gap: 8px;
     white-space: nowrap;
   }
@@ -245,14 +267,14 @@ function switchRoot(root: MenuInfo) {
   .logo-title {
     font-size: 18px;
     font-weight: 650;
-    line-height: 24px;
+    line-height: 1;
     letter-spacing: -0.5px;
   }
 
   .logo-slogan {
     font-size: 11px;
     font-weight: 400;
-    line-height: 24px;
+    line-height: 1;
     letter-spacing: 0.4px;
     color: var(--na-navbar-text-color);
   }
@@ -304,6 +326,7 @@ function switchRoot(root: MenuInfo) {
 
 <style lang="scss">
 .account-popover {
+  max-width: calc(100vw - 24px);
   padding: 0 !important;
   overflow: hidden;
 

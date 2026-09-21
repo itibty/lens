@@ -10,6 +10,7 @@ export enum CacheKeyNameEnum {
   accessToken = 'access_token',
   clientId = 'client_id',
   sidebarFold = 'sidebar_fold',
+  chromeTheme = 'chrome_theme',
   username = 'username',
   password = 'password',
   traceLog = 'traceLog',

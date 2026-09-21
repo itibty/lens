@@ -28,6 +28,33 @@ Vue 3 应用，覆盖数据集、卡片、看板设计，以及账号、角色�
 | `src/components/` | 通用组件 |
 | `src/core/` | 请求封装和配置 |
 
+## 品牌标语
+
+在 `src/core/config.ts` 的 `appSlogans` 中维护候选文案。每次打开或刷新应用时随机选择一句，登录页和顶栏共用，切换路由时保持不变；随机结果可能与上一次相同。
+
+## 系统外观
+
+右上角账号菜单 →「系统外观」，可切换经典、明亮、墨蓝、松青四套顶栏与侧栏配色，即时生效并保存在当前浏览器。内容区与看板主题独立，顶栏仍为 40px。
+
+选择「经典」可还原原有配色并清除该偏好；需要整体停用时，将 `src/core/config.ts` 的 `UIConfig.appearanceEnabled` 设为 `false`，入口会隐藏，已保存的方案也不再生效。配色定义集中在 `src/theme/chrome.ts`。
+
+## Loading 样式
+
+在 `src/core/config.ts` 设置 `UIConfig.loadingStyle`：`'brand'` 使用 Lens 品牌动画，`'default'` 恢复原有样式。页面、表格和卡片遮罩统一跟随此配置，按钮及时间图标仍使用小型圆环。
+
+```vue
+<!-- 跟随全局配置，保留原内容并显示局部遮罩 -->
+<div v-spinner="loading" element-loading-text="加载中…">内容</div>
+
+<!-- 单个区域固定使用默认样式 -->
+<div v-spinner:default="loading">内容</div>
+
+<!-- 仅使用动画图标；支持 variant、size、color -->
+<LoadingIcon v-if="loading" :size="28" />
+```
+
+`LoadingIcon` 和 `v-spinner` 都由项目自动注册；图标颜色默认跟随所在区域的主题。品牌动画与系统 logo 共用“棱镜光圈”图形，旋转周期为 0.8 秒；系统开启“减少动态效果”时停止旋转。
+
 ## 命令
 
 以下 `pnpm` 命令均在 `frontend/` 目录执行；从仓库根目录开始时先运行：

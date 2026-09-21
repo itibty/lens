@@ -12,6 +12,7 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    AppearancePanel: typeof import('./src/layout/components/Navbar/AppearancePanel.vue')['default']
     CodemirrorEditor: typeof import('./src/components/editor/CodemirrorEditor.vue')['default']
     CustomDialog: typeof import('./src/components/CustomDialog.vue')['default']
     CustomDrawer: typeof import('./src/components/CustomDrawer.vue')['default']
@@ -93,6 +94,7 @@ declare module 'vue' {
     InfoTooltip: typeof import('./src/components/InfoTooltip.vue')['default']
     LensLogo: typeof import('./src/components/LensLogo.vue')['default']
     ListTable: typeof import('./src/components/table/ListTable.vue')['default']
+    LoadingIcon: typeof import('./src/components/loading/LoadingIcon.vue')['default']
     MenuFilter: typeof import('./src/layout/components/MenuFilter/index.vue')['default']
     MenuIcon: typeof import('./src/components/MenuIcon.vue')['default']
     MenuItem: typeof import('./src/layout/components/Sidebar/MenuItem.vue')['default']
@@ -113,6 +115,7 @@ declare module 'vue' {
 
 // For TSX support
 declare global {
+  const AppearancePanel: typeof import('./src/layout/components/Navbar/AppearancePanel.vue')['default']
   const CodemirrorEditor: typeof import('./src/components/editor/CodemirrorEditor.vue')['default']
   const CustomDialog: typeof import('./src/components/CustomDialog.vue')['default']
   const CustomDrawer: typeof import('./src/components/CustomDrawer.vue')['default']
@@ -194,6 +197,7 @@ declare global {
   const InfoTooltip: typeof import('./src/components/InfoTooltip.vue')['default']
   const LensLogo: typeof import('./src/components/LensLogo.vue')['default']
   const ListTable: typeof import('./src/components/table/ListTable.vue')['default']
+  const LoadingIcon: typeof import('./src/components/loading/LoadingIcon.vue')['default']
   const MenuFilter: typeof import('./src/layout/components/MenuFilter/index.vue')['default']
   const MenuIcon: typeof import('./src/components/MenuIcon.vue')['default']
   const MenuItem: typeof import('./src/layout/components/Sidebar/MenuItem.vue')['default']

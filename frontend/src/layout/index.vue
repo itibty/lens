@@ -52,7 +52,7 @@ watch(
   box-sizing: border-box;
   padding: 0;
   z-index: 10;
-  border-bottom: 1px solid var(--el-border-color-lighter);
+  border-bottom: 1px solid var(--na-navbar-divider-color);
 }
 
 .sidebar {
@@ -61,7 +61,7 @@ watch(
   max-width: 200px;
   box-sizing: border-box;
   z-index: 9;
-  border-right: 1px solid var(--el-border-color-lighter);
+  border-right: 1px solid var(--na-sidebar-border);
 }
 
 .main {

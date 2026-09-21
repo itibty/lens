@@ -6,53 +6,51 @@
  * @Description: v-spinner="true" 自定义loading指令（原loading指令样式统一修改难)
  */
 // directives/loading.js
-import type { App } from 'vue'
+import type { App, DirectiveBinding } from 'vue'
+import type { LoadingStyle } from '@/core/config'
 import { ElLoading } from 'element-plus'
+import { BRAND_LOADING_SVG, DEFAULT_LOADING_SVG, resolveLoadingStyle } from '@/components/loading/loading'
 
-// 参考t-design loading
-const spinner = `<foreignObject x="0" y="0" width="100%" height="100%">
-    <div class="t-loading__gradient-conic" />
-  </foreignObject>
-`
 const loadingTextAttrName = 'element-loading-text'
 type SpinnerElement = HTMLElement & {
   loadingInstance?: ReturnType<typeof ElLoading.service>
+  loadingStyle?: LoadingStyle
 }
 
-function createLoadingInstance(el: SpinnerElement) {
+function updateLoading(el: SpinnerElement, binding: DirectiveBinding<boolean>) {
+  if (!binding.value) {
+    el.loadingInstance?.close()
+    el.loadingInstance = undefined
+    return
+  }
+  const style = resolveLoadingStyle(binding.arg)
+  const text = el.getAttribute(loadingTextAttrName) || ''
+  if (el.loadingInstance && el.loadingStyle === style) {
+    el.loadingInstance.setText(text)
+    return
+  }
   el.loadingInstance?.close()
-  // lock 会给 body 加 overflow:hidden，滚动条闪一下像整页刷新；局部 target 不需要锁 body
-  return ElLoading.service({
+  el.loadingStyle = style
+  // 局部 loading 不锁 body，避免页面滚动条闪动。
+  el.loadingInstance = ElLoading.service({
     target: el,
     lock: false,
-    text: el.getAttribute(loadingTextAttrName) || undefined,
-    spinner,
-    customClass: 'tdesign-loading',
+    text,
+    spinner: style === 'brand' ? BRAND_LOADING_SVG : DEFAULT_LOADING_SVG,
+    svgViewBox: style === 'brand' ? '0 0 100 100' : '0 0 50 50',
+    customClass: style === 'brand' ? 'lens-brand-loading' : 'tdesign-loading',
   })
 }
 
 export default {
   install(app: App) {
-    // 兼容v-loading等
-
+    // 默认跟随 UIConfig；v-spinner:default / v-spinner:brand 可局部覆盖。
     app.directive('spinner', {
-      mounted(el: SpinnerElement, binding) {
-        if (binding.value) {
-          el.loadingInstance = createLoadingInstance(el)
-        }
-      },
-      updated(el: SpinnerElement, binding) {
-        if (binding.value !== binding.oldValue) {
-          if (binding.value) {
-            el.loadingInstance = createLoadingInstance(el)
-          }
-          else {
-            el.loadingInstance?.close()
-          }
-        }
-      },
+      mounted: updateLoading,
+      updated: updateLoading,
       unmounted(el: SpinnerElement) {
         el.loadingInstance?.close()
+        el.loadingInstance = undefined
       },
     })
   },

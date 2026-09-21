@@ -74,6 +74,8 @@ const openedIndexes = computed(() => {
           :default-openeds="openedIndexes"
           :collapse-transition="false"
           :unique-opened="!filterKeyword && UIConfig.sidebarUniqueOpened"
+          popper-class="lens-sidebar-popper"
+          popper-effect="light"
           router
         >
           <template v-for="item in menus" :key="item.id">
@@ -83,14 +85,16 @@ const openedIndexes = computed(() => {
       </el-scrollbar>
     </div>
 
-    <div
+    <button
+      type="button"
       class="clickable icon-btn collapse-btn flex-xy text-12px"
       :title="appSetting.sidebarFold ? '展开菜单' : '收起菜单'"
+      :aria-label="appSetting.sidebarFold ? '展开菜单' : '收起菜单'"
       @click="appStore.toggleSidebarFold(true)"
     >
       <i-ep-expand v-if="appSetting.sidebarFold" />
       <i-ep-fold v-else />
-    </div>
+    </button>
   </div>
 </template>
 
@@ -100,7 +104,8 @@ const openedIndexes = computed(() => {
   position: relative;
   display: flex;
   flex-direction: column;
-  //background-color: red;
+  background: var(--na-sidebar-bg);
+  color: var(--na-sidebar-text);
 
   :deep(.sidebar) {
     border-right: none !important;
@@ -136,7 +141,7 @@ const openedIndexes = computed(() => {
   height: $page-header-height;
   padding: 0 10px;
   box-sizing: border-box;
-  border-bottom: 1px solid var(--el-border-color-lighter);
+  border-bottom: 1px solid var(--na-sidebar-border);
 }
 
 .menu-wrap {
@@ -151,7 +156,16 @@ const openedIndexes = computed(() => {
   height: 24px;
   right: 10px;
   bottom: 10px;
+  padding: 0;
+  border: 0;
   border-radius: var(--el-border-radius-base);
+  background: var(--na-sidebar-bg);
+  color: var(--na-sidebar-muted);
+
+  &:hover {
+    background: var(--na-sidebar-hover-bg);
+    color: var(--na-sidebar-hover-text);
+  }
 }
 
 .empty-wrap {

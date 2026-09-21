@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useFormDisabled } from 'element-plus'
 import MenuIcon from '@/components/MenuIcon.vue'
 import {
   findMenuIcon,
@@ -9,6 +10,7 @@ import {
 } from '@/core/menuIcons'
 
 const icon = defineModel<string>({ default: '' })
+const disabled = useFormDisabled()
 
 const popoverVisible = ref(false)
 const keyword = ref('')
@@ -40,7 +42,14 @@ watch(popoverVisible, (open) => {
     keyword.value = ''
 })
 
+watch(disabled, (value) => {
+  if (value)
+    popoverVisible.value = false
+})
+
 function pick(name: string) {
+  if (disabled.value)
+    return
   icon.value = name
   popoverVisible.value = false
 }
@@ -54,6 +63,7 @@ function onInput(value: string) {
   <div class="menu-icon-picker">
     <el-popover
       v-model:visible="popoverVisible"
+      :disabled="disabled"
       trigger="click"
       placement="bottom-start"
       :width="360"
@@ -64,6 +74,7 @@ function onInput(value: string) {
       <template #reference>
         <button
           type="button"
+          :disabled="disabled"
           class="menu-icon-picker__preview"
           :title="inPreset ? `${current?.label} · ${displayName}` : '从预设中选择'"
         >
@@ -87,6 +98,7 @@ function onInput(value: string) {
                 v-for="item in group.items"
                 :key="item.name"
                 type="button"
+                :disabled="disabled"
                 class="menu-icon-picker__tile"
                 :class="{ active: displayName === item.name }"
                 :title="`${item.label} · ${item.name}`"
@@ -131,6 +143,12 @@ function onInput(value: string) {
     background: var(--el-fill-color-blank);
     color: var(--el-text-color-primary);
     cursor: pointer;
+
+    &:disabled {
+      background: var(--el-disabled-bg-color);
+      color: var(--el-disabled-text-color);
+      cursor: not-allowed;
+    }
   }
 
   &__empty {

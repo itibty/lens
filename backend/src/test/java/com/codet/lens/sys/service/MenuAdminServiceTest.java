@@ -2,10 +2,12 @@ package com.codet.lens.sys.service;
 
 import com.codet.lens.common.base.ResultException;
 import com.codet.lens.common.base.Status;
+import com.codet.lens.sys.dto.menu.MenuTree;
 import com.codet.lens.sys.dto.menu.SaveMenuRequest;
 import com.codet.lens.sys.entity.SysMenu;
 import com.codet.lens.sys.mapper.SysMenuMapper;
 import com.codet.lens.sys.mapper.SysRoleMenuMapper;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -28,6 +30,25 @@ class MenuAdminServiceTest {
     @BeforeEach
     void mockRootMenu() {
         when(menuMapper.selectById(1L)).thenReturn(menu(1L, 0L, "MENU"));
+    }
+
+    @Test
+    void sortsMenusAtEveryLevelByPositionThenId() {
+        when(menuMapper.selectList(any())).thenReturn(List.of(
+                menu(1L, 0L, "MENU").setSortNum(20),
+                menu(2L, 0L, "MENU").setSortNum(10),
+                menu(3L, 1L, "MENU").setSortNum(30),
+                menu(4L, 1L, "MENU").setSortNum(10),
+                menu(5L, 1L, "MENU").setSortNum(10),
+                menu(6L, 4L, "FUNC").setSortNum(null),
+                menu(7L, 4L, "FUNC").setSortNum(10)));
+
+        var roots = service.tree();
+
+        assertEquals(List.of(2L, 1L), roots.stream().map(MenuTree::getId).toList());
+        var children = roots.get(1).getChildren();
+        assertEquals(List.of(4L, 5L, 3L), children.stream().map(MenuTree::getId).toList());
+        assertEquals(List.of(7L, 6L), children.get(0).getChildren().stream().map(MenuTree::getId).toList());
     }
 
     @Test

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { LENS_LOGO_SVG } from './brand/lensLogo'
+
 withDefaults(defineProps<{
   label?: string
   surface?: 'dark' | 'light'
@@ -16,10 +18,8 @@ withDefaults(defineProps<{
     fill="none"
     role="img"
     :aria-label="label"
-  >
-    <circle class="lens-logo__orbit" cx="50" cy="50" r="37" pathLength="100" transform="rotate(55 50 50)" />
-    <circle class="lens-logo__focus" cx="50" cy="50" r="16" />
-  </svg>
+    v-html="LENS_LOGO_SVG"
+  />
 </template>
 
 <style scoped>
@@ -28,21 +28,10 @@ withDefaults(defineProps<{
 
   display: block;
   overflow: visible;
+  color: var(--lens-logo-primary);
 }
 
 .lens-logo--on-dark {
   --lens-logo-primary: var(--na-brand-on-dark);
-}
-
-.lens-logo__orbit {
-  fill: none;
-  stroke-linecap: round;
-  stroke: var(--lens-logo-primary);
-  stroke-width: 9;
-  stroke-dasharray: 88 12;
-}
-
-.lens-logo__focus {
-  fill: var(--lens-logo-primary);
 }
 </style>

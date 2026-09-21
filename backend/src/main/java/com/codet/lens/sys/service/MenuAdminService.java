@@ -58,7 +58,10 @@ public class MenuAdminService {
                 parent.getChildren().add(node);
             }
         }
-        roots.sort(Comparator.comparing(MenuTree::getSortNum, Comparator.nullsLast(Integer::compareTo)));
+        Comparator<MenuTree> order = Comparator.comparing(MenuTree::getSortNum, Comparator.nullsLast(Integer::compareTo))
+                .thenComparing(MenuTree::getId);
+        roots.sort(order);
+        map.values().forEach(node -> node.getChildren().sort(order));
         return roots;
     }
 

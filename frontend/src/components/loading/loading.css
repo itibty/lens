@@ -1,0 +1,29 @@
+.lens-loading-orbit {
+  transform-box: view-box;
+  transform-origin: 50% 50%;
+  animation: lens-loading-spin 0.8s linear infinite;
+}
+
+.lens-brand-loading {
+  --el-loading-spinner-size: 36px;
+}
+
+.lens-brand-loading .el-loading-spinner .circular {
+  display: inline-block;
+  width: var(--el-loading-spinner-size);
+  height: var(--el-loading-spinner-size);
+  color: var(--el-color-primary);
+  animation: none;
+}
+
+@keyframes lens-loading-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lens-loading-orbit {
+    animation: none;
+  }
+}

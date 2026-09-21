@@ -6,10 +6,22 @@
  * @Description:
  */
 
+export type LoadingStyle = 'brand' | 'default'
+
+const appSlogans = [
+  '让数据更清晰',
+  '让洞察更直观',
+  '让决策有依据',
+  '看见数据价值',
+] as const
+
 // UI
 export const UIConfig = {
   appTitle: import.meta.env.VITE_APP_TITLE || 'Lens',
-  appSlogan: '让数据更清晰',
+  // 每次加载应用时选一次；登录页与顶栏共用，路由切换时保持不变。
+  appSlogan: appSlogans[Math.floor(Math.random() * appSlogans.length)],
+  loadingStyle: 'brand' as LoadingStyle, // 改为 default，统一恢复原有 loading 样式
+  appearanceEnabled: true, // 改为 false，隐藏外观入口并强制恢复经典导航配色
   showWatermark: true, // 是否水印
   sidebarFilter: true, // 侧栏是否支持搜索
   sidebarUniqueOpened: false, // 侧栏 uniqueOpened

@@ -20,21 +20,53 @@ function setup() {
 const success: VIS.RQueryDataResponse = { code: 200, msg: '成功', data: { columns: [], total: 1, truncated: false, rows: [{ total: 8 }], queryMeta: { resultGeneratedAt: '2026-09-14T10:00:00Z' } } }
 
 describe('query refresh result and time consistency', () => {
-  it('preserves old results and metadata only for same-condition refresh failure', async () => {
+  it.each([false, true])('shows initial loading and keeps results during refresh (silent=%s)', async (silent) => {
+    const { state } = setup()
+    vi.mocked(queryCardData).mockResolvedValueOnce(success)
+    const initial = state.run({ silent })
+    expect(state.loading.value).toBe(true)
+    expect(state.refreshing.value).toBe(true)
+    await initial
+
+    const updated = {
+      ...success,
+      data: { ...success.data!, rows: [{ total: 16 }], queryMeta: { resultGeneratedAt: '2026-09-21T10:00:00Z' } },
+    }
+    vi.mocked(queryCardData).mockResolvedValueOnce(updated)
+    const refresh = state.run({ silent })
+    expect(state.loading.value).toBe(!silent)
+    expect(state.refreshing.value).toBe(true)
+    expect(state.data.value).toEqual(success.data)
+    await refresh
+    expect(state.data.value).toEqual(updated.data)
+    expect(state.loading.value).toBe(false)
+    expect(state.refreshing.value).toBe(false)
+  })
+
+  it.each([false, true])('preserves results on refresh failure and clears them for changed filters (silent=%s)', async (silent) => {
     const { state, input } = setup()
     vi.mocked(queryCardData).mockResolvedValueOnce(success)
     await state.run()
     vi.mocked(queryCardData).mockRejectedValueOnce({ msg: '数据库超时' })
-    await state.run()
+    const refresh = state.run({ silent })
+    expect(state.loading.value).toBe(!silent)
+    expect(state.data.value).toEqual(success.data)
+    await refresh
     expect(state.data.value).toEqual(success.data)
     expect(state.refreshError.value).toBe('数据库超时')
     expect(state.error.value).toBe('')
+    expect(state.loading.value).toBe(false)
+    expect(state.refreshing.value).toBe(false)
     input.globalFilters[0]!.value = ['华南']
     vi.mocked(queryCardData).mockRejectedValueOnce({ msg: '数据库超时' })
-    await state.run()
+    const changedFilters = state.run({ silent })
+    expect(state.loading.value).toBe(true)
     expect(state.data.value.rows).toEqual([])
     expect(state.data.value.queryMeta).toBeUndefined()
+    await changedFilters
     expect(state.error.value).toBe('数据库超时')
+    expect(state.loading.value).toBe(false)
+    expect(state.refreshing.value).toBe(false)
   })
 
   it('discards a slow response after filters changed', async () => {
