@@ -1,0 +1,2 @@
+# Exclude Vue components from GitHub language statistics while preserving syntax highlighting.
+*.vue linguist-detectable=false
