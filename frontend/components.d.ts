@@ -108,9 +108,6 @@ declare module 'vue' {
     SvgIcon: typeof import('./src/components/SvgIcon.vue')['default']
     TableForm: typeof import('./src/components/form/TableForm.vue')['default']
   }
-  export interface GlobalDirectives {
-    vLoading: typeof import('element-plus/es')['ElLoadingDirective']
-  }
 }
 
 // For TSX support

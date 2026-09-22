@@ -242,9 +242,9 @@ function switchRoot(root: MenuInfo) {
   .nav-logo {
     --lens-logo-primary: var(--na-navbar-brand-color);
 
-    flex: 0 0 28px;
-    width: 28px;
-    height: 28px;
+    flex: 0 0 26px;
+    width: 26px;
+    height: 26px;
   }
 
   &.fold {

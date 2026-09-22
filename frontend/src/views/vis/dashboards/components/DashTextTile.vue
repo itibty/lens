@@ -3,7 +3,7 @@
 -->
 <script setup lang="ts">
 import type { CSSProperties } from 'vue'
-import type { DashTextAppearance, DashTextWidget } from '../dashLayout'
+import type { DashTextAppearance, DashTextDraft, DashTextWidget } from '../dashLayout'
 import type { DashFlowMode } from '../dashPresentation'
 import SimpleHtmlEditor from '@/views/vis/cards/components/SimpleHtmlEditor.vue'
 import { sanitizeRichText } from '@/views/vis/shared/sanitizeRichText'
@@ -24,23 +24,36 @@ const props = withDefaults(defineProps<{
 })
 
 const emit = defineEmits<{
-  'update:html': [html: string]
-  'update:appearance': [appearance: DashTextAppearance]
+  'update:draft': [draft: DashTextDraft]
+  'copy': []
   'remove': []
   'resizeStart': [corner: 'nw' | 'ne' | 'sw' | 'se', event: PointerEvent]
 }>()
 
 const safeHtml = computed(() => sanitizeRichText(props.widget.html))
 const editorHtml = computed<string | undefined>({
-  get: () => props.widget.html || undefined,
-  set: value => emit('update:html', sanitizeRichText(value)),
+  get: () => safeHtml.value || undefined,
+  set: value => emitDraft(sanitizeRichText(value), props.widget.appearance),
 })
+
+function emitDraft(html: string, appearance: DashTextAppearance) {
+  emit('update:draft', {
+    html,
+    appearance,
+  })
+}
+
+function updateAppearance(appearance: DashTextAppearance) {
+  emitDraft(safeHtml.value, appearance)
+}
 const tileStyle = computed<CSSProperties>(() => {
   const { appearance } = props.widget
   return {
-    backgroundColor: appearance.bg || 'var(--dash-card-bg, var(--el-bg-color))',
-    backgroundImage: appearance.bg ? 'none' : 'var(--dash-card-glaze, none)',
-    color: appearance.color || 'var(--dash-content-color, var(--el-text-color-primary))',
+    'backgroundColor': appearance.bg || 'var(--dash-card-bg, var(--el-bg-color))',
+    'backgroundImage': appearance.bg ? 'none' : 'var(--dash-card-glaze, none)',
+    'color': appearance.color || 'var(--dash-content-color, var(--el-text-color-primary))',
+    '--annotation-vertical-align': appearance.verticalAlign,
+    '--dash-text-padding': `${appearance.insets?.top ?? 0}px ${appearance.insets?.right ?? 0}px ${appearance.insets?.bottom ?? 0}px ${appearance.insets?.left ?? 0}px`,
   }
 })
 
@@ -53,11 +66,11 @@ function onResizePointerDown(corner: 'nw' | 'ne' | 'sw' | 'se', event: PointerEv
 
 <template>
   <div
-    class="dash-tile dash-text is-card"
+    class="dash-tile dash-text"
     :class="[
-      `is-padding-${widget.appearance.padding}`,
       `is-align-${widget.appearance.verticalAlign}`,
       {
+        'has-design-actions': designActions,
         'is-editable': editable,
         'is-resizing': resizing,
         'is-flow': !!flowMode,
@@ -91,9 +104,14 @@ function onResizePointerDown(corner: 'nw' | 'ne' | 'sw' | 'se', event: PointerEv
         </template>
         <DashTextSettings
           :appearance="widget.appearance"
-          @update:appearance="emit('update:appearance', $event)"
+          @update:appearance="updateAppearance"
         />
       </el-popover>
+      <el-tooltip content="复制" placement="top" :show-after="200">
+        <button type="button" aria-label="复制标注" @click.stop="emit('copy')">
+          <span class="i-mingcute-copy-2-line" />
+        </button>
+      </el-tooltip>
       <el-tooltip content="删除" placement="top" :show-after="200">
         <button type="button" @click.stop="emit('remove')">
           <span class="i-mingcute-delete-2-line" />
@@ -105,6 +123,7 @@ function onResizePointerDown(corner: 'nw' | 'ne' | 'sw' | 'se', event: PointerEv
         v-if="designActions"
         v-model="editorHtml"
         embedded
+        annotation
         class="dash-text__editor"
       />
       <div v-else class="dash-text__content" v-html="safeHtml" />
@@ -124,9 +143,7 @@ function onResizePointerDown(corner: 'nw' | 'ne' | 'sw' | 'se', event: PointerEv
   border: var(--vis-card-border);
   border-radius: var(--dash-card-radius, 12px);
 
-  &.is-card {
-    @include page.frost(card);
-  }
+  @include page.frost(card);
 
   &.is-editable:hover,
   &.is-editable:focus-within,
@@ -139,7 +156,7 @@ function onResizePointerDown(corner: 'nw' | 'ne' | 'sw' | 'se', event: PointerEv
 
 .dash-text.is-flow {
   height: auto;
-  min-height: 120px;
+  min-height: inherit;
   border: 1px solid color-mix(in srgb, var(--dash-border, var(--na-border-color-light)) 48%, transparent);
 
   .dash-text__body {
@@ -166,53 +183,16 @@ function onResizePointerDown(corner: 'nw' | 'ne' | 'sw' | 'se', event: PointerEv
   }
 }
 
-.dash-text.is-flow-compact {
-  &.is-padding-md .dash-text__body {
-    padding: 13px 14px;
-  }
-
-  &.is-padding-lg .dash-text__body {
-    padding: 18px;
-  }
-}
-
-@media (max-width: 359px) {
-  .dash-text.is-flow {
-    &.is-padding-sm .dash-text__body {
-      padding: 8px;
-    }
-
-    &.is-padding-md .dash-text__body {
-      padding: 11px 12px;
-    }
-
-    &.is-padding-lg .dash-text__body {
-      padding: 15px 14px;
-    }
-  }
-}
-
 .dash-text__body {
   display: flex;
   width: 100%;
   height: 100%;
   min-height: 0;
   box-sizing: border-box;
+  padding: var(--dash-text-padding, 0);
   overflow: auto;
   border-radius: inherit;
   scrollbar-width: thin;
-}
-
-.is-padding-sm .dash-text__body {
-  padding: 8px 10px;
-}
-
-.is-padding-md .dash-text__body {
-  padding: 14px 16px;
-}
-
-.is-padding-lg .dash-text__body {
-  padding: 22px 24px;
 }
 
 .is-align-start .dash-text__body {
@@ -230,6 +210,7 @@ function onResizePointerDown(corner: 'nw' | 'ne' | 'sw' | 'se', event: PointerEv
 .dash-text__content {
   width: 100%;
   min-width: 0;
+  display: flow-root;
   overflow-wrap: anywhere;
   font-size: 13px;
   line-height: 1.65;
@@ -314,6 +295,7 @@ function onResizePointerDown(corner: 'nw' | 'ne' | 'sw' | 'se', event: PointerEv
 .dash-text__editor {
   width: 100%;
   min-width: 0;
+  display: flow-root;
   overflow-wrap: anywhere;
   font-size: 13px;
   line-height: 1.65;
@@ -340,28 +322,39 @@ function onResizePointerDown(corner: 'nw' | 'ne' | 'sw' | 'se', event: PointerEv
   }
 }
 
+// 只给首行标题避让卡片操作，正文保持完整宽度，不额外占用顶部高度。
+.dash-text.has-design-actions {
+  :deep(.simple-html-editor__prose > :first-child:not(blockquote)),
+  :deep(.simple-html-editor__prose > blockquote:first-child > :first-child) {
+    padding-right: 90px;
+  }
+}
+
+.dash-text__content {
+  :deep(> p:last-child:empty) {
+    display: none;
+  }
+}
+
 .dash-text__actions {
   position: absolute;
-  top: 7px;
-  right: 8px;
+  top: 0;
+  right: 4px;
   z-index: 7;
   display: flex;
-  gap: 3px;
-  padding: 3px;
+  gap: 2px;
+  padding: 2px;
   border: 1px solid color-mix(in srgb, var(--dash-border, var(--na-border-color-light)) 72%, transparent);
   border-radius: 8px;
   background: color-mix(in srgb, var(--dash-card-bg, var(--na-surface-bg)) 92%, transparent);
   box-shadow: 0 4px 14px rgb(15 23 42 / 10%);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.12s ease;
 
   button {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 28px;
-    height: 28px;
+    width: 24px;
+    height: 24px;
     padding: 0;
     border: none;
     border-radius: 6px;
@@ -374,12 +367,6 @@ function onResizePointerDown(corner: 'nw' | 'ne' | 'sw' | 'se', event: PointerEv
       color: var(--dash-accent, var(--na-color-primary));
     }
   }
-}
-
-.dash-text:hover .dash-text__actions,
-.dash-text:focus-within .dash-text__actions {
-  opacity: 1;
-  pointer-events: auto;
 }
 
 .dash-tile__handle {

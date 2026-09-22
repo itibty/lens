@@ -33,6 +33,7 @@ onMounted(() => {
           class="appearance-option__preview"
           :style="{
             '--preview-navbar': theme.navbar.background,
+            '--preview-navbar-border': theme.navbar.border,
             '--preview-sidebar': theme.sidebar.background,
             '--preview-active': theme.sidebar.activeText,
           }"
@@ -88,7 +89,7 @@ onMounted(() => {
 
   &__grid {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 12px;
     margin-top: 12px;
   }
@@ -122,6 +123,7 @@ onMounted(() => {
 
   &__navbar {
     grid-column: 1 / -1;
+    border-bottom: 1px solid var(--preview-navbar-border);
     background: var(--preview-navbar);
   }
 

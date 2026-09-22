@@ -6,6 +6,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.owasp.html.HtmlPolicyBuilder;
 import org.owasp.html.PolicyFactory;
 import org.owasp.html.Sanitizers;
 
@@ -19,7 +20,10 @@ public final class RichTextSanitizer {
             .and(Sanitizers.BLOCKS)
             .and(Sanitizers.TABLES)
             .and(Sanitizers.LINKS)
-            .and(Sanitizers.STYLES);
+            .and(Sanitizers.STYLES)
+            .and(new HtmlPolicyBuilder()
+                    .allowElements("hr")
+                    .toFactory());
 
     private RichTextSanitizer() {
     }

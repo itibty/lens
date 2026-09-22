@@ -300,7 +300,6 @@ defineExpose<DashExplorerTreeInstance>({ setCurrentDashboard })
 .explorer-node__ops {
   margin-left: auto;
   flex-shrink: 0;
-  opacity: 0;
 }
 
 .explorer-node__more-icon,
@@ -312,11 +311,6 @@ defineExpose<DashExplorerTreeInstance>({ setCurrentDashboard })
 
 .explorer-menu__icon {
   margin-right: 7px;
-}
-
-.explorer-node:hover .explorer-node__ops,
-.explorer-node__ops:focus-within {
-  opacity: 1;
 }
 
 :deep(.el-tree-node__content) {

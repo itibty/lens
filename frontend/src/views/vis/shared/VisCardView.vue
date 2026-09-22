@@ -88,6 +88,8 @@ const props = withDefaults(defineProps<{
   /** 流式趋势卡允许内容撑高，避免辅助指标落入卡片内滚动区。 */
   autoHeight?: boolean
   actionVariant?: 'ghost' | 'outline'
+  /** 设计场景常显操作入口，不依赖悬停。 */
+  alwaysShowActions?: boolean
 }>(), {
   title: '',
   description: '',
@@ -109,6 +111,7 @@ const props = withDefaults(defineProps<{
   compact: false,
   autoHeight: false,
   actionVariant: 'outline',
+  alwaysShowActions: false,
 })
 
 const emit = defineEmits<{
@@ -161,7 +164,7 @@ const overlayThemeStyle = computed(() => themeCssVars(renderTheme.value))
 const hasHeaderText = computed(() => !!(cardTitle.value || cardRemark.value))
 const coarsePointer = useMediaQuery('(hover: none), (pointer: coarse)')
 const smallScreen = useMediaQuery('(max-width: 1023px)')
-const showRemarkIcon = computed(() => props.compact || smallScreen.value || coarsePointer.value || remarkOpen.value)
+const showRemarkIcon = computed(() => props.alwaysShowActions || props.compact || smallScreen.value || coarsePointer.value || remarkOpen.value)
 
 const empty = computed(() => {
   if (stageMode.value === 'pivot')
@@ -466,6 +469,7 @@ watch(allowDetail, (ok) => {
         'is-compact': compact,
         'is-auto-height': autoHeight,
         'is-borderless-actions': actionVariant === 'ghost',
+        'always-show-actions': alwaysShowActions,
       },
     ]"
     :style="surfaceThemeStyle"
@@ -1140,6 +1144,7 @@ watch(allowDetail, (ok) => {
     display: none;
   }
 
+  &.always-show-actions &__full-btn,
   &.is-borderless-actions &__body:hover &__full-btn,
   &.is-borderless-actions &__body:focus-within &__full-btn {
     display: inline-flex;
@@ -1164,6 +1169,7 @@ watch(allowDetail, (ok) => {
     }
   }
 
+  &.always-show-actions &__actions,
   &__body:hover &__actions,
   &__body:focus-within &__actions,
   &__actions.is-busy,

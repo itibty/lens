@@ -40,7 +40,10 @@ Vue 3 应用，覆盖数据集、卡片、看板设计，以及账号、角色�
 
 ## Loading 样式
 
-在 `src/core/config.ts` 设置 `UIConfig.loadingStyle`：`'brand'` 使用 Lens 品牌动画，`'default'` 恢复原有样式。页面、表格和卡片遮罩统一跟随此配置，按钮及时间图标仍使用小型圆环。
+在 `src/core/config.ts` 设置 loading 样式：
+
+- `UIConfig.loadingStyle` 默认 `'default'`，用于通用页面、表格、弹窗和卡片 body（包括看板内的卡片）。按钮及时间图标仍使用小型圆环。
+- `UIConfig.dashboardLoadingStyle` 默认 `'brand'`，仅用于看板展示（含独立预览）与设计画布的加载遮罩。目录树、选卡弹窗和明细抽屉仍使用通用样式。将此项改为 `'default'` 即可全站恢复默认动画。
 
 ```vue
 <!-- 跟随全局配置，保留原内容并显示局部遮罩 -->
@@ -48,6 +51,9 @@ Vue 3 应用，覆盖数据集、卡片、看板设计，以及账号、角色�
 
 <!-- 单个区域固定使用默认样式 -->
 <div v-spinner:default="loading">内容</div>
+
+<!-- 看板展示与设计画布显式使用专用配置，不向内部组件传播 -->
+<div v-spinner:[UIConfig.dashboardLoadingStyle]="loading">看板展示</div>
 
 <!-- 仅使用动画图标；支持 variant、size、color -->
 <LoadingIcon v-if="loading" :size="28" />

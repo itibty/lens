@@ -52,7 +52,6 @@ watch(
   box-sizing: border-box;
   padding: 0;
   z-index: 10;
-  border-bottom: 1px solid var(--na-navbar-divider-color);
 }
 
 .sidebar {

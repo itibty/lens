@@ -178,6 +178,19 @@ public final class VisDashWidgets {
         validateEnum(appearance, "verticalAlign", TEXT_VERTICAL_ALIGNS);
         validateColor(appearance, "bg");
         validateColor(appearance, "color");
+        JsonNode insets = appearance.get("insets");
+        if (insets != null && !insets.isNull()) {
+            if (!insets.isObject()) {
+                throw fail("文本内边距 insets 必须是对象");
+            }
+            for (String side : List.of("top", "right", "bottom", "left")) {
+                JsonNode value = insets.get(side);
+                if (value != null && (!value.isIntegralNumber() || !value.canConvertToInt()
+                        || value.intValue() < 0 || value.intValue() > 80)) {
+                    throw fail("文本内边距 " + side + " 必须是 0–80 的整数");
+                }
+            }
+        }
     }
 
     private static void validateEnum(JsonNode node, String field, Set<String> values) {

@@ -294,6 +294,6 @@ export const NAVBAR_COLORS = {
   background: '#20242A',
   text: '#D0D5DD',
   title: NEUTRAL.white,
-  border: alphaColor(NEUTRAL.white, 0.08),
+  border: '#20242A',
   hover: alphaColor(NEUTRAL.white, 0.08),
 }

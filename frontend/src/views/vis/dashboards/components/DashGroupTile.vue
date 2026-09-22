@@ -424,20 +424,10 @@ function onResizePointerDown(corner: 'nw' | 'ne' | 'sw' | 'se', event: PointerEv
 }
 
 .dash-group__cfg {
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.15s ease;
-
   &.is-borderless {
     min-width: var(--vis-control-compact);
     min-height: var(--vis-control-compact);
   }
-}
-
-.dash-group:hover .dash-group__cfg,
-.dash-group:focus-within .dash-group__cfg {
-  opacity: 1;
-  pointer-events: auto;
 }
 
 .dash-group__tabs {

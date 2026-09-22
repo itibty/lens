@@ -15,8 +15,10 @@ import { SlashCommand } from './slashCommand'
 
 const props = withDefaults(defineProps<{
   embedded?: boolean
+  annotation?: boolean
 }>(), {
   embedded: false,
+  annotation: false,
 })
 
 const TEXT_COLORS = [
@@ -102,6 +104,16 @@ const editor = useEditor({
     persistHtml(next.getHTML(), next.isEmpty)
   },
 })
+
+function focusEditor(event: MouseEvent) {
+  const ed = editor.value
+  if (!props.embedded || !ed)
+    return
+  if (ed.isEmpty)
+    ed.commands.focus('start')
+  else if (props.annotation && !ed.view.dom.contains(event.target as Node))
+    ed.commands.focus('end')
+}
 
 const appendBody = () => document.body
 const bubbleOptions = {
@@ -204,7 +216,11 @@ watch(html, (next) => {
 </script>
 
 <template>
-  <div class="simple-html-editor" :class="{ 'is-embedded': props.embedded }">
+  <div
+    class="simple-html-editor"
+    :class="{ 'is-embedded': props.embedded, 'is-annotation': annotation, 'is-empty': editor?.isEmpty }"
+    @click="focusEditor"
+  >
     <EditorContent
       v-if="editor"
       :editor="editor"
@@ -255,6 +271,15 @@ watch(html, (next) => {
           </div>
         </div>
         <i />
+        <button
+          v-if="annotation"
+          type="button"
+          title="引用"
+          :class="{ 'is-active': editor.isActive('blockquote') }"
+          @click="editor.chain().focus().toggleBlockquote().run()"
+        >
+          <span class="i-tabler-blockquote" />
+        </button>
         <button
           type="button"
           title="加粗"
@@ -503,6 +528,11 @@ watch(html, (next) => {
     resize: none;
     user-select: text;
 
+    &.is-empty {
+      align-self: stretch;
+      cursor: text;
+    }
+
     :deep(.tiptap) {
       min-height: 1.65em;
       padding: 0;
@@ -521,6 +551,32 @@ watch(html, (next) => {
       a {
         color: var(--dash-accent, var(--el-color-primary));
       }
+    }
+  }
+
+  &.is-annotation {
+    height: 100%;
+    cursor: text;
+
+    > :deep(div:first-child) {
+      min-height: 100%;
+      height: 100%;
+    }
+
+    :deep(.tiptap) {
+      display: flow-root;
+      min-height: 100%;
+      box-sizing: border-box;
+      align-content: var(--annotation-vertical-align, start);
+    }
+
+    :deep(.ProseMirror-selectednode) {
+      outline: 2px solid var(--dash-accent, var(--el-color-primary));
+      outline-offset: 2px;
+    }
+
+    :deep(hr) {
+      cursor: pointer;
     }
   }
 }

@@ -16,6 +16,21 @@ class VisDashWidgetsTest {
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     @Test
+    void preservesLegacyAnnotationContentOnSave() throws Exception {
+        String block = "<div data-lens-note=\"chapter\"><p data-lens-note-part=\"number\">09</p>"
+                + "<div data-lens-note-part=\"body\"><h3>已编辑标题</h3><p>已编辑说明</p></div></div>";
+        var root = MAPPER.createObjectNode();
+        root.putArray("widgets").addObject().put("kind", "text").put("id", "note-1")
+                .put("html", "<p>普通文本</p>" + block + block);
+        var prepared = VisDashWidgets.prepare(MAPPER.writeValueAsString(root));
+        String html = MAPPER.readTree(prepared.configJson()).path("widgets").get(0).path("html").asText();
+
+        String cleanBlock = "<div><p>09</p><div><h3>已编辑标题</h3><p>已编辑说明</p></div></div>";
+        assertEquals("<p>普通文本</p>" + cleanBlock + cleanBlock, html);
+        assertTrue(prepared.cardIds().isEmpty());
+    }
+
+    @Test
     void acceptsNativeTextWithoutCreatingCardMembership() throws Exception {
         String config = """
                 {"widgets":[
@@ -67,6 +82,27 @@ class VisDashWidgetsTest {
 
         assertEquals("文本外观 surface 无效", error.getMessage());
     }
+
+    @Test
+    void preservesIndependentTextPadding() throws Exception {
+        String config = """
+                {"widgets":[{"kind":"text","id":"note","html":"<p>说明</p>",
+                 "appearance":{"padding":"md","insets":{"top":8,"right":12,"bottom":16,"left":20}}}]}
+                """;
+        JsonNode insets = MAPPER.readTree(VisDashWidgets.prepare(config).configJson())
+                .path("widgets").get(0).path("appearance").path("insets");
+        assertEquals(MAPPER.readTree("{\"top\":8,\"right\":12,\"bottom\":16,\"left\":20}"), insets);
+    }
+
+    @Test
+    void rejectsInvalidTextPadding() {
+        for (String value : List.of("-1", "81", "1.5", "\"12\"", "9999999999999")) {
+            String config = "{\"widgets\":[{\"kind\":\"text\",\"id\":\"note\",\"html\":\"\","
+                    + "\"appearance\":{\"insets\":{\"left\":" + value + "}}}]}";
+            assertThrows(RuntimeException.class, () -> VisDashWidgets.prepare(config));
+        }
+    }
+
     @Test
     void acceptsLocalTextAndHiddenRemarkWithoutChangingMembership() throws Exception {
         String config = """

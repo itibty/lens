@@ -12,6 +12,27 @@ class RichTextSanitizerTest {
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     @Test
+    void removesRetiredPresetAttributesAndPreservesRichTextContent() {
+        String html = """
+                <div data-lens-note="chapter"><p data-lens-note-part="number">02</p>
+                  <div data-lens-note-part="body"><h3>章节</h3><p>内容</p></div></div>
+                <blockquote data-lens-template="sideline"><p>说明</p></blockquote>
+                <p data-lens-template="number">第三章</p><hr data-lens-template="divider">
+                <span onclick="steal()">正文</span><script>alert(1)</script>
+                """;
+        String sanitized = RichTextSanitizer.sanitizeHtml(html);
+
+        assertTrue(sanitized.contains("<p>02</p>"));
+        assertTrue(sanitized.contains("<h3>章节</h3><p>内容</p>"));
+        assertTrue(sanitized.contains("<blockquote><p>说明</p></blockquote>"));
+        assertTrue(sanitized.contains("<p>第三章</p>"));
+        assertTrue(sanitized.contains("<hr"));
+        assertFalse(sanitized.contains("data-lens-"));
+        assertFalse(sanitized.contains("onclick"));
+        assertFalse(sanitized.contains("script"));
+    }
+
+    @Test
     void sanitizesLegacyAndModuleHtml() throws Exception {
         String visual = """
                 {

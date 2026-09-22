@@ -9,7 +9,6 @@ interface ChromeColors {
     text: string
     hover: string
     border: string
-    divider: string
     brand: string
   }
   sidebar: {
@@ -26,7 +25,7 @@ interface ChromeColors {
 }
 
 const classic: ChromeColors = {
-  navbar: { ...NAVBAR_COLORS, divider: LIGHT_THEME.border.subtle, brand: DARK_THEME.primary.base },
+  navbar: { ...NAVBAR_COLORS, brand: DARK_THEME.primary.base },
   sidebar: {
     background: LIGHT_THEME.surface.panel,
     text: LIGHT_THEME.text.strong,
@@ -46,12 +45,11 @@ export const CHROME_THEMES = {
   light: {
     name: '明亮',
     navbar: {
-      background: '#FFFFFF',
+      background: '#F8FAFC',
       title: '#1F2937',
       text: '#475467',
       hover: '#F2F4F7',
       border: '#E4E7EC',
-      divider: '#E4E7EC',
       brand: LIGHT_THEME.primary.base,
     },
     sidebar: {
@@ -73,8 +71,7 @@ export const CHROME_THEMES = {
       title: '#F4F7FB',
       text: '#C6D3E2',
       hover: '#294564',
-      border: '#294564',
-      divider: '#294564',
+      border: '#142C49',
       brand: '#A9C9FF',
     },
     sidebar: {
@@ -87,29 +84,6 @@ export const CHROME_THEMES = {
       activeText: '#FFFFFF',
       border: '#314B68',
       inputBorder: '#526B87',
-    },
-  },
-  forest: {
-    name: '松青',
-    navbar: {
-      background: '#214B3B',
-      title: '#F3F8F3',
-      text: '#CDDCCE',
-      hover: '#355E4D',
-      border: '#355E4D',
-      divider: '#355E4D',
-      brand: '#ABE1BE',
-    },
-    sidebar: {
-      background: '#F0F6F1',
-      text: '#365345',
-      muted: '#586E61',
-      hover: '#E2EDE5',
-      hoverText: '#214F3A',
-      active: '#D6E7DC',
-      activeText: '#214F3A',
-      border: '#D5E2D9',
-      inputBorder: '#B6CCBD',
     },
   },
 } satisfies Record<string, ChromeColors & { name: string }>
@@ -154,7 +128,6 @@ export function chromeCssVars(id: ChromeThemeId): Record<string, string> {
     '--na-navbar-hover-text-color': navbar.title,
     '--na-navbar-hover-bg': navbar.hover,
     '--na-navbar-border-color': navbar.border,
-    '--na-navbar-divider-color': navbar.divider,
     '--na-navbar-brand-color': navbar.brand,
     '--na-sidebar-bg': sidebar.background,
     '--na-sidebar-text': sidebar.text,

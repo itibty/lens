@@ -20,7 +20,8 @@ export const UIConfig = {
   appTitle: import.meta.env.VITE_APP_TITLE || 'Lens',
   // 每次加载应用时选一次；登录页与顶栏共用，路由切换时保持不变。
   appSlogan: appSlogans[Math.floor(Math.random() * appSlogans.length)],
-  loadingStyle: 'brand' as LoadingStyle, // 改为 default，统一恢复原有 loading 样式
+  loadingStyle: 'default' as LoadingStyle, // 通用页面与组件的 loading 样式
+  dashboardLoadingStyle: 'brand' as LoadingStyle, // 仅看板展示（含独立预览）与设计画布使用；改为 default 可恢复默认
   appearanceEnabled: true, // 改为 false，隐藏外观入口并强制恢复经典导航配色
   showWatermark: true, // 是否水印
   sidebarFilter: true, // 侧栏是否支持搜索

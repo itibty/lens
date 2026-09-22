@@ -24,9 +24,9 @@ afterEach(() => {
 
 describe('system appearance', () => {
   it('uses classic for missing, invalid or inherited preset names', () => {
-    for (const value of [null, undefined, '', 'obsolete', '__proto__', 'constructor', {}])
+    for (const value of [null, undefined, '', 'obsolete', 'forest', '__proto__', 'constructor', {}])
       expect(resolveChromeTheme(value)).toBe('classic')
-    stored.set('NA:chrome_theme', 'obsolete')
+    stored.set('NA:chrome_theme', 'forest')
     expect(readChromeTheme()).toBe('classic')
   })
 
@@ -43,7 +43,7 @@ describe('system appearance', () => {
   })
 
   it('ignores saved appearances when the feature is disabled', () => {
-    saveChromeTheme('forest')
+    saveChromeTheme('light')
     UIConfig.appearanceEnabled = false
     expect(readChromeTheme()).toBe('classic')
     expect(resolveChromeTheme('navy')).toBe('classic')

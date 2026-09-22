@@ -300,7 +300,7 @@ watch(
   <div
     :id="DASH_VIEWER_ID"
     ref="viewerRef"
-    v-spinner="loading"
+    v-spinner:[UIConfig.dashboardLoadingStyle]="loading"
     :data-dashboard-view-state="personal.ready ? 'ready' : personal.error ? 'failed' : 'loading'"
     :data-dashboard-view-error="personal.error"
     :data-dashboard-screenshot-status="screenshotStatus"

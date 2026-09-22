@@ -34,12 +34,14 @@ export interface DashCardWidget extends DashLayoutRect {
 }
 
 export type DashTextPadding = 'sm' | 'md' | 'lg'
+export const DASH_TEXT_MAX_PADDING = 80
+export type DashTextInsets = Record<'top' | 'right' | 'bottom' | 'left', number>
 export type DashTextVerticalAlign = 'start' | 'center' | 'end'
-
 export interface DashTextAppearance {
-  /** 标注始终是实体卡片；该字段保留在配置里便于向后兼容。 */
   surface: 'card'
+  /** 仅保留旧配置兼容，实际内边距使用 insets，缺省为 0。 */
   padding: DashTextPadding
+  insets?: DashTextInsets
   verticalAlign: DashTextVerticalAlign
   bg?: string
   color?: string
@@ -142,6 +144,15 @@ export function emptyTextDraft(): DashTextDraft {
   }
 }
 
+function readTextInsets(raw: unknown): DashTextInsets | undefined {
+  const rec = raw && typeof raw === 'object' ? raw as Record<string, unknown> : {}
+  const take = (key: keyof DashTextInsets) => typeof rec[key] === 'number' && Number.isFinite(rec[key])
+    ? Math.max(0, Math.min(DASH_TEXT_MAX_PADDING, Math.round(rec[key])))
+    : 0
+  const insets = { top: take('top'), right: take('right'), bottom: take('bottom'), left: take('left') }
+  return Object.values(insets).some(Boolean) ? insets : undefined
+}
+
 function persistTextAppearance(appearance: DashTextAppearance): DashTextAppearance {
   const takeColor = (raw?: string) => {
     const value = raw?.trim()
@@ -149,8 +160,8 @@ function persistTextAppearance(appearance: DashTextAppearance): DashTextAppearan
   }
   const bg = takeColor(appearance.bg)
   const color = takeColor(appearance.color)
+  const insets = readTextInsets(appearance.insets)
   return {
-    // 标注始终使用实体卡片承载；保留 surface 字段只为兼容既有配置结构。
     surface: 'card',
     padding: appearance.padding === 'sm' || appearance.padding === 'lg' ? appearance.padding : 'md',
     verticalAlign: appearance.verticalAlign === 'center' || appearance.verticalAlign === 'end'
@@ -158,16 +169,21 @@ function persistTextAppearance(appearance: DashTextAppearance): DashTextAppearan
       : 'start',
     ...(bg ? { bg } : {}),
     ...(color ? { color } : {}),
+    ...(insets ? { insets } : {}),
   }
 }
 
-export function createTextWidget(widgets: DashWidget[], draft: DashTextDraft): DashTextWidget {
+export function createTextWidget(
+  widgets: DashWidget[],
+  draft: DashTextDraft,
+  size = { w: DASH_TEXT_DEFAULT_W, h: DASH_TEXT_DEFAULT_H },
+): DashTextWidget {
   return {
     kind: 'text',
     id: createDashUid('t'),
     html: draft.html,
     appearance: persistTextAppearance(draft.appearance),
-    ...nextRect(widgets, { w: DASH_TEXT_DEFAULT_W, h: DASH_TEXT_DEFAULT_H }),
+    ...nextRect(widgets, size),
   }
 }
 
@@ -686,7 +702,20 @@ function readTextAppearance(raw: unknown): DashTextAppearance {
       : 'start',
     bg: typeof rec.bg === 'string' ? rec.bg : undefined,
     color: typeof rec.color === 'string' ? rec.color : undefined,
+    insets: readTextInsets(rec.insets),
   })
+}
+
+function readTextHtml(rec: Record<string, unknown>): string {
+  const html = typeof rec.html === 'string' ? rec.html.slice(0, DASH_TEXT_HTML_MAX_LENGTH) : ''
+  const appearance = rec.appearance && typeof rec.appearance === 'object' ? rec.appearance as Record<string, unknown> : {}
+  // 旧版独立编号并入普通正文；已编辑的内容（包括清空）保持原样。
+  if (appearance.preset !== 'chapter' || appearance.presetContent === true)
+    return html
+  const number = (typeof appearance.chapterNumber === 'string' ? appearance.chapterNumber.trim().slice(0, 8) : '') || '01'
+  const escaped = number.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const prefix = `<p>${escaped}</p>`
+  return prefix.length + html.length <= DASH_TEXT_HTML_MAX_LENGTH ? prefix + html : html
 }
 
 function sanitizeWidget(
@@ -713,7 +742,7 @@ function sanitizeWidget(
     if (widgetIds.has(id))
       id = createDashUid('t')
     widgetIds.add(id)
-    const html = typeof rec.html === 'string' ? rec.html.slice(0, DASH_TEXT_HTML_MAX_LENGTH) : ''
+    const html = readTextHtml(rec)
     return {
       kind: 'text',
       id,

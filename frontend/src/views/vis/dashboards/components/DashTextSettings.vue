@@ -2,11 +2,8 @@
  * @Description: 标注卡片的轻量外观设置；由卡片工具栏 Popover 承载。
 -->
 <script setup lang="ts">
-import type {
-  DashTextAppearance,
-  DashTextPadding,
-  DashTextVerticalAlign,
-} from '../dashLayout'
+import type { DashTextAppearance, DashTextInsets, DashTextVerticalAlign } from '../dashLayout'
+import { DASH_TEXT_MAX_PADDING } from '../dashLayout'
 
 const props = defineProps<{
   appearance: DashTextAppearance
@@ -15,6 +12,17 @@ const props = defineProps<{
 const emit = defineEmits<{
   'update:appearance': [appearance: DashTextAppearance]
 }>()
+
+const paddingFields = [
+  { key: 'top', label: '上' },
+  { key: 'right', label: '右' },
+  { key: 'bottom', label: '下' },
+  { key: 'left', label: '左' },
+] as const
+
+function updatePadding(side: keyof DashTextInsets, value: number | undefined) {
+  patchAppearance({ insets: { top: 0, right: 0, bottom: 0, left: 0, ...props.appearance.insets, [side]: value ?? 0 } })
+}
 
 function patchAppearance(patch: Partial<DashTextAppearance>) {
   emit('update:appearance', {
@@ -36,7 +44,7 @@ function updateColor(value: string | null) {
 <template>
   <div class="dash-text-settings" @click.stop>
     <div class="dash-text-settings__row">
-      <span class="dash-text-settings__label">卡片颜色</span>
+      <span class="dash-text-settings__label">背景颜色</span>
       <div class="dash-text-settings__control">
         <el-color-picker
           :model-value="appearance.bg"
@@ -74,21 +82,24 @@ function updateColor(value: string | null) {
         <span v-else class="dash-text-settings__hint">跟随看板</span>
       </div>
     </div>
-
     <div class="dash-text-settings__field">
-      <span class="dash-text-settings__label">内边距</span>
-      <el-segmented
-        :model-value="appearance.padding"
-        :options="[
-          { label: '紧凑', value: 'sm' },
-          { label: '适中', value: 'md' },
-          { label: '宽松', value: 'lg' },
-        ]"
-        size="small"
-        @update:model-value="patchAppearance({ padding: $event as DashTextPadding })"
-      />
+      <span class="dash-text-settings__label">内边距（px）</span>
+      <div class="dash-text-settings__padding">
+        <label v-for="field in paddingFields" :key="field.key">
+          <span class="dash-text-settings__label">{{ field.label }}</span>
+          <el-input-number
+            :model-value="appearance.insets?.[field.key] ?? 0"
+            :aria-label="`${field.label}内边距`"
+            :min="0"
+            :max="DASH_TEXT_MAX_PADDING"
+            :precision="0"
+            controls-position="right"
+            size="small"
+            @update:model-value="updatePadding(field.key, $event)"
+          />
+        </label>
+      </div>
     </div>
-
     <div class="dash-text-settings__field">
       <span class="dash-text-settings__label">垂直对齐</span>
       <el-segmented
@@ -145,6 +156,24 @@ function updateColor(value: string | null) {
 .dash-text-settings__hint {
   color: var(--el-text-color-placeholder);
   font-size: 12px;
+}
+
+.dash-text-settings__padding {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 12px;
+
+  label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  :deep(.el-input-number) {
+    width: 100%;
+    min-width: 0;
+  }
 }
 
 .dash-text-settings :deep(.el-segmented) {

@@ -10,7 +10,7 @@ import type { DashCardDisplayOverrides } from '../dashCardDisplay'
 import type {
   DashGroupWidget,
   DashLayoutRect,
-  DashTextAppearance,
+  DashTextDraft,
   DashTextWidget,
   DashWidget,
 } from '../dashLayout'
@@ -77,6 +77,7 @@ const emit = defineEmits<{
   detach: [cardId: string]
   moveToGroup: [cardId: string]
   configureGroup: [groupId: string]
+  copyText: [textId: string]
   removeText: [textId: string]
 }>()
 
@@ -90,6 +91,24 @@ provide(DASH_CARD_DISPLAY_KEY, {
 
 const widgets = defineModel<DashWidget[]>('widgets', { default: () => [] })
 const layout = ref<Layout>([])
+const enteringKeys = ref(new Set<string>())
+let enteringFrame = 0
+let enteringVersion = 0
+
+async function revealEnteringItems() {
+  const version = ++enteringVersion
+  cancelAnimationFrame(enteringFrame)
+  await nextTick()
+  if (version !== enteringVersion)
+    return
+  // GridItem 在挂载后补齐 transform 和尺寸，首个稳定画面再显示新增节点。
+  enteringFrame = requestAnimationFrame(() => {
+    enteringFrame = requestAnimationFrame(() => {
+      enteringKeys.value = new Set()
+    })
+  })
+}
+
 const hostRef = ref<HTMLElement | null>(null)
 const { width: hostWidth } = useElementSize(hostRef)
 
@@ -178,6 +197,12 @@ function syncLayoutFromWidgets() {
     : toDesignLayout(widgets.value)
   if (layoutMatches(layout.value, next))
     return
+  const existing = new Set(layout.value.map(item => String(item.i)))
+  const added = next.filter(item => !existing.has(String(item.i)))
+  if (added.length) {
+    enteringKeys.value = new Set([...enteringKeys.value, ...added.map(item => String(item.i))])
+    void revealEnteringItems()
+  }
   layout.value = next
 }
 
@@ -219,18 +244,8 @@ function onUpdateGroup(next: DashGroupWidget) {
   widgets.value = replaceGroup(widgets.value, next)
 }
 
-function updateTextHtml(widget: DashTextWidget, html: string) {
-  widgets.value = applyTextDraft(widgets.value, widget.id, {
-    html,
-    appearance: widget.appearance,
-  })
-}
-
-function updateTextAppearance(widget: DashTextWidget, appearance: DashTextAppearance) {
-  widgets.value = applyTextDraft(widgets.value, widget.id, {
-    html: widget.html,
-    appearance,
-  })
+function updateText(widget: DashTextWidget, draft: DashTextDraft) {
+  widgets.value = applyTextDraft(widgets.value, widget.id, draft)
 }
 
 const detailScope = ref<Omit<VisCardDetailOpenPayload, 'hit'> | null>(null)
@@ -279,6 +294,8 @@ watch(
 )
 
 onBeforeUnmount(() => {
+  enteringVersion++
+  cancelAnimationFrame(enteringFrame)
   interact.cleanup()
 })
 </script>
@@ -289,6 +306,7 @@ onBeforeUnmount(() => {
     class="dash-grid"
     :class="{
       'is-editable': editable,
+      'is-inserting': enteringKeys.size > 0,
       'is-resizing': !!interact.resizingId.value,
       'is-stacked': stacked,
       'is-flow': flowing,
@@ -359,8 +377,8 @@ onBeforeUnmount(() => {
           :editable="editable"
           :design-actions="designActions"
           :flow-mode="flowMode"
-          @update:html="updateTextHtml(item.widget, $event)"
-          @update:appearance="updateTextAppearance(item.widget, $event)"
+          @update:draft="updateText(item.widget, $event)"
+          @copy="emit('copyText', item.widget.id)"
           @remove="emit('removeText', item.widget.id)"
         />
       </div>
@@ -382,6 +400,7 @@ onBeforeUnmount(() => {
       <GridItem
         v-for="{ item, widget } in tiles"
         :key="item.i"
+        :class="{ 'is-entering': enteringKeys.has(String(item.i)) }"
         :i="item.i"
         :x="item.x"
         :y="item.y"
@@ -449,8 +468,8 @@ onBeforeUnmount(() => {
           :editable="editable"
           :design-actions="designActions"
           :resizing="interact.resizingId.value === String(item.i)"
-          @update:html="updateTextHtml(widget, $event)"
-          @update:appearance="updateTextAppearance(widget, $event)"
+          @update:draft="updateText(widget, $event)"
+          @copy="emit('copyText', widget.id)"
           @remove="emit('removeText', widget.id)"
           @resize-start="(corner, event) => interact.onResizeStart(String(item.i), corner, event)"
         />
@@ -477,6 +496,16 @@ onBeforeUnmount(() => {
   min-height: 240px;
   @include dash.vgl-canvas;
   @include dash.vgl-fill(true);
+
+  &.is-inserting :deep(> .vgl-layout) {
+    transition: none;
+    overflow-anchor: none;
+  }
+
+  :deep(.vgl-item.is-entering) {
+    visibility: hidden;
+    transition: none;
+  }
 
   &.is-flow {
     container-type: inline-size;

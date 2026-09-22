@@ -10,6 +10,7 @@ import type { DashCardRadiusId, DashThemeId } from '../dashTheme'
 import type { VisCard } from '@/views/vis/shared/types'
 import { useStorage } from '@vueuse/core'
 import vis from '@/apis/vis/index'
+import { UIConfig } from '@/core/config'
 import { useLeaveConfirm } from '@/hooks/leaveConfirm'
 import { useSwipeBackGuard } from '@/hooks/swipeBack'
 import { useAccountStore } from '@/stores/modules/account'
@@ -54,6 +55,7 @@ import {
 } from '../dashTheme'
 import { provideDashGridGuides } from '../useDashGridGuides'
 import { useDashRefresh } from '../useDashRefresh'
+import { useDashWidgetReveal } from '../useDashWidgetReveal'
 import CardPickerDialog from './CardPickerDialog.vue'
 import DashCardDisplayDialog from './DashCardDisplayDialog.vue'
 import DashFilterBar from './DashFilterBar.vue'
@@ -108,6 +110,7 @@ const capturing = ref(false)
 const gridGuides = useStorage('lens:dash:grid-guides', true)
 provideDashGridGuides(computed(() => canWrite && gridGuides.value && !capturing.value))
 const canvasScrollbarRef = ref<ScrollbarInstance>()
+const { reveal: revealAddedWidget, cancel: cancelWidgetReveal } = useDashWidgetReveal(() => canvasScrollbarRef.value?.wrapRef)
 
 const states = reactive({
   id: '',
@@ -306,34 +309,6 @@ function rememberCards(list: VisCard[]) {
   cardMap.value = next
 }
 
-function findWidgetElement(key: string) {
-  const root = document.getElementById(DASH_DESIGNER_ID)
-  if (!root)
-    return
-  return Array.from(root.querySelectorAll<HTMLElement>('[data-dash-widget-key]'))
-    .find(element => element.dataset.dashWidgetKey === key)
-}
-
-async function revealAddedWidget(key: string) {
-  await nextTick()
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      const behavior = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'
-      const reveal = () => {
-        const target = findWidgetElement(key)
-        if (target) {
-          target.scrollIntoView({ behavior, block: 'nearest', inline: 'nearest' })
-          return
-        }
-        canvasScrollbarRef.value?.scrollTo({ top: Number.MAX_SAFE_INTEGER, behavior })
-      }
-      reveal()
-      // grid-layout-plus 会在属性更新后再次计算画布高度；完成后再校正一次。
-      window.setTimeout(reveal, 240)
-    })
-  })
-}
-
 async function addCards(list: VIS.VisCardInfo[]) {
   const used = new Set(collectCardIds(widgets.value))
   const selected = list.filter(info => Boolean(info.id && !used.has(String(info.id))))
@@ -366,6 +341,15 @@ function addGroup() {
 
 function addText() {
   const text = createTextWidget(widgets.value, emptyTextDraft())
+  widgets.value = [...widgets.value, text]
+  void revealAddedWidget(widgetKey(text))
+}
+
+function copyText(textId: string) {
+  const source = widgets.value.find(widget => widget.kind === 'text' && widget.id === textId)
+  if (!canWrite || source?.kind !== 'text')
+    return
+  const text = createTextWidget(widgets.value, source, { w: source.w, h: source.h })
   widgets.value = [...widgets.value, text]
   void revealAddedWidget(widgetKey(text))
 }
@@ -633,7 +617,10 @@ function updateMeta(meta: Partial<Omit<DashDesignerSavedPayload, 'id'>> & { desc
   }
 }
 
-watch(() => props.dashboardId, () => void loadDashboard(), { immediate: true })
+watch(() => props.dashboardId, () => {
+  cancelWidgetReveal()
+  void loadDashboard()
+}, { immediate: true })
 useSwipeBackGuard()
 
 defineExpose<DashDesignerInstance>({
@@ -647,7 +634,7 @@ defineExpose<DashDesignerInstance>({
 <template>
   <section
     :id="DASH_DESIGNER_ID"
-    v-spinner="adding || reloading"
+    v-spinner:[UIConfig.dashboardLoadingStyle]="loading || adding || reloading"
     class="designer"
     :class="{ 'is-loading': loading }"
   >
@@ -700,6 +687,7 @@ defineExpose<DashDesignerInstance>({
             @detach="detachCard"
             @move-to-group="openMoveToGroup"
             @configure-group="configureGroup"
+            @copy-text="copyText"
             @remove-text="removeText"
           />
         </div>
@@ -818,6 +806,8 @@ defineExpose<DashDesignerInstance>({
 @use '../dashPage' as dash;
 
 .designer {
+  // 固定 loading 的定位容器，避免动态 class 更新时遮罩在淡出期间扩散到目录树。
+  position: relative;
   display: flex;
   flex: 1;
   flex-direction: column;

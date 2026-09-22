@@ -1,5 +1,5 @@
 <!--
- * @Description: 看板格子：出数 + VisCardView；设计态 hover / 手柄
+ * @Description: 看板格子：出数 + VisCardView；设计态操作常显，拖拽手柄按需显示
 -->
 <script setup lang="ts">
 import type { DashCardGlobals } from '../dashApi'
@@ -335,6 +335,7 @@ function onMenuAction(key: string) {
           :global-filters="globals?.globalFilters"
           :global-params="globals?.globalParams"
           :extra-actions="extraActions"
+          :always-show-actions="designActions"
           :allow-fullscreen="canFullscreen"
           :fullscreen="isFull"
           :compact="presentationMode === 'compact' && !isFull"
