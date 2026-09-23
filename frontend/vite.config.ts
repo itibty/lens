@@ -7,10 +7,8 @@ import { fileURLToPath, URL } from 'node:url'
 
 import { defineConfig, loadEnv } from 'vite'
 import vue from '@vitejs/plugin-vue'
-import vueJsx from '@vitejs/plugin-vue-jsx'
 import VueSetupExtend from 'vite-plugin-vue-setup-extend'
 import VitePluginInspect from 'vite-plugin-inspect'
-// import VitePluginVueDevTools from 'vite-plugin-vue-devtools' // vue开发工具，嵌入到网页中
 
 // 自动引入
 import AutoImport from 'unplugin-auto-import/vite'
@@ -25,7 +23,6 @@ import UnoCSS from 'unocss/vite'
 // gzip压缩
 import ViteCompression from 'vite-plugin-compression'
 
-// import { createHtmlPlugin } from 'vite-plugin-html' // 导致 inspect无效等
 import simpleHtmlPlugin from 'vite-plugin-simple-html'
 
 // 自定义svg图标 https://zhuanlan.zhihu.com/p/570630648
@@ -51,7 +48,6 @@ export default defineConfig(({ command, mode, isSsrBuild, isPreview }) => {
         //   fs: fs, // 强制给 compileScript 传入 fs 选项
         // },
       }),
-      vueJsx(), // 支持jsx语法
       VueSetupExtend(), // 单文件启用setup, name属性指定组件名
 
       AutoImport({
@@ -67,14 +63,14 @@ export default defineConfig(({ command, mode, isSsrBuild, isPreview }) => {
         resolvers: [
           ElementPlusResolver({ importStyle: 'sass' }),
           IconsResolver({
-            enabledCollections: ['mingcute', 'ep', 'svg-spinners', 'ix', 'ant-design', 'tabler'], // iconify启用图标，需package.json中安装
+            enabledCollections: ['mingcute', 'ep', 'svg-spinners', 'ant-design', 'tabler'], // iconify启用图标，需package.json中安装
           }),
         ],
         dirs: [
           'src/components',
           'src/layout/components',
         ],
-        extensions: ['vue', 'tsx', 'jsx'], // 组件的有效文件扩展名。
+        extensions: ['vue'], // 组件的有效文件扩展名。
         deep: true, // 搜索子目录
       }),
       Icons({
@@ -88,7 +84,6 @@ export default defineConfig(({ command, mode, isSsrBuild, isPreview }) => {
       }),
 
       // index.html 中使用环境变量
-      // createHtmlPlugin 导致 breaks Vite proxy，使用simpleHtmlPlugin代替
       simpleHtmlPlugin({
         inject: {
           data: {
@@ -113,8 +108,6 @@ export default defineConfig(({ command, mode, isSsrBuild, isPreview }) => {
       }),
 
       createVersionFilePlugin(appVersion),
-
-      //VitePluginVueDevTools(),
 
       // 分析报告inspect
       isServe && VitePluginInspect({
@@ -201,4 +194,3 @@ export default defineConfig(({ command, mode, isSsrBuild, isPreview }) => {
     },
   }
 })
-

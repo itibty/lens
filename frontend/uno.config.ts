@@ -75,7 +75,6 @@ export default defineConfig({
         'mingcute': iconifyCollection('mingcute'),
         'ep': iconifyCollection('ep'),
         'tabler': iconifyCollection('tabler'),
-        'ix': iconifyCollection('ix'),
         'ant-design': iconifyCollection('ant-design'),
         'svg-spinners': iconifyCollection('svg-spinners'),
       },
