@@ -163,7 +163,7 @@ defineExpose<DashExplorerTreeInstance>({ setCurrentDashboard })
                 trigger="click"
                 @command="(command: ExplorerCommand) => onCommand(command, treeNode)"
               >
-                <el-button link>
+                <el-button link aria-label="更多操作">
                   <span class="explorer-node__more-icon i-mingcute-more-2-line" />
                 </el-button>
                 <template #dropdown>
@@ -300,6 +300,15 @@ defineExpose<DashExplorerTreeInstance>({ setCurrentDashboard })
 .explorer-node__ops {
   margin-left: auto;
   flex-shrink: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+:deep(.el-tree-node__content:hover) .explorer-node__ops,
+.explorer-node__ops:has(:focus-visible),
+.explorer-node__ops:has([aria-expanded='true']) {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .explorer-node__more-icon,
