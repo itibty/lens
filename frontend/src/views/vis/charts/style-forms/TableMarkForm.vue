@@ -18,10 +18,14 @@ import {
 } from '@/views/vis/shared/filterValue'
 import {
   emptyMarkRule,
+  isMarkTargetDisabled,
   listMarkableFields,
+  listMarkFilterFields,
   markFieldDataType,
+  syncTableMarkFields,
 } from '@/views/vis/shared/tableMark'
-import { isDateField } from '@/views/vis/shared/types'
+import { isDateField, isPivotChart } from '@/views/vis/shared/types'
+import StyleFormLabel from './StyleFormLabel.vue'
 
 type StyleColorKey = 'color' | 'bgColor'
 type MarkFilterView = VisTableMarkFilter & { _uid: string }
@@ -93,6 +97,15 @@ function normalizeHex(raw?: string) {
 const fieldOptions = computed(() =>
   listMarkableFields(props.query, props.fields, visual.value.chartType),
 )
+const pivot = computed(() => isPivotChart(visual.value.chartType))
+const fieldGroups = computed(() => [
+  { kind: 'row', label: '行维度表头' },
+  { kind: 'column', label: '列维度表头' },
+  { kind: 'metric', label: '指标数据格' },
+].map(group => ({ ...group, options: fieldOptions.value.filter(item => item.kind === group.kind) })).filter(group => group.options.length))
+const targetTip = computed(() => pivot.value
+  ? '维度标注表头，指标标注数值；不同区域分别设规则。'
+  : '选择要标注的字段，可多选。')
 
 const drafts = reactive<Record<string, MarkFilterDraft>>({})
 const hexFocus = ref<{ index: number, key: StyleColorKey, text: string } | null>(null)
@@ -112,16 +125,33 @@ const rules = computed({
   },
 })
 
+watch([fieldOptions, rules, () => visual.value.chartType], () => {
+  if (!props.query)
+    return
+  const next = syncTableMarkFields(rules.value, fieldOptions.value, visual.value.chartType)
+  if (next === rules.value)
+    return
+  // 条件移除后索引可能变化，作废旧草稿，避免把编辑内容提交到另一条条件。
+  for (const key of Object.keys(drafts))
+    delete drafts[key]
+  rules.value = next
+}, { deep: true, immediate: true })
+
 const ruleRows = computed(() =>
   rules.value.map((rule, ruleIndex) => ({
     rule,
     ruleIndex,
+    filterOptions: filterOptionsFor(rule),
     filters: (rule.filters ?? []).map((item, filterIndex) => {
       const key = filterKey(ruleIndex, filterIndex, item)
       return { item, filterIndex, key, draft: drafts[key] }
     }),
   })),
 )
+
+function filterOptionsFor(rule: VisTableMarkRule) {
+  return listMarkFilterFields(fieldOptions.value, rule.fields, visual.value.chartType)
+}
 
 function patchRule(index: number, partial: Partial<VisTableMarkRule>) {
   rules.value = rules.value.map((rule, i) => i === index ? { ...rule, ...partial } : rule)
@@ -196,7 +226,10 @@ function removeRule(index: number) {
 }
 
 function addFilter(index: number) {
-  const first = fieldOptions.value[0]
+  const rule = rules.value[index]
+  const first = rule && filterOptionsFor(rule)[0]
+  if (!first)
+    return
   const dataType = first?.dataType || 'string'
   const op = (opsForDataType(dataType)[0] || 'eq') as FilterOp
   const item: MarkFilterView = {
@@ -287,13 +320,13 @@ defineExpose({ addRule })
         </button>
       </div>
 
-      <div class="vis-style-form__row is-block">
-        <div class="vis-style-form__label">
+      <div class="vis-style-form__row">
+        <StyleFormLabel :tip="targetTip">
           应用字段
-        </div>
+        </StyleFormLabel>
         <el-select
           :model-value="row.rule.fields"
-          class="table-mark__fields"
+          class="vis-style-form__control table-mark__fields"
           size="small"
           multiple
           collapse-tags
@@ -301,19 +334,32 @@ defineExpose({ addRule })
           placeholder="选择字段"
           @update:model-value="(value: string[]) => patchRule(row.ruleIndex, { fields: value })"
         >
-          <el-option
-            v-for="item in fieldOptions"
-            :key="item.alias"
-            :label="item.alias"
-            :value="item.alias"
-          />
+          <template v-if="pivot">
+            <el-option-group v-for="group in fieldGroups" :key="group.kind" :label="group.label">
+              <el-option
+                v-for="item in group.options"
+                :key="item.alias"
+                :label="item.alias"
+                :value="item.alias"
+                :disabled="isMarkTargetDisabled(fieldOptions, row.rule.fields, item, visual.chartType)"
+              />
+            </el-option-group>
+          </template>
+          <template v-else>
+            <el-option
+              v-for="item in fieldOptions"
+              :key="item.alias"
+              :label="item.alias"
+              :value="item.alias"
+            />
+          </template>
         </el-select>
       </div>
 
       <div class="vis-style-form__row">
-        <div class="vis-style-form__label">
+        <StyleFormLabel>
           突出样式
-        </div>
+        </StyleFormLabel>
         <div class="table-mark__toolbar" role="toolbar" aria-label="突出样式">
           <button
             type="button"
@@ -417,9 +463,9 @@ defineExpose({ addRule })
       </div>
 
       <div class="vis-style-form__row">
-        <div class="vis-style-form__label">
+        <StyleFormLabel>
           触发条件
-        </div>
+        </StyleFormLabel>
         <div class="table-mark__cond">
           <el-radio-group
             v-if="row.filters.length > 1"
@@ -439,6 +485,7 @@ defineExpose({ addRule })
             class="vis-icon-btn"
             title="添加条件"
             aria-label="添加条件"
+            :disabled="!row.filterOptions.length"
             @click="addFilter(row.ruleIndex)"
           >
             <span class="i-mingcute-add-line" />
@@ -476,7 +523,7 @@ defineExpose({ addRule })
                   @update:model-value="(value: string) => onDraftFieldChange(filter.key, value)"
                 >
                   <el-option
-                    v-for="opt in fieldOptions"
+                    v-for="opt in row.filterOptions"
                     :key="opt.alias"
                     :label="opt.alias"
                     :value="opt.alias"
@@ -502,7 +549,7 @@ defineExpose({ addRule })
 }
 
 .table-mark__fields {
-  width: 100%;
+  flex: 1 1 0;
   min-width: 0;
 }
 

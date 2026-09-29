@@ -11,12 +11,14 @@ const EXPAND_SEL = [
 ]
 
 const HIDE_SEL = [
+  '[data-dashboard-screenshot-ignore]',
   '.dash-grid-guides',
   '.filter-dock__right',
   '.dash-tile__handle',
   '.dash-tile__dot',
   '.dash-text__actions',
   '.vis-card-view__actions',
+  '.vis-card-view__remark-btn',
   '.el-scrollbar__bar',
 ]
 

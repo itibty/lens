@@ -9,6 +9,7 @@ import {
 import CustomDrawer from '@/components/CustomDrawer.vue'
 import { useAccountStore } from '@/stores/modules/account'
 import { showConfirm, showToast } from '@/utils'
+import { DASHBOARD_VIEW_COPY as viewCopy } from '../dashboardViewCopy'
 import {
   formatSubscriptionFireAt,
   isSubscriptionRunPending,
@@ -333,7 +334,7 @@ defineExpose({ open })
               </el-dropdown>
             </div>
             <dl>
-              <div><dt>筛选</dt><dd>{{ row.viewStateJson ? '已保存筛选' : '跟随默认视图' }}</dd></div>
+              <div><dt>订阅内容</dt><dd>{{ row.viewStateJson ? '保存时的视图' : viewCopy.defaultName }}</dd></div>
               <div>
                 <dt>发送计划</dt><dd :title="row.timezone || 'Asia/Shanghai'">
                   {{ subscriptionScheduleLabel(row) }} · {{ !row.timezone || row.timezone === 'Asia/Shanghai' ? '北京时间' : row.timezone }}

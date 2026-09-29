@@ -25,7 +25,7 @@ export function useDashGridGuides(options: {
   const pointerHeld = ref(false)
   const drag = ref<{ id: string, x: number, y: number } | null>(null)
   const enabled = computed(() => !!context?.enabled.value && options.editable() && !options.staticPresentation())
-  // 各层背景网格保持常驻，只在当前操作层显示边界和尺寸。
+  // 只在当前拖动或缩放的栅格显示网格、边界和尺寸。
   const activeItem = computed(() => {
     if (!enabled.value || context?.activeScope.value !== scope)
       return undefined
@@ -91,5 +91,6 @@ export function useDashGridGuides(options: {
     onBeforeUnmount(releaseScope)
   }
 
-  return { visible: enabled, activeItem, onPointerDown, onMove, onMoveEnd }
+  const visible = computed(() => !!activeItem.value)
+  return { visible, activeItem, onPointerDown, onMove, onMoveEnd }
 }

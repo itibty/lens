@@ -4,11 +4,6 @@
 <script setup lang="ts">
 import type { VisVisualConfig } from '@/views/vis/shared/types'
 import { CARD_INPUT_PLACEHOLDERS } from '@/views/vis/charts/chartHelp'
-import {
-  AUTO_REFRESH_OPTIONS,
-  DEFAULT_AUTO_REFRESH_SEC,
-  sanitizeAutoRefreshSec,
-} from '@/views/vis/shared/cardRefresh'
 import { needsDataset } from '@/views/vis/shared/types'
 import { useVisualTitle } from './composables/useVisualTitle'
 import StyleFormLabel from './StyleFormLabel.vue'
@@ -16,25 +11,6 @@ import StyleFormLabel from './StyleFormLabel.vue'
 const visual = defineModel<VisVisualConfig>('visual', { required: true })
 const { showTitle, title, showDescription, description } = useVisualTitle(visual)
 const showDataFeatures = computed(() => needsDataset(visual.value.chartType))
-const autoRefresh = computed({
-  get: () => sanitizeAutoRefreshSec(visual.value.autoRefreshSec) != null,
-  set: (value: boolean) => {
-    if (value)
-      visual.value.autoRefreshSec = DEFAULT_AUTO_REFRESH_SEC
-    else
-      delete visual.value.autoRefreshSec
-  },
-})
-const autoRefreshSec = computed({
-  get: () => sanitizeAutoRefreshSec(visual.value.autoRefreshSec) ?? DEFAULT_AUTO_REFRESH_SEC,
-  set: (value: number) => {
-    const sec = sanitizeAutoRefreshSec(value)
-    if (sec)
-      visual.value.autoRefreshSec = sec
-    else
-      delete visual.value.autoRefreshSec
-  },
-})
 const allowDownload = computed({
   get: () => !!visual.value.allowDownload,
   set: (value: boolean) => {
@@ -96,35 +72,5 @@ const allowDownload = computed({
       数据下载
     </StyleFormLabel>
     <el-switch v-model="allowDownload" size="small" />
-  </div>
-
-  <div
-    v-if="showDataFeatures"
-    class="vis-style-form__row"
-  >
-    <StyleFormLabel>
-      自动刷新
-    </StyleFormLabel>
-    <el-switch v-model="autoRefresh" size="small" />
-  </div>
-  <div
-    v-if="showDataFeatures && autoRefresh"
-    class="vis-style-form__row is-child"
-  >
-    <StyleFormLabel>
-      刷新频率
-    </StyleFormLabel>
-    <el-select
-      v-model="autoRefreshSec"
-      size="small"
-      class="vis-style-form__control"
-    >
-      <el-option
-        v-for="item in AUTO_REFRESH_OPTIONS"
-        :key="item.value"
-        :label="item.label"
-        :value="item.value"
-      />
-    </el-select>
   </div>
 </template>

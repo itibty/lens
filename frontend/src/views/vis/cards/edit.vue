@@ -777,6 +777,7 @@ onBeforeRouteUpdate(async (to) => {
                               <el-input-number
                                 :model-value="states.card.query.limit"
                                 :aria-label="QUERY_SETTINGS_COPY.limit.label"
+                                :placeholder="QUERY_SETTINGS_COPY.limit.placeholder"
                                 class="adv-field__control"
                                 size="small"
                                 :min="1"

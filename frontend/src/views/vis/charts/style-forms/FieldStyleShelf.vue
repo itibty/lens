@@ -256,7 +256,7 @@ const emptyHint = computed(() =>
           />
 
           <div v-if="supportsMetricSignColor(visual.chartType)" class="vis-style-form__row">
-            <StyleFormLabel :tip="SIGN_COLOR_TIP">
+            <StyleFormLabel :tip="allowCellVisual ? `${SIGN_COLOR_TIP} 数据标注设置的文字色优先。` : SIGN_COLOR_TIP">
               正负配色
             </StyleFormLabel>
             <el-select

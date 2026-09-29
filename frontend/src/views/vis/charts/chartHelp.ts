@@ -38,6 +38,7 @@ export const QUERY_SETTINGS_COPY = {
   limit: {
     label: '最多行数',
     tip: '限制返回的结果行数，留空使用系统默认上限',
+    placeholder: '输入行数',
     clear: '清空最多行数',
   },
 } as const

@@ -1,7 +1,7 @@
 import type { TYPES } from '@visactor/vtable'
 import type { VisQueryConfig, VisVisualConfig } from './types'
 import { describe, expect, it, vi } from 'vitest'
-import { alphaColor, DARK_THEME, LIGHT_THEME, THEME_PRESETS } from '@/theme/tokens'
+import { alphaColor, DARK_THEME, LIGHT_THEME } from '@/theme/tokens'
 import { buildFieldStyleCandidates, fieldStyleKey, syncFieldStyles } from './fieldStyle'
 import { listTableColumns } from './listTable'
 import {
@@ -78,7 +78,7 @@ describe('metric cell progress', () => {
     expect(light?.style.barColor).toBe(METRIC_PROGRESS_DEFAULT_COLOR)
     expect(dark?.style.barColor).toBe(alphaColor(DARK_THEME.chart.series[0], 0.26))
     expect(light?.style.barBgColor).not.toBe(dark?.style.barBgColor)
-    for (const theme of Object.values(THEME_PRESETS)) {
+    for (const theme of [LIGHT_THEME, DARK_THEME]) {
       expect(metricProgressVTableConfig(progressVisual(), query(), '完成率', theme)?.style.barColor)
         .toBe(alphaColor(theme.chart.series[0], 0.26))
       expect(metricProgressVTableConfig(progressVisual({ color: '#123456' }), query(), '完成率', theme)?.style.barColor)

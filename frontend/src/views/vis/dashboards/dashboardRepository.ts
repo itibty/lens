@@ -1,7 +1,6 @@
 import type { DashCardDisplayOverrides } from './dashCardDisplay'
 import type { VisDashFilterDef } from './dashFilterModel'
 import type { DashWidget } from './dashLayout'
-import type { DashCardRadiusId, DashThemeId } from './dashTheme'
 import type { VisCard } from '@/views/vis/shared/types'
 import vis from '@/apis/vis/index'
 import { fromVisCardInfo } from '@/views/vis/cards/cardApi'
@@ -104,8 +103,6 @@ export async function saveDashboard(input: {
   desc?: string
   icon?: string
   filters: VisDashFilterDef[]
-  theme?: DashThemeId
-  cardRadius?: DashCardRadiusId
   cardDisplayOverrides?: DashCardDisplayOverrides
   autoRefreshSec?: number
   extra?: Record<string, unknown>
@@ -122,8 +119,6 @@ export async function saveDashboard(input: {
       input.filters,
       input.extra ?? {},
       widgets,
-      input.theme,
-      input.cardRadius,
       input.autoRefreshSec,
       input.cardDisplayOverrides,
     ),

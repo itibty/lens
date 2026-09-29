@@ -4,6 +4,7 @@ import { editDashboardSubscription } from '@/apis/vis/dashboardSubscription'
 import { resolvePersonalView } from '@/apis/vis/personalReport'
 import CustomDialog from '@/components/CustomDialog.vue'
 import { showToast } from '@/utils'
+import { DASHBOARD_VIEW_COPY as viewCopy } from '../dashboardViewCopy'
 import { subscriptionErrorMessage, subscriptionWeekdayOptions } from '../subscriptionFormat'
 
 const props = withDefaults(defineProps<{
@@ -59,7 +60,7 @@ async function previewContent() {
   contentState.value = undefined
   contentBindings.value = undefined
   if (contentMode.value === 'keep' && !form.value.viewStateJson) {
-    contentSummary.value = '报表默认视图'
+    contentSummary.value = viewCopy.defaultName
     contentLoading.value = false
     return
   }
@@ -80,12 +81,12 @@ async function previewContent() {
     if (request === contentRequest && currentSession === session) {
       contentState.value = response.data?.stateJson
       contentBindings.value = response.data?.bindingsJson
-      contentSummary.value = response.data?.summary || '报表默认条件'
+      contentSummary.value = response.data?.summary || viewCopy.defaultName
     }
   }
   catch (e) {
     if (request === contentRequest && currentSession === session)
-      contentError.value = subscriptionErrorMessage(e, '视图暂不可用，请重试')
+      contentError.value = subscriptionErrorMessage(e, '视图加载失败，请重试')
   }
   finally {
     if (request === contentRequest && currentSession === session)
@@ -227,16 +228,16 @@ defineExpose({ showDialog, close })
         <el-form-item label="订阅内容">
           <template #label>
             <span class="subscription-form-label">订阅内容
-              <el-tooltip :content="contentMode === 'keep' && !form.viewStateJson ? '跟随报表默认视图。' : '保存筛选和 Tab；相对日期按发送当天计算。'" placement="top" :popper-style="{ maxWidth: '280px' }">
+              <el-tooltip :content="contentMode === 'keep' && !form.viewStateJson ? '按看板的默认设置发送。' : '使用保存时的筛选和标签页；相对日期按发送当天计算。'" placement="top" :popper-style="{ maxWidth: '280px' }">
                 <button type="button" class="subscription-form-help" aria-label="订阅内容说明"><span class="i-mingcute-question-line" /></button>
               </el-tooltip>
             </span>
           </template>
           <el-select v-model="contentMode" @change="previewContent">
-            <el-option v-if="editing" :label="form.viewStateJson ? '已保存的内容' : '跟随默认视图'" value="keep" />
-            <el-option label="当前视图" value="current" />
-            <el-option label="默认视图" value="default" />
-            <el-option-group v-if="personalViews?.length" label="我的视图">
+            <el-option v-if="editing" label="保留现有设置" value="keep" />
+            <el-option :label="viewCopy.currentName" value="current" />
+            <el-option :label="viewCopy.defaultName" value="default" />
+            <el-option-group v-if="personalViews?.length" :label="viewCopy.savedGroup">
               <el-option v-for="view in personalViews" :key="view.id" :label="view.viewName" :value="`view:${view.id}`" />
             </el-option-group>
           </el-select>

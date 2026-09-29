@@ -2,7 +2,7 @@ import type { ISpec } from '@visactor/vchart'
 import type { VisVisualConfig } from '@/views/vis/shared/types'
 import { describe, expect, it } from 'vitest'
 import { CHART_TYPES, isVChartType } from '@/views/vis/charts/catalog'
-import { DASH_THEME_PRESETS, dashChromeVars, dashOverlayVars, dashThemeVars, isDashGlassTheme, resolveDashTheme, resolveDashThemeId } from '@/views/vis/dashboards/dashTheme'
+import { DASH_THEME_PRESETS, dashChromeVars, dashOverlayVars, dashThemeVars, resolveDashTheme, resolveDashThemeId } from '@/views/vis/dashboards/dashTheme'
 import { buildVChartSpec } from '@/views/vis/shared/cardRenderer'
 import { resolveCardChrome } from '@/views/vis/shared/cardTheme'
 import { CHART_SERIES_PALETTES, resolveChartSeriesColors } from '@/views/vis/shared/chartPalette'
@@ -10,7 +10,7 @@ import { resolveKpiPaint } from '@/views/vis/shared/kpiCard'
 import { resolveProgressPaint } from '@/views/vis/shared/progressCard'
 import { resolveVTableTheme } from '@/views/vis/shared/vtableTheme'
 import { themeCssVars } from './cssVars'
-import { DARK_THEME, DATA_SERIES, LIGHT_THEME, mixColor, THEME_PRESETS } from './tokens'
+import { DARK_THEME, DATA_SERIES, LIGHT_THEME, mixColor } from './tokens'
 import { withChartTheme } from './vchart'
 
 function luminance(hex: string) {
@@ -27,8 +27,8 @@ function contrast(a: string, b: string) {
 }
 
 describe('lens theme contract', () => {
-  it('shares the card designer baseline with default and legacy t1 dashboards', () => {
-    for (const id of [undefined, 't1', 'unknown']) {
+  it('shares the card designer baseline with default dashboards and unknown preferences', () => {
+    for (const id of [undefined, 'light', 't1', 't6', 'unknown']) {
       const preset = resolveDashTheme(id)
       expect(preset.name).toBe('默认')
       expect(preset.theme).toBe(LIGHT_THEME)
@@ -58,7 +58,7 @@ describe('lens theme contract', () => {
       .toEqual(withChartTheme(spec!, LIGHT_THEME, true))
   })
 
-  it.each(Object.entries(THEME_PRESETS))('%s keeps reading text and action labels legible', (_name, theme) => {
+  it.each(DASH_THEME_PRESETS)('$name keeps reading text and action labels legible', ({ theme }) => {
     for (const colors of [theme, theme.chrome]) {
       for (const background of [colors.surface.page, colors.surface.panel, colors.surface.elevated, colors.heading.background]) {
         for (const text of [colors.text.strong, colors.text.regular, colors.text.muted])
@@ -72,47 +72,31 @@ describe('lens theme contract', () => {
     }
   })
 
-  it('keeps saved theme IDs while distinguishing classic surfaces and category palettes', () => {
-    expect(DASH_THEME_PRESETS.map(preset => preset.id)).toEqual(['t1', 't2', 't3', 't4', 't5', 't6', 't7', 't8'])
-    expect(new Set(Object.values(THEME_PRESETS).map(theme => theme.chrome.surface.panel)).size).toBe(8)
-    expect(new Set(Object.values(THEME_PRESETS).map(theme => theme.chart.series[0])).size).toBe(8)
+  it('uses only shared light and dark palettes', () => {
+    expect(DASH_THEME_PRESETS.map(preset => preset.id)).toEqual(['light', 'dark'])
+    expect(resolveDashTheme('dark').theme).toBe(DARK_THEME)
     for (const preset of DASH_THEME_PRESETS) {
-      const theme = resolveDashTheme(preset.id).theme
-      expect(theme.chart.series).toHaveLength(DATA_SERIES.length)
-      if (preset.material) {
-        expect(dashThemeVars(preset.id)['--dash-canvas-bg']).toBe(theme.surface.page)
-        expect(dashThemeVars(preset.id)['--dash-card-bg']).toContain('%')
-        expect(dashThemeVars(preset.id)['--dash-card-glaze']).toContain('radial-gradient')
-        expect(dashThemeVars(preset.id)['--dash-card-blur']).toContain('blur(')
-        expect(dashThemeVars(preset.id)['--vis-card-border']).toContain('1px solid')
-      }
-      else {
-        expect(dashThemeVars(preset.id)['--dash-card-bg']).toBe(theme.surface.panel)
-        expect(dashThemeVars(preset.id)['--dash-chrome-bg']).toBe(theme.chrome.surface.panel)
-      }
+      expect(preset.theme.chart.series).toHaveLength(DATA_SERIES.length)
+      expect(dashThemeVars(preset.id)['--dash-card-bg']).toBe(preset.theme.surface.panel)
+      expect(dashThemeVars(preset.id)['--dash-chrome-bg']).toBe(preset.theme.chrome.surface.panel)
     }
-    expect(THEME_PRESETS.navy.chrome.mode).toBe('dark')
-    expect(THEME_PRESETS.navy.mode).toBe('light')
-    expect(THEME_PRESETS.paper.surface.panel).not.toBe(LIGHT_THEME.surface.panel)
-    expect(isDashGlassTheme('t7')).toBe(true)
-    expect(isDashGlassTheme('t8')).toBe(true)
-    expect(isDashGlassTheme('t1')).toBe(false)
-    expect(dashThemeVars('t8')['--dash-card-shadow']).toContain('0 10px 30px')
+    for (const invalid of [null, undefined, '', 't2', 't6', 't8', '__proto__', {}])
+      expect(resolveDashThemeId(invalid)).toBe('light')
   })
 
   it('projects the same theme into page controls and teleported overlays without mutating the global default', () => {
     const before = themeCssVars(LIGHT_THEME)
-    const page = dashThemeVars('t6')
-    const overlay = dashOverlayVars('t6')
+    const page = dashThemeVars('dark')
+    const overlay = dashOverlayVars('dark')
     for (const key of Object.keys(before))
       expect(overlay[key]).toBe(page[key])
-    expect(page['--el-color-primary']).toBe(THEME_PRESETS.dark.primary.base)
+    expect(page['--el-color-primary']).toBe(DARK_THEME.primary.base)
     expect(overlay['--dash-mobile-surface']).toBe(page['--dash-card-bg'])
     expect(themeCssVars(LIGHT_THEME)).toEqual(before)
-    expect(resolveDashThemeId('old-or-unknown')).toBe('t1')
-    expect(dashThemeVars('t1', 'lg')['--dash-card-radius']).toBe('16px')
-    expect(dashChromeVars('t2')['--el-text-color-primary']).toBe(THEME_PRESETS.navy.chrome.text.strong)
-    expect(dashOverlayVars('t2')['--el-text-color-primary']).toBe(THEME_PRESETS.navy.text.strong)
+    expect(resolveDashThemeId('old-or-unknown')).toBe('light')
+    expect(dashThemeVars('light')['--dash-card-radius']).toBe('12px')
+    expect(dashChromeVars('dark')['--el-text-color-primary']).toBe(DARK_THEME.chrome.text.strong)
+    expect(dashOverlayVars('dark')['--el-text-color-primary']).toBe(DARK_THEME.text.strong)
   })
 
   it('keeps saved custom paint and the input configuration intact', () => {
@@ -145,7 +129,7 @@ describe('lens theme contract', () => {
   })
 
   it('keeps default data marks distinguishable from light and dark panels', () => {
-    for (const theme of [LIGHT_THEME, DARK_THEME, ...Object.values(THEME_PRESETS)]) {
+    for (const theme of [LIGHT_THEME, DARK_THEME]) {
       for (const color of theme.chart.series)
         expect(contrast(color, theme.surface.panel)).toBeGreaterThanOrEqual(3)
     }
@@ -153,18 +137,18 @@ describe('lens theme contract', () => {
       const palette = CHART_SERIES_PALETTES.find(item => item.id === id)!.palette
       expect(resolveChartSeriesColors({ chartTheme: id })).toEqual(palette)
       expect(withChartTheme({ type: 'bar', color: palette } as ISpec, DARK_THEME).color).toEqual(palette)
-      expect(withChartTheme({ type: 'bar', color: palette } as ISpec, THEME_PRESETS.paper, false).color).toEqual(palette)
+      expect(withChartTheme({ type: 'bar', color: palette } as ISpec, DARK_THEME, false).color).toEqual(palette)
     }
   })
 
   it('switches default charts through every theme without persisting render colors', () => {
     const spec = { type: 'bar', color: [...DATA_SERIES] } as ISpec
     const before = JSON.stringify(spec)
-    for (const theme of Object.values(THEME_PRESETS)) {
+    for (const theme of [LIGHT_THEME, DARK_THEME]) {
       expect(withChartTheme(spec, theme, true).color).toEqual(theme.chart.series)
       expect(withChartTheme(spec, theme, false).color).toEqual(DATA_SERIES)
     }
-    expect(withChartTheme(spec, THEME_PRESETS.default, true).color).toEqual(DATA_SERIES)
+    expect(withChartTheme(spec, LIGHT_THEME, true).color).toEqual(DATA_SERIES)
     expect(JSON.stringify(spec)).toBe(before)
   })
 
@@ -173,13 +157,13 @@ describe('lens theme contract', () => {
     const data = { columns: ['month', 'channel', 'value'], rows: [{ month: '1月', channel: '线上', value: 120 }], total: 1, truncated: false }
     const spec = buildVChartSpec('heatmap', query, data, { chartType: 'heatmap' })!
     const before = JSON.stringify(spec)
-    const paper = THEME_PRESETS.paper
-    expect(withChartTheme(spec, paper, true)).toMatchObject({
-      color: { range: [mixColor(paper.primary.base, paper.surface.panel, 0.14), paper.primary.base] },
-      cell: { style: { stroke: paper.surface.panel } },
+    const dark = DARK_THEME
+    expect(withChartTheme(spec, dark, true)).toMatchObject({
+      color: { range: [mixColor(dark.primary.base, dark.surface.panel, 0.14), dark.primary.base] },
+      cell: { style: { stroke: dark.surface.panel } },
     })
     const gradient = buildVChartSpec('heatmap', query, data, { chartType: 'heatmap', chartTheme: 'WARM_GRADIENT' })!
-    expect(withChartTheme(gradient, paper, false).color).toEqual(gradient.color)
+    expect(withChartTheme(gradient, dark, false).color).toEqual(gradient.color)
     expect(JSON.stringify(spec)).toBe(before)
   })
 
@@ -236,14 +220,17 @@ describe('lens theme contract', () => {
     expect(light.bodyStyle?.bgColor).toBe(LIGHT_THEME.surface.panel)
     expect(dark.bodyStyle?.color).toBe(DARK_THEME.text.strong)
     expect(dark.bodyStyle?.bgColor).toBe(DARK_THEME.surface.panel)
-    for (const theme of Object.values(THEME_PRESETS)) {
+    for (const theme of [LIGHT_THEME, DARK_THEME]) {
       const table = resolveVTableTheme({ chartType: 'table' }, theme)
       expect(table.headerStyle?.bgColor).toBe(theme.surface.subtle)
       expect(table.bodyStyle?.color).toBe(theme.text.strong)
       expect(table.bodyStyle?.bgColor).toBe(theme.surface.panel)
     }
     const explicit = { chartType: 'table' as const, chartTheme: 'CONTRAST' as const }
-    expect(resolveVTableTheme(explicit, THEME_PRESETS.paper).headerStyle?.bgColor)
-      .toBe(resolveVTableTheme(explicit).headerStyle?.bgColor)
+    expect(resolveVTableTheme(explicit, LIGHT_THEME).headerStyle?.bgColor)
+      .not
+      .toBe(light.headerStyle?.bgColor)
+    expect(resolveVTableTheme(explicit, DARK_THEME).headerStyle?.bgColor)
+      .toBe(dark.headerStyle?.bgColor)
   })
 })

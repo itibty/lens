@@ -41,8 +41,6 @@ describe('dashboard config codec', () => {
     expect(parseDashConfig('{invalid')).toEqual({
       filters: [],
       widgets: [],
-      theme: 't1',
-      cardRadius: 'md',
       cardDisplayOverrides: {},
       autoRefreshSec: undefined,
       extra: {},
@@ -59,20 +57,18 @@ describe('dashboard config codec', () => {
     expect(parseDashConfig(raw)).toEqual({
       filters: [],
       widgets: [],
-      theme: 't1',
-      cardRadius: 'md',
       cardDisplayOverrides: {},
       autoRefreshSec: undefined,
       extra: {},
     })
   })
 
-  it('normalizes known fields and preserves unknown fields', () => {
+  it('ignores legacy appearance settings while preserving unknown fields', () => {
     const config = parseDashConfig(JSON.stringify({
+      theme: 't2',
+      cardRadius: 'xl',
       filters: [selectFilter],
       widgets: [],
-      theme: 't2',
-      cardRadius: 'md',
       autoRefreshSec: 60,
       futureSetting: { enabled: true },
     }))
@@ -80,8 +76,6 @@ describe('dashboard config codec', () => {
     expect(config).toEqual({
       filters: [selectFilter],
       widgets: [],
-      theme: 't2',
-      cardRadius: 'md',
       autoRefreshSec: 60,
       cardDisplayOverrides: {},
       extra: { futureSetting: { enabled: true } },
@@ -91,18 +85,16 @@ describe('dashboard config codec', () => {
   it('round-trips persisted settings without dropping extra fields', () => {
     const encoded = stringifyDashConfig(
       [selectFilter],
-      { futureSetting: 'keep-me' },
+      { futureSetting: 'keep-me', theme: 't8', cardRadius: 'none' },
       [],
-      't2',
-      'md',
       60,
     )
 
+    expect(JSON.parse(encoded)).not.toHaveProperty('theme')
+    expect(JSON.parse(encoded)).not.toHaveProperty('cardRadius')
     expect(parseDashConfig(encoded)).toEqual({
       filters: [selectFilter],
       widgets: [],
-      theme: 't2',
-      cardRadius: 'md',
       autoRefreshSec: 60,
       cardDisplayOverrides: {},
       extra: { futureSetting: 'keep-me' },

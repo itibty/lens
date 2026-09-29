@@ -25,7 +25,6 @@ const props = withDefaults(defineProps<{
   designActions?: boolean
   allowFullscreen?: boolean
   showSql?: boolean
-  autoRefresh?: boolean
   stacked?: boolean
   flowMode?: DashFlowMode
   emptyText?: string
@@ -38,7 +37,6 @@ const props = withDefaults(defineProps<{
   designActions: false,
   allowFullscreen: false,
   showSql: false,
-  autoRefresh: false,
   stacked: false,
   flowMode: undefined,
   emptyText: groupEmptyHint(false),
@@ -214,7 +212,6 @@ onBeforeUnmount(() => {
           in-group
           :allow-fullscreen="allowFullscreen"
           :show-sql="showSql"
-          :auto-refresh="autoRefresh"
           :data-tick="dataTick"
           :hide-title="hideTitle"
           @remove="emit('remove', entry.item.cardId)"
@@ -265,7 +262,6 @@ onBeforeUnmount(() => {
           in-group
           :allow-fullscreen="allowFullscreen"
           :show-sql="showSql"
-          :auto-refresh="autoRefresh"
           :data-tick="dataTick"
           :hide-title="hideTitle"
           :resizing="interact.resizingId.value === String(item.i)"

@@ -6,9 +6,7 @@ import type { FormInstance, FormRules, ScrollbarInstance } from 'element-plus'
 import type { DashFilterValues, DashSettingsDraft, VisDashFilterDef } from '../dashApi'
 import type { DashCardDisplay, DashCardDisplayOverrides } from '../dashCardDisplay'
 import type { DashGroupDraft, DashWidget } from '../dashLayout'
-import type { DashCardRadiusId, DashThemeId } from '../dashTheme'
 import type { VisCard } from '@/views/vis/shared/types'
-import { useStorage } from '@vueuse/core'
 import vis from '@/apis/vis/index'
 import { UIConfig } from '@/core/config'
 import { useLeaveConfirm } from '@/hooks/leaveConfirm'
@@ -48,13 +46,11 @@ import {
 import { captureDashPreview, saveDashScreenshot } from '../dashScreenshot'
 import {
   dashThemeVars,
-  DEFAULT_DASH_CARD_RADIUS,
-  DEFAULT_DASH_THEME,
-  isDashGlassTheme,
   resolveDashTheme,
 } from '../dashTheme'
 import { provideDashGridGuides } from '../useDashGridGuides'
 import { useDashRefresh } from '../useDashRefresh'
+import { useDashTheme } from '../useDashTheme'
 import { useDashWidgetReveal } from '../useDashWidgetReveal'
 import CardPickerDialog from './CardPickerDialog.vue'
 import DashCardDisplayDialog from './DashCardDisplayDialog.vue'
@@ -63,6 +59,7 @@ import DashGrid from './DashGrid.vue'
 import DashGroupEditor from './DashGroupEditor.vue'
 import DashGroupTreeSelect from './DashGroupTreeSelect.vue'
 import DashSettingsDialog from './DashSettingsDialog.vue'
+import DashThemeSwitch from './DashThemeSwitch.vue'
 
 export interface DashDesignerSavedPayload {
   id: string
@@ -107,8 +104,7 @@ const saveOpen = ref(false)
 const saveFormRef = ref<FormInstance>()
 const reloading = ref(false)
 const capturing = ref(false)
-const gridGuides = useStorage('lens:dash:grid-guides', true)
-provideDashGridGuides(computed(() => canWrite && gridGuides.value && !capturing.value))
+provideDashGridGuides(computed(() => canWrite && !capturing.value))
 const canvasScrollbarRef = ref<ScrollbarInstance>()
 const { reveal: revealAddedWidget, cancel: cancelWidgetReveal } = useDashWidgetReveal(() => canvasScrollbarRef.value?.wrapRef)
 
@@ -139,20 +135,11 @@ watch(() => collectCardIds(widgets.value).join(','), () => {
 
 const configExtra = ref<Record<string, unknown>>({})
 const filterValues = ref<DashFilterValues>({})
-const theme = ref<DashThemeId>(DEFAULT_DASH_THEME)
-const previewTheme = ref<DashThemeId>()
-const cardRadius = ref<DashCardRadiusId>(DEFAULT_DASH_CARD_RADIUS)
+const theme = useDashTheme()
 const autoRefreshSec = ref<number>()
 const groupTree = ref<VIS.DashGroupInfo[]>([])
 const baselineSnapshot = ref('')
-const effectiveTheme = computed(() => previewTheme.value ?? theme.value)
-const previewThemeModel = computed<DashThemeId>({
-  get: () => effectiveTheme.value,
-  set: (value) => {
-    previewTheme.value = value === theme.value ? undefined : value
-  },
-})
-provide(LENS_THEME_KEY, computed(() => resolveDashTheme(effectiveTheme.value).theme))
+provide(LENS_THEME_KEY, computed(() => resolveDashTheme(theme.value).theme))
 
 const saveForm = reactive({
   name: '',
@@ -165,8 +152,7 @@ const saveRules: FormRules<typeof saveForm> = {
   name: [{ required: true, trigger: 'blur', message: '请填写看板名称' }],
 }
 
-const themeStyle = computed(() => dashThemeVars(effectiveTheme.value, cardRadius.value))
-const glassTheme = computed(() => isDashGlassTheme(effectiveTheme.value))
+const themeStyle = computed(() => dashThemeVars(theme.value))
 const { refreshCards, refreshTick } = useDashRefresh()
 const excludeIds = computed(() => collectCardIds(widgets.value))
 const cards = computed(() => Object.values(cardMap.value))
@@ -181,8 +167,6 @@ function currentSnapshot() {
     icon: states.icon,
     groupId: states.groupId,
     filters: filters.value,
-    theme: theme.value,
-    cardRadius: cardRadius.value,
     autoRefreshSec: autoRefreshSec.value ?? null,
     cardDisplayOverrides: cardDisplayOverrides.value,
     extra: configExtra.value,
@@ -208,9 +192,6 @@ function resetEmpty() {
   configExtra.value = {}
   cardDisplayOverrides.value = {}
   displayOpen.value = false
-  theme.value = DEFAULT_DASH_THEME
-  previewTheme.value = undefined
-  cardRadius.value = DEFAULT_DASH_CARD_RADIUS
   autoRefreshSec.value = undefined
   filterValues.value = {}
   widgets.value = []
@@ -222,7 +203,6 @@ let loadRequestId = 0
 async function loadDashboard() {
   const dashboardId = String(props.dashboardId || '')
   const currentRequestId = ++loadRequestId
-  previewTheme.value = undefined
   if (!dashboardId) {
     loading.value = false
     resetEmpty()
@@ -247,8 +227,6 @@ async function loadDashboard() {
     states.groupId = res.data.groupId && res.data.groupId !== '0' ? String(res.data.groupId) : '0'
     filterValues.value = applyFilterDefaults(loaded.filters, {})
     filters.value = loaded.filters
-    theme.value = loaded.theme
-    cardRadius.value = loaded.cardRadius
     autoRefreshSec.value = loaded.autoRefreshSec
     configExtra.value = loaded.extra
     cardDisplayOverrides.value = loaded.cardDisplayOverrides
@@ -530,8 +508,6 @@ async function handleSave() {
       icon,
       groupId,
       filters: filters.value,
-      theme: theme.value,
-      cardRadius: cardRadius.value,
       autoRefreshSec: autoRefreshSec.value,
       cardDisplayOverrides: cardDisplayOverrides.value,
       extra: configExtra.value,
@@ -574,9 +550,6 @@ function confirmSave() {
 function onSettingsConfirm(draft: DashSettingsDraft) {
   filterValues.value = applyFilterDefaultsFromSettings(draft.filters, filters.value, filterValues.value)
   filters.value = draft.filters
-  theme.value = draft.theme
-  previewTheme.value = undefined
-  cardRadius.value = draft.cardRadius
   autoRefreshSec.value = draft.autoRefreshSec
 }
 
@@ -641,14 +614,12 @@ defineExpose<DashDesignerInstance>({
     <div
       class="designer__stage"
       :style="themeStyle"
-      :data-dash-glass="glassTheme ? 'true' : undefined"
     >
       <el-scrollbar ref="canvasScrollbarRef" class="designer__canvas">
         <div class="designer__chrome">
           <DashFilterBar
             v-model:values="filterValues"
-            v-model:theme="previewThemeModel"
-            v-model:grid-guides="gridGuides"
+            :theme="theme"
             :title="states.name"
             :desc="states.desc"
             :defs="filters"
@@ -692,6 +663,7 @@ defineExpose<DashDesignerInstance>({
           />
         </div>
       </el-scrollbar>
+      <DashThemeSwitch v-if="!capturing" v-model="theme" />
     </div>
   </section>
 
@@ -738,8 +710,6 @@ defineExpose<DashDesignerInstance>({
   <DashSettingsDialog
     v-model:visible="settingsOpen"
     :filters="filters"
-    :theme="theme"
-    :card-radius="cardRadius"
     :auto-refresh-sec="autoRefreshSec"
     :cards="cards"
     @confirm="onSettingsConfirm"
@@ -823,6 +793,8 @@ defineExpose<DashDesignerInstance>({
 .designer__stage {
   @include dash.design-tokens;
   @include dash.shell;
+
+  position: relative;
 
   flex: 1;
   min-height: 0;

@@ -51,7 +51,6 @@ const props = withDefaults(defineProps<{
   designActions?: boolean
   allowFullscreen?: boolean
   showSql?: boolean
-  autoRefresh?: boolean
   dataTick?: number
   presentationMode?: DashPresentationMode
   globalsOf?: (card: VisCard) => DashCardGlobals
@@ -64,7 +63,6 @@ const props = withDefaults(defineProps<{
   designActions: false,
   allowFullscreen: false,
   showSql: false,
-  autoRefresh: false,
   dataTick: undefined,
   presentationMode: 'auto',
   globalsOf: () => ({}),
@@ -343,7 +341,6 @@ onBeforeUnmount(() => {
           :can-move-to-group="canMoveToGroup"
           :allow-fullscreen="allowFullscreen"
           :show-sql="showSql"
-          :auto-refresh="autoRefresh"
           :data-tick="dataTick"
           @remove="emit('remove', item.widget.cardId)"
           @move-to-group="emit('moveToGroup', item.widget.cardId)"
@@ -360,7 +357,6 @@ onBeforeUnmount(() => {
           :design-actions="designActions"
           :allow-fullscreen="allowFullscreen"
           :show-sql="showSql"
-          :auto-refresh="autoRefresh"
           :data-tick="dataTick"
           :flow-mode="flowMode"
           :globals-of="globalsOf"
@@ -430,7 +426,6 @@ onBeforeUnmount(() => {
           :can-move-to-group="canMoveToGroup"
           :allow-fullscreen="allowFullscreen"
           :show-sql="showSql"
-          :auto-refresh="autoRefresh"
           :data-tick="dataTick"
           :resizing="interact.resizingId.value === String(item.i)"
           @remove="emit('remove', widget.cardId)"
@@ -449,7 +444,6 @@ onBeforeUnmount(() => {
           :design-actions="designActions"
           :allow-fullscreen="allowFullscreen"
           :show-sql="showSql"
-          :auto-refresh="autoRefresh"
           :data-tick="dataTick"
           :stacked="stacked"
           :globals-of="globalsOf"
@@ -534,12 +528,6 @@ onBeforeUnmount(() => {
     :deep(.vgl-item:has(.vis-card-view.is-menu-open)) {
       z-index: 4;
     }
-  }
-
-  &.is-editable :deep(.vgl-item:hover > .dash-tile .vis-card-view__actions),
-  &.is-editable :deep(.vgl-item:hover > .vis-full-wrap > .dash-tile .vis-card-view__actions) {
-    opacity: 1;
-    pointer-events: auto;
   }
 }
 

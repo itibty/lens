@@ -3,10 +3,8 @@
 -->
 <script setup lang="ts">
 import type { DashSettingsDraft, VisDashFilterDef } from '../dashApi'
-import type { DashCardRadiusId, DashThemeId } from '../dashTheme'
 import type { VisCard } from '@/views/vis/shared/types'
 import { cloneFilterDefs } from '../dashApi'
-import { DEFAULT_DASH_CARD_RADIUS, DEFAULT_DASH_THEME, resolveDashCardRadiusId, resolveDashThemeId } from '../dashTheme'
 import DashFilterSettings from './DashFilterSettings.vue'
 import DashStyleSettings from './DashStyleSettings.vue'
 
@@ -14,8 +12,6 @@ type SettingsTab = 'filters' | 'style'
 
 const props = defineProps<{
   filters: VisDashFilterDef[]
-  theme?: DashThemeId
-  cardRadius?: DashCardRadiusId
   autoRefreshSec?: number
   cards: VisCard[]
 }>()
@@ -32,15 +28,11 @@ const SETTINGS_TABS: Array<{ id: SettingsTab, label: string }> = [
 ]
 const activeTab = ref<SettingsTab>('filters')
 const draftFilters = ref<VisDashFilterDef[]>([])
-const draftTheme = ref<DashThemeId>(DEFAULT_DASH_THEME)
-const draftCardRadius = ref<DashCardRadiusId>(DEFAULT_DASH_CARD_RADIUS)
 const draftAutoRefreshSec = ref<number>()
 
 function snapshot() {
   activeTab.value = 'filters'
   draftFilters.value = cloneFilterDefs(props.filters)
-  draftTheme.value = resolveDashThemeId(props.theme)
-  draftCardRadius.value = resolveDashCardRadiusId(props.cardRadius)
   draftAutoRefreshSec.value = props.autoRefreshSec
 }
 
@@ -51,8 +43,6 @@ function handleCancel() {
 function handleConfirm() {
   emit('confirm', {
     filters: cloneFilterDefs(draftFilters.value),
-    theme: resolveDashThemeId(draftTheme.value),
-    cardRadius: resolveDashCardRadiusId(draftCardRadius.value),
     autoRefreshSec: draftAutoRefreshSec.value,
   })
   visible.value = false
@@ -103,8 +93,6 @@ watch(visible, (open) => {
           />
           <DashStyleSettings
             v-show="activeTab === 'style'"
-            v-model:theme="draftTheme"
-            v-model:card-radius="draftCardRadius"
             v-model:auto-refresh-sec="draftAutoRefreshSec"
           />
         </div>

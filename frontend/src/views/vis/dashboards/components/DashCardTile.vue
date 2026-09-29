@@ -9,7 +9,6 @@ import type { VisCardDetailOpenPayload } from '@/views/vis/shared/useVisCardDeta
 import { useIntersectionObserver } from '@vueuse/core'
 import { useAccountStore } from '@/stores/modules/account'
 import { FUNCTION_CARD_CONF } from '@/views/vis/cards/config'
-import { resolveAutoRefreshSec, useCardAutoRefresh } from '@/views/vis/shared/cardRefresh'
 import { VIS_EMPTY_TEXT } from '@/views/vis/shared/emptyState'
 import { allowsFullscreen, needsDataset } from '@/views/vis/shared/types'
 import { useVisCardQuery } from '@/views/vis/shared/useVisCardQuery'
@@ -26,7 +25,6 @@ import {
 } from '../dashPresentation'
 import { DASH_QUERY_STATUS_KEY } from '../dashQueryStatus'
 import { DASH_CARD_QUERY_TRACKER_KEY } from '../dashQueryTracker'
-import { trackDashGlassPointer } from '../dashTheme'
 import { DASH_REFRESH_TICK } from '../useDashRefresh'
 
 const props = withDefaults(defineProps<{
@@ -39,8 +37,6 @@ const props = withDefaults(defineProps<{
   resizing?: boolean
   allowFullscreen?: boolean
   showSql?: boolean
-  /** 仅看板预览页按卡片配置自动重查；编辑页不要传 */
-  autoRefresh?: boolean
   inGroup?: boolean
   canMoveToGroup?: boolean
   /** Tab 铺满组时不显示拖动手柄和缩放点 */
@@ -57,7 +53,6 @@ const props = withDefaults(defineProps<{
   resizing: false,
   allowFullscreen: false,
   showSql: false,
-  autoRefresh: false,
   inGroup: false,
   canMoveToGroup: false,
   locked: false,
@@ -101,11 +96,9 @@ const canFullscreen = computed(() =>
 )
 
 const extraActions = computed(() => {
-  const actions: Array<{ key: string, label: string, icon: string }> = []
+  const actions: Array<{ key: string, label: string, icon: string, danger?: boolean }> = []
   if (!props.designActions)
     return actions
-  if (displayContext)
-    actions.push({ key: 'display', label: '显示', icon: 'i-mingcute-edit-line' })
   if (canEditCard) {
     actions.push({
       key: 'config',
@@ -113,6 +106,8 @@ const extraActions = computed(() => {
       icon: 'i-mingcute-settings-3-line',
     })
   }
+  if (displayContext)
+    actions.push({ key: 'display', label: '显示', icon: 'i-mingcute-edit-line' })
   if (props.inGroup) {
     actions.push({
       key: 'detach',
@@ -130,6 +125,7 @@ const extraActions = computed(() => {
   actions.push({
     key: 'remove',
     label: '删除',
+    danger: true,
     icon: 'i-mingcute-delete-2-line',
   })
   return actions
@@ -236,16 +232,6 @@ watch([nearViewport, deferQuery], ([near, deferred]) => {
     void runWhenReady()
 })
 
-if (props.autoRefresh) {
-  useCardAutoRefresh({
-    intervalSec: () => resolveAutoRefreshSec(props.card.visual),
-    enabled: () => !disabled.value
-      && !eagerCardQueries.value
-      && (!deferQuery.value || nearViewport.value),
-    run: () => runWhenReady({ silent: true }),
-  })
-}
-
 function onResizePointerDown(corner: 'nw' | 'ne' | 'sw' | 'se', event: PointerEvent) {
   event.preventDefault()
   event.stopPropagation()
@@ -300,7 +286,6 @@ function onMenuAction(key: string) {
         'is-auto-height': autoHeight && !isFull,
         'hide-resize-dots': editable && !designActions,
       }"
-      @pointermove="trackDashGlassPointer"
     >
       <template v-if="editable && !isFull && !locked">
         <div
@@ -335,7 +320,6 @@ function onMenuAction(key: string) {
           :global-filters="globals?.globalFilters"
           :global-params="globals?.globalParams"
           :extra-actions="extraActions"
-          :always-show-actions="designActions"
           :allow-fullscreen="canFullscreen"
           :fullscreen="isFull"
           :compact="presentationMode === 'compact' && !isFull"
@@ -362,10 +346,9 @@ function onMenuAction(key: string) {
   min-height: 0;
   box-sizing: border-box;
   background-color: var(--dash-card-bg, var(--el-bg-color));
-  background-image: var(--dash-card-glaze, none);
   border: var(--vis-card-border);
   border-radius: var(--dash-card-radius, 12px);
-  @include page.frost(card);
+  box-shadow: var(--dash-card-shadow, 0 1px 2px rgb(15 23 42 / 4%));
 
   &.is-in-group:not(.is-full) {
     border: none;
@@ -420,11 +403,6 @@ function onMenuAction(key: string) {
       opacity: 1;
       pointer-events: auto;
     }
-  }
-
-  &:hover :deep(.vis-card-view__actions) {
-    opacity: 1;
-    pointer-events: auto;
   }
 }
 

@@ -5,8 +5,8 @@
 import type { DashFilterValues, VisDashFilterDef } from '../dashApi'
 import type { DashCardDisplayOverrides } from '../dashCardDisplay'
 import type { DashWidget } from '../dashLayout'
-import type { DashCardRadiusId, DashThemeId } from '../dashTheme'
 import type { VisCard } from '@/views/vis/shared/types'
+import type { VisPopoverAction } from '@/views/vis/shared/VisActionPopover.vue'
 import { useElementSize } from '@vueuse/core'
 import vis from '@/apis/vis/index'
 import { UIConfig } from '@/core/config'
@@ -20,6 +20,7 @@ import {
   isVisDisabled,
   loadDashboardWidgets,
 } from '../dashApi'
+import { DASHBOARD_VIEW_COPY as viewCopy } from '../dashboardViewCopy'
 import {
   DASH_EAGER_CARD_QUERIES_KEY,
   DASH_LAZY_CARD_QUERIES_KEY,
@@ -32,20 +33,19 @@ import { captureDashPreview, saveDashScreenshot } from '../dashScreenshot'
 import {
   dashOverlayVars,
   dashThemeVars,
-  DEFAULT_DASH_CARD_RADIUS,
   DEFAULT_DASH_THEME,
-  isDashGlassTheme,
   resolveDashTheme,
 } from '../dashTheme'
-import { useDashViewUrl } from '../dashViewQuery'
+import { buildDashboardViewLink, useDashViewUrl } from '../dashViewQuery'
 import { assertSubscriptionScreenshotReady } from '../subscriptionScreenshot'
 import { useDashboardViewState } from '../useDashboardViewState'
-import { useDashChromeScroll } from '../useDashChromeScroll'
 import { useDashRefresh } from '../useDashRefresh'
+import { useDashTheme } from '../useDashTheme'
 import DashboardSubscriptionDrawer from './DashboardSubscriptionDrawer.vue'
 import DashFilterBar from './DashFilterBar.vue'
 import DashGrid from './DashGrid.vue'
 import DashSnapshotMeta from './DashSnapshotMeta.vue'
+import DashThemeSwitch from './DashThemeSwitch.vue'
 import PersonalViewToolbar from './PersonalViewToolbar.vue'
 
 defineOptions({ name: 'DashViewer' })
@@ -81,19 +81,29 @@ const widgets = ref<DashWidget[]>([])
 const cardMap = ref<Record<string, VisCard>>({})
 const filters = ref<VisDashFilterDef[]>([])
 const filterValues = ref<DashFilterValues>({})
-const theme = ref<DashThemeId>(DEFAULT_DASH_THEME)
-const cardRadius = ref<DashCardRadiusId>(DEFAULT_DASH_CARD_RADIUS)
+const preferredTheme = useDashTheme()
+const subscriptionScreenshot = computed(() => route.query.subscriptionScreenshot === '1')
+const theme = computed(() => subscriptionScreenshot.value ? DEFAULT_DASH_THEME : preferredTheme.value)
 const cardDisplayOverrides = ref<DashCardDisplayOverrides>({})
 const autoRefreshSec = ref<number>()
-const themeStyle = computed(() => dashThemeVars(theme.value, cardRadius.value))
-const glassTheme = computed(() => isDashGlassTheme(theme.value))
+const themeStyle = computed(() => dashThemeVars(theme.value))
 provide(LENS_THEME_KEY, computed(() => resolveDashTheme(theme.value).theme))
 const { refreshCards, refreshTick } = useDashRefresh()
-const { chromeHidden, onCanvasScroll, revealChrome } = useDashChromeScroll()
 const viewState = useDashboardViewState(filters, filterValues, widgets)
 const personal = reactive(viewState)
-const { pause: pauseViewUrl, resume: resumeViewUrl } = useDashViewUrl(viewState.stateJson, viewState.bindingsJson)
+const { pause: pauseViewUrl, resume: resumeViewUrl } = useDashViewUrl(viewState.stateJson, viewState.bindingsJson, viewState.urlContext)
 const capturing = ref(false)
+const personalToolbarRef = ref<InstanceType<typeof PersonalViewToolbar>>()
+const showPersonalActions = computed(() => personal.ready && !personal.runDate && !capturing.value)
+const showViewSwitcher = computed(() => personal.capabilities.canCustomize && personal.views.length > 0)
+const canSaveView = computed(() => personal.capabilities.canCustomize && personal.viewsAvailable)
+const viewActions = computed<VisPopoverAction[]>(() => showPersonalActions.value
+  ? [
+      { key: 'saveView', label: viewCopy.save, icon: 'i-mingcute-bookmark-add-line', visible: canSaveView.value && !showViewSwitcher.value, disabled: personal.busy || (!personal.dirty && !personal.linked) },
+      { key: 'manageViews', label: viewCopy.manage, icon: 'i-mingcute-bookmark-line', visible: !showViewSwitcher.value && personal.views.length > 0, disabled: personal.busy },
+      { key: 'resetView', label: viewCopy.reset, icon: 'i-mingcute-back-line', visible: personal.capabilities.canCustomize && !showViewSwitcher.value && (personal.dirty || personal.linked), disabled: personal.busy },
+    ]
+  : [])
 const generatedAt = ref('')
 const refreshing = computed(() => Object.values(queryStatus.cards.value).some(card => card.loading))
 const refreshFailed = computed(() => Object.values(queryStatus.cards.value).filter(card => card.error).length)
@@ -120,10 +130,11 @@ async function waitForCardQueries(timeoutMs = 15_000) {
 async function shareCurrentView() {
   try {
     await nextTick()
-    await navigator.clipboard.writeText(window.location.href)
-    showToast('已复制当前视图链接')
+    const url = buildDashboardViewLink(window.location.href, personal.stateJson, personal.bindingsJson)
+    await navigator.clipboard.writeText(url.href)
+    showToast('链接已复制')
   }
-  catch { showToast('复制失败，请复制浏览器地址栏链接', 'error') }
+  catch { showToast('复制失败，请重试', 'error') }
 }
 
 function openPreview() {
@@ -168,8 +179,6 @@ function resetViewer() {
   cardMap.value = {}
   filters.value = []
   filterValues.value = {}
-  theme.value = DEFAULT_DASH_THEME
-  cardRadius.value = DEFAULT_DASH_CARD_RADIUS
   autoRefreshSec.value = undefined
   cardDisplayOverrides.value = {}
 }
@@ -210,8 +219,6 @@ async function loadDashboard(id: string) {
       filters.value = []
       widgets.value = []
       cardMap.value = {}
-      theme.value = DEFAULT_DASH_THEME
-      cardRadius.value = DEFAULT_DASH_CARD_RADIUS
       autoRefreshSec.value = undefined
       cardDisplayOverrides.value = {}
     }
@@ -219,8 +226,6 @@ async function loadDashboard(id: string) {
       filters.value = loaded.filters
       widgets.value = loaded.widgets
       cardMap.value = loaded.cardMap
-      theme.value = loaded.theme
-      cardRadius.value = loaded.cardRadius
       autoRefreshSec.value = loaded.autoRefreshSec
       cardDisplayOverrides.value = loaded.cardDisplayOverrides
     }
@@ -258,7 +263,6 @@ async function onScreenshot() {
   screenshotStatus.value = 'running'
   screenshotError.value = ''
   eagerCardQueries.value = true
-  revealChrome()
   try {
     refreshCards()
     await waitForCardQueries()
@@ -308,21 +312,16 @@ watch(
     class="viewer"
     :class="`is-${presentationMode}`"
     :style="themeStyle"
-    :data-dash-glass="glassTheme ? 'true' : undefined"
   >
-    <el-scrollbar
-      class="viewer__canvas"
-      @scroll="onCanvasScroll"
-    >
+    <el-scrollbar class="viewer__canvas">
       <div
         v-if="!emptyText"
         class="viewer__chrome"
         :inert="capturing"
-        :class="{ 'is-off': chromeHidden }"
       >
         <DashFilterBar
           v-model:values="filterValues"
-          v-model:theme="theme"
+          :theme="theme"
           :title="name"
           :desc="desc"
           :defs="dashDisabled || personal.runDate ? [] : filters"
@@ -331,7 +330,9 @@ watch(
           :preview-disabled="!dashboardId"
           :show-preview="!standalone"
           :show-subscription="!!dashboardId && !dashDisabled && personal.ready"
-          :show-favorite="personal.ready && !personal.runDate && !capturing"
+          :show-favorite="showPersonalActions && personal.preferencesAvailable"
+          :show-share="showPersonalActions"
+          :view-actions="viewActions"
           :favorite="!!personal.preference.favorite"
           :favorite-busy="personal.busy"
           :loading="loading"
@@ -343,31 +344,43 @@ watch(
           @subscription="openSubscription"
           @favorite="personal.favorite"
           @preview="openPreview"
+          @share="shareCurrentView"
+          @save-view="personalToolbarRef?.saveAs()"
+          @manage-views="personalToolbarRef?.manage()"
+          @reset-view="personal.choose('')"
         >
-          <template v-if="personal.ready && !personal.runDate && !capturing" #personal>
+          <template v-if="showPersonalActions" #personal>
             <PersonalViewToolbar
+              ref="personalToolbarRef"
               :views="personal.views" :selected-id="personal.selectedId" :linked="personal.linked"
+              :show-switcher="showViewSwitcher" :can-save="canSaveView"
               :default-view-id="personal.preference.defaultViewId" :surface-style="dashOverlayVars(theme)"
               :dirty="personal.dirty" :busy="personal.busy"
               @choose="personal.choose" @save="personal.save"
-              @rename="personal.rename" @remove="personal.remove" @set-default="personal.setDefault" @share="shareCurrentView"
+              @rename="personal.rename" @remove="personal.remove" @set-default="personal.setDefault"
             />
           </template>
         </DashFilterBar>
+        <div v-if="personal.metadataNotice && !capturing" class="viewer__state-error">
+          <el-alert :title="personal.metadataNotice" type="warning" :closable="false" />
+          <el-button :loading="personal.busy" @click="personal.retryMetadata()">
+            重试
+          </el-button>
+        </div>
         <div v-if="personal.error" class="viewer__state-error">
           <el-alert :title="personal.error" type="warning" :closable="false" />
           <el-button v-if="route.query.subscriptionScreenshot !== '1'" :loading="personal.busy" @click="personal.choose('')">
-            恢复默认视图
+            {{ viewCopy.reset }}
           </el-button>
         </div>
         <div v-if="personal.runDate" class="viewer__run-info">
-          <el-tooltip content="使用本次订阅的视图和日期重新查询当前数据" :disabled="capturing">
-            <span class="viewer__run-label">订阅视图</span>
+          <el-tooltip content="按本次订阅的筛选和计算日期展示最新数据" :disabled="capturing">
+            <span class="viewer__run-label">订阅内容</span>
           </el-tooltip>
           <span>{{ personal.summary }}</span>
           <span>计算日期 {{ personal.runDate }}</span>
           <el-button v-if="!capturing && route.query.subscriptionScreenshot !== '1'" text @click="personal.choose('')">
-            退出订阅视图
+            返回看板
           </el-button>
         </div>
         <DashSnapshotMeta v-if="capturing" :cards="queryStatus.cards.value" :generated-at="generatedAt" />
@@ -394,11 +407,11 @@ watch(
           :data-tick="refreshTick"
           :presentation-mode="presentationMode"
           allow-fullscreen
-          auto-refresh
           @select-tab="(groupId, cardId) => personal.tabs[groupId] = { activeCardId: cardId }"
         />
       </div>
     </el-scrollbar>
+    <DashThemeSwitch v-if="!emptyText && !capturing && !subscriptionScreenshot" v-model="preferredTheme" />
   </div>
   <DashboardSubscriptionDrawer
     ref="subscriptionDrawerRef"

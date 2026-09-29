@@ -16,6 +16,7 @@ const source: VIS.VisDashboardInfo = {
   cards: [{ cardId: '101', status: 'DBL' }, { cardId: '102', status: 'EBL' }],
   configJson: JSON.stringify({
     theme: 't2',
+    cardRadius: 'xl',
     autoRefreshSec: 60,
     filters: [{ uid: 'region', datasetId: '9101', field: 'region', label: '区域', applyAs: 'filter', formType: 'input', op: 'eq', defaultValue: { value: ['华东'] } }],
     widgets: [
@@ -44,7 +45,9 @@ describe('dashboard copies', () => {
     const config = parseDashConfig(request.configJson)
     expect(config.cardDisplayOverrides).toEqual({ 101: { title: '局部标题', description: null } })
     expect(config.filters[0]?.defaultValue?.value).toEqual(['华东'])
-    expect(config.theme).toBe('t2')
+    expect(JSON.parse(request.configJson!)).not.toHaveProperty('theme')
+    expect(config.extra).not.toHaveProperty('theme')
+    expect(JSON.parse(request.configJson!)).not.toHaveProperty('cardRadius')
     expect(config.autoRefreshSec).toBe(60)
     expect(config.widgets[1]).toMatchObject({ id: 'tabs', mode: 'tabs', pages: [{ id: 'p1', title: '营收', items: [{ cardId: '102' }] }] })
     expect(vis.query.getCardDetail).not.toHaveBeenCalled()

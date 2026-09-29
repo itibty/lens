@@ -2,6 +2,7 @@
  * @Description: 可复用卡片壳（设计器预览 / 未来看板共用）
 -->
 <script setup lang="ts">
+import type { VisActionGroup } from './VisActionPopover.vue'
 import type { DetailHit, DetailMenuPayload, PivotPathMember } from '@/views/vis/shared/cardDetail'
 import type { VisQueryConfig, VisVisualConfig } from '@/views/vis/shared/types'
 import { onClickOutside, useEventListener, useMediaQuery } from '@vueuse/core'
@@ -45,6 +46,7 @@ import VisRankCard from '@/views/vis/shared/VisRankCard.vue'
 import VisStaticCard from '@/views/vis/shared/VisStaticCard.vue'
 import VisTrendCard from '@/views/vis/shared/VisTrendCard.vue'
 import { CARD_TIME_COPY, cardTimeRows, formatQueryTime } from './queryTime'
+import VisActionPopover from './VisActionPopover.vue'
 import VisCardDataDialog from './VisCardDataDialog.vue'
 
 export interface VisCardMenuAction {
@@ -53,7 +55,6 @@ export interface VisCardMenuAction {
   icon?: string
   danger?: boolean
   disabled?: boolean
-  divided?: boolean
 }
 
 const props = withDefaults(defineProps<{
@@ -88,8 +89,6 @@ const props = withDefaults(defineProps<{
   /** 流式趋势卡允许内容撑高，避免辅助指标落入卡片内滚动区。 */
   autoHeight?: boolean
   actionVariant?: 'ghost' | 'outline'
-  /** 设计场景常显操作入口，不依赖悬停。 */
-  alwaysShowActions?: boolean
 }>(), {
   title: '',
   description: '',
@@ -111,7 +110,6 @@ const props = withDefaults(defineProps<{
   compact: false,
   autoHeight: false,
   actionVariant: 'outline',
-  alwaysShowActions: false,
 })
 
 const emit = defineEmits<{
@@ -163,8 +161,6 @@ const overlayThemeStyle = computed(() => themeCssVars(renderTheme.value))
 
 const hasHeaderText = computed(() => !!(cardTitle.value || cardRemark.value))
 const coarsePointer = useMediaQuery('(hover: none), (pointer: coarse)')
-const smallScreen = useMediaQuery('(max-width: 1023px)')
-const showRemarkIcon = computed(() => props.alwaysShowActions || props.compact || smallScreen.value || coarsePointer.value || remarkOpen.value)
 
 const empty = computed(() => {
   if (stageMode.value === 'pivot')
@@ -234,7 +230,6 @@ watch(allowViewData, (allowed) => {
   if (!allowed)
     dataOpen.value = false
 })
-const hasMoreMenu = true
 const hasMenu = computed(() => true)
 const showFullscreen = computed(() =>
   props.allowFullscreen && allowsFullscreen(props.visual.chartType),
@@ -254,8 +249,21 @@ const canDownload = computed(() => {
     return true
   return !!(props.dashboardId && props.cardId)
 })
+const actionGroups = computed<VisActionGroup[]>(() => [
+  {
+    id: 'view',
+    label: '普通操作',
+    items: [
+      { key: 'fullscreen', label: props.fullscreen ? '退出' : '全屏', icon: props.fullscreen ? 'i-mingcute-fullscreen-exit-line' : 'i-mingcute-fullscreen-line', visible: showFullscreen.value },
+      { key: 'refresh', label: '刷新', icon: 'i-mingcute-refresh-2-line' },
+      { key: 'data', label: '数据', icon: 'i-mingcute-list-check-3-line', visible: allowViewData.value, disabled: props.loading },
+      { key: 'screenshot', label: '截屏', icon: capturing.value ? 'i-svg-spinners-ring-resize' : 'i-mingcute-camera-line', visible: props.visual.chartType !== 'url', disabled: !canScreenshot.value },
+      { key: 'download', label: '下载', icon: exporting.value ? 'i-svg-spinners-ring-resize' : 'i-mingcute-download-2-line', visible: allowDownload.value, disabled: !canDownload.value },
+    ],
+  },
+  { id: 'design', label: '设计操作', items: props.extraActions },
+])
 const pivotRef = ref<{ exportExcel: (fileName: string) => Promise<void> }>()
-const moreRef = ref<{ handleClose: () => void } | null>(null)
 const menuRef = ref<HTMLElement>()
 const menu = ref<DetailMenuPayload | null>(null)
 const menuHits = computed(() => {
@@ -276,8 +284,7 @@ function closeMenu() {
 function closeFloatingMenus() {
   if (menu.value)
     closeMenu()
-  if (menuOpen.value)
-    moreRef.value?.handleClose()
+  menuOpen.value = false
 }
 
 function clampMenuToViewport() {
@@ -328,8 +335,13 @@ function pickMenuDetail(hit: DetailHit) {
   closeMenu()
 }
 
-function onMenuCommand(command: string | number | object) {
-  const key = String(command)
+function onMenuCommand(key: string) {
+  closeFloatingMenus()
+  if (key === 'fullscreen') {
+    if (showFullscreen.value)
+      emit('toggleFullscreen')
+    return
+  }
   if (key === 'refresh') {
     emit('refresh')
     return
@@ -448,7 +460,11 @@ function onKpiDetailClick(payload: { record: Record<string, unknown>, clientX: n
 }
 
 onClickOutside(menuRef, closeMenu)
-useEventListener(window, 'scroll', closeFloatingMenus, { capture: true, passive: true })
+useEventListener(window, 'scroll', (event) => {
+  if (event.target instanceof Element && event.target.closest('.vis-actions-popper'))
+    return
+  closeFloatingMenus()
+}, { capture: true, passive: true })
 useEventListener(window, 'resize', closeFloatingMenus, { passive: true })
 watch(allowDetail, (ok) => {
   if (!ok)
@@ -469,7 +485,6 @@ watch(allowDetail, (ok) => {
         'is-compact': compact,
         'is-auto-height': autoHeight,
         'is-borderless-actions': actionVariant === 'ghost',
-        'always-show-actions': alwaysShowActions,
       },
     ]"
     :style="surfaceThemeStyle"
@@ -533,7 +548,7 @@ watch(allowDetail, (ok) => {
             <button
               type="button"
               class="vis-card-view__remark-btn"
-              :class="{ 'is-clickable': coarsePointer, 'is-visible': showRemarkIcon }"
+              :class="{ 'is-clickable': coarsePointer }"
               aria-label="查看卡片备注"
               :aria-expanded="remarkOpen"
               @click.stop
@@ -546,7 +561,6 @@ watch(allowDetail, (ok) => {
         <div
           v-if="hasMenu"
           class="vis-card-view__actions"
-          :class="{ 'is-busy': exporting || capturing, 'is-open': menuOpen || timeOpen }"
           @pointerdown.stop
           @mousedown.stop
           @click.stop
@@ -590,89 +604,29 @@ watch(allowDetail, (ok) => {
               <span :class="refreshing && !loading ? 'i-svg-spinners-ring-resize' : 'i-mingcute-time-line'" />
             </button>
           </el-tooltip>
-          <VisActionButton
-            v-if="showFullscreen"
-            class="vis-card-view__full-btn"
-            :variant="actionVariant"
-            :label="fullscreen ? '退出全屏' : '全屏查看'"
-            :title="fullscreen ? '退出全屏' : '全屏查看'"
-            @click="emit('toggleFullscreen')"
-          >
-            <span
-              class="vis-card-view__full-icon"
-              :class="fullscreen ? 'i-mingcute-fullscreen-exit-line' : 'i-mingcute-fullscreen-line'"
-            />
-          </VisActionButton>
-          <el-dropdown
-            v-if="hasMoreMenu"
-            ref="moreRef"
-            trigger="click"
-            placement="bottom-end"
+          <VisActionPopover
+            v-model:open="menuOpen"
+            label="卡片操作"
+            :groups="actionGroups"
+            :surface-style="overlayThemeStyle"
+            :touch="compact"
             popper-class="vis-card-more-popper"
-            :popper-style="overlayThemeStyle"
-            @command="onMenuCommand"
-            @visible-change="menuOpen = $event"
+            @action="onMenuCommand"
           >
             <VisActionButton
               class="vis-card-view__more-btn"
               :variant="actionVariant"
               :active="menuOpen"
               label="更多卡片操作"
+              aria-haspopup="dialog"
+              :aria-expanded="menuOpen"
             >
               <span
                 :class="exporting || capturing ? 'i-svg-spinners-ring-resize' : 'i-mingcute-more-2-line'"
                 class="vis-card-view__more-icon"
               />
             </VisActionButton>
-            <template #dropdown>
-              <div v-if="compact && cardRemark" class="vis-card-more-popper__summary">
-                <p>
-                  {{ cardRemark }}
-                </p>
-              </div>
-              <el-dropdown-menu>
-                <el-dropdown-item command="refresh">
-                  <span class="vis-card-more-popper__icon i-mingcute-refresh-2-line" />
-                  刷新
-                </el-dropdown-item>
-                <el-dropdown-item v-if="allowViewData" command="data" :disabled="loading">
-                  <span class="vis-card-more-popper__icon i-mingcute-list-check-3-line" />
-                  数据
-                </el-dropdown-item>
-                <el-dropdown-item
-                  command="screenshot"
-                  :disabled="!canScreenshot"
-                  :title="visual.chartType === 'url' ? '网页卡片暂不支持截屏' : undefined"
-                >
-                  <span class="vis-card-more-popper__icon i-mingcute-camera-line" />
-                  截屏
-                </el-dropdown-item>
-                <el-dropdown-item
-                  v-if="allowDownload"
-                  command="download"
-                  :disabled="!canDownload"
-                >
-                  <span class="vis-card-more-popper__icon i-mingcute-download-2-line" />
-                  下载
-                </el-dropdown-item>
-                <el-dropdown-item
-                  v-for="(item, index) in extraActions"
-                  :key="item.key"
-                  :command="item.key"
-                  :disabled="item.disabled"
-                  :divided="item.divided ?? index === 0"
-                  :class="{ 'is-danger': item.danger }"
-                >
-                  <span
-                    v-if="item.icon"
-                    class="vis-card-more-popper__icon"
-                    :class="item.icon"
-                  />
-                  {{ item.label }}
-                </el-dropdown-item>
-              </el-dropdown-menu>
-            </template>
-          </el-dropdown>
+          </VisActionPopover>
         </div>
       </div>
 
@@ -1069,12 +1023,25 @@ watch(allowDetail, (ok) => {
     align-items: center;
     gap: 4px;
     line-height: 1;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.15s ease;
 
     :deep(.el-tooltip__trigger) {
       display: inline-flex;
+    }
+
+    @media (hover: hover) and (pointer: fine) {
+      --vis-control-compact: 24px;
+      --vis-icon-size: 14px;
+      --vis-radius-control: 6px;
+      gap: 2px;
+
+      .vis-card-view__time-icon {
+        height: var(--vis-control-compact);
+
+        > span {
+          width: var(--vis-icon-size);
+          height: var(--vis-icon-size);
+        }
+      }
     }
   }
 
@@ -1112,8 +1079,6 @@ watch(allowDetail, (ok) => {
 
   &.is-borderless-actions &__actions {
     gap: 0;
-    opacity: 1;
-    pointer-events: auto;
 
     :deep(.vis-action-button) {
       width: var(--vis-control-compact);
@@ -1123,34 +1088,6 @@ watch(allowDetail, (ok) => {
     }
   }
 
-  &__remark-btn {
-    opacity: 0;
-    pointer-events: none;
-  }
-
-  &__body:hover &__remark-btn,
-  &__body:focus-within &__remark-btn,
-  &__remark-btn.is-visible {
-    opacity: 0.65;
-    pointer-events: auto;
-
-    &:hover,
-    &:focus-visible {
-      opacity: 1;
-    }
-  }
-
-  &.is-borderless-actions &__full-btn {
-    display: none;
-  }
-
-  &.always-show-actions &__full-btn,
-  &.is-borderless-actions &__body:hover &__full-btn,
-  &.is-borderless-actions &__body:focus-within &__full-btn {
-    display: inline-flex;
-  }
-
-  &__full-btn,
   &__more-btn {
     .is-card-color & {
       color: var(--vis-content-color, inherit);
@@ -1161,21 +1098,11 @@ watch(allowDetail, (ok) => {
     }
   }
 
-  &__full-btn,
   &__more-btn {
     .vis-card-view:not(.is-borderless-actions) .is-card-color & {
       border-color: rgb(255 255 255 / 28%);
       background: rgb(255 255 255 / 8%);
     }
-  }
-
-  &.always-show-actions &__actions,
-  &__body:hover &__actions,
-  &__body:focus-within &__actions,
-  &__actions.is-busy,
-  &__actions.is-open {
-    opacity: 1;
-    pointer-events: auto;
   }
 
   &__title {
@@ -1400,48 +1327,6 @@ watch(allowDetail, (ok) => {
 </style>
 
 <style lang="scss">
-.vis-card-more-popper {
-  z-index: 4000 !important;
-  max-width: min(280px, calc(100vw - 24px));
-
-  &__summary {
-    padding: 12px 14px 10px;
-    border-bottom: 1px solid var(--na-border-color-lighter);
-    white-space: normal;
-    overflow-wrap: anywhere;
-
-    strong {
-      color: var(--na-text-strong);
-      font-size: 13px;
-      line-height: 20px;
-      font-weight: 600;
-    }
-
-    p {
-      margin: 4px 0 0;
-      color: var(--na-text-muted);
-      font-size: 12px;
-      line-height: 18px;
-    }
-  }
-
-  .el-dropdown-menu__item {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .el-dropdown-menu__item.is-danger {
-    color: var(--el-color-danger);
-  }
-
-  .vis-card-more-popper__icon {
-    flex-shrink: 0;
-    width: 16px;
-    height: 16px;
-  }
-}
-
 .vis-detail-menu {
   position: fixed;
   z-index: 4000;
@@ -1478,7 +1363,6 @@ watch(allowDetail, (ok) => {
 }
 
 @media (hover: none), (pointer: coarse) {
-  .vis-card-more-popper .el-dropdown-menu__item,
   .vis-detail-menu__item {
     min-height: 44px;
   }

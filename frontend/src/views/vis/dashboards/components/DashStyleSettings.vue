@@ -2,21 +2,12 @@
  * @Description: 看板配置 · 通用。只改草稿。
 -->
 <script setup lang="ts">
-import type { DashCardRadiusId, DashThemeId } from '../dashTheme'
 import {
   AUTO_REFRESH_OPTIONS,
   DEFAULT_AUTO_REFRESH_SEC,
   sanitizeAutoRefreshSec,
 } from '@/views/vis/shared/cardRefresh'
-import {
-  DASH_CARD_RADIUS_PRESETS,
-  DASH_THEME_PRESETS,
-  dashThemeCanvasSwatchStyle,
-  dashThemeSwatchStyle,
-} from '../dashTheme'
 
-const theme = defineModel<DashThemeId>('theme', { required: true })
-const cardRadius = defineModel<DashCardRadiusId>('cardRadius', { required: true })
 const autoRefreshSec = defineModel<number | undefined>('autoRefreshSec')
 
 const autoRefreshOn = computed({
@@ -68,66 +59,6 @@ const autoRefreshSecValue = computed({
             :value="item.value"
           />
         </el-select>
-      </div>
-    </section>
-    <section class="style-settings__group">
-      <h3 class="style-settings__title">
-        看板主题
-      </h3>
-      <div class="style-settings__grid">
-        <button
-          v-for="item in DASH_THEME_PRESETS"
-          :key="item.id"
-          type="button"
-          class="style-settings__item"
-          :class="{ 'is-active': theme === item.id }"
-          :title="item.name"
-          @click="theme = item.id"
-        >
-          <span
-            class="style-settings__swatch"
-            :style="dashThemeCanvasSwatchStyle(item)"
-          >
-            <span
-              class="style-settings__card"
-              :style="dashThemeSwatchStyle(item)"
-            >
-              <i
-                class="style-settings__accent"
-                :style="{ background: item.theme.primary.base }"
-              />
-            </span>
-          </span>
-          <span class="style-settings__name">
-            {{ item.name }}
-          </span>
-        </button>
-      </div>
-    </section>
-    <section class="style-settings__group">
-      <h3 class="style-settings__title">
-        卡片圆角
-      </h3>
-      <div class="style-settings__grid">
-        <button
-          v-for="item in DASH_CARD_RADIUS_PRESETS"
-          :key="item.id"
-          type="button"
-          class="style-settings__item"
-          :class="{ 'is-active': cardRadius === item.id }"
-          :title="item.name"
-          @click="cardRadius = item.id"
-        >
-          <span class="style-settings__swatch is-radius">
-            <span
-              class="style-settings__tile"
-              :style="{ borderRadius: `${item.value}px` }"
-            />
-          </span>
-          <span class="style-settings__name">
-            {{ item.name }}
-          </span>
-        </button>
       </div>
     </section>
   </div>
@@ -192,90 +123,5 @@ const autoRefreshSecValue = computed({
 
 .style-settings__select {
   width: 160px;
-}
-
-.style-settings__grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(68px, 1fr));
-  gap: 10px;
-}
-
-.style-settings__item {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  min-width: 0;
-  padding: 0;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  text-align: center;
-}
-
-.style-settings__swatch {
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  box-sizing: border-box;
-  height: 72px;
-  padding: 10px 8px 0;
-  overflow: hidden;
-  border: 2px solid transparent;
-  border-radius: 10px;
-  transition: border-color 0.15s ease;
-
-  &.is-radius {
-    align-items: center;
-    justify-content: center;
-    padding: 0;
-    background: var(--el-fill-color);
-  }
-
-  .style-settings__item:hover & {
-    border-color: var(--el-border-color);
-  }
-
-  .style-settings__item.is-active & {
-    border-color: var(--el-color-primary);
-  }
-}
-
-.style-settings__card {
-  display: block;
-  height: 38px;
-  overflow: hidden;
-  border: 1px solid rgb(15 23 42 / 8%);
-  box-shadow: 0 1px 2px rgb(15 23 42 / 4%);
-}
-
-.style-settings__accent {
-  display: block;
-  width: 18px;
-  height: 3px;
-  margin: 8px 0 0 8px;
-  border-radius: 99px;
-}
-
-.style-settings__tile {
-  box-sizing: border-box;
-  width: 44px;
-  height: 32px;
-  border: 1px solid rgb(15 23 42 / 10%);
-  background: var(--el-bg-color);
-  box-shadow: 0 1px 2px rgb(15 23 42 / 4%);
-}
-
-.style-settings__name {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 12px;
-  line-height: 1.3;
-  color: var(--el-text-color-regular);
-
-  .style-settings__item.is-active & {
-    color: var(--el-color-primary);
-    font-weight: 600;
-  }
 }
 </style>

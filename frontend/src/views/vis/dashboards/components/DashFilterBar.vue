@@ -6,6 +6,7 @@ import type { DashFilterValues, VisDashFilterDef } from '../dashApi'
 import type { DashPresentationMode } from '../dashPresentation'
 import type { DashThemeId } from '../dashTheme'
 import type { DashToolAction } from './DashToolsMenu.vue'
+import type { VisPopoverAction } from '@/views/vis/shared/VisActionPopover.vue'
 import { useEventListener } from '@vueuse/core'
 import VisActionButton from '@/views/vis/shared/VisActionButton.vue'
 import {
@@ -21,12 +22,15 @@ import DashToolsMenu from './DashToolsMenu.vue'
 
 const props = withDefaults(defineProps<{
   defs: VisDashFilterDef[]
+  theme?: DashThemeId
   title?: string
   desc?: string
   previewDisabled?: boolean
   showPreview?: boolean
   showSubscription?: boolean
   showFavorite?: boolean
+  showShare?: boolean
+  viewActions?: VisPopoverAction[]
   favorite?: boolean
   favoriteBusy?: boolean
   screenshotting?: boolean
@@ -42,6 +46,7 @@ const props = withDefaults(defineProps<{
   filterOptionsDashboardId?: string
   presentationMode?: DashPresentationMode
 }>(), {
+  theme: DEFAULT_DASH_THEME,
   title: '',
   desc: '',
   previewDisabled: false,
@@ -69,17 +74,17 @@ const emit = defineEmits<{
   screenshot: []
   subscription: []
   favorite: []
+  share: []
+  saveView: []
+  manageViews: []
+  resetView: []
   addCard: []
   addText: []
   addGroup: []
   settings: []
   save: []
 }>()
-const theme = defineModel<DashThemeId>('theme', { default: DEFAULT_DASH_THEME })
 const values = defineModel<DashFilterValues>('values', { required: true })
-const gridGuides = defineModel<boolean>('gridGuides', { default: true })
-const dockRef = ref<HTMLElement>()
-const touchActionsVisible = ref(false)
 const toolsOpen = ref(false)
 const mobileFiltersOpen = ref(false)
 const {
@@ -108,8 +113,8 @@ const descText = computed(() => props.desc.trim().replace(/\s+/g, ' '))
 const mobile = computed(() => props.presentationMode === 'compact' || props.presentationMode === 'medium')
 const filledFilterDefs = computed(() => props.defs.filter(isFilled))
 const filledFilterCount = computed(() => filledFilterDefs.value.length)
-const overlayStyle = computed(() => dashOverlayVars(theme.value))
-const chromeStyle = computed(() => dashChromeVars(theme.value))
+const overlayStyle = computed(() => dashOverlayVars(props.theme))
+const chromeStyle = computed(() => dashChromeVars(props.theme))
 
 function onAddCommand(command: 'card' | 'text' | 'group') {
   if (command === 'card') {
@@ -129,6 +134,10 @@ function closeTools() {
 
 const toolActions: Record<DashToolAction, () => void> = {
   favorite: () => emit('favorite'),
+  share: () => emit('share'),
+  saveView: () => emit('saveView'),
+  manageViews: () => emit('manageViews'),
+  resetView: () => emit('resetView'),
   preview: () => emit('preview'),
   screenshot: () => emit('screenshot'),
   subscription: () => emit('subscription'),
@@ -145,19 +154,8 @@ function onToolAction(action: DashToolAction) {
   toolActions[action]()
 }
 
-function onDockPointerDown(event: PointerEvent) {
-  touchActionsVisible.value = event.pointerType === 'touch' || event.pointerType === 'pen'
-}
-
 function isActionPopper(target: EventTarget | null) {
-  return target instanceof Element && !!target.closest('.dash-tools-popper, .personal-view-popper, .dash-add-popper')
-}
-
-function onPagePointerDown(event: PointerEvent) {
-  if (event.target instanceof Node && dockRef.value?.contains(event.target))
-    return
-  if (!isActionPopper(event.target))
-    touchActionsVisible.value = false
+  return target instanceof Element && !!target.closest('.vis-actions-popper, .personal-view-popper, .dash-add-popper')
 }
 
 function onPageScroll(event: Event) {
@@ -172,10 +170,8 @@ function onPageScroll(event: Event) {
   if (openUid.value)
     discardChip()
   toolsOpen.value = false
-  touchActionsVisible.value = false
 }
 
-useEventListener(document, 'pointerdown', onPagePointerDown)
 useEventListener(window, 'scroll', onPageScroll, true)
 
 watch(mobile, (enabled) => {
@@ -188,17 +184,13 @@ watch(mobile, (enabled) => {
 
 <template>
   <div
-    ref="dockRef"
     class="filter-dock"
     :style="chromeStyle"
     :class="{
       'is-mobile': mobile,
       'is-compact': presentationMode === 'compact',
       'is-medium': presentationMode === 'medium',
-      'is-touch-active': touchActionsVisible,
-      'is-design': showDesign,
     }"
-    @pointerdown="onDockPointerDown"
   >
     <div
       v-if="mobile && (title || descText)"
@@ -246,76 +238,46 @@ watch(mobile, (enabled) => {
             <i v-if="refreshFailed && !refreshing" class="filter-dock__error-dot" aria-hidden="true" />
           </VisActionButton>
         </el-tooltip>
-        <el-popover
-          v-model:visible="toolsOpen"
-          placement="bottom-end"
-          trigger="click"
-          :width="320"
-          :show-arrow="false"
-          :persistent="false"
-          popper-class="dash-tools-popper"
-          :popper-style="overlayStyle"
-          role="dialog"
+        <DashToolsMenu
+          v-model:open="toolsOpen"
+          :surface-style="overlayStyle"
+          :mobile="mobile"
+          :show-design="showDesign"
+          :show-preview="showPreview"
+          :preview-disabled="previewDisabled"
+          :show-favorite="showFavorite"
+          :favorite="favorite"
+          :favorite-busy="favoriteBusy"
+          :show-subscription="showSubscription"
+          :show-share="showShare"
+          :view-actions="viewActions"
+          :loading="loading"
+          :screenshotting="screenshotting"
+          :adding="adding"
+          :save-loading="saveLoading"
+          :save-disabled="saveDisabled"
+          @action="onToolAction"
         >
-          <template #reference>
-            <VisActionButton
-              data-dashboard-tools-trigger
-              :size="mobile ? 'compact' : 'regular'"
-              :variant="mobile ? 'ghost' : 'outline'"
-              class="filter-dock__btn"
-              :active="toolsOpen"
-              label="更多操作"
-              aria-haspopup="dialog"
-              :aria-expanded="toolsOpen"
-              @keydown.esc.stop="closeTools"
-            >
-              <span class="i-mingcute-more-2-line" />
-            </VisActionButton>
-          </template>
-
-          <DashToolsMenu
-            v-model:theme="theme"
-            v-model:grid-guides="gridGuides"
-            :desc="descText"
-            :mobile="mobile"
-            :show-design="showDesign"
-            :show-preview="showPreview"
-            :preview-disabled="previewDisabled"
-            :show-favorite="showFavorite"
-            :favorite="favorite"
-            :favorite-busy="favoriteBusy"
-            :show-subscription="showSubscription"
-            :loading="loading"
-            :screenshotting="screenshotting"
-            :adding="adding"
-            :save-loading="saveLoading"
-            :save-disabled="saveDisabled"
-            @action="onToolAction"
-            @update:theme="closeTools"
-            @keydown.esc.stop="closeTools"
-          />
-        </el-popover>
+          <VisActionButton
+            data-dashboard-tools-trigger
+            :size="mobile ? 'compact' : 'regular'"
+            :variant="mobile ? 'ghost' : 'outline'"
+            class="filter-dock__btn"
+            :active="toolsOpen"
+            label="更多操作"
+            aria-haspopup="dialog"
+            :aria-expanded="toolsOpen"
+          >
+            <span class="i-mingcute-more-2-line" />
+          </VisActionButton>
+        </DashToolsMenu>
       </div>
       <i v-if="!mobile && showDesign" class="filter-dock__tools-sep" />
       <div v-if="!mobile && showDesign" class="filter-dock__design">
-        <el-tooltip :content="gridGuides ? '隐藏辅助线' : '显示辅助线'" placement="bottom" :show-after="200">
-          <VisActionButton
-            size="regular" variant="outline" label="辅助线"
-            class="filter-dock__btn"
-            :active="gridGuides"
-            :aria-pressed="gridGuides"
-            :disabled="loading || screenshotting"
-            @click="gridGuides = !gridGuides"
-          >
-            <span class="i-mingcute-grid-line" />
-          </VisActionButton>
-        </el-tooltip>
         <el-dropdown
-          trigger="hover"
+          trigger="click"
           placement="bottom-end"
           popper-class="dash-add-popper"
-          :show-timeout="100"
-          :hide-timeout="100"
           :popper-style="overlayStyle"
           @command="onAddCommand"
         >
@@ -760,32 +722,6 @@ watch(mobile, (enabled) => {
   justify-self: end;
   gap: 8px;
   overflow: visible;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.15s ease;
-}
-
-// 设计页和独立预览的手机 / 平板布局直接显示工具。
-.filter-dock.is-design .filter-dock__right,
-.filter-dock.is-mobile .filter-dock__right,
-.filter-dock.is-touch-active .filter-dock__right,
-.filter-dock:has(:focus-visible) .filter-dock__right,
-.filter-dock:has(.filter-dock__right [aria-expanded='true']) .filter-dock__right {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .filter-dock:hover .filter-dock__right {
-    opacity: 1;
-    pointer-events: auto;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .filter-dock__right {
-    transition: none;
-  }
 }
 
 .filter-dock__view,

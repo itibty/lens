@@ -1,27 +1,21 @@
 import type { DashCardDisplayOverrides } from './dashCardDisplay'
 import type { VisDashFilterDef } from './dashFilterModel'
 import type { DashWidget } from './dashLayout'
-import type { DashCardRadiusId, DashThemeId } from './dashTheme'
 import { sanitizeAutoRefreshSec } from '@/views/vis/shared/cardRefresh'
 import { sanitizeCardDisplayOverrides } from './dashCardDisplay'
 import { normalizeFilterDef, persistFilterDef } from './dashFilterModel'
 import { collectCardIds, sanitizeWidgets } from './dashLayout'
-import { DEFAULT_DASH_CARD_RADIUS, DEFAULT_DASH_THEME, resolveDashCardRadiusId, resolveDashThemeId } from './dashTheme'
 
 export interface VisDashConfig {
   cardDisplayOverrides: DashCardDisplayOverrides
   filters: VisDashFilterDef[]
   widgets: DashWidget[]
-  theme: DashThemeId
-  cardRadius: DashCardRadiusId
   autoRefreshSec?: number
   extra: Record<string, unknown>
 }
 
 export interface DashSettingsDraft {
   filters: VisDashFilterDef[]
-  theme: DashThemeId
-  cardRadius: DashCardRadiusId
   autoRefreshSec?: number
 }
 
@@ -68,8 +62,6 @@ export function parseDashConfig(raw?: string): VisDashConfig {
     cardDisplayOverrides: sanitizeCardDisplayOverrides(parsed.cardDisplayOverrides, collectCardIds(widgets)),
     filters: readFilterList(parsed.filters),
     widgets,
-    theme: resolveDashThemeId(typeof parsed.theme === 'string' ? parsed.theme : undefined),
-    cardRadius: resolveDashCardRadiusId(typeof parsed.cardRadius === 'string' ? parsed.cardRadius : undefined),
     autoRefreshSec: sanitizeAutoRefreshSec(parsed.autoRefreshSec),
     extra,
   }
@@ -79,8 +71,6 @@ export function stringifyDashConfig(
   filters: VisDashFilterDef[],
   extra: Record<string, unknown> = {},
   widgets: DashWidget[] = [],
-  theme?: DashThemeId,
-  cardRadius?: DashCardRadiusId,
   autoRefreshSec?: number,
   cardDisplayOverrides: DashCardDisplayOverrides = {},
 ) {
@@ -93,16 +83,7 @@ export function stringifyDashConfig(
   delete body.widgets
   delete body.cardRadius
   delete body.autoRefreshSec
-  const resolved = resolveDashThemeId(theme)
-  if (resolved === DEFAULT_DASH_THEME)
-    delete body.theme
-  else
-    body.theme = resolved
-  const radius = resolveDashCardRadiusId(cardRadius)
-  if (radius === DEFAULT_DASH_CARD_RADIUS)
-    delete body.cardRadius
-  else
-    body.cardRadius = radius
+  delete body.theme
   const refreshSec = sanitizeAutoRefreshSec(autoRefreshSec)
   if (refreshSec)
     body.autoRefreshSec = refreshSec

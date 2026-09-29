@@ -282,7 +282,7 @@ defineExpose<DashExplorerTreeInstance>({ setCurrentDashboard })
   padding-right: 2px;
 
   &.is-disabled {
-    color: var(--el-text-color-placeholder);
+    color: var(--el-text-color-disabled);
   }
 }
 
@@ -292,6 +292,7 @@ defineExpose<DashExplorerTreeInstance>({ setCurrentDashboard })
 }
 
 .explorer-node__name {
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -300,15 +301,21 @@ defineExpose<DashExplorerTreeInstance>({ setCurrentDashboard })
 .explorer-node__ops {
   margin-left: auto;
   flex-shrink: 0;
-  opacity: 0;
-  pointer-events: none;
 }
 
-:deep(.el-tree-node__content:hover) .explorer-node__ops,
-.explorer-node__ops:has(:focus-visible),
-.explorer-node__ops:has([aria-expanded='true']) {
-  opacity: 1;
-  pointer-events: auto;
+@media (hover: hover) and (pointer: fine) {
+  .explorer-node__ops {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  :deep(.el-tree-node__content:hover) .explorer-node__ops,
+  :deep(.el-tree-node.is-current > .el-tree-node__content) .explorer-node__ops,
+  .explorer-node__ops:has(:focus-visible),
+  .explorer-node__ops:has([aria-expanded='true']) {
+    opacity: 1;
+    pointer-events: auto;
+  }
 }
 
 .explorer-node__more-icon,

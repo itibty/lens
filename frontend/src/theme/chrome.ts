@@ -39,7 +39,7 @@ const classic: ChromeColors = {
   },
 }
 
-// 系统导航配色独立于 THEME_PRESETS；不修改内容区、按钮或图表色。
+// 系统导航配色独立于看板主题；不修改内容区、按钮或图表色。
 export const CHROME_THEMES = {
   classic: { name: '经典', ...classic },
   light: {

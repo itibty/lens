@@ -1,4 +1,5 @@
 import type { IHeaderTreeDefine, PivotTableConstructorOptions } from '@visactor/vtable'
+import type { MarkStyleArg } from './tableMark'
 import type { VisQueryConfig, VisVisualConfig } from './types'
 import type { ThemeColors } from '@/theme/tokens'
 import { TYPES } from '@visactor/vtable'
@@ -373,8 +374,73 @@ function treeRowHeaderWidth(depth: number) {
   return PIVOT_TREE_ROW_GUTTER + PIVOT_TREE_INDENT * Math.max(0, depth - 1) + PIVOT_TREE_ROW_TEXT
 }
 
+/** 表头没有 originRecord；只能按当前轴的表头路径判断，不能借用任一子格的指标。 */
+function pivotHeaderMarkRecord(args: MarkStyleArg, field: string, axis: 'row' | 'column') {
+  const paths = args.table.getCellHeaderPaths(args.col, args.row) as TYPES.IPivotTableCellHeaderPaths
+  if (paths.cellLocation !== (axis === 'row' ? 'rowHeader' : 'columnHeader'))
+    return null
+  const members = (axis === 'row' ? paths.rowHeaderPaths : paths.colHeaderPaths) ?? []
+  const current = members.at(-1)
+  if (current?.dimensionKey !== field || isPinnedHeaderValue(current.dataValue ?? current.value))
+    return null
+  const record: Record<string, unknown> = {}
+  for (const member of members) {
+    if (member.dimensionKey && !isPinnedHeaderValue(member.dataValue ?? member.value))
+      record[member.dimensionKey] = member.dataValue ?? member.value
+  }
+  return record
+}
+
+/** Lens 已在服务端聚合，每个交叉格对应一条记录；VTable 的返回值仍是数组。 */
+function pivotBodyMarkRecord(args: MarkStyleArg, dimensions: string[]) {
+  const raw = args.table.getCellOriginRecord(args.col, args.row)
+  const record = Array.isArray(raw) ? (raw.length === 1 ? raw[0] : null) : raw
+  if (!record || typeof record !== 'object' || Array.isArray(record))
+    return null
+  const result: Record<string, unknown> = { ...record }
+  // 合计缺少的维度不视作空值；保留该交叉格真实的合计指标供条件判断。
+  for (const field of dimensions) {
+    if (isPinnedHeaderValue(result[field]))
+      delete result[field]
+  }
+  return result
+}
+
+function pivotHeaderMarkStyle(
+  marks: ReturnType<typeof prepareTableMarks>,
+  field: string,
+  axis: 'row' | 'column',
+  tableTheme: ReturnType<typeof resolveVTableTheme>,
+) {
+  const resolve = bindMarkColumnStyle(marks, field, undefined, args => pivotHeaderMarkRecord(args, field, axis))
+  if (typeof resolve !== 'function')
+    return undefined
+  const defaults = tableTheme.headerStyle ?? {}
+  const style: Record<string, unknown> = {}
+  const properties = [
+    ['color', 'color', '#000000'],
+    ['bgColor', 'bgColor', 'transparent'],
+    ['fontWeight', 'bold', 600],
+    ['fontStyle', 'italic', 'normal'],
+  ] as const
+  // VTable 按 dimensionKey 缓存表头 Style，包括整份 style 函数的返回值。
+  // 属性函数仍会逐格调用；必须返回主题的有效回退值，undefined 会使文字消失。
+  for (const [property, markProperty, fallback] of properties) {
+    if (!marks.some(rule => rule.fields.has(field) && rule.style[markProperty]))
+      continue
+    style[property] = (args: MarkStyleArg) => {
+      const value = resolve(args)[property]
+      const defaultValue = defaults[property]
+      return value ?? (typeof defaultValue === 'function' ? defaultValue(args) : defaultValue) ?? fallback
+    }
+  }
+  return style
+}
+
 function dimDefines(
   fields: string[],
+  axis: 'row' | 'column',
+  tableTheme: ReturnType<typeof resolveVTableTheme>,
   treeWidth?: number,
   marks: ReturnType<typeof prepareTableMarks> = [],
   leafShowSort = false,
@@ -383,7 +449,7 @@ function dimDefines(
     dimensionKey: field,
     title: field,
     headerFormat: (value: unknown) => formatPivotHeaderValue(value),
-    headerStyle: bindMarkColumnStyle(marks, field),
+    headerStyle: pivotHeaderMarkStyle(marks, field, axis, tableTheme),
     showSort: leafShowSort && index === fields.length - 1,
     ...(treeWidth != null ? { width: treeWidth } : {}),
   }))
@@ -407,6 +473,9 @@ export function buildPivotTableOption(
   const sortColumn = resolveTableStyle(visual).sortColumn
   const records = empty ? [] : buildRecords(data, treeDisplay)
   const marks = prepareTableMarks(visual, query?.asOfDate)
+  const dimensions = [...rowFields, ...colFields]
+  const readMarkRecord = (args: MarkStyleArg) => pivotBodyMarkRecord(args, dimensions)
+  const tableTheme = resolveVTableTheme(visual, theme)
   const sortMetric = resolveIndicatorSortKey(sortState?.paths, metrics)
   const activeSort = sortColumn && !empty && sortMetric && sortState ? sortState : null
   const hideIndicatorName = !empty && metrics.length === 1
@@ -435,8 +504,8 @@ export function buildPivotTableOption(
 
   const option: PivotTableConstructorOptions = {
     records,
-    rows: dimDefines(rowFields, treeDisplay ? treeRowHeaderWidth(rowFields.length) : undefined, marks),
-    columns: dimDefines(colFields, undefined, marks, sortColumn && hideIndicatorName),
+    rows: dimDefines(rowFields, 'row', tableTheme, treeDisplay ? treeRowHeaderWidth(rowFields.length) : undefined, marks),
+    columns: dimDefines(colFields, 'column', tableTheme, undefined, marks, sortColumn && hideIndicatorName),
     indicators: metrics.map((metric) => {
       const progress = metricProgressVTableConfig(visual, query, metric, theme)
       const signColor = resolveFieldFormat(visual, query, metric).signColor
@@ -450,13 +519,13 @@ export function buildPivotTableOption(
       if (!progress) {
         return {
           ...common,
-          style: bindMetricSignColorStyle(bindMarkColumnStyle(marks, metric), signColor, theme),
+          style: bindMetricSignColorStyle(bindMarkColumnStyle(marks, metric, undefined, readMarkRecord), signColor, theme),
         }
       }
       return {
         ...common,
         ...progress.define,
-        style: bindMetricSignColorStyle(bindMarkColumnStyle(marks, metric, progress.style), signColor, theme),
+        style: bindMetricSignColorStyle(bindMarkColumnStyle(marks, metric, progress.style, readMarkRecord), signColor, theme),
       }
     }),
     rowTree,
@@ -475,7 +544,7 @@ export function buildPivotTableOption(
       .replaceAll(PIVOT_TOTAL_TOKEN, '总计'),
     ...resolveVTableLayout(empty),
     hover: { highlightMode: 'cross' },
-    theme: resolveVTableTheme(visual, theme),
+    theme: tableTheme,
     dataConfig: {
       aggregationRules: metrics.map(metric => ({
         indicatorKey: metric,

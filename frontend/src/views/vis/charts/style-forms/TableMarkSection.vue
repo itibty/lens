@@ -14,6 +14,12 @@ defineProps<{
 const visual = defineModel<VisVisualConfig>('visual', { required: true })
 const openSections = defineModel<string[]>('openSections', { required: true })
 const formRef = ref<{ addRule: () => void } | null>(null)
+const markCount = computed(() => visual.value.table?.marks?.length ?? 0)
+
+watch(markCount, (count) => {
+  if (!count && openSections.value.includes('marks'))
+    openSections.value = openSections.value.filter(name => name !== 'marks')
+}, { immediate: true })
 
 function addMark() {
   if (!openSections.value.includes('marks'))
@@ -26,6 +32,7 @@ function addMark() {
   <StyleFormSection
     title="数据标注"
     name="marks"
+    :collapsible="markCount > 0"
   >
     <template #extra>
       <button

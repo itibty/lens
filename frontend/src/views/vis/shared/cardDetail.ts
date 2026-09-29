@@ -146,7 +146,7 @@ function fillDimsFromTreePath(
   return next
 }
 
-/** 几何图点击：只带点上已有的维。树图外层格子没有里层维值，不能当成空。 */
+/** 几何图点击：保留命中的指标，只带点上已有的维。树图外层格子没有里层维值，不能当成空。 */
 export function contextFromChartDatum(
   query: VisQueryConfig,
   datum: Record<string, unknown> | undefined,
@@ -154,14 +154,18 @@ export function contextFromChartDatum(
   const rec = unwrapChartDatum(datum)
   if (!rec)
     return null
+  const metric = (query.metrics ?? []).find(item => metricAlias(item) === rec.__vis_series)
+  if (metric?.contrast)
+    return null
   const dims = query.dimensions ?? []
-  if (!dims.length)
-    return emptyDetailHit()
   const filled = fillDimsFromTreePath(dims, rec)
   const present = dims.filter(dim => dimValueOnDatum(dim, filled) !== undefined)
-  if (!present.length)
+  if (dims.length && !present.length)
     return null
-  return contextFromDims(present, filled)
+  const hit = contextFromDims(present, filled)
+  if (metric)
+    hit.metric = metricAlias(metric)
+  return hit
 }
 
 export function contextFromPivotPaths(

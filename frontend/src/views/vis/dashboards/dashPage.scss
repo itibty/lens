@@ -27,22 +27,6 @@ $dash-grid-gap: 12px;
   @include page-tokens;
 }
 
-@mixin frost($shadow: none) {
-  backdrop-filter: var(--dash-card-blur, none);
-  -webkit-backdrop-filter: var(--dash-card-blur, none);
-
-  @if $shadow == card {
-    box-shadow: var(--dash-card-shadow, 0 1px 2px rgb(15 23 42 / 4%));
-  } @else if $shadow == btn {
-    box-shadow: var(--dash-btn-shadow, 0 1px 2px rgb(15 23 42 / 4%));
-  } @else if $shadow == chrome {
-    box-shadow: var(
-      --dash-chrome-shadow,
-      0 1px 0 color-mix(in srgb, var(--dash-border, var(--na-border-color-light)) 85%, transparent)
-    );
-  }
-}
-
 @mixin shell {
   display: flex;
   flex-direction: column;
@@ -55,8 +39,7 @@ $dash-grid-gap: 12px;
   padding: var(--dash-page-y) var(--dash-chrome-x) var(--dash-gutter);
   box-sizing: border-box;
   background-color: var(--dash-chrome-bg, var(--na-surface-bg));
-  background-image: var(--dash-chrome-glaze, none);
-  @include frost(chrome);
+  box-shadow: var(--dash-chrome-shadow, 0 1px 0 var(--dash-border, var(--na-border-color-light)));
 }
 
 @mixin chrome-sticky {
@@ -65,12 +48,6 @@ $dash-grid-gap: 12px;
   position: sticky;
   top: 0;
   z-index: 8;
-  transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
-
-  &.is-off {
-    transform: translateY(-100%);
-    pointer-events: none;
-  }
 }
 
 @mixin canvas {

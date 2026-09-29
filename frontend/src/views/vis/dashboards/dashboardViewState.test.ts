@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { captureViewState, parseViewState, resolveTabValues } from './dashboardViewState'
+import { captureViewState, getDashboardViewCapabilities, parseViewState, resolveTabValues } from './dashboardViewState'
 import { createEmptyGroup } from './dashLayout'
 
 function group(id: string, cardIds: string[]) {
@@ -12,6 +12,15 @@ function group(id: string, cardIds: string[]) {
 }
 
 describe('personal view tab state', () => {
+  it('only offers customization for filters or genuinely switchable tabs', () => {
+    expect(getDashboardViewCapabilities([], []).canCustomize).toBe(false)
+    expect(getDashboardViewCapabilities([], [group('empty', []), group('one', ['1']), group('two', ['2'])]).canCustomize).toBe(false)
+    expect(getDashboardViewCapabilities([], [group('duplicates', ['1', '1'])]).canCustomize).toBe(false)
+    expect(getDashboardViewCapabilities([], [{ ...group('tile', ['1', '2']), mode: 'tile' }]).canCustomize).toBe(false)
+    expect(getDashboardViewCapabilities([], [group('tabs', ['1', '2'])])).toEqual({ hasFilters: false, hasSwitchableTabs: true, canCustomize: true })
+    expect(getDashboardViewCapabilities([{ uid: 'region', datasetId: '1', field: 'region', label: '地区', formType: 'select', applyAs: 'filter' }], [])).toEqual({ hasFilters: true, hasSwitchableTabs: false, canCustomize: true })
+  })
+
   it('keeps selections through reordering and falls back only within the changed group', () => {
     const saved = { first: { activeCardId: '2' }, second: { activeCardId: '4' }, removed: { activeCardId: '5' } }
     expect(resolveTabValues([group('first', ['2', '1']), group('second', ['3']), group('new', ['6'])], saved)).toEqual({

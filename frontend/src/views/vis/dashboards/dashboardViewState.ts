@@ -10,6 +10,15 @@ export interface DashboardViewState {
   tabs: DashTabValues
 }
 
+/** 查看状态的能力入口；新增可保存的交互时，在这里统一扩展判断。 */
+export function getDashboardViewCapabilities(defs: VisDashFilterDef[], widgets: DashWidget[]) {
+  const hasFilters = defs.length > 0
+  const hasSwitchableTabs = widgets.some(widget => widget.kind === 'group'
+    && widget.mode === 'tabs'
+    && new Set(widget.pages.map(page => page.items[0]?.cardId).filter(Boolean)).size > 1)
+  return { hasFilters, hasSwitchableTabs, canCustomize: hasFilters || hasSwitchableTabs }
+}
+
 export function resolveTabValues(widgets: DashWidget[], saved: DashTabValues = {}): DashTabValues {
   const tabs: DashTabValues = {}
   for (const widget of [...widgets].sort((a, b) => ('id' in a ? a.id : '').localeCompare('id' in b ? b.id : ''))) {

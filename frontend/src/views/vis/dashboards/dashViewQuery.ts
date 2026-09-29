@@ -27,29 +27,50 @@ export function explicitViewRequest(query: LocationQuery): Pick<VIS.ResolveViewR
   }
 }
 
-export function syncViewQuery(stateJson: string, bindingsJson: string) {
+export interface DashboardViewContext {
+  selectedId: string
+  dirty: boolean
+  linked: boolean
+}
+
+/** 分享的是当前查看内容，不携带仅属于自己的视图 ID。 */
+export function buildDashboardViewLink(href: string, stateJson: string, bindingsJson: string) {
+  const url = new URL(href)
+  const encoded = o2s({ state: JSON.parse(stateJson), filterBindings: JSON.parse(bindingsJson) })
+  if (!encoded)
+    throw new Error('无法生成视图链接')
+  url.searchParams.set('vs', decodeURIComponent(encoded))
+  for (const key of ['f', 'viewId', 'view', 'subscriptionRunId', 'subscriptionScreenshot'])
+    url.searchParams.delete(key)
+  return url
+}
+
+export function syncViewQuery(stateJson: string, bindingsJson: string, context: DashboardViewContext) {
   const url = new URL(window.location.href)
   if (url.searchParams.has('subscriptionRunId'))
     return
-  const encoded = o2s({ state: JSON.parse(stateJson), filterBindings: JSON.parse(bindingsJson) })
-  if (!encoded)
-    return
-  const next = decodeURIComponent(encoded)
-  if (url.searchParams.get('vs') === next && !url.searchParams.has('f') && !url.searchParams.has('viewId'))
-    return
-  url.searchParams.set('vs', next)
+  const previous = url.href
   url.searchParams.delete('f')
   url.searchParams.delete('viewId')
-  window.history.replaceState(window.history.state, '', `${url.pathname}${url.search}${url.hash}`)
+  url.searchParams.delete('view')
+  url.searchParams.delete('vs')
+  if (context.dirty || context.linked)
+    url.searchParams.set('vs', buildDashboardViewLink(url.href, stateJson, bindingsJson).searchParams.get('vs')!)
+  if (context.selectedId)
+    url.searchParams.set('viewId', context.selectedId)
+  else if (!context.dirty && !context.linked)
+    url.searchParams.set('view', 'default')
+  if (url.href !== previous)
+    window.history.replaceState(window.history.state, '', `${url.pathname}${url.search}${url.hash}`)
 }
 
-export function useDashViewUrl(stateJson: Ref<string>, bindingsJson: Ref<string>) {
+export function useDashViewUrl(stateJson: Ref<string>, bindingsJson: Ref<string>, context: Ref<DashboardViewContext>) {
   const enabled = ref(false)
   const sync = () => {
     if (enabled.value)
-      syncViewQuery(stateJson.value, bindingsJson.value)
+      syncViewQuery(stateJson.value, bindingsJson.value, context.value)
   }
-  watch([stateJson, bindingsJson, enabled], sync)
+  watch([stateJson, bindingsJson, context, enabled], sync)
   return {
     pause: () => enabled.value = false,
     resume: () => {

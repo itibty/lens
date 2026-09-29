@@ -14,7 +14,7 @@ const widgets: DashWidget[] = [
 describe('dashboard-local card display', () => {
   it('round trips absent, hidden and custom fields outside extra config', () => {
     const overrides = { 101: { title: '区域营收', description: null } }
-    const raw = stringifyDashConfig([], {}, widgets, undefined, undefined, undefined, overrides)
+    const raw = stringifyDashConfig([], {}, widgets, undefined, overrides)
     const config = parseDashConfig(raw)
     expect(config.cardDisplayOverrides).toEqual(overrides)
     expect(config.extra.cardDisplayOverrides).toBeUndefined()
