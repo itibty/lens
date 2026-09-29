@@ -46,12 +46,12 @@ export function captureViewState(defs: VisDashFilterDef[], values: DashFilterVal
 export function parseViewState(json: string): DashboardViewState {
   const parsed = JSON.parse(json)
   if (![1, 2].includes(parsed?.schemaVersion) || !parsed.filters || typeof parsed.filters !== 'object' || Array.isArray(parsed.filters))
-    throw new Error('个人视图格式或版本不受支持')
+    throw new Error('视图格式不受支持')
   const keys = parsed.schemaVersion === 1 ? ['schemaVersion', 'filters'] : ['schemaVersion', 'filters', 'tabs']
   if (Object.keys(parsed).some(key => !keys.includes(key)))
-    throw new Error('个人视图包含暂不支持的状态')
+    throw new Error('视图包含不支持的设置')
   const tabs = parsed.tabs ?? {}
   if (!tabs || typeof tabs !== 'object' || Array.isArray(tabs))
-    throw new Error('Tab 状态格式无效')
+    throw new Error('视图中的标签页设置无效')
   return { schemaVersion: 2, filters: parsed.filters, tabs }
 }

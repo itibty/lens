@@ -95,7 +95,7 @@ function switchRoot(root: MenuInfo) {
         placement="bottom-start"
         :width="268"
         :show-arrow="false"
-        popper-class="root-menu-popover"
+        popper-class="lens-navbar-popper root-menu-popover"
       >
         <template #reference>
           <button
@@ -136,7 +136,7 @@ function switchRoot(root: MenuInfo) {
         :width="appearanceVisible ? 320 : 220"
         trigger="click"
         placement="bottom-end"
-        popper-class="account-popover"
+        popper-class="lens-navbar-popper account-popover"
         @after-leave="appearanceVisible = false"
       >
         <template #reference>
@@ -144,6 +144,7 @@ function switchRoot(root: MenuInfo) {
             ref="accountButtonRef"
             type="button"
             class="account-trigger clickable"
+            :class="{ open: accountPopoverVisible }"
             :title="displayName"
           >
             {{ displayName }}
@@ -395,7 +396,8 @@ function switchRoot(root: MenuInfo) {
       font-size: 16px;
     }
 
-    &:hover {
+    &:hover,
+    &:focus-visible {
       background: var(--el-fill-color-light);
       color: var(--el-color-primary);
     }
@@ -425,7 +427,8 @@ function switchRoot(root: MenuInfo) {
     color: var(--el-text-color-primary);
     cursor: pointer;
 
-    &:hover {
+    &:hover,
+    &:focus-visible {
       background: var(--el-fill-color);
     }
 

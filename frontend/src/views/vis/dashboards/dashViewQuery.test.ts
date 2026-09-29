@@ -20,7 +20,7 @@ describe('complete view links', () => {
   it('keeps explicit empty state and rejects malformed links', () => {
     expect(explicitViewRequest({ vs: '{"state":{"schemaVersion":2,"filters":{},"tabs":{}}}' })).toBeDefined()
     expect(() => explicitViewRequest({ vs: '[]' })).toThrow('链接中的视图无效')
-    expect(() => explicitViewRequest({ vs: JSON.stringify({ state, filterBindings: [] }) })).toThrow('绑定无效')
+    expect(() => explicitViewRequest({ vs: JSON.stringify({ state, filterBindings: [] }) })).toThrow('链接中的筛选设置无效')
   })
 
   it('writes tab-only views, removes old sources, and round trips through URLSearchParams', () => {

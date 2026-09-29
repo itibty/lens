@@ -8,6 +8,7 @@ import { getSubscriptionRunView } from '@/apis/vis/dashboardSubscription'
 import * as api from '@/apis/vis/personalReport'
 import { showToast } from '@/utils'
 import { apiErrorMessage } from '@/views/vis/shared/visRequest'
+import { DASHBOARD_VIEW_COPY as viewCopy } from './dashboardViewCopy'
 import { captureViewState, getDashboardViewCapabilities, parseViewState, resolveTabValues } from './dashboardViewState'
 import { explicitViewRequest } from './dashViewQuery'
 
@@ -54,7 +55,7 @@ export function useDashboardViewState(defs: Ref<VisDashFilterDef[]>, values: Ref
 
   function apply(result: VIS.ResolvedView) {
     if (!result.stateJson)
-      throw new Error('没有可恢复的查看状态')
+      throw new Error('未能读取视图内容')
     const state = parseViewState(result.stateJson)
     values.value = state.filters
     tabs.value = resolveTabValues(widgets.value, state.tabs)
@@ -134,7 +135,7 @@ export function useDashboardViewState(defs: Ref<VisDashFilterDef[]>, values: Ref
             }
             catch {
               if (current === session)
-                metadataNotice.value = '原视图加载失败，当前查看内容已保留'
+                metadataNotice.value = '已保存的视图加载失败，当前筛选和标签页已保留'
             }
           }
         }
@@ -145,7 +146,7 @@ export function useDashboardViewState(defs: Ref<VisDashFilterDef[]>, values: Ref
           request.viewId = preference.value.defaultViewId
         }
         else if (!preferencesAvailable.value && queryString('view') !== 'default') {
-          metadataNotice.value = '个人设置加载失败，已打开默认视图'
+          metadataNotice.value = `个人设置加载失败，已使用${viewCopy.defaultName}设置`
         }
         if (current !== session)
           return
@@ -300,7 +301,7 @@ export function useDashboardViewState(defs: Ref<VisDashFilterDef[]>, values: Ref
       await api.setDefaultPersonalView({ dashboardId: dashboardId.value, defaultViewId: id }, options)
       if (current()) {
         preference.value.defaultViewId = id
-        showToast(id ? '下次打开看板时将使用此视图' : '已取消默认打开')
+        showToast(id ? '已设为默认打开' : `下次打开时将使用${viewCopy.defaultName}设置`)
       }
     })
   }

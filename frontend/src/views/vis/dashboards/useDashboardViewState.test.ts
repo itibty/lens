@@ -181,7 +181,7 @@ describe('restore personal report state before querying', () => {
     await state.load('10', {})
     expect(state.ready.value).toBe(true)
     expect(api.resolvePersonalView).toHaveBeenCalledWith({ dashboardId: '10' }, expect.anything())
-    expect(state.metadataNotice.value).toBe('个人设置加载失败，已打开默认视图')
+    expect(state.metadataNotice.value).toBe('个人设置加载失败，已使用看板默认设置')
   })
 
   it('keeps a required state-restoration error visible when retrying only view metadata', async () => {

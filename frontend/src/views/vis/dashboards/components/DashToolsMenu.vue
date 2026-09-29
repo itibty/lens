@@ -34,7 +34,7 @@ const groups = computed<VisActionGroup[]>(() => [
       { key: 'screenshot', label: '截屏', icon: props.screenshotting ? 'i-svg-spinners-ring-resize' : 'i-mingcute-camera-line', disabled: props.loading || props.screenshotting, attrs: { 'data-dashboard-screenshot-action': '' } },
       { key: 'favorite', label: '收藏', title: props.favorite ? '取消收藏' : '收藏', icon: props.favorite ? 'i-mingcute-star-fill' : 'i-mingcute-star-line', visible: props.showFavorite, disabled: props.favoriteBusy, active: props.favorite },
       { key: 'subscription', label: '订阅', icon: 'i-mingcute-mail-send-line', visible: props.showSubscription },
-      { key: 'share', label: '复制链接', icon: 'i-mingcute-link-line', visible: !!props.showShare },
+      { key: 'share', label: viewCopy.share, icon: 'i-mingcute-link-line', visible: !!props.showShare },
     ],
   },
   { id: 'personal', label: viewCopy.title, items: props.viewActions || [] },

@@ -82,7 +82,8 @@ onMounted(() => {
     color: var(--el-text-color-secondary);
     cursor: pointer;
 
-    &:hover {
+    &:hover,
+    &:focus-visible {
       background: var(--el-fill-color-light);
     }
   }
@@ -105,6 +106,10 @@ onMounted(() => {
   font: inherit;
   cursor: pointer;
 
+  &:hover {
+    background: var(--el-fill-color-light);
+  }
+
   &[aria-pressed='true'] {
     border-color: var(--el-color-primary);
     box-shadow: inset 0 0 0 1px var(--el-color-primary);
@@ -118,7 +123,7 @@ onMounted(() => {
     overflow: hidden;
     border: 1px solid var(--el-border-color-light);
     border-radius: 4px;
-    background: var(--el-bg-color-page);
+    background: var(--na-content-bg);
   }
 
   &__navbar {
@@ -142,7 +147,7 @@ onMounted(() => {
   &__content {
     margin: 7px;
     border-radius: 2px;
-    background: var(--el-bg-color);
+    background: var(--na-surface-bg);
   }
 
   &__label {

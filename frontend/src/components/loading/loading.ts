@@ -3,7 +3,7 @@ import { LENS_LOGO_SVG } from '@/components/brand/lensLogo'
 import { UIConfig } from '@/core/config'
 import './loading.css'
 
-// 六片棱镜整体旋转；组件与指令共用，静态 logo 保持不动。
+// 偏心镜环整体旋转；组件与指令共用，静态 logo 保持不动。
 export const BRAND_LOADING_SVG = `
   <g class="lens-loading-orbit">
     ${LENS_LOGO_SVG}

@@ -24,7 +24,7 @@ afterEach(() => {
 
 describe('system appearance', () => {
   it('uses classic for missing, invalid or inherited preset names', () => {
-    for (const value of [null, undefined, '', 'obsolete', 'forest', '__proto__', 'constructor', {}])
+    for (const value of [null, undefined, '', 'obsolete', 'navy', 'forest', '__proto__', 'constructor', {}])
       expect(resolveChromeTheme(value)).toBe('classic')
     stored.set('NA:chrome_theme', 'forest')
     expect(readChromeTheme()).toBe('classic')
@@ -32,8 +32,8 @@ describe('system appearance', () => {
 
   it('restores the browser preference and clears only that preference when reverting', () => {
     stored.set('NA:access_token', 'untouched')
-    saveChromeTheme('navy')
-    expect(readChromeTheme()).toBe('navy')
+    saveChromeTheme('gold')
+    expect(readChromeTheme()).toBe('gold')
     saveChromeTheme('light')
     expect(readChromeTheme()).toBe('light')
     saveChromeTheme('classic')
@@ -46,7 +46,7 @@ describe('system appearance', () => {
     saveChromeTheme('light')
     UIConfig.appearanceEnabled = false
     expect(readChromeTheme()).toBe('classic')
-    expect(resolveChromeTheme('navy')).toBe('classic')
+    expect(resolveChromeTheme('gold')).toBe('classic')
   })
 
   it('keeps startup and switching usable when browser storage is unavailable', () => {
@@ -56,7 +56,7 @@ describe('system appearance', () => {
       removeItem: () => { throw new Error('Storage disabled') },
     })
     expect(readChromeTheme()).toBe('classic')
-    expect(() => saveChromeTheme('navy')).not.toThrow()
+    expect(() => saveChromeTheme('gold')).not.toThrow()
     expect(() => saveChromeTheme('classic')).not.toThrow()
   })
 

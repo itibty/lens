@@ -228,13 +228,13 @@ defineExpose({ showDialog, close })
         <el-form-item label="订阅内容">
           <template #label>
             <span class="subscription-form-label">订阅内容
-              <el-tooltip :content="contentMode === 'keep' && !form.viewStateJson ? '按看板的默认设置发送。' : '使用保存时的筛选和标签页；相对日期按发送当天计算。'" placement="top" :popper-style="{ maxWidth: '280px' }">
+              <el-tooltip :content="contentMode === 'keep' && !form.viewStateJson ? '按看板默认设置发送最新数据。' : '按选定的筛选条件和标签页发送最新数据，相对日期按发送当天计算。'" placement="top" :popper-style="{ maxWidth: '280px' }">
                 <button type="button" class="subscription-form-help" aria-label="订阅内容说明"><span class="i-mingcute-question-line" /></button>
               </el-tooltip>
             </span>
           </template>
           <el-select v-model="contentMode" @change="previewContent">
-            <el-option v-if="editing" label="保留现有设置" value="keep" />
+            <el-option v-if="editing" label="保持原订阅内容" value="keep" />
             <el-option :label="viewCopy.currentName" value="current" />
             <el-option :label="viewCopy.defaultName" value="default" />
             <el-option-group v-if="personalViews?.length" :label="viewCopy.savedGroup">

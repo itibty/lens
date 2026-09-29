@@ -12,7 +12,7 @@ export function readViewQuery(encoded: string) {
   parseViewState(stateJson)
   const bindings = 'filterBindings' in payload ? payload.filterBindings : {}
   if (!bindings || typeof bindings !== 'object' || Array.isArray(bindings))
-    throw new Error('链接中的筛选绑定无效')
+    throw new Error('链接中的筛选设置无效')
   return { stateJson, bindingsJson: JSON.stringify(bindings) }
 }
 

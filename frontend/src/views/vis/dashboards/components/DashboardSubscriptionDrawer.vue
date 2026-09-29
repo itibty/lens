@@ -334,7 +334,7 @@ defineExpose({ open })
               </el-dropdown>
             </div>
             <dl>
-              <div><dt>订阅内容</dt><dd>{{ row.viewStateJson ? '保存时的视图' : viewCopy.defaultName }}</dd></div>
+              <div><dt>订阅内容</dt><dd>{{ row.viewStateJson ? viewCopy.subscriptionSaved : viewCopy.defaultName }}</dd></div>
               <div>
                 <dt>发送计划</dt><dd :title="row.timezone || 'Asia/Shanghai'">
                   {{ subscriptionScheduleLabel(row) }} · {{ !row.timezone || row.timezone === 'Asia/Shanghai' ? '北京时间' : row.timezone }}

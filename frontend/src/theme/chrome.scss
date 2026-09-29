@@ -1,3 +1,25 @@
+// 顶栏浮层传送到 body 后，在浮层内适配 Element Plus 变量。
+.lens-navbar-popper.el-popper {
+  --el-bg-color: var(--na-navbar-popover-bg);
+  --el-bg-color-overlay: var(--na-navbar-popover-bg);
+  --el-text-color-primary: var(--na-navbar-popover-strong);
+  --el-text-color-regular: var(--na-navbar-popover-text);
+  --el-text-color-secondary: var(--na-navbar-popover-muted);
+  --el-fill-color: var(--na-navbar-popover-hover);
+  --el-fill-color-light: var(--na-navbar-popover-hover);
+  --el-fill-color-lighter: var(--na-navbar-popover-tile);
+  --el-border-color-light: var(--na-navbar-popover-border);
+  --el-border-color-lighter: var(--na-navbar-popover-border);
+  --el-color-primary: var(--na-navbar-popover-accent);
+  --el-color-primary-light-9: var(--na-navbar-popover-active);
+  --el-box-shadow-light: var(--na-navbar-popover-shadow);
+
+  button:focus-visible {
+    outline: 2px solid var(--el-color-primary);
+    outline-offset: -3px;
+  }
+}
+
 // 侧栏和传送到 body 的折叠菜单共用导航变量，不改变业务组件的 Element Plus 主题。
 .sidebar-wrapper .el-menu,
 .lens-sidebar-popper,

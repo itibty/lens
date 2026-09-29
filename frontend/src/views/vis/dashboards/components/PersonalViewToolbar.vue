@@ -34,12 +34,13 @@ const selected = computed(() => props.views.find(view => view.id === props.selec
 const temporary = computed(() => !selected.value && (props.linked || props.dirty))
 const currentName = computed(() => selected.value?.viewName || (temporary.value ? copy.currentName : copy.defaultName))
 const hasChanges = computed(() => props.dirty || props.linked)
+const statusText = computed(() => hasChanges.value ? selected.value ? copy.modified : copy.unsaved : '')
 
 function actionsOf(view: VIS.PersonalViewInfo): VisActionGroup[] {
   const isDefault = props.defaultViewId === view.id
   return [
     { id: 'edit', label: '视图设置', items: [
-      { key: isDefault ? 'clearDefault' : 'default', label: isDefault ? copy.clearDefault : copy.setDefault, icon: 'i-mingcute-pin-line', visible: props.canSave || isDefault, disabled: props.busy },
+      { key: isDefault ? 'clearDefault' : 'default', label: isDefault ? copy.clearDefault : copy.setDefault, title: isDefault ? copy.clearDefaultDescription : copy.setDefaultDescription, icon: 'i-mingcute-pin-line', visible: props.canSave || isDefault, disabled: props.busy },
       { key: 'rename', label: '重命名', icon: 'i-mingcute-edit-2-line', disabled: props.busy },
     ] },
     { id: 'delete', label: '删除视图', items: [
@@ -57,7 +58,8 @@ async function command(value: string, view = selected.value) {
   rowMenuId.value = ''
   try {
     if (value === 'save' || value === 'rename') {
-      const response = await ElMessageBox.prompt(value === 'save' ? copy.saveDescription : '视图名称', value === 'save' ? copy.save : '重命名视图', {
+      const title = value === 'rename' ? '重命名视图' : selected.value ? copy.saveAs : copy.save
+      const response = await ElMessageBox.prompt(value === 'save' ? copy.saveDescription : '视图名称', title, {
         customStyle: props.surfaceStyle,
         inputValue: value === 'rename' ? view?.viewName || '' : '',
         inputPlaceholder: '输入视图名称',
@@ -135,10 +137,10 @@ defineExpose({ saveAs: () => command('save'), manage: () => dialogOpen.value = t
     <div class="personal-view-menu" @keydown.esc.stop="closeMenu">
       <div v-if="!dialogOpen" class="personal-view-menu__heading">
         <span>{{ copy.title }}</span>
-        <span v-if="hasChanges" class="personal-view-menu__status">未保存</span>
+        <span v-if="statusText" class="personal-view-menu__status">{{ statusText }}</span>
       </div>
       <div ref="optionsRef" class="personal-view-menu__options" role="group" :aria-label="dialogOpen ? copy.savedGroup : '可选视图'" @keydown.down.prevent="moveFocus($event, 1)" @keydown.up.prevent="moveFocus($event, -1)">
-        <button v-if="!dialogOpen" type="button" data-view-option class="personal-view-menu__option" :class="{ 'is-selected': !selectedId && !temporary }" :aria-pressed="!selectedId && !temporary" :disabled="busy" @click="choose('')">
+        <button v-if="!dialogOpen" type="button" data-view-option class="personal-view-menu__option" :class="{ 'is-selected': !selectedId && !temporary }" :aria-pressed="!selectedId && !temporary" :title="copy.defaultDescription" :disabled="busy" @click="choose('')">
           <span class="personal-view-menu__name">{{ copy.defaultName }}</span>
           <span class="personal-view-menu__check" :class="{ 'i-mingcute-check-line': !selectedId && !temporary }" />
         </button>
@@ -170,7 +172,7 @@ defineExpose({ saveAs: () => command('save'), manage: () => dialogOpen.value = t
           </VisActionPopover>
         </div>
         <div v-if="!views.length && dialogOpen" class="personal-view-menu__empty">
-          暂无保存的视图
+          {{ copy.empty }}
         </div>
       </div>
       <div v-if="!dialogOpen && canSave && hasChanges" class="personal-view-menu__footer">
@@ -180,7 +182,7 @@ defineExpose({ saveAs: () => command('save'), manage: () => dialogOpen.value = t
         <button v-if="selected && dirty" type="button" class="personal-view-menu__secondary" :disabled="busy" @click="command('save')">
           {{ copy.saveAs }}
         </button>
-        <button v-if="selected && dirty" type="button" class="personal-view-menu__secondary" :disabled="busy" @click="choose(selectedId)">
+        <button v-if="selected && dirty" type="button" class="personal-view-menu__secondary" :title="copy.restoreDescription" :disabled="busy" @click="choose(selectedId)">
           {{ copy.restore }}
         </button>
       </div>
@@ -195,7 +197,7 @@ defineExpose({ saveAs: () => command('save'), manage: () => dialogOpen.value = t
       <template #reference>
         <button
           type="button" class="personal-view-toolbar__trigger" :disabled="busy"
-          :title="currentName" :aria-label="`切换视图：${currentName}${hasChanges ? '，未保存' : ''}`" aria-haspopup="dialog" :aria-expanded="open"
+          :title="`${currentName}${statusText ? `（${statusText}）` : ''}`" :aria-label="`切换视图：${currentName}${statusText ? `，${statusText}` : ''}`" aria-haspopup="dialog" :aria-expanded="open"
           @keydown.down.prevent="openMenu" @keydown.esc.stop="open = false"
         >
           <span class="personal-view-toolbar__icon" :class="busy ? 'i-svg-spinners-ring-resize' : 'i-mingcute-bookmark-line'" />

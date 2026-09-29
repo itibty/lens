@@ -22,6 +22,31 @@ interface ChromeColors {
     border: string
     inputBorder: string
   }
+  popover: {
+    background: string
+    strong: string
+    text: string
+    muted: string
+    tile: string
+    hover: string
+    active: string
+    accent: string
+    border: string
+    shadow: string
+  }
+}
+
+const lightPopover: ChromeColors['popover'] = {
+  background: LIGHT_THEME.surface.elevated,
+  strong: LIGHT_THEME.text.strong,
+  text: LIGHT_THEME.text.regular,
+  muted: LIGHT_THEME.text.muted,
+  tile: LIGHT_THEME.surface.faint,
+  hover: LIGHT_THEME.surface.subtle,
+  active: mixColor(LIGHT_THEME.primary.base, LIGHT_THEME.surface.panel, 0.1),
+  accent: LIGHT_THEME.primary.base,
+  border: LIGHT_THEME.border.light,
+  shadow: LIGHT_THEME.shadow.floating,
 }
 
 const classic: ChromeColors = {
@@ -37,6 +62,7 @@ const classic: ChromeColors = {
     border: LIGHT_THEME.border.subtle,
     inputBorder: LIGHT_THEME.border.normal,
   },
+  popover: lightPopover,
 }
 
 // 系统导航配色独立于看板主题；不修改内容区、按钮或图表色。
@@ -63,27 +89,40 @@ export const CHROME_THEMES = {
       border: '#E4E7EC',
       inputBorder: '#D0D5DD',
     },
+    popover: lightPopover,
   },
-  navy: {
-    name: '墨蓝',
+  gold: {
+    name: '墨金',
     navbar: {
-      background: '#142C49',
-      title: '#F4F7FB',
-      text: '#C6D3E2',
-      hover: '#294564',
-      border: '#142C49',
-      brand: '#A9C9FF',
+      background: '#18191B',
+      title: '#E8D5AF',
+      text: '#C8C2B8',
+      hover: '#2C2923',
+      border: '#423A2C',
+      brand: '#D8BB82',
     },
     sidebar: {
-      background: '#1B3553',
-      text: '#D4DFEC',
-      muted: '#B1C1D5',
-      hover: '#274361',
-      hoverText: '#FFFFFF',
-      active: '#2D5079',
-      activeText: '#FFFFFF',
-      border: '#314B68',
-      inputBorder: '#526B87',
+      background: '#202123',
+      text: '#D1CCC3',
+      muted: '#A8A196',
+      hover: '#2D2B27',
+      hoverText: '#E8D5AF',
+      active: '#3A3225',
+      activeText: '#E8CB91',
+      border: '#38352F',
+      inputBorder: '#5B5549',
+    },
+    popover: {
+      background: '#202123',
+      strong: '#E8E3DA',
+      text: '#D1CCC3',
+      muted: '#A8A196',
+      tile: '#262729',
+      hover: '#2D2B27',
+      active: '#3A3225',
+      accent: '#E8CB91',
+      border: '#423A2C',
+      shadow: DARK_THEME.shadow.floating,
     },
   },
 } satisfies Record<string, ChromeColors & { name: string }>
@@ -120,7 +159,7 @@ export function saveChromeTheme(value: ChromeThemeId) {
 }
 
 export function chromeCssVars(id: ChromeThemeId): Record<string, string> {
-  const { navbar, sidebar } = CHROME_THEMES[id]
+  const { navbar, sidebar, popover } = CHROME_THEMES[id]
   return {
     '--na-navbar-bg': navbar.background,
     '--na-navbar-title-color': navbar.title,
@@ -129,6 +168,16 @@ export function chromeCssVars(id: ChromeThemeId): Record<string, string> {
     '--na-navbar-hover-bg': navbar.hover,
     '--na-navbar-border-color': navbar.border,
     '--na-navbar-brand-color': navbar.brand,
+    '--na-navbar-popover-bg': popover.background,
+    '--na-navbar-popover-strong': popover.strong,
+    '--na-navbar-popover-text': popover.text,
+    '--na-navbar-popover-muted': popover.muted,
+    '--na-navbar-popover-tile': popover.tile,
+    '--na-navbar-popover-hover': popover.hover,
+    '--na-navbar-popover-active': popover.active,
+    '--na-navbar-popover-accent': popover.accent,
+    '--na-navbar-popover-border': popover.border,
+    '--na-navbar-popover-shadow': popover.shadow,
     '--na-sidebar-bg': sidebar.background,
     '--na-sidebar-text': sidebar.text,
     '--na-sidebar-muted': sidebar.muted,

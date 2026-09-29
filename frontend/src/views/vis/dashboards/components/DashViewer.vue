@@ -132,7 +132,7 @@ async function shareCurrentView() {
     await nextTick()
     const url = buildDashboardViewLink(window.location.href, personal.stateJson, personal.bindingsJson)
     await navigator.clipboard.writeText(url.href)
-    showToast('链接已复制')
+    showToast(viewCopy.linkCopied)
   }
   catch { showToast('复制失败，请重试', 'error') }
 }
